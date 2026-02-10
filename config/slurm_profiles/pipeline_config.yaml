@@ -1,0 +1,168 @@
+# ============================================================
+# GeneCompass Rat Fine-Tuning Pipeline Configuration
+# ============================================================
+# POLICY ONLY — all tunable parameters and paths.
+# Mechanism lives in lib/gene_utils.py which reads this file.
+#
+# Path resolution:
+#   All paths are relative to project_root.
+#   project_root defaults to "." — override via PIPELINE_ROOT env var.
+#
+# Usage:
+#   import yaml, os
+#   with open("config/pipeline_config.yaml") as f:
+#       config = yaml.safe_load(f)
+#   root = os.environ.get("PIPELINE_ROOT", config["project_root"])
+
+# ============================================================
+# Project root (override with PIPELINE_ROOT env var)
+# ============================================================
+project_root: "."
+
+# ============================================================
+# BioMart Reference
+# ============================================================
+# The canonical rat gene universe is defined as Ensembl BioMart
+# (release + assembly below). All pipeline outputs are indexed by
+# canonical ENSRNOG IDs from this release. Noncanonical identifiers
+# are resolved via deterministic mapping rules; unresolved identifiers
+# are excluded with audit logs.
+biomart:
+  ensembl_release: "113"         # REQUIRED — verified before stage runs
+  assembly: "mRatBN7.2"         # REQUIRED
+  species: "rattus_norvegicus"
+  download_date: "2026-01-15"   # REQUIRED — fill actual date
+
+  # Primary gene annotation (Gene stable ID, Gene name, Gene type, Chr, Desc)
+  rat_gene_info: data/references/biomart/rat_gene_info.tsv
+  # Optional expected checksum — if set, Stage 2 verifies match.
+  # Omit this key until you have the actual hash, then pin it:
+  #   rat_gene_info_md5: "a1b2c3d4e5f6..."
+
+  # Supplementary (adds NCBI gene IDs)
+  rat_genes_biomart: data/references/rat_genes_biomart.tsv
+
+  # Ortholog tables
+  rat_human_orthologs: data/references/biomart/rat_human_orthologs.tsv
+  rat_mouse_orthologs: data/references/biomart/rat_mouse_orthologs.tsv
+
+# ============================================================
+# RGD Reference
+# ============================================================
+# Role: SYMBOL SYNONYM RESOLUTION ONLY.
+# RGD is NOT used for:
+#   - Gene identity (which Ensembl IDs exist)
+#   - Biotype classification
+#   - Gene existence decisions
+# RGD IS used for:
+#   - Resolving gene symbols to BioMart Ensembl IDs when
+#     a symbol appears in h5ad var but not in BioMart's symbol column
+rgd:
+  genes_file: data/references/biomart/GENES_RAT.txt
+  use_for_biotype_fallback: false   # strict BioMart only
+  use_for_symbol_synonyms: true     # help resolve symbols → ENSRNOG
+  # RGD synonym lookup must resolve to a BioMart ENSRNOG — never creates new IDs
+  require_biomart_resolution: true
+
+# ============================================================
+# Data Directories (all relative to project_root)
+# ============================================================
+paths:
+  # NOTE: On Gilbreth this resolves to /depot/reese18/data/training/qc_h5ad
+  # If your actual directory is still named qc_matrices, update here or rename.
+  qc_h5ad_dir: data/training/qc_h5ad
+  expected_qc_h5ad_files: 895      # Stage 2 warns if wildly off
+  gene_inventory_dir: data/training/gene_inventory
+  vocabulary_dir: data/training/vocabulary
+  ortholog_dir: data/training/ortholog_mappings
+  median_dir: data/training/gene_medians
+  reference_dir: data/training/reference_files
+  tokenized_corpus_dir: data/training/tokenized_corpus
+
+  # MoTrPAC-specific data
+  motrpac_data_dir: data/motrpac/rat_training_6mo
+  motrpac_processed_dir: data/motrpac/processed
+
+  # GeneCompass pretrained model artifacts (inside vendor submodule)
+  genecompass_dir: vendor/GeneCompass
+  genecompass_scdata: vendor/GeneCompass/scdata
+  genecompass_tokens: vendor/GeneCompass/scdata/dict/human_mouse_tokens.pickle
+  genecompass_medians: vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle
+  genecompass_homologs: vendor/GeneCompass/scdata/dict/gc_homologs.pickle
+
+  # Model outputs
+  models_dir: data/models
+  results_dir: data/results
+
+# ============================================================
+# Stage 2: Gene Inventory
+# ============================================================
+gene_inventory:
+  biomart_gate: true               # reject any gene ID not in BioMart (assert in Stage 2)
+  min_biomart_match: 0.30
+  match_sample_size: 1000
+  match_sample_seed: 0              # reproducible sampling
+  accession_patterns:
+    - "^GSE\\d+$"                   # GEO
+    - "^E-[A-Z]+-\\d+$"            # ArrayExpress (E-MTAB-1234)
+    - "^E-[A-Z]+-[A-Z]+-\\d+$"    # ArrayExpress extended (E-TABM-XX-1234)
+  fail_on_unrecognized_accession: true  # hard-fail if filename yields no match
+
+# ============================================================
+# Stage 3: Vocabulary Pruning
+# ============================================================
+vocabulary:
+  min_studies: 2
+  # Canonical biotype labels (lowercase) to retain
+  keep_biotypes:
+    - protein_coding
+    - mirna
+
+# ============================================================
+# Stage 4: Ortholog Mapping
+# ============================================================
+orthologs:
+  # Resolve best human and best mouse per rat gene SEPARATELY,
+  # then merge. Never outer-join raw ortholog tables directly.
+  merge_strategy: separate_best_then_merge
+
+  # When a rat gene has orthologs in both species, prefer human
+  # token for GeneCompass compatibility (pretrained on human IDs)
+  prefer_species: human
+
+  identity_thresholds:
+    ortholog_one2one: 50.0
+    ortholog_one2many: 70.0
+    ortholog_many2many: 80.0
+
+  # Low-identity tier for one2one just below threshold
+  enable_low_identity_tier: false
+  low_identity_floor: 40.0
+
+# ============================================================
+# Stage 5: Gene Medians
+# ============================================================
+medians:
+  method: sparse_vectorized
+
+# ============================================================
+# Stage 6: Reference Files
+# ============================================================
+reference_files:
+  # GeneCompass output format uses different biotype labels
+  biotype_output_map:
+    protein_coding: protein_coding
+    mirna: miRNA
+
+# ============================================================
+# SLURM
+# ============================================================
+slurm:
+  account: reese18
+  qos: normal
+  partition: standby             # default for non-GPU stages
+  default_memory: "128G"
+  default_cpus: 1
+  default_time: "24:00:00"
+  gpu_partition: gpu             # GPU stages (fine-tuning, medians)
+  gpu_type: a100

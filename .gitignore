@@ -1,0 +1,37 @@
+# Data (too large — see README for download instructions)
+data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SLURM logs
+slurm-*.out
+*.log
+
+# Model artifacts
+*.pt
+*.pth
+*.bin
+*.ckpt
