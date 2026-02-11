@@ -34,11 +34,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 import hashlib
 
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
 try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
 
 try:
     import anthropic
@@ -750,13 +752,13 @@ class RateLimiter:
 # =============================================================================
 
 def load_data(config: Dict) -> Tuple[List[Dict], Dict[str, Dict], Dict[Tuple[str, str], Path]]:
-    """Load catalog, matrix analysis data, and build source paths."""
-    
-    catalog_dir = Path(config.get('catalog_dir', './catalog'))
-    data_root = Path(config.get('data_root', '.'))
+    h = config.get('harvesting', {})
+    catalog_dir = resolve_path(config, h.get('catalog_dir', 'data/catalog'))
+    data_root = resolve_path(config, h.get('data_root', 'data/raw'))
     
     # Load catalog
     catalog_path = catalog_dir / 'master_catalog.json'
+    
     logger.info(f"Loading catalog from {catalog_path}")
     with open(catalog_path) as f:
         catalog = json.load(f)
@@ -775,7 +777,7 @@ def load_data(config: Dict) -> Tuple[List[Dict], Dict[str, Dict], Dict[Tuple[str
     
     # Build source paths from config
     source_paths = {}
-    sources = config.get('sources', {})
+    sources = h.get('sources', {})
     for source_name, source_config in sources.items():
         for dtype in ['single_cell', 'bulk']:
             dtype_config = source_config.get(dtype, {})
@@ -1161,70 +1163,40 @@ def save_results(results: List[Dict], output_path: Path):
 
 def main():
     parser = argparse.ArgumentParser(description='Enhanced LLM-powered study analyzer')
-    parser.add_argument('--config', '-c', required=True, help='Path to config.yaml')
-    parser.add_argument('--output', '-o', help='Output JSON path')
     parser.add_argument('--max-studies', '-n', type=int, help='Max studies to process')
     
-    # Resume/overwrite handling
     resume_group = parser.add_mutually_exclusive_group()
     resume_group.add_argument('--resume', action='store_true', default=True,
-                              help='Resume from previous run, skip processed studies (DEFAULT)')
+                              help='Resume from previous run (DEFAULT)')
     resume_group.add_argument('--fresh', action='store_true',
                               help='Start fresh (will prompt before overwriting)')
     parser.add_argument('--force', action='store_true',
-                        help='Force overwrite without prompting (use with --fresh)')
+                        help='Force overwrite without prompting')
     
-    parser.add_argument('--filter-usable', action='store_true', 
-                        help='Only analyze usable mRNA studies')
-    parser.add_argument('--filter-organism', help='Filter by organism (e.g., "rattus")')
-    parser.add_argument('--model', default=None,
-                        help='Claude model to use (default: from config or claude-haiku-4-5)')
+    parser.add_argument('--model', default=None, help='Claude model override')
     
-    # Debug options
-    parser.add_argument('--debug', action='store_true', 
-                        help='Enable debug logging (shows JSON parsing details)')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                        help='More verbose output (show response sizes)')
-    parser.add_argument('--save-responses', action='store_true',
-                        help='Save all API responses (not just failures) to debug_responses/')
-    parser.add_argument('--debug-dir', default='debug_responses',
-                        help='Directory for debug files (default: debug_responses)')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('--verbose', '-v', action='store_true')
     
     args = parser.parse_args()
     
-    # Configure logging level
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
     elif args.verbose:
         logging.getLogger().setLevel(logging.INFO)
     
-    if not HAS_YAML:
-        raise ImportError("PyYAML required. Install: pip install pyyaml")
-    
     if not HAS_ANTHROPIC:
         raise ImportError("anthropic package required. Install: pip install anthropic")
+    config = _config or {}
+    h = config.get('harvesting', {})
     
-    # Load config
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
+    output_path = resolve_path(config, h.get('llm_output_file', 'data/catalog/llm_study_analysis.json'))
+    model = args.model or h.get('llm_model', 'claude-haiku-4-5')
+    debug_dir = str(resolve_path(config, h.get('llm_debug_dir', 'data/catalog/debug_responses')))
+    resume = not args.fresh
     
-    catalog_dir = Path(config.get('catalog_dir', './catalog'))
-    output_path = Path(args.output) if args.output else catalog_dir / 'llm_study_analysis_enhanced.json'
-    
-    # Determine resume behavior
-    resume = not args.fresh  # Default is resume=True unless --fresh specified
-    
-    logger.info(f"Config: {args.config}")
-    logger.info(f"Output: {output_path}")
-    logger.info(f"Mode: {'RESUME (append)' if resume else 'FRESH (overwrite)'}")
-    
-    # Load data
     studies, matrix_by_acc, source_paths = load_data(config)
     
-    # Get model - can be specified in config or command line (command line takes precedence)
-    model = args.model or config.get('llm_model', 'claude-haiku-4-5')
-    
-    # Process
     results = process_studies(
         studies=studies,
         matrix_by_acc=matrix_by_acc,
@@ -1233,11 +1205,11 @@ def main():
         max_studies=args.max_studies,
         resume=resume,
         force_overwrite=args.force,
-        filter_usable=args.filter_usable,
-        filter_organism=args.filter_organism,
+        filter_usable=h.get('llm_filter_usable', True),
+        filter_organism=h.get('llm_filter_organism', 'rattus'),
         model=model,
-        debug_dir=args.debug_dir,
-        save_all_responses=args.save_responses
+        debug_dir=debug_dir,
+        save_all_responses=h.get('llm_save_responses', False)
     )
     
     # Print summary

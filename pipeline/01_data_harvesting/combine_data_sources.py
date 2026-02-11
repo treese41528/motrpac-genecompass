@@ -176,11 +176,6 @@ UNIFIED SCHEMA:
     "validation_passed": bool
   }
 }
-
-Usage:
-    python combine_data_sources.py --config config.yaml
-    python combine_data_sources.py --config config.yaml --output unified.json
-    python combine_data_sources.py --config config.yaml --csv-summary
 """
 
 import json
@@ -191,12 +186,10 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from collections import Counter
+import sys
+import os
 
-try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -204,6 +197,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+try:
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
 
 # =============================================================================
 # HELPER FUNCTIONS
@@ -926,65 +926,32 @@ def generate_csv_summary(unified_studies: List[dict], output_path: Path):
 # =============================================================================
 # MAIN
 # =============================================================================
-
 def main():
     parser = argparse.ArgumentParser(
-        description='Combine data sources into unified studies catalog',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Data sources merged:
-  - master_catalog.json: Basic GEO/ArrayExpress metadata
-  - matrix_analysis.json: Gene/cell counts, formats
-  - llm_analysis.json: LLM-validated metadata, topics, utility
-
-Output:
-  - unified_studies.json: Combined view with all fields
-  - unified_studies_summary.csv: Flat summary (with --csv-summary)
-  
-Examples:
-  python combine_data_sources.py --config config.yaml
-  python combine_data_sources.py --config config.yaml --csv-summary
-  python combine_data_sources.py --config config.yaml --llm llm_analysis.json
-  python combine_data_sources.py --config config.yaml --catalog my_catalog.json --matrix my_matrix.json
-        """
-    )
-    
-    parser.add_argument('--config', '-c', required=True, help='Path to config.yaml')
-    parser.add_argument('--output', '-o', help='Output JSON path (default: unified_studies.json)')
+        description='Combine data sources into unified studies catalog')
     parser.add_argument('--csv-summary', action='store_true', help='Also generate CSV summary')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
-    
-    # Input file names (relative to catalog_dir)
     parser.add_argument('--catalog', default='master_catalog.json',
                         help='Catalog JSON filename (default: master_catalog.json)')
     parser.add_argument('--matrix', default='matrix_analysis.json',
                         help='Matrix analysis JSON filename (default: matrix_analysis.json)')
-    parser.add_argument('--llm', default='llm_test.json',
-                        help='LLM analysis JSON filename (default: llm_test.json)')
+    parser.add_argument('--llm', default='llm_study_analysis.json',
+                            help='LLM analysis JSON filename (default: llm_study_analysis.json)')
     
     args = parser.parse_args()
     
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    if not HAS_YAML:
-        print("ERROR: PyYAML required. Install: pip install pyyaml")
-        return 1
-    
-    # Load config
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
-    
-    catalog_dir = Path(config.get('catalog_dir', './catalog'))
-    
-    output_path = Path(args.output) if args.output else catalog_dir / 'unified_studies.json'
+    config = _config or {}
+    h = config.get('harvesting', {})
+    catalog_dir = resolve_path(config, h.get('catalog_dir', 'data/catalog'))
+    output_path = catalog_dir / 'unified_studies.json'
     csv_path = output_path.with_suffix('.csv') if args.csv_summary else None
     
     logger.info(f"Catalog directory: {catalog_dir}")
     logger.info(f"Output: {output_path}")
-    logger.info(f"Input files: {args.catalog}, {args.matrix}, {args.llm}")
     
-    # Load all data sources (using user-specified filenames)
     catalog_by_acc = load_catalog(catalog_dir, args.catalog)
     matrix_by_acc = load_matrix_analysis(catalog_dir, args.matrix)
     llm_by_acc = load_llm_analysis(catalog_dir, args.llm)
@@ -993,13 +960,9 @@ Examples:
         logger.error("No data sources found!")
         return 1
     
-    # Combine
     unified_studies = combine_studies(catalog_by_acc, matrix_by_acc, llm_by_acc)
-    
-    # Compute aggregate stats
     stats = compute_aggregate_stats(unified_studies)
     
-    # Build output
     output = {
         'generated_at': datetime.now().isoformat(),
         'sources': {
@@ -1011,15 +974,13 @@ Examples:
         'studies': unified_studies,
     }
     
-    # Save JSON
     with open(output_path, 'w') as f:
         json.dump(output, f, indent=2)
     logger.info(f"Saved {len(unified_studies)} unified studies to {output_path}")
     
-    # Save CSV summary
     if csv_path:
         generate_csv_summary(unified_studies, csv_path)
-    
+        
     # Print summary
     print("\n" + "=" * 60)
     print("UNIFIED CATALOG SUMMARY")

@@ -98,6 +98,30 @@ try:
 except ImportError:
     raise ImportError("GEOparse is required. Install with: pip install GEOparse")
 
+# --- Config integration ---
+import sys as _sys
+import os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(__file__), '..', '..', 'lib'))
+try:
+    from gene_utils import load_config, resolve_path
+    _config = load_config()
+except (FileNotFoundError, ImportError):
+    _config = None
+
+def _cfg(key_path: str, fallback):
+    """Get nested config value with dotted key path, or return fallback."""
+    if _config is None:
+        return fallback
+    obj = _config
+    for key in key_path.split('.'):
+        if isinstance(obj, dict):
+            obj = obj.get(key)
+        else:
+            return fallback
+        if obj is None:
+            return fallback
+    return obj
+
 
 # -----------------------
 # SRA Data Structures
@@ -2515,12 +2539,16 @@ def main():
     parser.add_argument("--search_term", type=str, default=None)
     parser.add_argument("--download", action="store_true")
     parser.add_argument("--all_files", action="store_true", help="Download all files (ignore filtering).")
-    parser.add_argument("--output_dir", type=str, default="data/geo_harvest")
-    parser.add_argument("--metadata_file", type=str, default="geo_metadata.csv")
+    parser.add_argument("--output_dir", type=str,
+                        default=str(resolve_path(_config, _cfg("harvesting.geo_output_dir", "data/geo_harvest"))) if _config else "data/geo_harvest")
+    parser.add_argument("--metadata_file", type=str,
+                        default=_cfg("harvesting.geo_metadata_file", "geo_metadata.csv"))
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--email", type=str, default="you@example.com")
+    parser.add_argument("--email", type=str,
+                        default=_cfg("harvesting.email", "you@example.com"))
     parser.add_argument("--api_key", type=str, default=None)
-    parser.add_argument("--batch-esummary", type=int, default=0)
+    parser.add_argument("--batch-esummary", type=int,
+                        default=_cfg("harvesting.geo_batch_esummary", 0))
     parser.add_argument("--workers", type=int, default=0)
     parser.add_argument("--verify-checksums", action="store_true")
     parser.add_argument("--resume", action="store_true")
@@ -2632,6 +2660,10 @@ def main():
     ensure_dir(args.output_dir)
     log_file = setup_file_logging(args.output_dir, run_id, args.log_level)
     logging.info(f"Starting harvest run: {run_id}")
+    if _config is not None:
+        logging.info(f"Config: loaded (project_root={_config.get('_project_root', '?')})")
+    else:
+        logging.info("Config: not found (using built-in defaults)")
 
     # Print configuration summary and compile patterns
     patterns = compile_mode_patterns(

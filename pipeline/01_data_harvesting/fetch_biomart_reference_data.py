@@ -23,6 +23,8 @@ Author: Tim Reese / MoTrPAC GeneCompass Project
 Date: February 2026
 """
 
+import sys
+import os
 import requests
 import time
 import argparse
@@ -33,20 +35,53 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Optional
 
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+# Load config (used for defaults; CLI args still override)
+try:
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
+
 # =============================================================================
-# CONFIGURATION
+# CONFIGURATION (defaults from pipeline_config.yaml, fallback to constants)
 # =============================================================================
 
-BIOMART_SERVER = "https://www.ensembl.org/biomart/martservice"
-RGD_GENES_URL = "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
+def _cfg(key_path: str, fallback):
+    """Get a nested config value with dotted key path, or return fallback."""
+    if _config is None:
+        return fallback
+    obj = _config
+    for key in key_path.split('.'):
+        if isinstance(obj, dict):
+            obj = obj.get(key)
+        else:
+            return fallback
+        if obj is None:
+            return fallback
+    return obj
 
-DEFAULT_OUTPUT_DIR = Path("/depot/reese18/data/references/biomart")
+BIOMART_SERVER = _cfg('harvesting.biomart_server',
+                       "https://www.ensembl.org/biomart/martservice")
+RGD_GENES_URL = _cfg('harvesting.rgd_genes_url',
+                      "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt")
+
+def _default_output_dir() -> Path:
+    """Resolve default output directory from config or fallback."""
+    if _config is not None:
+        # Use parent directory of the rat_gene_info path
+        rat_gene_info = _config.get('biomart', {}).get('rat_gene_info', '')
+        if rat_gene_info:
+            return resolve_path(_config, str(Path(rat_gene_info).parent))
+    return Path("data/references/biomart")
 
 # Test genes to verify coverage
-TEST_GENES = [
+TEST_GENES = _cfg('harvesting.test_genes', [
     'actb', 'gapdh', 'ube2m', 'dhfr', 'gnai3', 'pin1', 'ccl5',
     'apoe', 'tp53', 'brca1', 'egfr', 'vegfa', 'il6', 'tnf'
-]
+])
 
 
 def setup_logging(verbose: bool = False) -> logging.Logger:
@@ -478,6 +513,10 @@ def test_coverage(lookups: Dict[str, Dict], logger: logging.Logger):
 # =============================================================================
 
 def main():
+    default_output = _default_output_dir()
+    default_species = _cfg('harvesting.fetch_species', ['rat', 'mouse', 'human'])
+    default_timeout = _cfg('harvesting.biomart_timeout', 600)
+
     parser = argparse.ArgumentParser(
         description="Fetch gene symbol reference data from BioMart and RGD",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -497,11 +536,11 @@ Examples:
         """
     )
     parser.add_argument(
-        "-o", "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR,
-        help="Output directory"
+        "-o", "--output-dir", type=Path, default=default_output,
+        help=f"Output directory (default: {default_output})"
     )
     parser.add_argument(
-        "--species", nargs='+', default=['rat', 'mouse', 'human'],
+        "--species", nargs='+', default=default_species,
         choices=['rat', 'mouse', 'human'],
         help="Species to fetch"
     )
@@ -518,8 +557,8 @@ Examples:
         help="Skip ortholog data fetch"
     )
     parser.add_argument(
-        "--timeout", type=int, default=600,
-        help="BioMart query timeout in seconds"
+        "--timeout", type=int, default=default_timeout,
+        help=f"BioMart query timeout in seconds (default: {default_timeout})"
     )
     parser.add_argument("-v", "--verbose", action="store_true")
     
@@ -534,6 +573,10 @@ Examples:
     logger.info(f"Output: {args.output_dir}")
     logger.info(f"Species: {args.species}")
     logger.info(f"Include RGD: {not args.no_rgd}")
+    if _config is not None:
+        logger.info(f"Config: loaded (project_root={_config.get('_project_root', '?')})")
+    else:
+        logger.info("Config: not found (using built-in defaults)")
     
     # Track all metadata
     all_metadata = {

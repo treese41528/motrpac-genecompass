@@ -9,23 +9,22 @@ Usage:
 
 import json
 import sys
+import os
 import argparse
 from collections import Counter
 from pathlib import Path
 
+
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+# Load config (used for defaults; CLI args still override)
 try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
 
-
-def load_config(config_path: str) -> dict:
-    """Load configuration from YAML file."""
-    if not HAS_YAML:
-        raise ImportError("PyYAML required. Install: pip install pyyaml")
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
 
 
 def load_results(filepath: Path) -> dict:
@@ -282,7 +281,6 @@ def spot_check_study(d: dict, accession: str):
 
 def main():
     parser = argparse.ArgumentParser(description='Check matrix analysis results')
-    parser.add_argument('--config', '-c', required=True, help='Path to config.yaml')
     parser.add_argument('--input', '-i', help='Override input path (default: from config)')
     parser.add_argument('--spot-check', '-s', help='Spot check a specific study accession')
     parser.add_argument('--summary-only', action='store_true', help='Show only summary')
@@ -290,8 +288,9 @@ def main():
     args = parser.parse_args()
     
     # Load config
-    config = load_config(args.config)
-    catalog_dir = Path(config.get('catalog_dir', './catalog'))
+    config = _config or {}
+    h = config.get('harvesting', {})
+    catalog_dir = resolve_path(config, h.get('catalog_dir', 'data/catalog'))
     
     # Determine input path
     if args.input:

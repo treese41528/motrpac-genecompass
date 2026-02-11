@@ -1,6 +1,9 @@
 # Data (too large — see README for download instructions)
 data/
 
+# Logs
+logs/
+
 # Python
 __pycache__/
 *.pyc

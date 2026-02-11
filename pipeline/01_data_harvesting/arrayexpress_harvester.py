@@ -134,6 +134,30 @@ except ImportError:
     def tqdm(iterable, **kwargs):
         return iterable
 
+# --- Config integration ---
+import sys as _sys
+_sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+try:
+    from gene_utils import load_config, resolve_path
+    _config = load_config()
+except (FileNotFoundError, ImportError):
+    _config = None
+
+def _cfg(key_path: str, fallback):
+    """Get nested config value with dotted key path, or return fallback."""
+    if _config is None:
+        return fallback
+    obj = _config
+    for key in key_path.split('.'):
+        if isinstance(obj, dict):
+            obj = obj.get(key)
+        else:
+            return fallback
+        if obj is None:
+            return fallback
+    return obj
+
+
 
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
@@ -1700,7 +1724,7 @@ def download_sample_supplementary_file(
     
     Returns tuple of (local_path or None, FileFilterResult).
     """
-    from arrayexpress_harvester import filter_file, FileFilterResult, read_md5_file, md5sum, write_md5_file
+    # (self-imports removed during refactoring — functions defined above)
     
     # Filter decision
     result = filter_file(
@@ -1793,7 +1817,7 @@ def download_all_sample_files(
         - List of skipped filenames
         - List of all FileFilterResults
     """
-    from arrayexpress_harvester import filter_file, FileFilterResult, ensure_dir
+    # (self-imports removed during refactoring — functions defined above)
     
     downloaded: List[str] = []
     skipped: List[str] = []
@@ -2699,12 +2723,7 @@ def process_study(
     - Passes study_files_downloaded to prevent re-downloading
     - Tracks both BioStudies and legacy FTP sources
     """
-    from arrayexpress_harvester import (
-        StudyProcessingResult, DownloadEvent, ensure_dir, get_timestamp,
-        fetch_mage_tab, extract_archives, build_manifest, 
-        write_sample_file_table, extract_ena_study_accession,
-        fetch_ena_runs, write_ena_run_table, download_ena_fastq,
-    )
+    # (self-imports removed during refactoring — functions defined above)
     
     start_time = get_timestamp()
     t0 = time.time()
@@ -2991,9 +3010,11 @@ Examples:
                         help="Show what would be downloaded without downloading")
     
     # Output options
-    parser.add_argument("--output-dir", type=str, default="data/arrayexpress_harvest",
+    parser.add_argument("--output-dir", type=str,
+                        default=str(resolve_path(_config, _cfg("harvesting.arrayexpress_output_dir", "data/arrayexpress_harvest"))) if _config else "data/arrayexpress_harvest",
                         help="Output directory (default: data/arrayexpress_harvest)")
-    parser.add_argument("--metadata-file", type=str, default="arrayexpress_metadata.csv",
+    parser.add_argument("--metadata-file", type=str,
+                        default=_cfg("harvesting.arrayexpress_metadata_file", "arrayexpress_metadata.csv"),
                         help="Metadata CSV file (default: arrayexpress_metadata.csv)")
     parser.add_argument("--limit", type=int, default=0,
                         help="Limit number of studies (0 = no limit)")
@@ -3161,6 +3182,10 @@ Examples:
     ensure_dir(args.output_dir)
     setup_file_logging(args.output_dir, run_id, args.log_level)
     logging.info(f"Starting ArrayExpress harvest run: {run_id}")
+    if _config is not None:
+        logging.info(f"Config: loaded (project_root={_config.get('_project_root', '?')})")
+    else:
+        logging.info("Config: not found (using built-in defaults)")
     
     # Log critical diagnostic-informed changes
     logging.info("="*60)

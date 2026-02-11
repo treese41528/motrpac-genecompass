@@ -21,13 +21,18 @@ from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
 from typing import Dict, List, Any, Tuple, Optional
+import sys
 
-# Optional YAML support
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+# Load config (used for defaults; CLI args still override)
 try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
+
 
 # =============================================================================
 # ORGANISM DATABASE - Comprehensive aliases to canonical names
@@ -628,12 +633,7 @@ def cleanup_organisms_and_tissues(organisms: List[str], tissues: List[str]) -> T
     return sorted(clean_organisms), sorted(clean_tissues)
 
 
-def load_config(config_path: str) -> dict:
-    """Load catalog_dir from config.yaml."""
-    if not HAS_YAML:
-        raise ImportError("PyYAML required for config files. Install with: pip install pyyaml")
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
+
 
 def load_catalog(catalog_path: str) -> Dict[str, Any]:
     """Load the master catalog JSON."""
@@ -1020,24 +1020,15 @@ def print_report(stats: Dict[str, Any]):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate statistics from harvested data catalog')
-    parser.add_argument('--config', help='Path to config.yaml (reads catalog_dir from it)')
-    parser.add_argument('--catalog', help='Path to master_catalog.json')
-    parser.add_argument('--output', help='Output path for statistics JSON')
     parser.add_argument('--report', action='store_true', help='Print human-readable report')
     
     args = parser.parse_args()
     
-    # Determine catalog path
-    if args.config and os.path.exists(args.config):
-        config = load_config(args.config)
-        catalog_dir = Path(config.get('catalog_dir', './catalog'))
-        catalog_path = args.catalog or catalog_dir / 'master_catalog.json'
-        output_path = args.output or catalog_dir / 'statistics.json'
-    elif args.catalog:
-        catalog_path = Path(args.catalog)
-        output_path = Path(args.output) if args.output else catalog_path.parent / 'statistics.json'
-    else:
-        parser.error("Either --config or --catalog is required")
+    config = _config or {}
+    h = config.get('harvesting', {})
+    catalog_dir = resolve_path(config, h.get('catalog_dir', 'data/catalog'))
+    catalog_path = catalog_dir / 'master_catalog.json'
+    output_path = catalog_dir / 'statistics.json'
     
     # Load catalog
     print(f"Loading catalog from {catalog_path}...")

@@ -95,6 +95,96 @@ paths:
   results_dir: data/results
 
 # ============================================================
+# Stage 1: Data Harvesting & QC
+# ============================================================
+# Add this block to config/pipeline_config.yaml
+# (after the existing 'paths:' section, before 'gene_inventory:')
+#
+# These constants were extracted from hardcoded values in
+# pipeline/01_data_harvesting/ scripts during refactoring.
+# ============================================================
+
+harvesting:
+  # --- Contact / API ---
+  email: "reese18@purdue.edu"
+  # NCBI API key: set via NCBI_API_KEY env var (not stored in config)
+
+  # --- BioMart / RGD fetch settings ---
+  biomart_server: "https://www.ensembl.org/biomart/martservice"
+  rgd_genes_url: "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
+  biomart_timeout: 600
+  fetch_species:
+    - rat
+    - mouse
+    - human
+  test_genes:
+    - actb
+    - gapdh
+    - ube2m
+    - dhfr
+    - gnai3
+    - pin1
+    - ccl5
+    - apoe
+    - tp53
+    - brca1
+    - egfr
+    - vegfa
+    - il6
+    - tnf
+
+  # --- GEO settings ---
+  geo_output_dir: data/raw/geo
+  geo_metadata_file: geo_metadata.csv
+  geo_query: "rattus norvegicus[organism] AND single cell RNA-seq"
+  geo_batch_esummary: 400
+
+  # --- ArrayExpress settings ---
+  arrayexpress_output_dir: data/raw/arrayexpress
+  arrayexpress_metadata_file: arrayexpress_metadata.csv
+
+  # --- Preprocessing ---
+  matrix_staging_dir: data/matrix_staging
+  min_cells_per_study: 4
+  min_genes_per_cell: 200
+  max_mito_fraction: 0.15
+
+  # --- LLM QC (optional) ---
+  llm_model: "claude-haiku-4-5"
+  llm_cost_limit_usd: 5.0
+  llm_output_file: data/catalog/llm_study_analysis.json
+  llm_debug_dir: data/catalog/debug_responses
+  llm_save_responses: false
+  llm_rate_limit: 40            # calls per minute
+  llm_max_tokens: 8192
+  llm_filter_organism: "rattus"
+  llm_filter_usable: true
+  data_root: data/raw
+  # --- Catalog ---
+  catalog_file: data/gene_inventory/study_catalog.tsv
+
+  catalog_dir: data/catalog
+
+  sources:
+    geo:
+      single_cell:
+        enabled: true
+        path: geo/single_cell/geo_datasets
+      bulk:
+        enabled: true
+        path: geo/bulk/geo_datasets
+    arrayexpress:
+      single_cell:
+        enabled: true
+        path: arrayexpress/singlecell/datasets
+      bulk:
+        enabled: true
+        path: arrayexpress/bulk/datasets
+
+  extraction:
+    max_files_per_study: 500
+
+# ============================================================
 # Stage 2: Gene Inventory
 # ============================================================
 gene_inventory:

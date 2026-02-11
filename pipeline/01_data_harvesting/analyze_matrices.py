@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-analyze_matrices_fast.py - FAST parallel matrix analysis
+analyze_matrices.py - FAST parallel matrix analysis
 
 Key optimizations:
 1. Multiprocessing for parallel study analysis
@@ -9,8 +9,8 @@ Key optimizations:
 4. Streaming file counting (no full loads)
 
 Usage:
-    python analyze_matrices_fast.py --config config.yaml --organism rattus --workers 8
-    python analyze_matrices_fast.py --config config.yaml --max-studies 100 --workers 4
+    python analyze_matrices.py --config config.yaml --organism rattus --workers 8
+    python analyze_matrices.py --config config.yaml --max-studies 100 --workers 4
 """
 
 import os
@@ -35,12 +35,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Optional imports
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+# Load config (used for defaults; CLI args still override)
 try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
+
+
+
 
 try:
     import h5py
@@ -1536,22 +1542,13 @@ def analyze_study(args: Tuple[str, Path, bool]) -> Dict[str, Any]:
 # MAIN ANALYSIS
 # =============================================================================
 
-def load_config(config_path: str) -> dict:
-    """Load configuration from YAML file."""
-    if not HAS_YAML:
-        raise ImportError("PyYAML required. Install: pip install pyyaml")
-    with open(config_path, 'r') as f:
-        return yaml.safe_load(f)
-
 def main():
     """Main function with deduplication and filtering."""
     parser = argparse.ArgumentParser(description='Fast parallel matrix analysis')
-    parser.add_argument('--config', '-c', required=True, help='Path to config.yaml')
     parser.add_argument('--organism', '-o', help='Filter by organism')
     parser.add_argument('--data-type', '-t', help='Filter by data type')
     parser.add_argument('--max-studies', '-n', type=int, help='Max studies')
     parser.add_argument('--workers', '-w', type=int, default=8, help='Workers')
-    parser.add_argument('--output', help='Output JSON path')
     parser.add_argument('--resume', action='store_true', help='Resume')
     parser.add_argument('--extract-tar', action='store_true', help='Extract tars')
     parser.add_argument('--deduplicate', action='store_true', default=True,
@@ -1561,14 +1558,14 @@ def main():
     
     args = parser.parse_args()
     
-    config = load_config(args.config)
-    catalog_dir = Path(config.get('catalog_dir', './catalog'))
+    config = load_config()
+    h = config.get('harvesting', {})
+    catalog_dir = resolve_path(config, h.get('catalog_dir', 'data/catalog'))
     catalog_path = catalog_dir / 'master_catalog.json'
-    output_path = Path(args.output) if args.output else catalog_dir / 'matrix_analysis.json'
-    
+    output_path = catalog_dir / 'matrix_analysis.json'
     # Build source paths
-    data_root = Path(config.get('data_root', '.'))
-    sources = config.get('sources', {})
+    data_root = resolve_path(config, h.get('data_root', 'data/raw'))
+    sources = h.get('sources', {})
     source_paths = {}
     for source_name, source_config in sources.items():
         for dtype in ['single_cell', 'bulk']:

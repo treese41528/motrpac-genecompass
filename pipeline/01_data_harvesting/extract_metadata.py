@@ -34,19 +34,23 @@ from collections import defaultdict
 from typing import Dict, List, Any, Optional, Tuple
 import argparse
 
-# Try to import yaml, but make it optional
-try:
-    import yaml
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
+
+# --- Config integration ---
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
+from gene_utils import load_config, resolve_path
+
+# Load config (used for defaults; CLI args still override)
+try:
+    _config = load_config()
+except FileNotFoundError:
+    _config = None
+
 
 # ============================================================================
 # FILE FORMAT DEFINITIONS
@@ -376,22 +380,19 @@ class Config:
         self.max_files_per_study = 500
     
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> 'Config':
-        """Load from YAML config file."""
-        if not HAS_YAML:
-            raise ImportError("PyYAML required for config files. Install with: pip install pyyaml")
-        
+    def from_yaml(cls) -> 'Config':
+        """Load from pipeline config."""
         config = cls()
-        with open(yaml_path, 'r') as f:
-            data = yaml.safe_load(f)
+        data = _config or {}
+        h = data.get('harvesting', {})
         
-        config.data_root = data.get('data_root') or os.environ.get('MOTRPAC_DATA_ROOT')
-        config.catalog_dir = data.get('catalog_dir', './catalog')
+        config.data_root = str(resolve_path(data, h.get('data_root', 'data/raw')))
+        config.catalog_dir = str(resolve_path(data, h.get('catalog_dir', 'data/catalog')))
         
-        root = Path(config.data_root) if config.data_root else Path('.')
+        root = Path(config.data_root)
         
         # Parse standard sources
-        for source_name, source_cfg in data.get('sources', {}).items():
+        for source_name, source_cfg in h.get('sources', {}).items():
             if not source_cfg.get('enabled', True):
                 continue
             for dtype in ['single_cell', 'bulk']:
@@ -403,35 +404,11 @@ class Config:
                         config.sources.append((f"{source_name}_{dtype}", str(full), dtype, source_name))
         
         # Custom sources
-        for custom in data.get('custom_sources', []):
+        for custom in h.get('custom_sources', []):
             if Path(custom['path']).exists():
                 config.sources.append((custom['name'], custom['path'], custom['type'], custom.get('source', custom['name'])))
         
-        config.max_files_per_study = data.get('extraction', {}).get('max_files_per_study', 500)
-        return config
-    
-    @classmethod  
-    def from_args(cls, args) -> 'Config':
-        """Create from command line arguments."""
-        config = cls()
-        config.data_root = args.data_root
-        config.catalog_dir = args.output_dir or './catalog'
-        
-        if args.auto_detect and config.data_root:
-            config.sources = auto_detect_sources(config.data_root)
-        elif hasattr(args, 'add_source') and args.add_source:
-            for spec in args.add_source:
-                parts = spec.split(':')
-                if len(parts) >= 3:
-                    label, path, dtype = parts[0], parts[1], parts[2]
-                    source = parts[3] if len(parts) > 3 else label.split('_')[0]
-                    if Path(path).exists():
-                        config.sources.append((label, path, dtype, source))
-                    else:
-                        logger.warning(f"Path not found: {path}")
-        elif config.data_root:
-            config.sources = get_default_sources(config.data_root)
-        
+        config.max_files_per_study = h.get('extraction', {}).get('max_files_per_study', 500)
         return config
 
 
@@ -889,31 +866,31 @@ def run_extraction(config: Config):
 
 def main():
     parser = argparse.ArgumentParser(description='Extract metadata from harvested datasets')
-    parser.add_argument('--config', '-c', help='Path to config.yaml')
-    parser.add_argument('--data-root', '-d', help='Root data directory')
-    parser.add_argument('--output-dir', '-o', default=None, help='Output directory (overrides config)')
     parser.add_argument('--auto-detect', action='store_true', help='Auto-detect sources')
     parser.add_argument('--add-source', action='append', 
                         help='Add source: label:path:type[:source] (repeatable)')
     
     args = parser.parse_args()
     
-    if args.config and os.path.exists(args.config):
-        config = Config.from_yaml(args.config)
-    else:
-        config = Config.from_args(args)
+    config = Config.from_yaml()
     
-    # Only override config if explicitly provided on command line
-    if args.output_dir is not None:
-        config.catalog_dir = args.output_dir
-    
-    # Fall back to default if still not set
-    if not config.catalog_dir:
-        config.catalog_dir = './catalog'
+    if args.auto_detect and config.data_root:
+        config.sources = auto_detect_sources(config.data_root)
+    elif args.add_source:
+        config.sources = []
+        for spec in args.add_source:
+            parts = spec.split(':')
+            if len(parts) >= 3:
+                label, path, dtype = parts[0], parts[1], parts[2]
+                source = parts[3] if len(parts) > 3 else label.split('_')[0]
+                if Path(path).exists():
+                    config.sources.append((label, path, dtype, source))
+                else:
+                    logger.warning(f"Path not found: {path}")
     
     if not config.sources:
         print("ERROR: No data sources found.")
-        print("Use --data-root with --auto-detect, or --add-source, or --config")
+        print("Check harvesting.sources in pipeline_config.yaml")
         sys.exit(1)
     
     run_extraction(config)
