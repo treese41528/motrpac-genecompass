@@ -199,7 +199,7 @@ h5py
 
 If you use this work, please cite:
 
-> Reese TG et al. (2026). Development of Advanced Analytical Tools Integrating External Datasets with MoTrPAC Data. NIH RFA-RM-24-011.
+> Reese TG et al. (2026). Development of Advanced Analytical Tools Integrating External Datasets with MoTrPAC Data: Utilizing Statistical, Machine Learning, and AI Approaches to Uncover Molecular Mechanisms of Physical Activity. NIH RFA-RM-24-011.
 
 And the GeneCompass paper:
 
@@ -209,6 +209,6 @@ And the GeneCompass paper:
 
 ## License
 
-[TBD — MIT or Apache 2.0]
+This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE) for details.
 
 GeneCompass submodule retains its original license. See `vendor/GeneCompass/LICENSE`.
