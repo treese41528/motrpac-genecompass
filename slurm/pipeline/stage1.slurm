@@ -5,8 +5,13 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=48G
+#SBATCH --mem=128G
 #SBATCH --time=24:00:00
+#SBATCH --partition=a100-40gb
+#SBATCH --account=reese18
+#SBATCH --gpus-per-task=1
+#SBATCH --gres=gpu:1
+#SBATCH --qos=normal
 #SBATCH --output=logs/stage1_%j.out
 #SBATCH --error=logs/stage1_%j.err
 
@@ -29,11 +34,10 @@
 # ============================================================================
 
 # Project root — derive from script location (slurm/ is one level below root)
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$PROJECT_ROOT"
-
-# Activate environment
-source "${PIPELINE_ENV:?Set PIPELINE_ENV to your Python venv activate script}"
+# Bootstrap — find profile relative to script, then everything uses exported vars
+source /depot/reese18/apps/motrpac-genecompass/config/slurm_profiles/env.sh
+cd "$PIPELINE_ROOT"
+source "$PIPELINE_ENV"
 
 # Create log directory if needed
 mkdir -p logs
@@ -45,7 +49,7 @@ echo "Job ID:  $SLURM_JOB_ID"
 echo "Node:    $SLURM_NODELIST"
 echo "CPUs:    $SLURM_CPUS_PER_TASK"
 echo "Memory:  $SLURM_MEM_PER_NODE"
-echo "Root:    $PROJECT_ROOT"
+echo "Root:    $PIPELINE_ROOT"
 echo "Python:  $(which python)"
 echo "Args:    $@"
 echo "=================================================="

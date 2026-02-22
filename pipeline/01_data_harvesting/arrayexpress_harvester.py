@@ -49,45 +49,46 @@ FEATURES:
 USAGE EXAMPLES:
 ---------------
 # Basic harvest of rat single-cell data
-python arrayexpress_harvester.py \\
-    --mode single-cell \\
-    --organism "Rattus norvegicus" \\
-    --download \\
+python arrayexpress_harvester.py \
+    --mode single-cell \
+    --organism "Rattus norvegicus" \
+    --download \
     --limit 10
 
 # Discovery mode - see all available files
-python arrayexpress_harvester.py \\
-    --mode bulk \\
-    --organism "Rattus norvegicus" \\
-    --download \\
-    --discovery \\
+python arrayexpress_harvester.py \
+    --mode bulk \
+    --organism "Rattus norvegicus" \
+    --download \
+    --discovery \
     --limit 5
 
 # Full harvest with parallel downloads and sample-level files
-python arrayexpress_harvester.py \\
-    --mode both \\
-    --organism "Rattus norvegicus" \\
-    --download \\
-    --workers 8 \\
-    --include-sample-files \\
-    --verify-checksums \\
+python arrayexpress_harvester.py \
+    --mode both \
+    --organism "Rattus norvegicus" \
+    --download \
+    --workers 8 \
+    --include-sample-files \
+    --verify-checksums \
+    --output-dir path_to_out \
     --resume
 
 # Include microarray and ENA data
-python arrayexpress_harvester.py \\
-    --mode bulk \\
-    --include-microarray \\
-    --include-ena \\
-    --ena-download \\
-    --download \\
+python arrayexpress_harvester.py \
+    --mode bulk \
+    --include-microarray \
+    --include-ena \
+    --ena-download \
+    --download \
     --limit 10
 
 # Dry run to preview what would be downloaded
-python arrayexpress_harvester.py \\
-    --mode single-cell \\
-    --organism "Rattus norvegicus" \\
-    --download \\
-    --dry-run \\
+python arrayexpress_harvester.py \
+    --mode single-cell \
+    --organism "Rattus norvegicus" \
+    --download \
+    --dry-run \
     --limit 5
 
 # Show pattern configuration

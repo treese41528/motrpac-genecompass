@@ -17,7 +17,7 @@ USAGE (examples)
 ---------------
 # Maximum performance for rat single-cell data
 export NCBI_API_KEY=your_key
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode single-cell \
     --organism "Rattus norvegicus" \
     --download \
@@ -28,7 +28,7 @@ python geo_harvester_expanded.py \
     --email your@email.com
 
 # Discovery mode - see all files without filtering
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode bulk \
     --organism "Rattus norvegicus" \
     --download \
@@ -36,14 +36,14 @@ python geo_harvester_expanded.py \
     --limit 5
 
 # Include microarray data
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode bulk \
     --include-microarray \
     --download \
     --limit 10
 
 # Include SRA data (fetch run info, optionally download FASTQs)
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode single-cell \
     --include-sra \
     --sra-download \
@@ -51,21 +51,22 @@ python geo_harvester_expanded.py \
     --limit 5
 
 # Include GSM-level supplementary files
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode bulk \
     --include-gsm-suppl \
     --download \
     --limit 10
 
 # Full harvest with all options
-python geo_harvester_expanded.py \
+python geo_harvester.py \
     --mode both \
     --include-microarray \
     --include-generic \
     --include-sra \
     --include-gsm-suppl \
     --download \
-    --workers 8
+    --workers 8 \
+    --email your_email
 """
 
 import os

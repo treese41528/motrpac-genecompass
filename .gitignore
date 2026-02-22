@@ -29,6 +29,10 @@ venv/
 .DS_Store
 Thumbs.db
 
+# slurm
+slurm/
+config/slurm_profiles/
+
 # SLURM logs
 slurm-*.out
 *.log
