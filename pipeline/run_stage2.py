@@ -1,48 +1,57 @@
 #!/usr/bin/env python3
 """
-run_stage2.py — Stage 2 Orchestrator: Gene Universe (3-step pipeline)
+run_stage2.py — Stage 2 Orchestrator: Gene Universe & Cell QC (3-step pipeline)
 
 Runs three steps in sequence:
   Step 1: build_gene_universe.py         (scan raw → resolve → gene_universe.tsv)
-  Step 2: preprocess_training_matrices.py (cell QC → h5ad + expression_stats.tsv)
+  Step 2: preprocess_training_matrices.py (cell QC → raw-count h5ad + expression_stats.tsv)
   Step 3: prune_gene_universe.py          (expression pruning → pruned_gene_universe.tsv)
 
 Architecture:
-    ┌─────────────────────────────────────────────┐
-    │ Step 1: Gene Universe Construction          │
-    │ Scan raw matrices (var_names only)          │
-    │ Resolve gene IDs: BioMart → RGD             │
-    │ Prune: min_studies + biotype                │
-    │ OUT: gene_universe.tsv, gene_resolution.tsv │
-    └──────────────┬──────────────────────────────┘
+    ┌─────────────────────────────────────────────────┐
+    │ Step 1: Gene Universe Construction              │
+    │ Scan raw matrices (var_names only)              │
+    │ Resolve gene IDs: BioMart → RGD                 │
+    │ Prune: min_studies + biotype                    │
+    │ OUT: gene_universe.tsv, gene_resolution.tsv     │
+    └──────────────┬──────────────────────────────────┘
                    │
-    ┌──────────────▼──────────────────────────────┐
-    │ Step 2: Cell QC & Preprocessing             │
-    │ Load full matrices, map to gene_universe    │
-    │ GeneCompass-exact QC:                       │
-    │   normal_filter → gene_number_filter →      │
-    │   min_genes → normalize → top-2048 ranking  │
-    │ OUT: QC'd h5ad files, expression_stats.tsv  │
-    └──────────────┬──────────────────────────────┘
+    ┌──────────────▼──────────────────────────────────┐
+    │ Step 2: Cell QC (NO normalization, NO ranking)  │
+    │ Load full matrices, map to gene_universe        │
+    │ GeneCompass-exact QC:                           │
+    │   normal_filter → gene_number_filter →          │
+    │   min_genes → save RAW COUNTS                   │
+    │ Collect: n_cells_nonzero, total_raw_counts      │
+    │ OUT: QC'd h5ad (raw), expression_stats.tsv      │
+    └──────────────┬──────────────────────────────────┘
                    │
-    ┌──────────────▼──────────────────────────────┐
-    │ Step 3: Expression Pruning                  │
-    │ Remove genes never in any cell's top-2048   │
-    │ OUT: pruned_gene_universe.tsv               │
-    │      stage2_manifest.json                   │
-    └─────────────────────────────────────────────┘
+    ┌──────────────▼──────────────────────────────────┐
+    │ Step 3: Expression Pruning                      │
+    │ Remove genes below min expression thresholds    │
+    │ Criterion: n_cells_nonzero >= N (raw counts)    │
+    │ OUT: pruned_gene_universe.tsv                   │
+    │      stage2_manifest.json                       │
+    └─────────────────────────────────────────────────┘
+
+    Downstream stages read QC'd h5ad and apply normalization there:
+      Stage 3: Ortholog Mapping
+      Stage 4: Gene Medians (normalize → compute medians)
+      Stage 5: Reference Assembly (median-divide → log2 → rank → top-2048)
 
 Key properties:
     - No chicken-and-egg: Step 1 builds gene list from raw var_names.
       Step 2 consumes it. No fallback chains, no pickle dependencies.
     - Single resolution point: Gene ID resolution in Step 1 only.
-    - Deterministic: same inputs → same outputs.
-    - GeneCompass-exact: Step 2 follows source code order precisely.
+    - Normalization-agnostic: QC'd h5ad store raw counts.
+      Normalization decisions deferred to Stage 4-5.
+    - GeneCompass-exact: Step 2 follows source code QC order precisely.
+    - Multiple passes OK: Stages 4-5 re-read QC'd h5ad as needed.
 
 Usage:
   python run_stage2.py              # Run all 3 steps
   python run_stage2.py --from 2     # Skip gene universe (already built)
-  python run_stage2.py --from 3     # Skip to pruning (preprocessing done)
+  python run_stage2.py --from 3     # Skip to pruning (QC done)
   python run_stage2.py --dry-run    # Validate only
   python run_stage2.py -v           # Verbose logging
 
@@ -77,9 +86,9 @@ STEPS = [
     },
     {
         'num': 2,
-        'name': 'Preprocess Training Matrices',
+        'name': 'Cell QC (raw counts)',
         'script': 'preprocess_training_matrices.py',
-        'description': 'Load full matrices → GeneCompass-exact cell QC → normalize → top-2048 → expression_stats.tsv',
+        'description': 'Load full matrices → GeneCompass-exact cell QC → save RAW COUNTS → expression_stats.tsv',
         'key_output': 'expression_stats.tsv',
         'output_location': 'gene_universe_dir',
     },
@@ -87,7 +96,7 @@ STEPS = [
         'num': 3,
         'name': 'Prune Gene Universe',
         'script': 'prune_gene_universe.py',
-        'description': 'Remove genes never in any cell top-2048 → pruned_gene_universe.tsv',
+        'description': 'Remove genes below expression thresholds (raw count stats) → pruned_gene_universe.tsv',
         'key_output': 'pruned_gene_universe.tsv',
         'output_location': 'gene_universe_dir',
     },
@@ -154,14 +163,12 @@ def validate_inputs(config: dict, from_step: int) -> bool:
     errors = []
 
     if from_step >= 2:
-        # Step 2 needs gene_universe.tsv and gene_resolution.tsv from Step 1
         for fname in ['gene_universe.tsv', 'gene_resolution.tsv']:
             fpath = gu_dir / fname
             if not fpath.exists():
                 errors.append(f"{fname} not found: {fpath} (run Step 1 first)")
 
     if from_step >= 3:
-        # Step 3 needs expression_stats.tsv from Step 2
         stats_path = gu_dir / 'expression_stats.tsv'
         if not stats_path.exists():
             errors.append(f"expression_stats.tsv not found: {stats_path} (run Step 2 first)")
@@ -204,7 +211,6 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
                       f"after {elapsed:.1f}s")
         return False
 
-    # Report key output
     if not dry_run:
         gu_dir = resolve_path(config, config['paths'].get(step['output_location'], ''))
         key_out = gu_dir / step['key_output']
@@ -222,13 +228,17 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Stage 2 Orchestrator: Gene Universe (3-step pipeline)",
+        description="Stage 2 Orchestrator: Gene Universe & Cell QC (3-step pipeline)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Steps:
   1  build_gene_universe.py           Scan → resolve → gene_universe.tsv
-  2  preprocess_training_matrices.py  Cell QC → h5ad + expression_stats.tsv
+  2  preprocess_training_matrices.py  Cell QC → raw-count h5ad + expression_stats.tsv
   3  prune_gene_universe.py           Expression prune → pruned_gene_universe.tsv
+
+Architecture note:
+  QC'd h5ad files contain RAW COUNTS (no normalization).
+  Normalization and ranking are deferred to Stages 4-5.
 
 Examples:
   python run_stage2.py              # Run all 3 steps
@@ -250,15 +260,17 @@ Examples:
         logging.getLogger().setLevel(logging.DEBUG)
 
     logger.info("=" * 70)
-    logger.info("STAGE 2: GENE UNIVERSE (3-step pipeline)")
+    logger.info("STAGE 2: GENE UNIVERSE & CELL QC (3-step pipeline)")
     logger.info("=" * 70)
     logger.info("")
     logger.info("  Step 1: build_gene_universe.py         → gene_universe.tsv")
-    logger.info("  Step 2: preprocess_training_matrices.py → expression_stats.tsv")
+    logger.info("  Step 2: preprocess_training_matrices.py → QC'd h5ad (RAW) + expression_stats.tsv")
     logger.info("  Step 3: prune_gene_universe.py          → pruned_gene_universe.tsv")
     logger.info("")
+    logger.info("  NOTE: No normalization or ranking in this stage.")
+    logger.info("        Those are deferred to Stages 4-5.")
+    logger.info("")
 
-    # Load config
     try:
         config = load_config()
     except FileNotFoundError:
@@ -266,7 +278,6 @@ Examples:
                       "Set PIPELINE_ROOT or run from project root.")
         sys.exit(1)
 
-    # Validate
     if not validate_config(config):
         logger.error("Config validation failed")
         sys.exit(1)
@@ -277,7 +288,6 @@ Examples:
         sys.exit(1)
     logger.info("Input validation passed")
 
-    # Run steps
     t_total = time.time()
     steps_to_run = [s for s in STEPS if s['num'] >= args.from_step]
 
@@ -296,7 +306,6 @@ Examples:
     logger.info(f"STAGE 2 COMPLETE — {len(steps_to_run)} steps in {elapsed_total:.1f}s")
     logger.info("=" * 70)
 
-    # Report final output
     if not args.dry_run:
         gu_dir = resolve_path(config, config['paths']['gene_universe_dir'])
         pruned = gu_dir / 'pruned_gene_universe.tsv'
@@ -304,7 +313,11 @@ Examples:
             with open(pruned) as f:
                 n_genes = sum(1 for _ in f) - 1
             logger.info(f"Final output: {pruned} ({n_genes:,} genes)")
-            logger.info("Downstream stages read: pruned_gene_universe.tsv")
+            logger.info("")
+            logger.info("Next steps:")
+            logger.info("  Stage 3 → Ortholog Mapping (reads pruned_gene_universe.tsv)")
+            logger.info("  Stage 4 → Gene Medians (reads QC'd h5ad, normalizes, computes medians)")
+            logger.info("  Stage 5 → Tokenization (median-divide → log2 → rank → top-2048)")
         elif args.from_step <= 3:
             logger.warning(f"Expected output not found: {pruned}")
 

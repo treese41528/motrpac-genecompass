@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
 """
-preprocess_training_matrices.py — Stage 2, Step 2: Cell QC + Normalize + Rank → QC'd h5ad
+preprocess_training_matrices.py — Stage 2, Step 2: Cell QC → Raw-count h5ad + gene stats
 
 Pipeline position:
     Stage 1: Data Harvesting & QC
-    Stage 2: Gene Universe
+    Stage 2: Gene Universe & Cell QC
       Step 1: build_gene_universe.py (scan → resolve → gene_universe.tsv)
       Step 2: preprocess_training_matrices.py                    ← THIS SCRIPT
       Step 3: prune_gene_universe.py (expression-based pruning)
     Stage 3: Ortholog Mapping
-    Stage 4: Gene Medians (SLURM)
-    Stage 5: Reference Assembly & Corpus Export
+    Stage 4: Gene Medians (normalize → compute medians)
+    Stage 5: Reference Assembly & Tokenization (median-divide → log2 → rank → top-2048)
 
 Purpose:
     Load full expression matrices, map gene IDs to the gene_universe from
     Step 1 (no duplicate resolution logic — uses pre-built lookup), apply
-    GeneCompass-exact cell QC, normalize, rank top-2048 genes per cell,
-    and collect expression statistics for Step 3 pruning.
+    GeneCompass-exact cell QC, and save QC'd h5ad with RAW COUNTS.
+
+    NO normalization, NO log-transform, NO ranking in this script.
+    Those belong to Stages 4-5, where the normalization scheme is
+    informed by validation against the GeneCompass human median pickle.
+
+    Collects normalization-agnostic statistics for Step 3 pruning:
+      per-gene:  n_cells_nonzero, total_raw_counts, mean_raw_nonzero
+      per-cell:  library_size, n_genes_detected, mito_pct (stored in obs)
 
 Key design:
     - GeneUniverseMapper: reads Step 1's gene_universe.tsv + gene_resolution.tsv
@@ -27,12 +34,13 @@ Key design:
       3. gene_number_filter (≥7 protein_coding + miRNA genes)
       4. min_genes_filter (≥200 genes)
       5. min_cells_per_sample check
-    - Normalization: CPM(10K) → log1p(base=2)
-    - Per-cell top-2048 ranking + expression statistics collection
+    - Output h5ad contains RAW INTEGER COUNTS in .X
+    - Downstream stages apply normalization as needed
 
 Outputs:
-    QC'd h5ad files         — One per study, ENSRNOG var_names
-    expression_stats.tsv    — Per gene: ensembl_id, n_cells_top2048, total_expression
+    QC'd h5ad files         — One per sample, ENSRNOG var_names, raw counts in .X
+    expression_stats.tsv    — Per gene: ensembl_id, n_cells_nonzero, total_raw_counts, etc.
+    cell_stats.tsv          — Per-study: library size distribution, n_genes, mito_pct
     preprocessing_report.json — Per-study cell QC statistics
 
 Usage:
@@ -191,7 +199,6 @@ class GeneUniverseMapper:
             for row in reader:
                 raw_id = row['raw_id']
                 resolved = row['resolved_ensembl_id']
-                kept = row.get('kept', 'True')
                 # Only include mappings to genes that are in the universe
                 if resolved and resolved in self.universe_ids:
                     self.raw_to_ensembl[raw_id] = resolved
@@ -270,7 +277,6 @@ class GeneUniverseMapper:
 def _merge_duplicate_genes(adata: 'ad.AnnData', ensembl_ids: List[str]) \
         -> Tuple['ad.AnnData', int]:
     """Merge duplicate gene mappings by summing counts."""
-    # Group indices by ENSRNOG
     eid_to_indices = defaultdict(list)
     for i, eid in enumerate(ensembl_ids):
         eid_to_indices[eid].append(i)
@@ -278,7 +284,6 @@ def _merge_duplicate_genes(adata: 'ad.AnnData', ensembl_ids: List[str]) \
     unique_eids = sorted(eid_to_indices.keys())
     n_dupes = sum(1 for indices in eid_to_indices.values() if len(indices) > 1)
 
-    # Build merged matrix
     if sp.issparse(adata.X):
         rows = []
         for eid in unique_eids:
@@ -305,6 +310,7 @@ def _merge_duplicate_genes(adata: 'ad.AnnData', ensembl_ids: List[str]) \
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SECTION 2: FORMAT DETECTION AND MATRIX LOADING
+#   (unchanged from previous version — load_h5ad, load_10x_mtx, etc.)
 # ═════════════════════════════════════════════════════════════════════════════
 
 class MatrixLoadResult:
@@ -416,6 +422,7 @@ def detect_unfiltered_10x(n_barcodes: int) -> bool:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Format-specific loaders (h5ad, MTX, H5, Loom, TSV/CSV)
+#   (unchanged from previous version)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_h5ad(filepath: str) -> Optional[MatrixLoadResult]:
@@ -691,6 +698,7 @@ def _find_companion_file(directory: Path, candidates: List[str],
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SECTION 3: MATRIX DISCOVERY
+#   (unchanged from previous version)
 # ═════════════════════════════════════════════════════════════════════════════
 
 def find_matrix_files(study_dir: str) -> List[Tuple[str, str]]:
@@ -785,15 +793,11 @@ def load_matrix(filepath: str, format_type: str, study_dir: str) -> Optional[Mat
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# SECTION 4: CELL QC — GeneCompass EXACT ORDER
+# SECTION 4: CELL QC — GeneCompass EXACT ORDER (unchanged)
 # ═════════════════════════════════════════════════════════════════════════════
 
 def identify_mito_genes(gene_names: List[str]) -> List[str]:
-    """Identify mitochondrial gene names from original var_names.
-
-    Must run BEFORE remapping to ENSRNOG, since mito patterns match
-    original gene symbols (mt-Nd1, mt-Co1, etc.).
-    """
+    """Identify mitochondrial gene names from original var_names."""
     mito_genes = []
     for gname in gene_names:
         gname_str = str(gname)
@@ -805,31 +809,20 @@ def identify_mito_genes(gene_names: List[str]) -> List[str]:
 
 
 def normal_filter(adata, mito_gene_ids: Set[str]):
-    """GeneCompass normal_filter: z-score on total counts + mito %.
-
-    Removes cells where EITHER total gene count z-score OR
-    mitochondrial percentage z-score exceeds ±3.
-
-    GeneCompass uses ±3 for BOTH bounds (not just upper).
-    This removes both extremely low-count and high-count cells,
-    plus cells with extreme mito percentages in either direction.
-    """
-    # Total counts per cell
+    """GeneCompass normal_filter: z-score on total counts + mito %."""
     if sp.issparse(adata.X):
         total_counts = np.array(adata.X.sum(axis=1)).flatten()
     else:
         total_counts = np.array(np.sum(adata.X, axis=1)).flatten()
 
-    # Remove zero-count cells first
     nonzero_mask = total_counts > 0
     if not np.all(nonzero_mask):
         adata = adata[nonzero_mask].copy()
         total_counts = total_counts[nonzero_mask]
 
     if adata.n_obs < 3:
-        return adata  # Can't compute z-scores with <3 cells
+        return adata
 
-    # Mito counts
     mito_mask = np.isin(adata.var_names, list(mito_gene_ids))
     if sp.issparse(adata.X):
         mito_counts = np.array(adata[:, mito_mask].X.sum(axis=1)).flatten()
@@ -840,15 +833,11 @@ def normal_filter(adata, mito_gene_ids: Set[str]):
                          out=np.zeros_like(mito_counts, dtype=float),
                          where=total_counts > 0)
 
-    # Z-scores
     total_z = zscore(total_counts)
     mito_z = zscore(mito_pct)
-
-    # Handle constant arrays (zscore returns NaN)
     total_z = np.nan_to_num(total_z, nan=0.0)
     mito_z = np.nan_to_num(mito_z, nan=0.0)
 
-    # Keep cells within ±3 SD for BOTH metrics
     keep = ((total_z > -3) & (total_z < 3) &
             (mito_z > -3) & (mito_z < 3))
 
@@ -856,14 +845,7 @@ def normal_filter(adata, mito_gene_ids: Set[str]):
 
 
 def gene_number_filter(adata, core_gene_ids: Set[str]):
-    """GeneCompass gene_number_filter: ≥7 protein_coding + miRNA genes.
-
-    Counts nonzero expression of protein_coding and miRNA genes per cell.
-    Keeps cells with > 6 (i.e., ≥ 7) nonzero core genes.
-
-    IMPORTANT: applies filter to FULL adata, not just core subset.
-    The core genes are used to compute the mask, but ALL genes survive.
-    """
+    """GeneCompass gene_number_filter: ≥7 protein_coding + miRNA genes."""
     core_mask = np.isin(adata.var_names, list(core_gene_ids))
     core_adata = adata[:, core_mask]
 
@@ -873,8 +855,7 @@ def gene_number_filter(adata, core_gene_ids: Set[str]):
         data = np.array(core_adata.X)
 
     core_counts = np.count_nonzero(data, axis=1)
-    keep = core_counts > 6  # > 6 means ≥ 7
-
+    keep = core_counts > 6
     return adata[keep].copy()
 
 
@@ -898,54 +879,85 @@ def filter_empty_droplets(adata, min_genes: int = 200):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# SECTION 5: NORMALIZATION AND TOP-2048 RANKING
+# SECTION 5: RAW-COUNT STATISTICS (replaces normalization + ranking)
 # ═════════════════════════════════════════════════════════════════════════════
 
-def top_2048_ranking(adata) -> Dict[str, Dict]:
-    """Per-cell top-2048 ranking + corpus-wide gene stats.
+def collect_raw_gene_stats(adata) -> Dict[str, Dict]:
+    """Collect normalization-agnostic per-gene statistics from raw counts.
 
-    Returns dict: ensembl_id → {n_cells_top2048, total_expression}
+    For each gene, computes:
+      n_cells_nonzero:   number of cells where gene is expressed (count > 0)
+      total_raw_counts:  sum of raw counts across all cells
+      mean_raw_nonzero:  mean expression in cells where gene is expressed
+
+    These statistics support pruning (Step 3) without requiring any
+    normalization decision. They are also useful for downstream QA.
     """
-    gene_stats = defaultdict(lambda: {'n_cells_top2048': 0, 'total_expression': 0.0})
     gene_ids = adata.var_names.tolist()
+    gene_stats = {}
 
-    # Process in chunks for memory efficiency
-    chunk_size = 5000
-    for start in range(0, adata.n_obs, chunk_size):
-        end = min(start + chunk_size, adata.n_obs)
-
-        if sp.issparse(adata.X):
-            chunk = np.asarray(adata.X[start:end].todense())
-        else:
-            chunk = np.asarray(adata.X[start:end])
-
-        for i in range(chunk.shape[0]):
-            cell = chunk[i]
-            nonzero = np.nonzero(cell)[0]
-            if len(nonzero) == 0:
-                continue
-
-            # Get top-2048 by value (O(n) via argpartition)
-            if len(nonzero) <= 2048:
-                top_indices = nonzero
-            else:
-                values = cell[nonzero]
-                top_k = np.argpartition(values, -2048)[-2048:]
-                top_indices = nonzero[top_k]
-
-            for idx in top_indices:
-                gene_stats[gene_ids[idx]]['n_cells_top2048'] += 1
-
-    # Add total expression per gene
     if sp.issparse(adata.X):
-        totals = np.array(adata.X.sum(axis=0)).flatten()
+        # CSC format is efficient for column-wise operations
+        X_csc = adata.X.tocsc()
+        for j, gid in enumerate(gene_ids):
+            col = X_csc[:, j]
+            nonzero_vals = col.data  # only stored (nonzero) values
+            n_nz = len(nonzero_vals)
+            total = float(nonzero_vals.sum()) if n_nz > 0 else 0.0
+            mean_nz = float(total / n_nz) if n_nz > 0 else 0.0
+            gene_stats[gid] = {
+                'n_cells_nonzero': n_nz,
+                'total_raw_counts': total,
+                'mean_raw_nonzero': round(mean_nz, 4),
+            }
     else:
-        totals = np.array(adata.X.sum(axis=0)).flatten()
+        X = np.asarray(adata.X)
+        for j, gid in enumerate(gene_ids):
+            col = X[:, j]
+            nonzero_vals = col[col > 0]
+            n_nz = len(nonzero_vals)
+            total = float(nonzero_vals.sum()) if n_nz > 0 else 0.0
+            mean_nz = float(total / n_nz) if n_nz > 0 else 0.0
+            gene_stats[gid] = {
+                'n_cells_nonzero': n_nz,
+                'total_raw_counts': total,
+                'mean_raw_nonzero': round(mean_nz, 4),
+            }
 
-    for i, gid in enumerate(gene_ids):
-        gene_stats[gid]['total_expression'] = float(totals[i])
+    return gene_stats
 
-    return dict(gene_stats)
+
+def annotate_cell_stats(adata, mito_gene_ids: Set[str]) -> None:
+    """Annotate adata.obs with per-cell QC statistics (in-place).
+
+    Stores in obs:
+      library_size:    total raw counts per cell
+      n_genes_detected: number of genes with count > 0
+      mito_pct:         fraction of counts from mitochondrial genes
+
+    These travel with the QC'd h5ad for downstream diagnostics.
+    """
+    if sp.issparse(adata.X):
+        lib_size = np.array(adata.X.sum(axis=1)).flatten()
+        n_genes = np.array((adata.X > 0).sum(axis=1)).flatten()
+    else:
+        X = np.asarray(adata.X)
+        lib_size = X.sum(axis=1).flatten()
+        n_genes = (X > 0).sum(axis=1).flatten()
+
+    mito_mask = np.isin(adata.var_names, list(mito_gene_ids))
+    if sp.issparse(adata.X):
+        mito_counts = np.array(adata[:, mito_mask].X.sum(axis=1)).flatten()
+    else:
+        mito_counts = np.asarray(adata.X)[:, mito_mask].sum(axis=1).flatten()
+
+    mito_pct = np.divide(mito_counts, lib_size,
+                         out=np.zeros_like(mito_counts, dtype=float),
+                         where=lib_size > 0)
+
+    adata.obs['library_size'] = lib_size.astype(np.float32)
+    adata.obs['n_genes_detected'] = n_genes.astype(np.int32)
+    adata.obs['mito_pct'] = mito_pct.astype(np.float32)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -954,7 +966,7 @@ def top_2048_ranking(adata) -> Dict[str, Dict]:
 
 def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapper,
                   config: dict, output_dir: str) -> Tuple[Dict, Dict]:
-    """Process a single study end-to-end following GeneCompass exact order.
+    """Process a single study: load → map → QC → save raw counts + stats.
 
     Returns: (report_dict, gene_stats_dict)
     """
@@ -972,7 +984,9 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
         'errors': [],
         'samples': [],
     }
-    study_gene_stats = defaultdict(lambda: {'n_cells_top2048': 0, 'total_expression': 0.0})
+    study_gene_stats = defaultdict(lambda: {
+        'n_cells_nonzero': 0, 'total_raw_counts': 0.0, 'mean_raw_nonzero': 0.0,
+    })
 
     # Discover matrices
     matrix_files = find_matrix_files(study_dir)
@@ -1064,20 +1078,20 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
             sample_report['cells_final'] = adata_qc.n_obs
             total_cells_after += adata_qc.n_obs
 
-            # 8. Normalize: CPM(10K) → log1p(base=2)
-            raw_adata = adata_qc.copy()
-            sc.pp.normalize_total(adata_qc, target_sum=1e4)
-            sc.pp.log1p(adata_qc, base=2)
+            # ─── NO NORMALIZATION ─── NO RANKING ─── RAW COUNTS ONLY ───
 
-            # 9. Per-cell top-2048 ranking + expression stats
-            gene_stats = top_2048_ranking(adata_qc)
+            # 8. Annotate per-cell stats (stored in obs for downstream use)
+            annotate_cell_stats(adata_qc, mito_ensembl)
+
+            # 9. Collect raw gene stats for pruning
+            gene_stats = collect_raw_gene_stats(adata_qc)
             for gid, stats in gene_stats.items():
-                study_gene_stats[gid]['n_cells_top2048'] += stats['n_cells_top2048']
-                study_gene_stats[gid]['total_expression'] += stats['total_expression']
+                study_gene_stats[gid]['n_cells_nonzero'] += stats['n_cells_nonzero']
+                study_gene_stats[gid]['total_raw_counts'] += stats['total_raw_counts']
+                # mean_raw_nonzero is recomputed at merge from totals/counts
 
-            # 10. Save QC'd h5ad
+            # 10. Save QC'd h5ad — RAW COUNTS in .X
             if save_qc:
-                adata_qc.raw = raw_adata
                 qc_dir = Path(output_dir)
                 qc_dir.mkdir(parents=True, exist_ok=True)
                 out_path = qc_dir / f"{sample_id}.h5ad"
@@ -1090,7 +1104,7 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
             sample_report['status'] = 'success'
 
             # Free memory
-            del adata, adata_mapped, adata_qc, raw_adata
+            del adata, adata_mapped, adata_qc
 
         except Exception as e:
             sample_report['status'] = 'error'
@@ -1099,6 +1113,12 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
             logger.debug(traceback.format_exc())
 
         report['samples'].append(sample_report)
+
+    # Compute corpus-level mean_raw_nonzero
+    for gid, stats in study_gene_stats.items():
+        if stats['n_cells_nonzero'] > 0:
+            stats['mean_raw_nonzero'] = round(
+                stats['total_raw_counts'] / stats['n_cells_nonzero'], 4)
 
     report['total_cells_before_qc'] = total_cells_before
     report['total_cells_after_qc'] = total_cells_after
@@ -1111,7 +1131,7 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# SECTION 7: STUDY CATALOG
+# SECTION 7: STUDY CATALOG (unchanged)
 # ═════════════════════════════════════════════════════════════════════════════
 
 def load_study_catalog(config: dict) -> List[Dict]:
@@ -1205,10 +1225,7 @@ def run_corpus_preprocessing(args, config: dict):
     gu_dir = resolve_path(config, config['paths']['gene_universe_dir'])
     qc_dir = resolve_path(config, config['paths']['qc_h5ad_dir'])
 
-    # Load gene universe mapper from Step 1 outputs
     mapper = GeneUniverseMapper(gu_dir)
-
-    # Load study catalog
     studies = load_study_catalog(config)
     if not studies:
         logger.error("No usable studies found")
@@ -1216,8 +1233,9 @@ def run_corpus_preprocessing(args, config: dict):
 
     qc_dir.mkdir(parents=True, exist_ok=True)
 
-    # Process all studies
-    corpus_gene_stats = defaultdict(lambda: {'n_cells_top2048': 0, 'total_expression': 0.0})
+    corpus_gene_stats = defaultdict(lambda: {
+        'n_cells_nonzero': 0, 'total_raw_counts': 0.0,
+    })
     all_reports = []
     total_cells = 0
     n_success = 0
@@ -1236,8 +1254,8 @@ def run_corpus_preprocessing(args, config: dict):
             )
 
             for gid, stats in gene_stats.items():
-                corpus_gene_stats[gid]['n_cells_top2048'] += stats['n_cells_top2048']
-                corpus_gene_stats[gid]['total_expression'] += stats['total_expression']
+                corpus_gene_stats[gid]['n_cells_nonzero'] += stats['n_cells_nonzero']
+                corpus_gene_stats[gid]['total_raw_counts'] += stats['total_raw_counts']
 
             total_cells += report.get('total_cells_after_qc', 0)
             if report['status'] == 'success':
@@ -1257,26 +1275,19 @@ def run_corpus_preprocessing(args, config: dict):
     stats_path = gu_dir / 'expression_stats.tsv'
     with open(stats_path, 'w', newline='') as f:
         w = csv.DictWriter(f, delimiter='\t',
-                           fieldnames=['ensembl_id', 'n_cells_top2048',
-                                       'total_expression', 'n_studies_expressed'])
+                           fieldnames=['ensembl_id', 'n_cells_nonzero',
+                                       'total_raw_counts', 'mean_raw_nonzero'])
         w.writeheader()
-        # Count studies per gene from reports
-        gene_study_counts = defaultdict(int)
-        for report in all_reports:
-            if report.get('status') == 'success':
-                acc = report['accession']
-                for sample in report.get('samples', []):
-                    if sample.get('status') == 'success':
-                        # Each successful sample contributes genes
-                        gene_study_counts[acc] += 1  # simplified
-
         for gid in sorted(corpus_gene_stats.keys()):
             stats = corpus_gene_stats[gid]
+            n_nz = stats['n_cells_nonzero']
+            total = stats['total_raw_counts']
+            mean_nz = round(total / n_nz, 4) if n_nz > 0 else 0.0
             w.writerow({
                 'ensembl_id': gid,
-                'n_cells_top2048': stats['n_cells_top2048'],
-                'total_expression': round(stats['total_expression'], 2),
-                'n_studies_expressed': 0,  # computed by Step 3 if needed
+                'n_cells_nonzero': n_nz,
+                'total_raw_counts': round(total, 2),
+                'mean_raw_nonzero': mean_nz,
             })
 
     logger.info(f"expression_stats.tsv: {len(corpus_gene_stats):,} genes")
@@ -1287,6 +1298,7 @@ def run_corpus_preprocessing(args, config: dict):
         'stage': 'stage2_step2',
         'timestamp': datetime.now().isoformat(),
         'elapsed_seconds': round(elapsed, 1),
+        'normalization': 'NONE — raw counts preserved in QC h5ad files',
         'summary': {
             'total_studies': len(studies),
             'studies_success': n_success,
@@ -1306,6 +1318,7 @@ def run_corpus_preprocessing(args, config: dict):
     logger.info(f"  Studies processed:    {n_success}/{len(studies)}")
     logger.info(f"  Total QC'd cells:     {total_cells:,}")
     logger.info(f"  Genes tracked:        {len(corpus_gene_stats):,}")
+    logger.info(f"  Normalization:        NONE (raw counts in h5ad)")
     logger.info(f"  Elapsed:              {elapsed/60:.1f} min")
 
 
@@ -1319,7 +1332,6 @@ def run_single_study_mode(args, config: dict):
 
     mapper = GeneUniverseMapper(gu_dir)
 
-    # Find study directory
     h = config.get('harvesting', {})
     data_root = resolve_path(config, h.get('data_root', 'data/raw'))
     sources = h.get('sources', {})
@@ -1344,7 +1356,6 @@ def run_single_study_mode(args, config: dict):
         output_dir=str(qc_dir),
     )
 
-    # Save per-study outputs for merge
     report_file = qc_dir / f"report_{accession}.json"
     with open(report_file, 'w') as f:
         json.dump(report, f, indent=2, default=str)
@@ -1365,15 +1376,17 @@ def run_merge_mode(args, config: dict):
     if args.output_dir:
         qc_dir = Path(args.output_dir)
 
-    corpus_gene_stats = defaultdict(lambda: {'n_cells_top2048': 0, 'total_expression': 0.0})
+    corpus_gene_stats = defaultdict(lambda: {
+        'n_cells_nonzero': 0, 'total_raw_counts': 0.0,
+    })
     all_reports = []
 
     for stats_file in sorted(qc_dir.glob('gene_stats_*.json')):
         with open(stats_file) as f:
             gene_stats = json.load(f)
         for gid, stats in gene_stats.items():
-            corpus_gene_stats[gid]['n_cells_top2048'] += stats['n_cells_top2048']
-            corpus_gene_stats[gid]['total_expression'] += stats['total_expression']
+            corpus_gene_stats[gid]['n_cells_nonzero'] += stats['n_cells_nonzero']
+            corpus_gene_stats[gid]['total_raw_counts'] += stats['total_raw_counts']
 
     for report_file in sorted(qc_dir.glob('report_*.json')):
         with open(report_file) as f:
@@ -1381,20 +1394,22 @@ def run_merge_mode(args, config: dict):
 
     logger.info(f"Merged {len(all_reports)} studies, {len(corpus_gene_stats):,} genes")
 
-    # Write expression_stats.tsv
     stats_path = gu_dir / 'expression_stats.tsv'
     with open(stats_path, 'w', newline='') as f:
         w = csv.DictWriter(f, delimiter='\t',
-                           fieldnames=['ensembl_id', 'n_cells_top2048',
-                                       'total_expression', 'n_studies_expressed'])
+                           fieldnames=['ensembl_id', 'n_cells_nonzero',
+                                       'total_raw_counts', 'mean_raw_nonzero'])
         w.writeheader()
         for gid in sorted(corpus_gene_stats.keys()):
             stats = corpus_gene_stats[gid]
+            n_nz = stats['n_cells_nonzero']
+            total = stats['total_raw_counts']
+            mean_nz = round(total / n_nz, 4) if n_nz > 0 else 0.0
             w.writerow({
                 'ensembl_id': gid,
-                'n_cells_top2048': stats['n_cells_top2048'],
-                'total_expression': round(stats['total_expression'], 2),
-                'n_studies_expressed': 0,
+                'n_cells_nonzero': n_nz,
+                'total_raw_counts': round(total, 2),
+                'mean_raw_nonzero': mean_nz,
             })
 
     n_success = sum(1 for r in all_reports if r.get('status') == 'success')
@@ -1406,6 +1421,7 @@ def run_merge_mode(args, config: dict):
     report_data = {
         'stage': 'stage2_step2_merged',
         'timestamp': datetime.now().isoformat(),
+        'normalization': 'NONE — raw counts preserved',
         'summary': {
             'studies_success': n_success,
             'studies_total': len(all_reports),
@@ -1424,7 +1440,7 @@ def run_merge_mode(args, config: dict):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Stage 2, Step 2: Preprocess training matrices — GeneCompass-exact Cell QC",
+        description="Stage 2, Step 2: Cell QC → Raw-count h5ad (NO normalization, NO ranking)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -1432,6 +1448,13 @@ Examples:
   python preprocess_training_matrices.py --single-study GSE123456  # SLURM array
   python preprocess_training_matrices.py --merge             # Merge SLURM outputs
   sbatch slurm/stage2_preprocess.slurm                       # SLURM wrapper
+
+Outputs:
+  QC'd h5ad files with RAW COUNTS in .X (no normalization applied)
+  expression_stats.tsv with n_cells_nonzero, total_raw_counts, mean_raw_nonzero
+  Per-cell stats (library_size, n_genes_detected, mito_pct) stored in adata.obs
+
+Normalization and ranking are deferred to Stages 4-5.
         """
     )
     parser.add_argument('-o', '--output-dir', default=None,
@@ -1460,7 +1483,6 @@ Examples:
         logger.error("pipeline_config.yaml not found. Run from project root or set PIPELINE_ROOT.")
         sys.exit(1)
 
-    # Validate required config
     for section in ('gene_universe', 'biomart', 'paths'):
         if section not in config:
             logger.error(f"Config missing '{section}' section")
@@ -1473,6 +1495,7 @@ Examples:
         logger.info("DRY RUN — validating inputs:")
         logger.info(f"  gene_universe.tsv: {'EXISTS' if universe_path.exists() else 'MISSING (run Step 1)'}")
         logger.info(f"  gene_resolution.tsv: {'EXISTS' if resolution_path.exists() else 'MISSING (run Step 1)'}")
+        logger.info("  Normalization: NONE (raw counts preserved)")
         logger.info("DRY RUN — exiting")
         return
 

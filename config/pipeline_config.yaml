@@ -73,9 +73,9 @@ paths:
 
   genecompass_dir: vendor/GeneCompass
   genecompass_scdata: vendor/GeneCompass/scdata
-  genecompass_tokens: vendor/GeneCompass/scdata/dict/human_mouse_tokens.pickle
   genecompass_medians: vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle
-  genecompass_homologs: vendor/GeneCompass/scdata/dict/gc_homologs.pickle
+  genecompass_tokens: vendor/GeneCompass/prior_knowledge/human_mouse_tokens.pickle
+  genecompass_homologs: vendor/GeneCompass/prior_knowledge/homologous_hm_token.pickle
 
   models_dir: data/models
   results_dir: data/results
@@ -157,43 +157,79 @@ harvesting:
 # Stage 2: Gene Universe
 # ============================================================
 gene_universe:
-  # ── Step 2 preprocessing thresholds ──
-  preprocessing:
-    min_genes_per_cell: 200        # Cell QC: minimum expressed genes
-    min_cells_per_sample: 4        # Drop studies with fewer cells
-    max_mito_fraction: 0.15        # Sanity check only (NOT the GeneCompass filter)
-    outlier_sd_threshold: 3.0      # Used by normal_filter (±3 SD z-score)
-    min_core_genes_per_cell: 7     # GeneCompass gene_number_filter (protein_coding + miRNA)
-    save_qc_matrices: true         # Save QC'd h5ad files
-
   # ── Step 1 gene universe construction ──
-  biomart_gate: true               # Non-negotiable: all genes must be in BioMart
-  min_biomart_match: 0.30          # Minimum match rate to accept a study
-  match_sample_size: 1000          # Sample size for match rate estimation
-  match_sample_seed: 0             # RNG seed for reproducibility
-  min_studies: 2                   # Gene must appear in ≥2 studies
-  keep_biotypes:                   # Biotypes to retain
+  biomart_gate: true
+  min_biomart_match: 0.30
+  match_sample_size: 1000
+  match_sample_seed: 0
+  min_studies: 2
+  keep_biotypes:
     - protein_coding
     - lncrna
     - mirna
-  accession_patterns:              # Regex patterns for study accessions
+  accession_patterns:
     - "^GSE\\d+$"
     - "^E-[A-Z]+-\\d+$"
     - "^E-[A-Z]+-[A-Z]+-\\d+$"
   fail_on_unrecognized_accession: true
 
+  # ── Step 2 cell QC thresholds (GeneCompass-exact) ──
+  preprocessing:
+    min_genes_per_cell: 200
+    min_cells_per_sample: 4
+    max_mito_fraction: 0.15
+    outlier_sd_threshold: 3.0
+    min_core_genes_per_cell: 7
+    save_qc_matrices: true
+
+  # ── Step 3 expression-based pruning ──
+  # GeneCompass architecture: biotype filtering (Step 1) + top-2048
+  # ranking (Stage 5) are the real gene selectors. This step only
+  # removes genes with zero expression in the entire QC'd corpus —
+  # carrying extra genes through Stages 3-4 is cheap.
+  pruning:
+    min_cells_nonzero: 1           # Expressed in ≥1 QC'd cell
+
 # ============================================================
-# Stage 3: Ortholog Mapping
+# Stage 3: Ortholog Mapping — UPDATED CONFIG
 # ============================================================
+# Replace the existing 'orthologs:' section in pipeline_config.yaml
+# with this block.
+#
+# KEY CHANGE: No identity thresholds.
+# GeneCompass empirically used none (min observed: 1.2%).
+# Ensembl's tree-based orthology inference IS the quality gate.
+# ============================================================
+
 orthologs:
-  merge_strategy: separate_best_then_merge
-  prefer_species: human
-  identity_thresholds:
-    ortholog_one2one: 50.0
-    ortholog_one2many: 70.0
-    ortholog_many2many: 80.0
-  enable_low_identity_tier: false
-  low_identity_floor: 40.0
+  # Tier priority:
+  #   T1  tri-species one2one → T2a human one2one → T2b mouse one2one →
+  #   T3a human one2many/many2many → T3b mouse one2many/many2many →
+  #   T4  new rat token
+  #
+  # GeneCompass empirically used: 89.6% one2one, 7.9% one2many, 2.4% many2many
+  # with NO identity threshold (min observed: 1.2%)
+
+  # Orthology types accepted per tier level
+  one2one_types:
+    - ortholog_one2one
+
+  multi_types:
+    - ortholog_one2many
+    - ortholog_many2many
+
+  # No identity threshold — Ensembl tree-based inference is the quality gate.
+  # This key is retained for documentation only; the script ignores it.
+  identity_threshold: null
+
+  # For one2many / many2many disambiguation: pick ortholog with highest % identity
+  disambiguation: highest_identity
+
+  # Biotypes eligible for new token assignment (Tier 4)
+  new_token_biotypes:
+    - protein_coding
+    - lncRNA
+    - miRNA
 
 # ============================================================
 # Stage 4: Gene Medians
