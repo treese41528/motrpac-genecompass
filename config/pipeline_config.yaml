@@ -65,6 +65,7 @@ paths:
   gene_universe_dir: data/training/gene_universe
   ortholog_dir: data/training/ortholog_mappings
   median_dir: data/training/gene_medians
+  hybrid_medians: data/training/gene_medians/hybrid_gene_medians.pickle
   reference_dir: data/training/reference_files
   tokenized_corpus_dir: data/training/tokenized_corpus
 
@@ -242,6 +243,7 @@ medians:
 # Stage 5: Reference Assembly & Corpus Export
 # ============================================================
 reference_assembly:
+  cells_per_shard: 50000
   biotype_output_map:
     protein_coding: protein_coding
     lncrna: lncRNA                 # GeneCompass paper includes lncRNA in core gene list
