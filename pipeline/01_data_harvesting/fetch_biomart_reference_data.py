@@ -16,6 +16,7 @@ Outputs:
 - GENES_RAT.txt (RGD source file)
 - rat_human_orthologs.tsv
 - rat_mouse_orthologs.tsv
+- mouse_human_orthologs.tsv
 - rat_gene_info.tsv
 - fetch_metadata.json
 
@@ -174,6 +175,19 @@ def get_query(species: str, query_type: str) -> str:
         <Attribute name="gene_biotype"/>
         <Attribute name="chromosome_name"/>
         <Attribute name="description"/>
+    </Dataset>
+</Query>""",
+
+        'mouse_human_orthologs': """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Query>
+<Query virtualSchemaName="default" formatter="TSV" header="1" uniqueRows="1" count="" datasetConfigVersion="0.6">
+    <Dataset name="mmusculus_gene_ensembl" interface="default">
+        <Attribute name="ensembl_gene_id"/>
+        <Attribute name="hsapiens_homolog_ensembl_gene"/>
+        <Attribute name="hsapiens_homolog_associated_gene_name"/>
+        <Attribute name="hsapiens_homolog_orthology_type"/>
+        <Attribute name="hsapiens_homolog_perc_id"/>
+        <Attribute name="hsapiens_homolog_perc_id_r1"/>
     </Dataset>
 </Query>"""
     }
@@ -488,7 +502,21 @@ def fetch_ortholog_data(output_dir: Path, logger: logging.Logger,
         }
     else:
         results['rat_gene_info'] = {'status': 'failed'}
-    
+
+    # Mouse-Human orthologs (required by Stage 6 gene family embedding)
+    data = query_biomart(get_query('mouse', 'mouse_human_orthologs'),
+                         "mouse-human orthologs", logger, timeout)
+    if data:
+        path = output_dir / "mouse_human_orthologs.tsv"
+        path.write_text(data)
+        results['mouse_human'] = {
+            'path': str(path),
+            'records': data.count('\n') - 1,
+            'status': 'success'
+        }
+    else:
+        results['mouse_human'] = {'status': 'failed'}
+
     return results
 
 
