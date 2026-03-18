@@ -4,6 +4,10 @@ data/
 # Logs
 logs/
 
+# Pipeline reporting
+pipeline_report.py
+reports/
+
 # Python
 __pycache__/
 *.pyc
