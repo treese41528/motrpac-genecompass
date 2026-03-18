@@ -45,7 +45,7 @@ biomart:
   # Ortholog tables
   rat_human_orthologs: data/references/biomart/rat_human_orthologs.tsv
   rat_mouse_orthologs: data/references/biomart/rat_mouse_orthologs.tsv
-
+  mouse_human_orthologs: data/references/biomart/mouse_human_orthologs.tsv 
 # ============================================================
 # RGD Reference
 # ============================================================
@@ -77,6 +77,11 @@ paths:
   genecompass_medians: vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle
   genecompass_tokens: vendor/GeneCompass/prior_knowledge/human_mouse_tokens.pickle
   genecompass_homologs: vendor/GeneCompass/prior_knowledge/homologous_hm_token.pickle
+
+  prior_knowledge_dir: data/training/prior_knowledge
+  hgnc_file: data/references/hgnc/hgnc_complete_set.txt
+  rat_genome_fasta: data/references/genome/Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz
+  mouse_human_orthologs: data/references/biomart/mouse_human_orthologs.tsv
 
   models_dir: data/models
   results_dir: data/results
@@ -259,3 +264,39 @@ reference_assembly:
   # MoTrPAC exclusion list (data leakage prevention)
   exclude_studies:
     - "GSE242354"   # MoTrPAC Endurance Exercise Training Study
+
+
+# ============================================================
+# Stage 6: Prior Knowledge Embeddings
+# ============================================================
+prior_knowledge:
+
+  # Step 1: Co-expression embedding
+  coexp:
+    pcc_threshold: 0.8          # GeneCompass exact
+    n_sample_cells: 3000        # GeneCompass exact
+    min_shared_cells: 10        # Methodological addition (guard sparse data)
+    min_expr_ratio: 0.05        # Methodological addition (pre-filter)
+    chunk_size: 2000            # Memory management
+    vector_size: 768
+    window: 1
+    sg: 1                       # Skip-gram
+    epochs: 30
+    workers: 8
+
+  # Step 2: Gene family embedding
+  gene_family:
+    min_family_size: 2          # GeneCompass exact
+    vector_size: 768
+    window: 1
+    sg: 1
+    epochs: 30
+    workers: 8
+    rat_only_tokens: true       # Only embed rat-specific tokens (T4); 
+                                # ortholog-mapped tokens inherit from GC
+
+  # Steps 3 & 4: Promoter and GRN — stubs, not yet implemented
+  promoter:
+    enabled: true             # Requires DNABert + Ensembl genome sequences
+  grn:
+    enabled: true   # PECA2vec cross-species transfer from GeneCompass human/mouse GRNs
