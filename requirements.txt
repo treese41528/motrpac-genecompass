@@ -1,0 +1,64 @@
+# ============================================================
+# motrpac-genecompass: Python dependencies
+# ============================================================
+# Environment: Python 3.12
+#
+# INSTALL:
+#   python3.12 -m venv motrpac-env
+#   source motrpac-env/bin/activate
+#   pip install --upgrade pip
+#   pip install -r requirements.txt
+# ============================================================
+
+# ── Core scientific stack ──────────────────────────────────
+numpy>=1.23,<3.0
+scipy>=1.10
+pandas>=2.0
+h5py>=3.8
+
+# ── Single-cell / bioinformatics ───────────────────────────
+scanpy>=1.9                # Cell QC, preprocessing (Stage 2)
+anndata>=0.9               # h5ad file handling
+biopython>=1.80            # Bio.Entrez for GEO/ArrayExpress (Stage 1)
+
+# ── Data serialization / arrow ─────────────────────────────
+pyarrow>=12.0              # Arrow IPC corpus (Stage 5)
+datasets>=2.12             # HuggingFace datasets for pretrain loader
+
+# ── PyTorch / model training ──────────────────────────────
+torch>=1.13.1              # GeneCompass model, fine-tuning (Stage 7)
+torchvision>=0.14.1        # Required by some torch utilities
+accelerate>=0.32.1         # HuggingFace training utilities
+safetensors>=0.3.1         # Model checkpoint format
+
+# ── HuggingFace transformers ──────────────────────────────
+# GeneCompass was developed with transformers==4.30.0, but only
+# uses BertConfig, BertForMaskedLM, and TrainingArguments (stable
+# APIs). We pin >=4.38 for Python 3.12 wheel compatibility.
+transformers>=4.38,<5.0
+
+# ── Training monitoring ───────────────────────────────────
+wandb                      # Weights & Biases for Stage 7 metrics
+
+# ── Word embeddings (Stage 6) ─────────────────────────────
+gensim>=4.0                # Word2Vec / Gene2Vec for co-expression
+
+# ── Visualization ─────────────────────────────────────────
+matplotlib>=3.7
+seaborn>=0.12
+
+# ── Networking / API access ───────────────────────────────
+requests>=2.28             # GEO/ArrayExpress API calls (Stage 1)
+
+# ── Utilities ─────────────────────────────────────────────
+tqdm>=4.65                 # Progress bars
+packaging>=23.0            # Version parsing
+pytz>=2023.0               # Timezone handling
+pyyaml>=5.1                # pipeline_config.yaml parsing
+
+# ── Stdlib (no install needed) ─────────────────────────────
+# argparse, collections, concurrent, csv, dataclasses,
+# datetime, ftplib, functools, gzip, hashlib, itertools,
+# json, logging, multiprocessing, os, pathlib, pickle,
+# random, re, shutil, subprocess, sys, tarfile, time,
+# traceback, typing, urllib, xml, zipfile

@@ -1,0 +1,115 @@
+# ============================================================================
+# GeneCompass Rat Fine-Tuning Configuration
+#
+# Two-phase training on 7× A100-40GB (2 nodes, multi-node DDP)
+#
+# Phase 1 (freeze encoder): Train only new embeddings (T4 word embeddings,
+#   rat cls_embedding, extended prediction head). All 12 transformer layers
+#   and 4 prior knowledge projection layers are frozen. ~1-2 epochs.
+#   Goal: bring T4 token representations into the learned embedding space
+#   without disrupting pre-trained weights.
+#
+# Phase 2 (unfreeze all): Full end-to-end fine-tuning at reduced LR.
+#   ~2-3 epochs. Goal: adapt the entire model to rat biology.
+#
+# Cluster:  Purdue RCAC Gilbreth
+# Hardware: 2× gilbreth-n* nodes (4+3 A100-40GB = 7 GPUs, alloc limit)
+# Wall:     3-day QOS limit → checkpoint-resume required (~2 submissions)
+#
+# Estimated runtime:
+#   Phase 1: ~37 hrs/epoch × 2 epochs = ~74 hrs (1 SLURM job, fits 3 days)
+#   Phase 2: ~37 hrs/epoch × 2 epochs = ~74 hrs (1 SLURM job, fits 3 days)
+#   Total:   ~6 days across 2 SLURM submissions
+#
+# Usage:
+#   # Phase 1 (freeze encoder)
+#   sbatch slurm/stage7.slurm
+#
+#   # Phase 2 (unfreeze, resume from phase 1 checkpoint)
+#   sbatch slurm/stage7_phase2.slurm
+# ============================================================================
+
+# ── Model ────────────────────────────────────────────────────────────────────
+model:
+  base_checkpoint: vendor/GeneCompass/pretrained_models/GeneCompass_Base
+  init_checkpoint: data/models/rat_genecompass_init
+  vocab_size: 53032                 # 50558 original + 2474 T4 rat tokens
+  num_species: 3                    # 0=human, 1=mouse, 2=rat
+  hidden_size: 768
+  num_hidden_layers: 12
+  num_attention_heads: 12
+  intermediate_size: 3072
+  max_position_embeddings: 2048
+
+# ── Data ─────────────────────────────────────────────────────────────────────
+data:
+  token_dict_path: data/training/ortholog_mappings/rat_human_mouse_tokens.pickle
+  dataset_directory: data/training/tokenized_corpus/dataset
+  stage6_dir: data/training/prior_knowledge
+  homologous_gene_path: vendor/GeneCompass/prior_knowledge/homologous_hm_token.pickle
+
+# ── Phase 1: Freeze encoder, train new embeddings ────────────────────────────
+# Frozen:  bert.encoder (12 layers), prior knowledge projections (linear1),
+#          concat_embeddings, LayerNorm, position/token_type embeddings
+# Trained: word_embeddings (T4 rows 50558-53031 learn; 0-50557 also update),
+#          cls_embedding (species=2 row learns), cls prediction head biases
+phase1:
+  freeze_encoder: true
+  max_learning_rate: 5.0e-5         # Higher LR OK — only training embeddings
+  num_train_epochs: 1
+  warmup_steps: 1000
+  lr_scheduler_type: linear
+  run_name: rat_phase1_freeze
+
+# ── Phase 2: Unfreeze all, end-to-end fine-tuning ────────────────────────────
+# Resume from phase 1 best checkpoint.
+# Lower LR to protect converged encoder weights.
+phase2:
+  freeze_encoder: false
+  max_learning_rate: 1.0e-5         # 5× lower than GC default (5e-5)
+  num_train_epochs: 2               # Extend to 3 if loss still decreasing
+  warmup_steps: 2000
+  lr_scheduler_type: linear
+  resume_from: data/models/rat_genecompass_finetuned/models/rat_phase1_freeze/
+  run_name: rat_phase2_finetune
+
+# ── Shared training settings ─────────────────────────────────────────────────
+training:
+  # Per-GPU batch size (A100-40GB limit with gradient checkpointing)
+  train_batch_size_per_gpu: 10
+  weight_decay: 0.01
+  fp16: true
+  gradient_checkpointing: true
+
+  # emb_warmup: do NOT reset — pre-trained alpha=1.0 (fully converged)
+  # Setting emb_warmup_steps here only affects the per_step increment;
+  # the loaded checkpoint already has alpha=1.0 and steps=960000
+  emb_warmup_steps: 10000
+
+# ── T4 token initialization (rat_model_init.py) ─────────────────────────────
+initialization:
+  t4_word_emb_init: random          # random | family_mean
+  t4_word_emb_std: 0.02             # config.initializer_range
+  species_init: mouse_plus_noise
+  species_noise_std: 0.02
+  coexp_rescale_factor: 3.9         # Our T4 co-exp norm 4.8 → model expects ~18.6
+
+# ── Logging & checkpointing ─────────────────────────────────────────────────
+logging:
+  logging_steps: 50                 # W&B log frequency
+  save_strategy: steps
+  save_steps: 25000                 # ~every 5 hr → safe resume window
+  save_total_limit: 3               # Keep last 3 checkpoints to save disk
+  wandb_project: motrpac-genecompass-rat
+
+# ── Output ───────────────────────────────────────────────────────────────────
+output:
+  output_directory: data/models/rat_genecompass_finetuned
+
+# ── Distributed training ────────────────────────────────────────────────────
+distributed:
+  nproc_per_node: 4                 # GPUs per node (gilbreth-n* nodes have 4)
+  nnodes: 2                         # 2 nodes × 4 GPU = 8 allocated, 7 used
+  # Note: reese18 GrpTRES limit is 7 A100-40GB.
+  # Request 4+4=8, SLURM scheduler may idle 1 GPU or enforce the cap.
+  # Test with a short job first: sbatch --time=0:10:00 slurm/stage7.slurm

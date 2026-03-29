@@ -1,0 +1,1 @@
+# Compatibility patches for vendor GeneCompass + modern library versions

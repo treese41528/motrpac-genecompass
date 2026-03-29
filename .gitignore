@@ -46,3 +46,4 @@ slurm-*.out
 *.pth
 *.bin
 *.ckpt
+wandb/
