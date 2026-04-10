@@ -399,11 +399,12 @@ def assign_tiers(
             best = _pick_best_candidate(human_any_gc)
             assignment.update({
                 'tier': 'T3a_human_multi',
-                'token_id': human_token[best['target_gene']],
-                'human_ortholog': best['target_gene'],
+                'token_id': next_token_id,              # ← was human_token[best['target_gene']]
+                'human_ortholog': best['target_gene'],   # ortholog still recorded
                 'orth_type_human': best['orth_type'],
                 'perc_id_human': best['perc_id'] if best['perc_id'] is not None else '',
             })
+            next_token_id += 1                           # ← added
             tier_counts['T3a_human_multi'] += 1
             assignments.append(assignment)
             continue
@@ -414,11 +415,12 @@ def assign_tiers(
             best = _pick_best_candidate(mouse_any_gc)
             assignment.update({
                 'tier': 'T3b_mouse_multi',
-                'token_id': mouse_token[best['target_gene']],
-                'mouse_ortholog': best['target_gene'],
+                'token_id': next_token_id,              # ← was mouse_token[best['target_gene']]
+                'mouse_ortholog': best['target_gene'],   # ortholog still recorded
                 'orth_type_mouse': best['orth_type'],
                 'perc_id_mouse': best['perc_id'] if best['perc_id'] is not None else '',
             })
+            next_token_id += 1                           # ← added
             tier_counts['T3b_mouse_multi'] += 1
             assignments.append(assignment)
             continue
@@ -491,7 +493,9 @@ def compute_diagnostics(assignments: List[Dict]) -> Tuple[List[Dict], Dict]:
     # ── Token collision audit ──
     token_to_rat_genes = defaultdict(list)
     for a in assignments:
-        if a['token_id'] is not None and a['tier'] != 'T4_new_token':
+        if a['token_id'] is not None and a['tier'] not in (
+            'T4_new_token', 'T3a_human_multi', 'T3b_mouse_multi'   # ← added T3
+        ):
             token_to_rat_genes[a['token_id']].append(a['rat_gene'])
 
     # Count collisions per token
@@ -508,16 +512,14 @@ def compute_diagnostics(assignments: List[Dict]) -> Tuple[List[Dict], Dict]:
         if tok is None:
             a['token_collision_count'] = 0
             a['expansion_direction'] = 'NA'
-        elif a['tier'] == 'T4_new_token':
-            a['token_collision_count'] = 1  # unique by construction
+        elif a['tier'] in ('T4_new_token', 'T3a_human_multi', 'T3b_mouse_multi'):
+            a['token_collision_count'] = 1
             a['expansion_direction'] = 'NA'
         else:
             cc = collision_counts.get(tok, 1)
             a['token_collision_count'] = cc
             if cc > 1:
                 a['expansion_direction'] = 'rat_expanded'
-            elif a['tier'] in ('T3a_human_multi', 'T3b_mouse_multi'):
-                a['expansion_direction'] = 'human_expanded' if 'human' in a['tier'] else 'mouse_expanded'
             else:
                 a['expansion_direction'] = 'one2one'
 
@@ -715,7 +717,9 @@ def build_collision_report(assignments: List[Dict]) -> List[Dict]:
     """Build collision report: tokens shared by >1 rat gene."""
     token_to_assignments = defaultdict(list)
     for a in assignments:
-        if a['token_id'] is not None and a['tier'] not in ('T4_new_token', 'excluded'):
+        if a['token_id'] is not None and a['tier'] not in (
+            'T4_new_token', 'T3a_human_multi', 'T3b_mouse_multi', 'excluded'
+        ):
             token_to_assignments[a['token_id']].append(a)
 
     rows = []
@@ -799,7 +803,8 @@ def write_outputs(
     logger.info(f"rat_to_mouse_mapping.pickle: {len(rat_to_mouse):,} mappings")
 
     # ── 5. new_rat_tokens.txt ──
-    new_tokens = sorted(a['rat_gene'] for a in assignments if a['tier'] == 'T4_new_token')
+    new_tokens = sorted(a['rat_gene'] for a in assignments
+                        if a['tier'] in ('T4_new_token', 'T3a_human_multi', 'T3b_mouse_multi'))  # ← added T3
     with open(output_dir / 'new_rat_tokens.txt', 'w') as f:
         f.write('\n'.join(new_tokens) + '\n')
     logger.info(f"new_rat_tokens.txt: {len(new_tokens):,} genes")
@@ -859,8 +864,12 @@ def write_outputs(
         },
         'confidence_distribution': dict(conf_counts),
         'biotype_distribution': dict(biotype_counts),
-        'pre_trained_tokens_used': total_mapped - tier_counts.get('T4_new_token', 0),
-        'new_tokens_created': tier_counts.get('T4_new_token', 0),
+        'pre_trained_tokens_used': tier_counts.get('T1_tri_species', 0) +
+                                   tier_counts.get('T2a_human_one2one', 0) +
+                                   tier_counts.get('T2b_mouse_one2one', 0),  
+        'new_tokens_created': tier_counts.get('T3a_human_multi', 0) +
+                              tier_counts.get('T3b_mouse_multi', 0) +
+                              tier_counts.get('T4_new_token', 0), 
         'rat_to_human_mappings': len(rat_to_human),
         'rat_to_mouse_mappings': len(rat_to_mouse),
         'token_collisions': {
