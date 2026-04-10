@@ -16,7 +16,7 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 |-----------|----------|-------------|
 | **Data pipeline** | `pipeline/` | 7-stage preprocessing: corpus assembly → GeneCompass-ready reference files |
 | **GeneCompass** | `vendor/GeneCompass/` | Foundation model (git submodule, forked with rat extensions) |
-| **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus + MoTrPAC fine-tuning |
+| **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus |
 | **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration (UniCell, scDEAL, Scissor) |
 | **Analysis** | `analysis/` | Differential expression, GRN inference, temporal modeling |
 | **Translation** | `translation/` | Cross-species embedding alignment, in silico perturbation |
