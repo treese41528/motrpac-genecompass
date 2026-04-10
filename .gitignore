@@ -47,3 +47,8 @@ slurm-*.out
 *.bin
 *.ckpt
 wandb/
+
+# Scratch / temp
+1
+randsel_500w_mouse/
+notebooks/traceback_analysis.ipynb
