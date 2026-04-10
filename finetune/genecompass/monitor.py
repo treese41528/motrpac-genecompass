@@ -60,7 +60,6 @@ def init_wandb(
         logger.warning(f"W&B initialization failed (non-fatal): {e}")
         return False
 
-
 def log_training_step(
     step: int,
     loss: float,
@@ -69,12 +68,12 @@ def log_training_step(
     learning_rate: float,
     emb_warmup_alpha: float = 1.0,
     grad_norm: Optional[float] = None,
+    species_id: Optional[int] = None,
     extra: Optional[Dict] = None,
 ) -> None:
-    """Log a single training step to W&B."""
+    """Log a single training step to W&B with per-species breakdown."""
     try:
         import wandb
-
         metrics = {
             "train/loss": loss,
             "train/id_loss": id_loss,
@@ -85,13 +84,17 @@ def log_training_step(
         if grad_norm is not None:
             metrics["train/grad_norm"] = grad_norm
 
+        # Per-species loss breakdown
+        if species_id is not None:
+            species_name = {0: 'human', 1: 'mouse', 2: 'rat'}.get(species_id, f'sp{species_id}')
+            metrics[f"train/id_loss_{species_name}"] = id_loss
+            metrics[f"train/value_loss_{species_name}"] = value_loss
+
         if extra:
             metrics.update(extra)
-
         wandb.log(metrics, step=step)
-
     except Exception:
-        pass  # Silent fail — don't interrupt training
+        pass
 
 
 def compute_grad_norm(model) -> float:
