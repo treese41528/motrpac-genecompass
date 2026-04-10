@@ -210,9 +210,10 @@ def freeze_encoder(model, world_rank: int = 0) -> int:
 def unfreeze_all(model, world_rank: int = 0) -> int:
     """Unfreeze all parameters for end-to-end fine-tuning (phase 2)."""
     for param in model.parameters():
-        param.requires_grad = True
+        if param.is_floating_point() or param.is_complex():
+            param.requires_grad = True
 
-    n_total = sum(p.numel() for p in model.parameters())
+    n_total = sum(p.numel() for p in model.parameters() if p.is_floating_point())
     if world_rank == 0:
         logger.info(f"Phase 2 UNFREEZE: all {n_total:,} parameters trainable")
 
@@ -304,7 +305,9 @@ def main(args):
     )
 
     # ── Hyperparameters ──────────────────────────────────────────────────
-    vocab_size = ft_config.get('vocab_size', 53032)
+    with open(token_dict_path, 'rb') as f:
+        token_dictionary = pickle.load(f)
+    vocab_size = max(token_dictionary.values()) + 1
     num_species = ft_config.get('num_species', 3)
     max_lr = ft_config.get('max_learning_rate', 1e-5)
     epochs = args.num_train_epochs or ft_config.get('num_train_epochs', 2)

@@ -3,29 +3,32 @@
 """
 smoke_test.py — Validate the full Stage 7 chain without training.
 
-Runs in ~2 minutes on a single GPU. Tests:
+Runs in ~2 minutes on a single GPU (or CPU). Tests:
   1. Import chain (vendor GeneCompass modules load correctly)
   2. Config loading (rat_finetune.yaml parses, phase merging works)
-  3. Checkpoint extension (rat_model_init builds [53032, 768] tensors)
-  4. Model construction (BertForMaskedLM with 3-species cls_embedding)
-  5. State dict loading (extended weights load without errors)
-  6. Freeze logic (phase 1 freezes encoder, correct param counts)
-  7. Forward pass (single batch, loss computes without NaN)
-  8. Weight tying (decoder.weight is word_embeddings.weight)
-  9. Species handling (rat species=2 produces valid cls_embedding)
-  10. Checkpoint save/load round-trip
+  3. Prerequisites (all input files exist)
+  4. Token dictionary (correct size, structure, T3+T4 counts)
+  5. Checkpoint extension (vocab-indexed tensors resized correctly)
+  6. Model construction + state dict loading
+  7. Weight tying (decoder.weight is word_embeddings.weight)
+  8. Freeze logic (phase 1 freezes encoder, correct param counts)
+  9. Forward pass (single batch, loss computes without NaN)
+  10. Species handling (rat species=2 produces valid cls_embedding)
 
 Does NOT test:
   - Multi-GPU DDP (use the SLURM smoke test for that)
   - Full epoch training
   - W&B connectivity (tested separately)
 
+Vocab size is derived at runtime from the token dictionary. No hardcoded
+sizes -- works with any vocabulary (original 50,558 + N new tokens).
+
 Usage:
   python finetune/genecompass/smoke_test.py
   python finetune/genecompass/smoke_test.py --skip-init  # reuse existing init checkpoint
 
 Author: Tim Reese Lab
-Date: March 2026
+Date: March 2026 (updated April 2026 for T3 reclassification)
 """
 
 import argparse
@@ -91,9 +94,9 @@ def main():
     try:
         from rat_load_prior_embedding import (
             load_rat_prior_embeddings, build_knowledges_dict,
-            ORIGINAL_VOCAB_SIZE, RAT_VOCAB_SIZE, T4_START
+            ORIGINAL_VOCAB_SIZE, EMBEDDING_DIM,
         )
-        from rat_model_init import extend_checkpoint
+        from rat_model_init import extend_checkpoint, init_t3_warm_start
         from rat_pretrain import (
             load_pipeline_config, freeze_encoder, unfreeze_all, get_phase_config
         )
@@ -108,8 +111,6 @@ def main():
     try:
         ft_config = load_pipeline_config(str(config_path))
         check("Config parse", True, f"{len(ft_config)} keys")
-        check("vocab_size", ft_config.get('vocab_size') == 53032,
-              f"got {ft_config.get('vocab_size')}")
         check("num_species", ft_config.get('num_species') == 3)
 
         # Phase merge
@@ -134,8 +135,6 @@ def main():
     model_bin = ckpt_path / 'pytorch_model.bin'
     check("GC checkpoint exists", model_bin.exists(), str(model_bin))
 
-    # Merged token dict may not exist yet — we build it in step 4.
-    # Here just check the source files exist.
     hm_path = resolve('vendor/GeneCompass/prior_knowledge/human_mouse_tokens.pickle')
     rat_path = resolve('data/training/ortholog_mappings/rat_tokens.pickle')
     check("human_mouse_tokens.pickle exists", hm_path.exists())
@@ -162,17 +161,13 @@ def main():
 
     # ── 4. Token dictionary ──────────────────────────────────────────────
     print("\n4. Token dictionary")
-
     token_dict_path = resolve(ft_config.get('token_dict_path',
                               'data/training/ortholog_mappings/rat_human_mouse_tokens.pickle'))
 
-    # Build merged dict if it doesn't exist yet
     if not token_dict_path.exists():
         print("   Merged dict not found — building it now...")
         try:
             from build_rat_token_dictionary import build_merged_dictionary
-            hm_path = _PROJECT_ROOT / 'vendor' / 'GeneCompass' / 'prior_knowledge' / 'human_mouse_tokens.pickle'
-            rat_path = _PROJECT_ROOT / 'data' / 'training' / 'ortholog_mappings' / 'rat_tokens.pickle'
             build_merged_dictionary(hm_path, rat_path, token_dict_path)
             check("Built merged token dict", True, str(token_dict_path))
         except Exception as e:
@@ -181,14 +176,20 @@ def main():
 
     with open(token_dict_path, 'rb') as f:
         token_dict = pickle.load(f)
-    check("Token dict size", len(token_dict) == RAT_VOCAB_SIZE,
-          f"{len(token_dict)} entries")
+
+    vocab_size = max(token_dict.values()) + 1
+    check("Token dict consistent", len(token_dict) == vocab_size,
+          f"{len(token_dict)} entries, vocab_size={vocab_size}")
     check("Has <pad>", '<pad>' in token_dict)
     check("Has <mask>", '<mask>' in token_dict)
 
-    # Count T4 tokens
-    n_t4 = sum(1 for tid in token_dict.values() if tid >= T4_START)
-    check("T4 token count", n_t4 == 2474, f"got {n_t4}")
+    # Count new tokens (T3 + T4, all above ORIGINAL_VOCAB_SIZE)
+    n_new = sum(1 for tid in token_dict.values() if tid >= ORIGINAL_VOCAB_SIZE)
+    n_ensrnog = sum(1 for k in token_dict if isinstance(k, str) and k.startswith('ENSRNOG'))
+    check("New tokens (T3+T4)", n_new == n_ensrnog,
+          f"{n_new} new IDs, {n_ensrnog} ENSRNOG keys")
+    check("Pre-trained tokens preserved", ORIGINAL_VOCAB_SIZE + n_new == vocab_size,
+          f"{ORIGINAL_VOCAB_SIZE} + {n_new} = {vocab_size}")
 
     # ── 5. Checkpoint extension ──────────────────────────────────────────
     print("\n5. Checkpoint extension")
@@ -196,6 +197,9 @@ def main():
 
     if args.skip_init and (init_dir / 'pytorch_model.bin').exists():
         check("Init checkpoint (reused)", True, str(init_dir))
+        init_state = torch.load(
+            init_dir / 'pytorch_model.bin', map_location='cpu', weights_only=False
+        )
     else:
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -210,34 +214,53 @@ def main():
                     species_noise_std=0.02,
                     coexp_rescale_factor=3.9,
                 )
-                # Verify output
-                ext_state = torch.load(
+                init_state = torch.load(
                     os.path.join(tmpdir, 'pytorch_model.bin'),
                     map_location='cpu', weights_only=False,
                 )
-                we_shape = ext_state['bert.embeddings.word_embeddings.weight'].shape
-                cls_shape = ext_state['bert.cls_embedding.weight'].shape
-                hi_shape = ext_state['bert.embeddings.homologous_index'].shape
 
-                check("word_embeddings shape", we_shape == (53032, 768), str(we_shape))
-                check("cls_embedding shape", cls_shape == (3, 768), str(cls_shape))
-                check("homologous_index shape", hi_shape == (53032,), str(hi_shape))
+                we_shape = init_state['bert.embeddings.word_embeddings.weight'].shape
+                cls_shape = init_state['bert.cls_embedding.weight'].shape
+                hi_shape = init_state['bert.embeddings.homologous_index'].shape
 
-                # Verify T4 rows not all zero (word_embeddings should have random init)
-                t4_norm = ext_state['bert.embeddings.word_embeddings.weight'][T4_START:].norm()
-                check("T4 word_emb non-zero", t4_norm > 0, f"norm={t4_norm:.2f}")
+                check("word_embeddings shape",
+                      we_shape == (vocab_size, EMBEDDING_DIM), str(we_shape))
+                check("cls_embedding shape",
+                      cls_shape == (3, EMBEDDING_DIM), str(cls_shape))
+                check("homologous_index shape",
+                      hi_shape == (vocab_size,), str(hi_shape))
+
+                # Verify new rows not all zero
+                new_norm = init_state[
+                    'bert.embeddings.word_embeddings.weight'
+                ][ORIGINAL_VOCAB_SIZE:].norm()
+                check("New token word_emb non-zero", new_norm > 0,
+                      f"norm={new_norm:.2f}")
 
                 # Verify pre-trained rows preserved
-                orig_state = torch.load(model_bin, map_location='cpu', weights_only=False)
+                orig_state = torch.load(
+                    model_bin, map_location='cpu', weights_only=False
+                )
                 orig_we = orig_state['bert.embeddings.word_embeddings.weight']
                 preserved = torch.allclose(
-                    ext_state['bert.embeddings.word_embeddings.weight'][:ORIGINAL_VOCAB_SIZE],
+                    init_state[
+                        'bert.embeddings.word_embeddings.weight'
+                    ][:ORIGINAL_VOCAB_SIZE],
                     orig_we, atol=1e-6,
                 )
                 check("Pre-trained rows preserved", preserved)
 
-                # Use this for subsequent tests
-                init_state = ext_state
+                # Verify T3 warm-start: new T3 rows should have norms
+                # similar to pre-trained rows (cloned from orthologs)
+                pretrained_mean_norm = orig_we[2:100].norm(dim=1).mean().item()
+                t3_norms = init_state[
+                    'bert.embeddings.word_embeddings.weight'
+                ][ORIGINAL_VOCAB_SIZE:ORIGINAL_VOCAB_SIZE + 100].norm(dim=1)
+                t3_mean_norm = t3_norms.mean().item()
+                check("T3 warm-start norms reasonable",
+                      t3_mean_norm > pretrained_mean_norm * 0.5,
+                      f"T3 mean={t3_mean_norm:.3f}, pretrained mean={pretrained_mean_norm:.3f}")
+
         except Exception as e:
             check("Checkpoint extension", False, str(e))
             import traceback
@@ -247,13 +270,6 @@ def main():
     # ── 6. Model construction + loading ──────────────────────────────────
     print("\n6. Model construction")
 
-    # Load init state if we skipped extension
-    if args.skip_init:
-        init_state = torch.load(
-            init_dir / 'pytorch_model.bin', map_location='cpu', weights_only=False
-        )
-
-    # Build knowledges from state dict
     knowledges = {
         'promoter': init_state['bert.embeddings.promoter_knowledge'],
         'co_exp': init_state['bert.embeddings.co_exp_knowledge'],
@@ -269,7 +285,7 @@ def main():
         layer_norm_eps=1e-12, attention_probs_dropout_prob=0.02,
         hidden_dropout_prob=0.02, intermediate_size=3072, hidden_act="gelu",
         max_position_embeddings=2048, model_type="bert", num_attention_heads=12,
-        pad_token_id=token_dict.get("<pad>"), vocab_size=53032,
+        pad_token_id=token_dict.get("<pad>"), vocab_size=vocab_size,
         use_values=True, use_promoter=True, use_co_exp=True,
         use_gene_family=True, use_peca_grn=True,
         warmup_steps=5000, emb_warmup_steps=10000, use_cls_token=True,
@@ -277,9 +293,11 @@ def main():
 
     from torch import nn
     model = BertForMaskedLM(config, knowledges=knowledges)
-    model.bert.cls_embedding = nn.Embedding(3, 768)
+    model.bert.cls_embedding = nn.Embedding(3, EMBEDDING_DIM)
+
     missing, unexpected = model.load_state_dict(init_state, strict=False)
-    check("Model loads", True, f"missing={len(missing)}, unexpected={len(unexpected)}")
+    check("Model loads", True,
+          f"missing={len(missing)}, unexpected={len(unexpected)}")
 
     # ── 7. Weight tying ──────────────────────────────────────────────────
     print("\n7. Weight tying")
@@ -290,23 +308,21 @@ def main():
     # ── 8. Freeze logic ──────────────────────────────────────────────────
     print("\n8. Freeze logic")
     n_total = sum(p.numel() for p in model.parameters())
+
     n_trainable_frozen = freeze_encoder(model, world_rank=0)
     check("Frozen: trainable < total",
           n_trainable_frozen < n_total,
           f"{n_trainable_frozen:,} / {n_total:,}")
 
-    # Encoder should be frozen
     encoder_frozen = all(
-        not p.requires_grad
-        for p in model.bert.encoder.parameters()
+        not p.requires_grad for p in model.bert.encoder.parameters()
     )
     check("Encoder layers frozen", encoder_frozen)
+    check("word_embeddings trainable",
+          model.bert.embeddings.word_embeddings.weight.requires_grad)
+    check("cls_embedding trainable",
+          model.bert.cls_embedding.weight.requires_grad)
 
-    # word_embeddings should be trainable
-    check("word_embeddings trainable", model.bert.embeddings.word_embeddings.weight.requires_grad)
-    check("cls_embedding trainable", model.bert.cls_embedding.weight.requires_grad)
-
-    # Unfreeze
     n_trainable_unfrozen = unfreeze_all(model, world_rank=0)
     check("Unfrozen: all trainable", n_trainable_unfrozen == n_total)
 
@@ -314,16 +330,13 @@ def main():
     print("\n9. Forward pass (single batch, CPU)")
     model.eval()
 
-    # Create a fake batch: 2 cells, 64 tokens each
     batch_size, seq_len = 2, 64
-    # Use real token IDs: mix of T1-T3 and T4
-    input_ids = torch.randint(2, 53032, (batch_size, seq_len))
-    input_ids[:, 0] = token_dict.get('<pad>', 0)  # ensure pad exists
+    input_ids = torch.randint(2, vocab_size, (batch_size, seq_len))
+    input_ids[:, 0] = token_dict.get('<pad>', 0)
     values = torch.rand(batch_size, seq_len)
     species = torch.full((batch_size, 1), 2, dtype=torch.long)  # rat
     attention_mask = torch.ones(batch_size, seq_len, dtype=torch.long)
 
-    # Mask some tokens for labels
     labels = input_ids.clone()
     labels[torch.rand(batch_size, seq_len) > 0.15] = -100
     labels_values = values.clone()
@@ -338,6 +351,7 @@ def main():
                 labels=labels,
                 labels_values=labels_values,
             )
+
         loss = output.loss.item()
         id_loss = output.id_loss.item()
         value_loss = output.value_loss.item()
@@ -345,36 +359,72 @@ def main():
         check("Forward pass succeeds", True)
         check("Loss is finite", np.isfinite(loss), f"loss={loss:.4f}")
         check("id_loss is finite", np.isfinite(id_loss), f"id_loss={id_loss:.4f}")
-        check("value_loss is finite", np.isfinite(value_loss), f"value_loss={value_loss:.4f}")
-        check("Loss formula", abs(loss - (0.2 * id_loss + 0.8 * value_loss)) < 0.01,
-              f"{loss:.4f} ≈ 0.2×{id_loss:.4f} + 0.8×{value_loss:.4f}")
-
-        # Check output shape
-        logits_shape = output.logits.shape
-        check("Logits shape", logits_shape == (batch_size, seq_len, 53032),
-              str(logits_shape))
-
+        check("value_loss is finite", np.isfinite(value_loss),
+              f"value_loss={value_loss:.4f}")
+        check("Loss formula",
+              abs(loss - (0.2 * id_loss + 0.8 * value_loss)) < 0.01,
+              f"{loss:.4f} ≈ 0.2*{id_loss:.4f} + 0.8*{value_loss:.4f}")
+        check("Logits shape",
+              output.logits.shape == (batch_size, seq_len, vocab_size),
+              str(output.logits.shape))
     except Exception as e:
         check("Forward pass", False, str(e))
         import traceback
         traceback.print_exc()
 
-    # ── 10. Species=2 cls_embedding ──────────────────────────────────────
+    # ── 10. Species handling ─────────────────────────────────────────────
     print("\n10. Species handling")
     rat_cls = model.bert.cls_embedding(torch.tensor([[2]]))
     human_cls = model.bert.cls_embedding(torch.tensor([[0]]))
     mouse_cls = model.bert.cls_embedding(torch.tensor([[1]]))
+
     check("Rat cls_embedding non-zero", rat_cls.norm().item() > 0)
-    check("Rat ≠ human", not torch.allclose(rat_cls, human_cls))
-    check("Rat ≈ mouse (init)", torch.cosine_similarity(
-        rat_cls.view(1, -1), mouse_cls.view(1, -1)).item() > 0.5,
-        f"cosine={torch.cosine_similarity(rat_cls.view(1,-1), mouse_cls.view(1,-1)).item():.3f}")
+    check("Rat != human", not torch.allclose(rat_cls, human_cls))
+
+    cos_sim = torch.cosine_similarity(
+        rat_cls.view(1, -1), mouse_cls.view(1, -1)
+    ).item()
+    check("Rat ~ mouse (init)", cos_sim > 0.5, f"cosine={cos_sim:.3f}")
+
+    # ── 11. Multi-species forward pass ───────────────────────────────────
+    print("\n11. Multi-species forward pass")
+    try:
+        # Human cell
+        human_species = torch.full((batch_size, 1), 0, dtype=torch.long)
+        with torch.no_grad():
+            h_out = model(
+                input_ids=input_ids, values=values, species=human_species,
+                attention_mask=attention_mask, labels=labels,
+                labels_values=labels_values,
+            )
+        check("Human forward pass", np.isfinite(h_out.loss.item()),
+              f"loss={h_out.loss.item():.4f}")
+
+        # Mouse cell
+        mouse_species = torch.full((batch_size, 1), 1, dtype=torch.long)
+        with torch.no_grad():
+            m_out = model(
+                input_ids=input_ids, values=values, species=mouse_species,
+                attention_mask=attention_mask, labels=labels,
+                labels_values=labels_values,
+            )
+        check("Mouse forward pass", np.isfinite(m_out.loss.item()),
+              f"loss={m_out.loss.item():.4f}")
+
+        # Losses should differ by species (different cls_embedding)
+        check("Species produce different losses",
+              abs(h_out.loss.item() - m_out.loss.item()) > 1e-6)
+    except Exception as e:
+        check("Multi-species forward", False, str(e))
+        import traceback
+        traceback.print_exc()
 
     # ── Summary ──────────────────────────────────────────────────────────
     print("\n" + "=" * 60)
     passed = sum(1 for _, ok in results if ok)
     failed = sum(1 for _, ok in results if not ok)
     total = len(results)
+
     if failed == 0:
         print(f"{PASS} ALL {total} CHECKS PASSED")
     else:
