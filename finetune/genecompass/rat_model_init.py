@@ -4,25 +4,30 @@
 rat_model_init.py — Extend GeneCompass_Base checkpoint for rat fine-tuning.
 
 Loads the pre-trained GeneCompass_Base checkpoint (50,558 vocab, 2 species) and
-produces an extended checkpoint (53,032 vocab, 3 species) suitable for rat
-fine-tuning. The output is a complete state_dict + config.json that can be
-loaded directly by BertForMaskedLM.
+produces an extended checkpoint suitable for rat fine-tuning. Vocab size is
+derived at runtime from the token dictionary. The output is a complete
+state_dict + config.json that can be loaded directly by BertForMaskedLM.
 
 Operations performed:
-  1. Resize all vocab-indexed tensors from [50558, ...] → [53032, ...]
-  2. Fill T4 prior knowledge rows from Stage 6 embeddings
-  3. Initialize T4 word embeddings (random or family-mean)
-  4. Extend cls_embedding from [2, 768] → [3, 768] (rat = mouse + noise)
-  5. Extend prediction head biases to [53032]
-  6. Extend homologous_index to [53032] (identity for new positions)
-  7. Maintain weight tying: decoder.weight == word_embeddings.weight
-  8. Write extended config.json with vocab_size=53032
+  1. Resize all vocab-indexed tensors from [50,558, ...] to [vocab_size, ...]
+  2. Fill new token prior knowledge rows from Stage 6 embeddings
+  3. Initialize T3 word embeddings (warm-start: cloned from ortholog + noise)
+  4. Initialize T4 word embeddings (random or family-mean)
+  5. Extend cls_embedding from [2, 768] to [3, 768] (rat = mouse + noise)
+  6. Extend prediction head biases to [vocab_size]
+  7. Extend homologous_index to [vocab_size] (identity for new positions)
+  8. Maintain weight tying: decoder.weight == word_embeddings.weight
+  9. Write extended config.json with derived vocab_size
+
+New tokens (positions 50,558+) include T3 genes (reclassified from shared
+to unique tokens, ortholog relationship preserved for warm-start init and
+Stage 6 embedding lookup) and T4 genes (no ortholog, rat-specific).
 
 The original GeneCompass checkpoint is never modified. Output goes to a new
 directory (default: data/models/rat_genecompass_init/).
 
 Author: Tim Reese Lab
-Date: March 2026
+Date: March 2026 (updated April 2026 for T3 reclassification)
 """
 
 import argparse
@@ -47,8 +52,6 @@ sys.path.insert(0, str(_SCRIPT_DIR))
 from rat_load_prior_embedding import (
     build_knowledges_dict,
     ORIGINAL_VOCAB_SIZE,
-    RAT_VOCAB_SIZE,
-    T4_START,
     EMBEDDING_DIM,
 )
 
@@ -59,21 +62,82 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+
+
+
+
 # ─────────────────────────────────────────────────────────────────────────────
-# T4 Word Embedding Initialization Strategies
+# T3 and T4 Word Embedding Initialization Strategies
 # ─────────────────────────────────────────────────────────────────────────────
 
-def init_t4_random(
+
+def init_t3_warm_start(
     word_emb: torch.Tensor,
     rat_token_dict: dict,
-    std: float = 0.02,
+    rat_token_mapping_path: str | Path,
+    gc_vocab: dict,
+    noise_std: float = 0.001,
 ) -> None:
-    """Initialize T4 word embeddings with N(0, std). Matches config.initializer_range."""
-    n_t4 = RAT_VOCAB_SIZE - ORIGINAL_VOCAB_SIZE
-    word_emb[T4_START:] = torch.randn(n_t4, EMBEDDING_DIM) * std
-    logger.info(f"T4 word embeddings initialized: N(0, {std}) for {n_t4} tokens")
+    """
+    Initialize T3 word embeddings from their ortholog's pre-trained embedding.
 
+    Each T3 gene has a known ortholog in the GC vocabulary. We clone that
+    ortholog's embedding row and add minimal noise to break symmetry.
+    """
+    import csv
+    mapping = {}
+    with open(rat_token_mapping_path) as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            if row['tier'] in ('T3a_human_multi', 'T3b_mouse_multi'):
+                mapping[row['rat_gene']] = {
+                    'human_ortholog': row.get('human_ortholog', ''),
+                    'mouse_ortholog': row.get('mouse_ortholog', ''),
+                    'tier': row['tier'],
+                }
 
+    n_cloned = 0
+    n_fallback = 0
+    for gene_str, token_id in rat_token_dict.items():
+        if token_id < ORIGINAL_VOCAB_SIZE:
+            continue
+        if gene_str not in mapping:
+            continue  # T4 gene, handled separately
+
+        info = mapping[gene_str]
+        # Find the ortholog's token ID in the original GC vocab
+        ortholog_id = None
+        if info['tier'] == 'T3a_human_multi' and info['human_ortholog']:
+            ortholog_id = gc_vocab.get(info['human_ortholog'])
+        elif info['tier'] == 'T3b_mouse_multi' and info['mouse_ortholog']:
+            ortholog_id = gc_vocab.get(info['mouse_ortholog'])
+
+        if ortholog_id is not None and ortholog_id < ORIGINAL_VOCAB_SIZE:
+            word_emb[token_id] = word_emb[ortholog_id].clone()
+            if noise_std > 0:
+                word_emb[token_id] += torch.randn(EMBEDDING_DIM) * noise_std
+            n_cloned += 1
+        else:
+            word_emb[token_id] = torch.randn(EMBEDDING_DIM) * 0.02
+            n_fallback += 1
+
+    logger.info(f"T3 word embeddings: {n_cloned} cloned from ortholog, {n_fallback} random fallback")
+
+def init_t4_random(word_emb, rat_token_dict, std=0.02):
+    """Initialize T4 word embeddings only (skip T3 which are already warm-started)."""
+    n = 0
+    for gene_str, token_id in rat_token_dict.items():
+        if token_id < ORIGINAL_VOCAB_SIZE:
+            continue
+        # Skip T3 -- already initialized by init_t3_warm_start
+        # T3 genes have nonzero embeddings at this point; T4 are still zero
+        if word_emb[token_id].norm() > 0.01:
+            continue
+        word_emb[token_id] = torch.randn(EMBEDDING_DIM) * std
+        n += 1
+    logger.info(f"T4 word embeddings initialized: N(0, {std}) for {n} tokens")
+    
+    
 def init_t4_family_mean(
     word_emb: torch.Tensor,
     rat_token_dict: dict,
@@ -108,18 +172,19 @@ def init_t4_family_mean(
     n_fallback = 0
 
     for gene_str, token_id in rat_token_dict.items():
-        if token_id < T4_START:
+        if token_id < ORIGINAL_VOCAB_SIZE:
             continue
         if gene_str in ('<pad>', '<mask>'):
             continue
-
+        if word_emb[token_id].norm() > 0.01:
+            continue
         fam = gene_to_family.get(gene_str)
         if fam is not None:
             # Collect T1-T3 family members with pre-trained embeddings
             member_ids = []
             for member in family_dict[fam]:
                 mid = rat_token_dict.get(member)
-                if mid is not None and mid < T4_START:
+                if mid is not None and mid < ORIGINAL_VOCAB_SIZE:
                     member_ids.append(mid)
 
             if member_ids:
@@ -171,19 +236,20 @@ def extend_checkpoint(
     # ── 2. Load rat token dictionary ─────────────────────────────────────
     with open(rat_token_dict_path, 'rb') as f:
         rat_token_dict = pickle.load(f)
-    logger.info(f"Rat token dict: {len(rat_token_dict)} entries")
-    assert len(rat_token_dict) == RAT_VOCAB_SIZE, \
-        f"Expected {RAT_VOCAB_SIZE} tokens, got {len(rat_token_dict)}"
+    vocab_size = max(rat_token_dict.values()) + 1
+    logger.info(f"Rat token dict: {len(rat_token_dict)} entries, vocab_size={vocab_size}")
+    # No gaps in token IDs
+    assert len(rat_token_dict) == vocab_size, \
+        f"Token ID gap: {len(rat_token_dict)} entries but max ID implies {vocab_size}"
 
     # ── 3. Build prior knowledge tensors ─────────────────────────────────
     knowledges = build_knowledges_dict(
-        pretrained_state_dict=state,
-        rat_token_dict=rat_token_dict,
-        stage6_dir=stage6_dir,
-        homologous_gene_path=homologous_gene_path,
-        coexp_rescale_factor=coexp_rescale_factor,
-        vocab_size=RAT_VOCAB_SIZE,
-    )
+            pretrained_state_dict=state,
+            rat_token_dict=rat_token_dict,
+            stage6_dir=stage6_dir,
+            homologous_gene_path=homologous_gene_path,
+            coexp_rescale_factor=coexp_rescale_factor,
+        )
 
     # ── 4. Resize vocab-indexed tensors ──────────────────────────────────
     # Prior knowledge buffers → replace entirely with our tensors
@@ -197,10 +263,25 @@ def extend_checkpoint(
         state[key] = tensor
         logger.info(f"  {key}: {tensor.shape}")
 
-    # Word embeddings: [50558, 768] → [53032, 768]
     old_word_emb = state['bert.embeddings.word_embeddings.weight']
-    new_word_emb = torch.zeros(RAT_VOCAB_SIZE, EMBEDDING_DIM, dtype=old_word_emb.dtype)
+    new_word_emb = torch.zeros(vocab_size, EMBEDDING_DIM, dtype=old_word_emb.dtype)
     new_word_emb[:ORIGINAL_VOCAB_SIZE] = old_word_emb
+
+
+    # Initialize T3 word embeddings (warm-start from ortholog)
+    rat_token_mapping_path = Path(rat_token_dict_path).parent / 'rat_token_mapping.tsv'
+    gc_vocab_path = checkpoint_path.parent / 'prior_knowledge' / 'human_mouse_tokens.pickle'
+    if not gc_vocab_path.exists():
+        gc_vocab_path = _PROJECT_ROOT / 'vendor' / 'GeneCompass' / 'prior_knowledge' / 'human_mouse_tokens.pickle'
+    assert gc_vocab_path.exists(), f"GC vocab not found: {gc_vocab_path}"
+    # or resolve from config
+    with open(gc_vocab_path, 'rb') as f:
+        gc_vocab = pickle.load(f)
+
+    init_t3_warm_start(
+        new_word_emb, rat_token_dict, rat_token_mapping_path, gc_vocab,
+        noise_std=0.001,
+    )
 
     # Initialize T4 word embeddings
     if t4_init_strategy == 'random':
@@ -228,18 +309,18 @@ def extend_checkpoint(
     # ── 6. Extend prediction head biases ─────────────────────────────────
     for bias_key in ('cls.predictions.bias', 'cls.predictions.decoder.bias'):
         old_bias = state[bias_key]
-        new_bias = torch.zeros(RAT_VOCAB_SIZE, dtype=old_bias.dtype)
+        new_bias = torch.zeros(vocab_size, dtype=old_bias.dtype)
         new_bias[:ORIGINAL_VOCAB_SIZE] = old_bias
         state[bias_key] = new_bias
-        logger.info(f"  {bias_key}: [{ORIGINAL_VOCAB_SIZE}] → [{RAT_VOCAB_SIZE}]")
+        logger.info(f"  {bias_key}: [{ORIGINAL_VOCAB_SIZE}] → [{vocab_size}]")
 
     # ── 7. Extend homologous_index ───────────────────────────────────────
     old_index = state['bert.embeddings.homologous_index']
-    new_index = torch.arange(RAT_VOCAB_SIZE, dtype=old_index.dtype)
+    new_index = torch.arange(vocab_size, dtype=old_index.dtype)
     new_index[:ORIGINAL_VOCAB_SIZE] = old_index
     # T4 positions: identity (new tokens map to themselves)
     state['bert.embeddings.homologous_index'] = new_index
-    logger.info(f"  homologous_index: [{ORIGINAL_VOCAB_SIZE}] → [{RAT_VOCAB_SIZE}] (T4 = identity)")
+    logger.info(f"  homologous_index: [{ORIGINAL_VOCAB_SIZE}] → [{vocab_size}] (T4 = identity)")
 
     # ── 8. Extend cls_embedding: [2, 768] → [3, 768] ────────────────────
     old_cls = state['bert.cls_embedding.weight']
@@ -294,13 +375,13 @@ def extend_checkpoint(
         }
 
     # Update vocab size and pad token
-    config['vocab_size'] = RAT_VOCAB_SIZE
+    config['vocab_size'] = vocab_size
     config['pad_token_id'] = rat_token_dict.get('<pad>', 0)
 
     config_out = output_dir / 'config.json'
     with open(config_out, 'w') as f:
         json.dump(config, f, indent=2)
-    logger.info(f"Config saved: {config_out} (vocab_size={RAT_VOCAB_SIZE})")
+    logger.info(f"Config saved: {config_out} (vocab_size={vocab_size})")
 
     # ── 12. Summary ──────────────────────────────────────────────────────
     total_params = sum(t.numel() for t in state.values() if isinstance(t, torch.Tensor))
@@ -324,7 +405,7 @@ def main():
     )
     parser.add_argument(
         '--rat-token-dict', required=True,
-        help='Path to rat_tokens.pickle (53,032 entries)'
+        help='Path to rat_human_mouse_tokens.pickle (merged token dictionary)'
     )
     parser.add_argument(
         '--stage6-dir', required=True,

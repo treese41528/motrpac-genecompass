@@ -4,22 +4,26 @@
 rat_load_prior_embedding.py — Build prior knowledge tensors for rat fine-tuning.
 
 Replaces vendor/GeneCompass/genecompass/utils.py::load_prior_embedding, which
-crashes on ENSRNOG tokens (T4 rat-specific genes). This version:
+crashes on ENSRNOG tokens. This version:
 
   1. Starts with ZERO tensors of shape [vocab_size, 768]
-  2. Copies rows 0–50557 from the pre-trained GeneCompass checkpoint
-     (preserving calibrated T1-T3 embeddings for all four knowledge types)
-  3. Fills rows 50558–53031 (T4 rat tokens) from Stage 6 embedding pickles
-  4. Applies co-expression norm rescaling (factor ~3.9×) to T4 rows only
-  5. Returns the homologous_gene_human2mouse dict unchanged (rat uses identity)
+  2. Copies rows 0-50557 from the pre-trained GeneCompass checkpoint
+     (preserving calibrated embeddings for all four knowledge types)
+  3. Fills new token rows (50558+) from Stage 6 embedding pickles
+  4. Applies co-expression norm rescaling to new rows only
+  5. Returns the homologous_gene_human2mouse dict unchanged
 
-The key insight: T1-T3 rows in our Stage 6 dicts are NOT used. The pre-trained
-values at positions 0-50557 are already calibrated to the projection layers
-(linear1) — overwriting them with our independently-computed embeddings would
-break the learned projections.
+Vocab size is derived at runtime from max(rat_token_dict.values()) + 1.
+New tokens include both T3 (reclassified from shared to unique, with
+ortholog relationship preserved) and T4 (no ortholog, rat-specific).
+
+The key insight: rows 0-50557 in our Stage 6 dicts are NOT used. The
+pre-trained values at those positions are already calibrated to the
+projection layers (linear1) -- overwriting them with our independently
+computed embeddings would break the learned projections.
 
 Author: Tim Reese Lab
-Date: March 2026
+Date: March 2026 (updated April 2026 for T3 reclassification)
 """
 
 import logging
@@ -38,20 +42,17 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 ORIGINAL_VOCAB_SIZE = 50_558   # GeneCompass Base vocabulary
-RAT_VOCAB_SIZE = 53_032        # 50558 + 2474 T4 rat tokens
-T4_START = ORIGINAL_VOCAB_SIZE # First T4 token position
 EMBEDDING_DIM = 768
 
 EMBEDDING_TYPES = ('promoter', 'coexp', 'family', 'grn')
 
 
 def load_rat_prior_embeddings(
-    pretrained_state_dict: Dict[str, torch.Tensor],
-    rat_token_dict: Dict[str, int],
-    stage6_dir: str | Path,
-    homologous_gene_path: str | Path,
-    coexp_rescale_factor: float = 3.9,
-    vocab_size: int = RAT_VOCAB_SIZE,
+    pretrained_state_dict,
+    rat_token_dict,
+    stage6_dir,
+    homologous_gene_path,
+    coexp_rescale_factor=3.9,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, dict]:
     """
     Build the five knowledge objects required by KnowledgeBertEmbeddings.
@@ -61,7 +62,9 @@ def load_rat_prior_embeddings(
     pretrained_state_dict : dict
         State dict from GeneCompass_Base checkpoint (torch.load output).
     rat_token_dict : dict
-        Rat token dictionary {gene_id_str: token_int}. 53,032 entries.
+        Token dictionary {gene_id_str: token_int}. Vocab size derived
+        from max token ID. Includes T1/T2 (reusing GC IDs), T3 (new
+        unique IDs, warm-started from ortholog), and T4 (new, no ortholog).
     stage6_dir : path
         Directory containing Stage 6 embedding pickles:
           promoter_embeddings.pkl, coexp_embeddings.pkl,
@@ -69,10 +72,8 @@ def load_rat_prior_embeddings(
     homologous_gene_path : path
         Path to GeneCompass homologous_hm_token.pickle.
     coexp_rescale_factor : float
-        Scale factor for T4 co-expression embeddings (default 3.9).
-        Our T4 co-exp norms are ~4.8 vs model expectation ~18.6.
-    vocab_size : int
-        Target vocabulary size (default 53032).
+        Scale factor for new token co-expression embeddings (default 3.9).
+        Our new token co-exp norms are ~4.8 vs model expectation ~18.6.
 
     Returns
     -------
@@ -80,7 +81,8 @@ def load_rat_prior_embeddings(
         Four [vocab_size, 768] float tensors + homolog mapping dict.
     """
     stage6_dir = Path(stage6_dir)
-
+    vocab_size = max(rat_token_dict.values()) + 1
+    t4_start = ORIGINAL_VOCAB_SIZE
     # ── 1. Load Stage 6 embedding pickles ────────────────────────────────
     stage6_files = {
         'promoter': stage6_dir / 'promoter_embeddings.pkl',
@@ -122,7 +124,7 @@ def load_rat_prior_embeddings(
         t4_zero = 0
 
         for gene_str, token_id in rat_token_dict.items():
-            if token_id < T4_START:
+            if token_id < t4_start:
                 continue  # T1-T3: keep pre-trained values
             if gene_str in ('<pad>', '<mask>'):
                 continue  # Special tokens: stay zero
@@ -138,7 +140,7 @@ def load_rat_prior_embeddings(
 
         # Apply co-expression rescaling to T4 rows only
         if name == 'coexp' and coexp_rescale_factor != 1.0:
-            tensor[T4_START:] *= coexp_rescale_factor
+            tensor[t4_start:] *= coexp_rescale_factor
             logger.info(
                 f"Co-expression T4 rows rescaled by {coexp_rescale_factor:.1f}× "
                 f"(norm ratio correction)"
@@ -179,15 +181,9 @@ def build_knowledges_dict(
     stage6_dir: str | Path,
     homologous_gene_path: str | Path,
     coexp_rescale_factor: float = 3.9,
-    vocab_size: int = RAT_VOCAB_SIZE,
 ) -> Dict[str, object]:
     """
     Convenience wrapper: returns the dict format expected by BertForMaskedLM.
-
-    Returns
-    -------
-    dict with keys: 'promoter', 'co_exp', 'gene_family', 'peca_grn',
-                    'homologous_gene_human2mouse'
     """
     promoter, coexp, family, grn, homolog = load_rat_prior_embeddings(
         pretrained_state_dict=pretrained_state_dict,
@@ -195,7 +191,6 @@ def build_knowledges_dict(
         stage6_dir=stage6_dir,
         homologous_gene_path=homologous_gene_path,
         coexp_rescale_factor=coexp_rescale_factor,
-        vocab_size=vocab_size,
     )
 
     return {
