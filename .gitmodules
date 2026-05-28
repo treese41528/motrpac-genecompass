@@ -1,3 +1,9 @@
 [submodule "vendor/GeneCompass"]
 	path = vendor/GeneCompass
 	url = https://github.com/xCompass-AI/GeneCompass
+[submodule "vendor/BayesPrism"]
+	path = vendor/BayesPrism
+	url = https://github.com/Danko-Lab/BayesPrism.git
+[submodule "vendor/MotrpacRatTraining6moData"]
+	path = vendor/MotrpacRatTraining6moData
+	url = https://github.com/MoTrPAC/MotrpacRatTraining6moData.git
