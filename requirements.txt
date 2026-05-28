@@ -19,6 +19,7 @@ h5py>=3.8
 # ── Single-cell / bioinformatics ───────────────────────────
 scanpy>=1.9                # Cell QC, preprocessing (Stage 2)
 anndata>=0.9               # h5ad file handling
+scikit-misc>=0.3           # HVG selection (seurat_v3 flavor)
 biopython>=1.80            # Bio.Entrez for GEO/ArrayExpress (Stage 1)
 
 # ── Data serialization / arrow ─────────────────────────────
