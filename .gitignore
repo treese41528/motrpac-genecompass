@@ -56,3 +56,8 @@ tmp/
 
 # R user library (locked decision: install BayesPrism here per onboarding §9.1)
 R_libs/
+
+# Stage 8 deconvolution — generated artifacts (regenerable; large .mtx/.rds)
+deconvolution/reference/liver_GSE220075/
+deconvolution/results/
+deconvolution/validation/
