@@ -13,7 +13,7 @@
 
 set -eo pipefail   # -u dropped: Gilbreth's /etc/profile.d/00-modulepath.sh references unbound vars
 
-PROJECT_ROOT="/depot/reese18/apps/motrpac-genecompass"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 
 # Project-local tmp for R's scratch (downloaded_packages, build dirs) — never /tmp.

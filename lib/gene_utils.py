@@ -43,10 +43,25 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 # CONFIG LOADING
 # ============================================================
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge ``override`` into ``base`` (override wins); returns base."""
+    for k, v in override.items():
+        if isinstance(v, dict) and isinstance(base.get(k), dict):
+            _deep_merge(base[k], v)
+        else:
+            base[k] = v
+    return base
+
+
 def load_config(config_path: Optional[str] = None) -> dict:
     """
     Load pipeline config from YAML.
     Resolves project_root from PIPELINE_ROOT env var or config default.
+
+    A sibling ``pipeline_config.local.yaml`` (gitignored), if present, is
+    deep-merged on top of the committed config: the committed file is the shared
+    template; machine-specific overrides (paths, n_cores, ...) live in the local
+    file so they never reach GitHub.
 
     Args:
         config_path: Path to YAML file. If None, searches for
@@ -76,6 +91,13 @@ def load_config(config_path: Optional[str] = None) -> dict:
 
     with open(config_path) as f:
         config = yaml.safe_load(f)
+
+    # Machine-specific overrides (gitignored): pipeline_config.local.yaml
+    local = Path(config_path).with_name("pipeline_config.local.yaml")
+    if local.is_file():
+        with open(local) as f:
+            override = yaml.safe_load(f) or {}
+        _deep_merge(config, override)
 
     # Resolve project root
     config["_project_root"] = Path(

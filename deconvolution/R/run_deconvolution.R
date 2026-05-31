@@ -25,8 +25,10 @@ ref_dir <- args[1]; mix_dir <- args[2]; out_dir <- args[3]
 mtx_base <- if (length(args) >= 4) args[4] else "pseudobulk_counts"
 genes_base <- sub("_counts$", "", mtx_base)   # pseudobulk_counts -> pseudobulk_genes
 n.cores <- as.integer(Sys.getenv("N_CORES", unset = "4"))
-excl_path <- file.path("/depot/reese18/apps/motrpac-genecompass",
-                       "deconvolution/reference/rat_exclude_genes.tsv")
+excl_path <- Sys.getenv("RAT_EXCLUDE_GENES")
+if (excl_path == "")   # standalone fallback when not launched via run_deconvolution.sh
+  excl_path <- file.path(Sys.getenv("PROJECT_ROOT", unset = "."),
+                         "deconvolution/reference/rat_exclude_genes.tsv")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 cat(sprintf("BayesPrism %s | n.cores=%d\nref=%s\nmix=%s\n",
             as.character(packageVersion("BayesPrism")), n.cores, ref_dir, mix_dir))

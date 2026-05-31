@@ -21,6 +21,7 @@ Usage (project venv):
   python deconvolution/build_reference.py --study GSE220075 --tissue liver
 """
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -31,16 +32,26 @@ import scipy.sparse as sp
 import anndata as ad
 import scanpy as sc
 
-PROJECT = Path("/depot/reese18/apps/motrpac-genecompass")
-QC_DIR = Path("/depot/reese18/data/training/preprocessed/qc_matrices")
-CT_DIR = PROJECT / "data/training/cell_annotations"
-CONS_DIR = PROJECT / "data/training/cell_annotations_consensus"
-INVENTORY = PROJECT / "reports/annotations/annotation_inventory.tsv"
+# Paths are read from config/pipeline_config.yaml (deconvolution section), with an
+# optional gitignored config/pipeline_config.local.yaml override. PIPELINE_ROOT is
+# derived from this file's location so the module works from any working directory.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))
+from gene_utils import load_config, resolve_path  # noqa: E402
+
+_CFG = load_config()
+_DC = _CFG["deconvolution"]
+PROJECT = _CFG["_project_root"]
+QC_DIR = resolve_path(_CFG, _DC["qc_matrices_dir"])
+CT_DIR = resolve_path(_CFG, _DC["cell_annotations_dir"])
+CONS_DIR = resolve_path(_CFG, _DC["consensus_annotations_dir"])
+INVENTORY = resolve_path(_CFG, _DC["annotation_inventory"])
 UNKNOWN = {"Unknown", "unknown", "", "nan", "NA"}
 
 
-def select_samples(study, tissue, conditions=None):
-    """In-corpus sample IDs for study+tissue, optionally filtered by condition_resolved."""
+def select_samples(study, tissue, conditions=None, sex=None):
+    """In-corpus sample IDs for study+tissue, optionally filtered by
+    condition_resolved and/or sex_resolved."""
     inv = pd.read_csv(INVENTORY, sep="\t", dtype=str)
     sel = inv[
         (inv["accession"] == study)
@@ -49,10 +60,12 @@ def select_samples(study, tissue, conditions=None):
     ]
     if conditions:
         sel = sel[sel["condition_resolved"].isin(conditions)]
+    if sex:
+        sel = sel[sel["sex_resolved"].str.lower() == sex.lower()]
     samples = sorted(sel["sample_id"].tolist())
     if not samples:
         sys.exit(f"ERROR: no in-corpus {tissue} samples for {study} "
-                 f"(conditions={conditions}) in {INVENTORY}")
+                 f"(conditions={conditions}, sex={sex}) in {INVENTORY}")
     return samples
 
 
@@ -94,9 +107,9 @@ def load_sample(sample):
     return sub
 
 
-def load_study(study, tissue, conditions=None):
+def load_study(study, tissue, conditions=None, sex=None):
     """Concatenate all (loadable) samples of a study/tissue on the shared gene set."""
-    samples = select_samples(study, tissue, conditions)
+    samples = select_samples(study, tissue, conditions, sex)
     print(f"{study} / {tissue}: {len(samples)} samples -> {samples}")
     parts = [s for s in (load_sample(x) for x in samples) if s is not None]
     if not parts:

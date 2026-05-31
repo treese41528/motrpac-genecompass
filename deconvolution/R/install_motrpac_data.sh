@@ -27,8 +27,10 @@
 
 set -eo pipefail   # -u dropped: Gilbreth's /etc/profile.d/00-modulepath.sh references unbound vars
 
-PROJECT_ROOT="/depot/reese18/apps/motrpac-genecompass"
-DATA_STORE="/depot/reese18/data/motrpac/rat_training_6mo"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# External data store (~18 GB, lives OUTSIDE the repo). Override via env for reuse;
+# it gets symlinked into data/motrpac/ at the end of this script.
+DATA_STORE="${MGC_MOTRPAC_DATA_STORE:-/depot/reese18/data/motrpac/rat_training_6mo}"
 PROJECT_DATA_LINK="${PROJECT_ROOT}/data/motrpac/rat_training_6mo"
 PKG_SRC="${PROJECT_ROOT}/vendor/MotrpacRatTraining6moData"
 README="${PKG_SRC}/README.md"

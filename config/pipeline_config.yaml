@@ -300,3 +300,25 @@ prior_knowledge:
     enabled: true             # Requires DNABert + Ensembl genome sequences
   grn:
     enabled: true   # PECA2vec cross-species transfer from GeneCompass human/mouse GRNs
+
+# ============================================================
+# Stage 8: Deconvolution (BayesPrism)
+# ============================================================
+# All paths relative to project_root. Cluster data is expected to be symlinked
+# into data/ (e.g. data/training/preprocessed -> /depot/.../training/preprocessed).
+# Machine-specific overrides belong in the gitignored config/pipeline_config.local.yaml.
+deconvolution:
+  # Inputs: single-cell corpus (raw QC matrices) + per-sample annotations
+  qc_matrices_dir: data/training/preprocessed/qc_matrices
+  cell_annotations_dir: data/training/cell_annotations
+  consensus_annotations_dir: data/training/cell_annotations_consensus
+  annotation_inventory: reports/annotations/annotation_inventory.tsv
+  # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup)
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes.tsv
+  # Outputs
+  reference_dir: deconvolution/reference
+  validation_dir: deconvolution/validation
+  results_dir: deconvolution/results
+  # Runtime (R / BayesPrism)
+  n_cores: 4
+  r_module: r/4.4.1

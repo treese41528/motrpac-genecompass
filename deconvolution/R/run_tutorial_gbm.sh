@@ -14,7 +14,8 @@
 
 set -eo pipefail   # -u dropped: Gilbreth's profile.d scripts reference unbound vars
 
-PROJECT_ROOT="/depot/reese18/apps/motrpac-genecompass"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+export PROJECT_ROOT
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"          # project-local scratch (run.prism writes mixtures here)
 export N_CORES="${N_CORES:-4}"

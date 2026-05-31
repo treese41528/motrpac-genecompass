@@ -100,16 +100,25 @@ def build_harmonization(source_labels, ref_types):
     return mapping
 
 
-def generate_mixtures(pool, types, rng, n_mix, cells_per_mix, alpha):
+def generate_mixtures(pool, types, rng, n_mix, cells_per_mix, alpha, return_z=False):
     """Dirichlet-proportioned pseudobulk. Returns (counts mixtures x genes, true_frac DataFrame).
 
     Ground truth recorded two ways: cellfrac__ = fraction of CELLS of each type;
     rnafrac__ = fraction of total COUNTS contributed by each type (this is what
     BayesPrism's theta estimates, so it's the primary scoring target).
+
+    If return_z, also returns z_true: dict cell_type -> (n_mix x n_genes) array of
+    the summed counts contributed by that type's cells per mixture -- the ground-
+    truth per-cell-type expression Z (sum over types == the mixture total). The rng
+    draw order is IDENTICAL whether or not return_z, so replaying with the same
+    seed reproduces the exact same mixtures (and hence a Z aligned to the saved
+    pseudobulk that BayesPrism deconvolved). See deconvolution/compute_true_z.py.
     """
     X = sp.csr_matrix(pool.X)                        # cells x genes
+    n_genes = X.shape[1]
     type_idx = {t: np.where(pool.obs["ref_type"].values == t)[0] for t in types}
     rows, recs = [], []
+    z_true = {t: np.zeros((n_mix, n_genes)) for t in types} if return_z else None
     for i in range(n_mix):
         frac = rng.dirichlet(np.full(len(types), alpha))
         n_per = (frac * cells_per_mix).round().astype(int)
@@ -129,11 +138,16 @@ def generate_mixtures(pool, types, rng, n_mix, cells_per_mix, alpha):
         for t, n in zip(types, n_per):
             rec[f"cellfrac__{t}"] = n / n_total
         for t in types:
-            rna = float(np.asarray(X[picks_by_type[t]].sum())) if t in picks_by_type else 0.0
-            rec[f"rnafrac__{t}"] = rna / total
+            tvec = (np.asarray(X[picks_by_type[t]].sum(axis=0)).ravel()
+                    if t in picks_by_type else np.zeros(n_genes))
+            rec[f"rnafrac__{t}"] = float(tvec.sum()) / total
+            if return_z:
+                z_true[t][i] = tvec
         rows.append(mix_counts)
         recs.append(rec)
     counts = sp.csr_matrix(np.vstack(rows).astype(np.int64))
+    if return_z:
+        return counts, pd.DataFrame(recs), z_true
     return counts, pd.DataFrame(recs)
 
 
@@ -146,6 +160,7 @@ def main():
     ap.add_argument("--source-study", help="cross mode: mixture source study")
     ap.add_argument("--ref-dir", help="cross mode: existing reference dir")
     ap.add_argument("--conditions", help="comma-sep condition_resolved filter (source)")
+    ap.add_argument("--sex", help="cross mode: sex_resolved filter (e.g. male/female)")
     ap.add_argument("--holdout-frac", type=float, default=0.30)
     ap.add_argument("--n-mixtures", type=int, default=50)
     ap.add_argument("--cells-per-mixture", type=int, default=1000)
@@ -179,7 +194,7 @@ def main():
         ref_meta = pd.read_csv(Path(args.ref_dir) / "cells_meta.tsv", sep="\t")
         ref_types = sorted(ref_meta["cell_type"].unique())
         ref_genes = [l.strip() for l in open(Path(args.ref_dir) / "genes.tsv")]
-        pool = clean_cells(load_study(args.source_study, args.tissue, conds))
+        pool = clean_cells(load_study(args.source_study, args.tissue, conds, args.sex))
         hmap = build_harmonization(sorted(pool.obs["cell_type"].unique()), ref_types)
         pool.obs["ref_type"] = pool.obs["cell_type"].map(hmap)
         hm = (pool.obs.groupby("cell_type")

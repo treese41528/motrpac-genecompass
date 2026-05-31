@@ -1,8 +1,10 @@
 """Inspect catalog — round 3. LLM analyses + unified studies entries."""
 import json
 import os
+from pathlib import Path
 
-catalog_dir = "/depot/reese18/apps/motrpac-genecompass/data/catalog"
+# repo-relative (data/catalog is a symlink into the cluster data store)
+catalog_dir = str(Path(__file__).resolve().parents[2] / "data" / "catalog")
 
 # 1. llm_study_analysis.json -> analyses (one entry)
 print("=== llm_study_analysis -> analyses (1 entry) ===")

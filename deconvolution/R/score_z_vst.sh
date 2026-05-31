@@ -1,23 +1,19 @@
 #!/bin/bash
-# Wrapper for run_deconvolution.R -- reproduces the Gilbreth R env (project-local
-# R_libs/, suppressed site Rprofile, TMPDIR=project tmp/, conda stripped so
-# scran/igraph dlopen cleanly), then runs the deconvolution.
+# Wrapper for score_z_vst.R -- same Gilbreth R env as run_deconvolution.sh
+# (project R_libs/, suppressed site Rprofile, conda stripped). Light (readRDS-free,
+# just CSV + DESeq2 VST), so a login node is fine.
 #
-# run.prism is CPU-heavy -- use a COMPUTE node (see run_validation.slurm).
-#
-# Usage:  [N_CORES=16] run_deconvolution.sh <ref_dir> <mixture_dir> <out_dir> [mtx_basename]
+# Usage:  score_z_vst.sh <stage_dir> <focal_type>
 set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export PROJECT_ROOT PIPELINE_ROOT="$PROJECT_ROOT"
-# Best-effort config read (falls back to repo-relative defaults if python/pyyaml absent)
 command -v python3 >/dev/null 2>&1 && \
   eval "$(python3 "${PROJECT_ROOT}/deconvolution/_config_sh.py" 2>/dev/null || true)"
-export RAT_EXCLUDE_GENES="${RAT_EXCLUDE_GENES:-${CFG_RAT_EXCLUDE_GENES:-${PROJECT_ROOT}/deconvolution/reference/rat_exclude_genes.tsv}}"
+R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
+
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
-export N_CORES="${N_CORES:-${CFG_N_CORES:-4}}"
-R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${TMPDIR}"
 
@@ -29,7 +25,5 @@ export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
 export PATH=$(echo "${PATH}" | tr ':' '\n' \
   | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
 
-echo "R       : $(which R)"
-echo "N_CORES : ${N_CORES}"
 Rscript --no-init-file --no-site-file \
-  "${PROJECT_ROOT}/deconvolution/R/run_deconvolution.R" "$@"
+  "${PROJECT_ROOT}/deconvolution/R/score_z_vst.R" "$@"

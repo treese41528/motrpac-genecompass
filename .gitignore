@@ -37,6 +37,9 @@ Thumbs.db
 slurm/
 config/slurm_profiles/
 
+# Machine-specific config override (committed config/pipeline_config.yaml is the shared template)
+config/pipeline_config.local.yaml
+
 # SLURM logs
 slurm-*.out
 *.log
@@ -53,6 +56,9 @@ wandb/
 randsel_500w_mouse/
 notebooks/traceback_analysis.ipynb
 tmp/
+
+# Reading material / reference PDFs (local only)
+readings/
 
 # R user library (locked decision: install BayesPrism here per onboarding §9.1)
 R_libs/
