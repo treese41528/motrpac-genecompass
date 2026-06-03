@@ -49,6 +49,42 @@ cat(sprintf("reference: %d cells x %d genes | %d types | %d states\n",
 excl <- read.delim(excl_path, stringsAsFactors = FALSE)$feature_ID
 n_excl <- sum(colnames(ref) %in% excl)
 ref <- ref[, !colnames(ref) %in% excl, drop = FALSE]
+
+# ---- sex-chromosome removal (replaces cleanup.genes chrX/chrY groups) ----
+# chrX/chrY genes from biomart rat_gene_info.tsv; default-on so sex composition
+# does not confound cell-type fractions in mixed-sex bulk. Gated by
+# EXCLUDE_SEX_CHROMOSOMES; skips cleanly if the list/flag is absent.
+sex_on <- Sys.getenv("EXCLUDE_SEX_CHROMOSOMES", unset = "1") %in% c("1", "true", "TRUE")
+sex_path <- Sys.getenv("RAT_SEX_CHROM_GENES")
+if (sex_on && nzchar(sex_path) && file.exists(sex_path)) {
+  sexg <- toupper(sub("\\..*$", "", read.delim(sex_path, stringsAsFactors = FALSE)$feature_ID))
+  drop_sex <- toupper(sub("\\..*$", "", colnames(ref))) %in% sexg
+  cat(sprintf("sex-chromosome filter: removed %d chrX/chrY genes\n", sum(drop_sex)))
+  ref <- ref[, !drop_sex, drop = FALSE]
+} else {
+  cat(sprintf("sex-chromosome filter: SKIPPED (EXCLUDE_SEX_CHROMOSOMES=%s, list=%s)\n",
+              Sys.getenv("EXCLUDE_SEX_CHROMOSOMES", unset = "1"),
+              if (nzchar(sex_path) && file.exists(sex_path)) "present" else "absent"))
+}
+
+# ---- protein-coding subset (replaces hs/mm-only select.gene.type="protein_coding") ----
+# Rat protein-coding genes from biomart rat_gene_info.tsv (Gene type == protein_coding),
+# the same biotype source GeneCompass Stage 2 uses. Gated by PROTEIN_CODING_ONLY so the
+# pre-protein-coding behavior stays reproducible if the list/flag is absent.
+pc_only <- Sys.getenv("PROTEIN_CODING_ONLY", unset = "1") %in% c("1", "true", "TRUE")
+pc_path <- Sys.getenv("RAT_PROTEIN_CODING_GENES")
+if (pc_only && nzchar(pc_path) && file.exists(pc_path)) {
+  pc <- toupper(sub("\\..*$", "", read.delim(pc_path, stringsAsFactors = FALSE)$feature_ID))
+  keep_pc <- toupper(sub("\\..*$", "", colnames(ref))) %in% pc
+  cat(sprintf("protein-coding filter: %d/%d reference genes are protein_coding (%d non-coding/unknown dropped)\n",
+              sum(keep_pc), length(keep_pc), sum(!keep_pc)))
+  ref <- ref[, keep_pc, drop = FALSE]
+} else {
+  cat(sprintf("protein-coding filter: SKIPPED (PROTEIN_CODING_ONLY=%s, list=%s)\n",
+              Sys.getenv("PROTEIN_CODING_ONLY", unset = "1"),
+              if (nzchar(pc_path) && file.exists(pc_path)) "present" else "absent"))
+}
+
 keepg <- colSums(ref > 0) >= 3                      # species-agnostic low-expression filter
 cat(sprintf("removed %d ribo/mito/hb genes; %d genes expressed in <3 cells; %d genes kept\n",
             n_excl, sum(!keepg), sum(keepg)))

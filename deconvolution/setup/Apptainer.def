@@ -1,0 +1,63 @@
+# =============================================================================
+# Apptainer/Singularity image for the whole MoTrPAC GeneCompass repo: the
+# deconvolution R stack + the full repo Python environment (requirements.txt).
+# HPC path; mirrors setup/Dockerfile (keep the apt list / CRAN_REPO / requirements
+# in sync between the two).
+#
+# Build (most clusters allow --fakeroot; no Docker needed), from the repo root so the
+# %files paths resolve, with the BayesPrism submodule checked out:
+#   git submodule update --init vendor/BayesPrism
+#   apptainer build --fakeroot genecompass.sif deconvolution/setup/Apptainer.def
+#   # ...or convert a Docker image:  apptainer build genecompass.sif docker-daemon://motrpac-genecompass:1.0
+#
+# Run (Apptainer auto-mounts $PWD and $HOME); R and Python entry points both work:
+#   apptainer exec genecompass.sif Rscript deconvolution/R/run_omnideconv.R <ref> <mix> <out>
+#   apptainer exec genecompass.sif python pipeline/01_data_harvesting/geo_harvester.py ...
+# GPU (Stage-7 training): add --nv on an NVIDIA host (the default torch wheel is
+# CUDA-capable). The deconvolution methods themselves are CPU-only.
+# =============================================================================
+Bootstrap: docker
+From: rocker/r-ver:4.4.1
+
+%files
+    deconvolution/setup /opt/motrpac/deconvolution/setup
+    vendor/BayesPrism   /opt/motrpac/vendor/BayesPrism
+    requirements.txt    /opt/motrpac/requirements.txt
+
+%post
+    set -e
+    apt-get update && apt-get install -y --no-install-recommends \
+        git cmake pkg-config curl ca-certificates \
+        libpng-dev libjpeg-dev libtiff5-dev \
+        libxml2-dev libcurl4-openssl-dev libssl-dev \
+        zlib1g-dev libicu-dev libglpk-dev libsqlite3-dev libgit2-dev \
+        libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libx11-dev \
+        libhdf5-dev libgsl-dev
+    rm -rf /var/lib/apt/lists/*
+
+    # --- R layer ---
+    export CRAN_REPO=https://packagemanager.posit.co/cran/__linux__/jammy/2026-06-02
+    export PROJECT_ROOT=/opt/motrpac
+    Rscript /opt/motrpac/deconvolution/setup/install_r_packages.R
+    Rscript -e 'for (p in c("BayesPrism","omnideconv","MuSiC","DWLS","SCDC","BisqueRNA")) \
+        stopifnot(requireNamespace(p, quietly=TRUE)); cat("DECONV_R_OK\n")'
+
+    # --- Python layer (full repo env via uv -> reproducible Python 3.12) ---
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
+    /usr/local/bin/uv venv --python 3.12 /opt/motrpac-venv
+    /usr/local/bin/uv pip install --python /opt/motrpac-venv/bin/python --no-cache -r /opt/motrpac/requirements.txt
+    /opt/motrpac-venv/bin/python -c "import anndata, scanpy, pandas, scipy, numpy, torch, transformers, yaml; print('PY_ENV_OK')"
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export RETICULATE_PYTHON=/opt/motrpac-venv/bin/python
+    export PATH=/opt/motrpac-venv/bin:$PATH
+
+%runscript
+    exec R --no-save "$@"
+
+%labels
+    org.motrpac.component genecompass-full-stack
+    org.motrpac.r_version 4.4.1
+    org.motrpac.python_version 3.12

@@ -1,0 +1,60 @@
+# =============================================================================
+# Pinned R-package manifest for the MoTrPAC GeneCompass deconvolution stack
+# (Stage 8: BayesPrism + the omnideconv multi-method cross-check + DESeq2 scoring).
+#
+# This is the SINGLE SOURCE OF TRUTH for the R environment, consumed by BOTH
+# setup paths:
+#   - the containers           (setup/Dockerfile, setup/Apptainer.def)
+#   - the bare-metal bootstrap (setup/install_r_env.sh -> setup/install_r_packages.R)
+#
+# Only the "root" packages we explicitly want are listed; pak resolves the full
+# dependency tree from them. Versions/SHAs were captured from a verified, working
+# R_libs/ on 2026-06-02 under R 4.4.1 / Bioconductor 3.20.
+#
+# To refresh after a deliberate upgrade: re-run setup/install_r_packages.R, then
+# `Rscript setup/snapshot_r_packages.R` (prints updated version/sha fields to paste here).
+# =============================================================================
+r_version: "4.4.1"
+bioc_version: "3.20"        # R 4.4 era: DESeq2 1.46, Biobase 2.66, Biostrings 2.74
+
+packages:
+  # ---- CRAN ----
+  - {name: Seurat,     version: "5.5.0",  source: cran}
+  - {name: Matrix,     version: "1.7-5",  source: cran}
+  - {name: limSolve,   version: "2.0.1",  source: cran}   # Bisque needs it; back on CRAN 2025-06-24
+  - {name: reticulate, version: "1.46.0", source: cran}
+  - {name: anndata,    version: "0.8.0",  source: cran}
+
+  # ---- Bioconductor ----
+  - {name: DESeq2,     version: "1.46.0", source: bioc}    # VST metric (paper-faithful scoring)
+
+  # ---- GitHub: reference-based method packages (omnideconv forks + Bisque) ----
+  # These forks are patched to omnideconv::deconvolute()'s calling convention; use
+  # exactly these slugs (NOT the upstream xuranw/MuSiC etc.).
+  - {name: MuSiC,         version: "0.3.0",      source: github, repo: omnideconv/MuSiC,  sha: 7b18b034}
+  - {name: DWLS,          version: "0.5.2",      source: github, repo: omnideconv/DWLS,   sha: 9a767ced}
+  - {name: SCDC,          version: "0.0.0.9000", source: github, repo: omnideconv/SCDC,   sha: dc2b0ef4}
+  - {name: bseqsc,        version: "1.0",        source: github, repo: omnideconv/bseqsc, sha: 9ac71beb}
+  - {name: BisqueRNA,     version: "1.0.5",      source: github, repo: cozygene/bisque,   sha: 8640250d}  # CRAN copy removed 2025-06-02
+  - {name: SCOPfunctions, version: "0.0.0.9000", source: github, repo: CBMR-Single-Cell-Omics-Platform/SCOPfunctions, sha: b7c3656a}  # omnideconv hard dep
+
+  # ---- GitHub, PATCHED at install time ----
+  # omnideconv's DESCRIPTION lists devtools/pkgdown/knitr/rmarkdown/testthat as
+  # Imports (for doc-building only; absent from its NAMESPACE). install_r_packages.R
+  # demotes them before a local install, which removes the unbuildable
+  # ragg->systemfonts/textshaping font stack. See setup/install_r_packages.R::patch_omnideconv.
+  - {name: omnideconv, version: "0.1.1", source: github_patched, repo: omnideconv/omnideconv, sha: 2dcd4d83}
+
+  # ---- vendored git submodule (audited Danko-Lab R BayesPrism, NOT pyBayesPrism) ----
+  # Pinned by the repo's submodule commit. If the submodule is absent, the installer
+  # falls back to github Danko-Lab/BayesPrism (subdir BayesPrism) — less reproducible.
+  - {name: BayesPrism, version: "2.2.3", source: vendor, path: vendor/BayesPrism/BayesPrism,
+     github_fallback: "Danko-Lab/BayesPrism", subdir: BayesPrism}
+
+# Methods deliberately EXCLUDED from this stack and why (do not "helpfully" re-add):
+#   scBio (CPM)            -> pulls terra -> gdal/geos/proj (heavy geospatial)
+#   MOMF                   -> pulls rgl   -> OpenGL/glu/X11 (heavy 3D)
+#   omnideconv/BayesPrism  -> installs as package "BayesPrism", would CLOBBER the
+#                             vendored Danko-Lab build above
+# CDSeq is optional (slow Gibbs sampler; needs harmony) and is not pinned here.
+exclude_methods: [scBio, MOMF, "omnideconv/BayesPrism"]

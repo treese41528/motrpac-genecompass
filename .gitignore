@@ -63,7 +63,16 @@ readings/
 # R user library (locked decision: install BayesPrism here per onboarding §9.1)
 R_libs/
 
-# Stage 8 deconvolution — generated artifacts (regenerable; large .mtx/.rds)
-deconvolution/reference/liver_GSE220075/
+# Stage 8 deconvolution — generated DATA artifacts (regenerable via deconvolution/build_*.{py,sh};
+# large .mtx/.rds, up to ~2 GB/file). Per-tissue reference SUBDIRS are ignored, but the small
+# committed gene lists at the reference/ root (reference/rat_*_genes.tsv) are kept.
+deconvolution/reference/*/
+deconvolution/reference_v2/
+deconvolution/validation_v2/
 deconvolution/results/
 deconvolution/validation/
+# stray single-cell matrix exports, anywhere
+*.h5ad
+
+# local cluster profile for the deconvolution R bootstrap (template: site.env.gilbreth.example)
+deconvolution/setup/site.env
