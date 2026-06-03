@@ -52,10 +52,18 @@ RUN Rscript deconvolution/setup/install_r_packages.R \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY requirements.txt ./requirements.txt
 RUN uv venv --python 3.12 /opt/motrpac-venv \
- && uv pip install --python /opt/motrpac-venv/bin/python --no-cache -r requirements.txt
+ && uv pip install --python /opt/motrpac-venv/bin/python --no-cache -r requirements.txt \
+ && uv pip install --python /opt/motrpac-venv/bin/python --no-cache --no-deps \
+      "git+https://github.com/omnideconv/scaden.git@03f4ee3e4cce8808a5d1a2467ea5b87f04c90a09"
+# Scaden (above) is added --no-deps because its fork pins a stale tensorflow==2.13.0; the modern
+# TF + the tf-keras Keras-2 shim come from requirements.txt. TF_USE_LEGACY_KERAS makes
+# tf.keras = Keras 2 for Scaden's code (harmless to torch). We do NOT globally disable CUDA here
+# (that would break GPU torch); run_omnideconv.* scopes CUDA_VISIBLE_DEVICES=-1 to the
+# deconvolution run so TF stays CPU without touching torch.
 ENV RETICULATE_PYTHON=/opt/motrpac-venv/bin/python \
-    PATH=/opt/motrpac-venv/bin:${PATH}
-RUN python -c "import anndata, scanpy, pandas, scipy, numpy, torch, transformers, yaml; print('PY_ENV_OK')"
+    PATH=/opt/motrpac-venv/bin:${PATH} \
+    TF_USE_LEGACY_KERAS=1
+RUN CUDA_VISIBLE_DEVICES=-1 python -c "import anndata, scanpy, pandas, scipy, numpy, torch, transformers, yaml, tensorflow, autogenes, scaden; print('PY_ENV_OK')"
 
 # Default: drop into R. At runtime mount the repo at /work; `python`/`Rscript` both work.
 WORKDIR /work

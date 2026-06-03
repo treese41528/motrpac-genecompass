@@ -46,13 +46,18 @@ From: rocker/r-ver:4.4.1
     curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
     /usr/local/bin/uv venv --python 3.12 /opt/motrpac-venv
     /usr/local/bin/uv pip install --python /opt/motrpac-venv/bin/python --no-cache -r /opt/motrpac/requirements.txt
-    /opt/motrpac-venv/bin/python -c "import anndata, scanpy, pandas, scipy, numpy, torch, transformers, yaml; print('PY_ENV_OK')"
+    # Scaden's fork pins an ancient tensorflow==2.13.0 -> add it WITHOUT deps (modern TF + the
+    # tf-keras Keras-2 shim already came from requirements.txt). See requirements-omnideconv.txt.
+    /usr/local/bin/uv pip install --python /opt/motrpac-venv/bin/python --no-cache --no-deps \
+        "git+https://github.com/omnideconv/scaden.git@03f4ee3e4cce8808a5d1a2467ea5b87f04c90a09"
+    CUDA_VISIBLE_DEVICES=-1 /opt/motrpac-venv/bin/python -c "import anndata, scanpy, pandas, scipy, numpy, torch, transformers, yaml, tensorflow, autogenes, scaden; print('PY_ENV_OK')"
 
 %environment
     export LC_ALL=C.UTF-8
     export LANG=C.UTF-8
     export RETICULATE_PYTHON=/opt/motrpac-venv/bin/python
     export PATH=/opt/motrpac-venv/bin:$PATH
+    export TF_USE_LEGACY_KERAS=1
 
 %runscript
     exec R --no-save "$@"

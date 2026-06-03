@@ -1,8 +1,9 @@
 # Setting up the deconvolution R environment
 
 This stage needs an R toolchain: **BayesPrism** (Danko-Lab, vendored) for the primary
-deconvolution, the **omnideconv** multi-method panel (MuSiC / DWLS / SCDC / Bisque) for
-the cross-check, and **DESeq2** for the paper-faithful VST scoring metric. The pipeline
+deconvolution, the **omnideconv** multi-method panel (MuSiC / DWLS / SCDC / Bisque, plus the
+Python methods **AutoGeneS / Scaden** via reticulate) for the cross-check, and **DESeq2** for
+the paper-faithful VST scoring metric. The pipeline
 also has Python pieces (the `*.py` helpers + the R↔Python `reticulate` bridge); the
 **container path bundles the full repo Python env** (`requirements.txt`) alongside R, so
 it is the entire environment in one image.

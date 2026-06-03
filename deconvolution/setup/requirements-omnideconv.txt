@@ -1,0 +1,20 @@
+absl-py==2.4.0
+astunparse==1.6.3
+autogenes @ git+https://github.com/omnideconv/AutoGeneS.git@9ba0328217020384c62ef7688a6535d39ead5fe9
+cachetools==7.1.4
+deap==1.4.4
+dill==0.4.1
+flatbuffers==25.12.19
+gast==0.7.0
+google-pasta==0.2.0
+grpcio==1.81.0
+h5py==3.14.0
+keras==3.14.1
+libclang==18.1.1
+ml_dtypes==0.5.4
+opt_einsum==3.4.0
+scaden @ git+https://github.com/omnideconv/scaden.git@03f4ee3e4cce8808a5d1a2467ea5b87f04c90a09
+tensorflow==2.21.0
+termcolor==3.3.0
+tf_keras==2.21.0
+wrapt==2.1.2
