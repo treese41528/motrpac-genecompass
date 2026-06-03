@@ -52,7 +52,8 @@ import pandas as pd
 import scipy.io as sio
 import scipy.sparse as sp
 
-from build_reference import (PROJECT, load_study, clean_cells, export_reference)
+from build_reference import (PROJECT, load_study, clean_cells, export_reference,
+                             canonicalize_labels)
 
 # Substrings (lowercased, no word boundaries -> robust to plurals) that mark a
 # cell as immune; collapsed to the reference's coarse immune bucket.
@@ -72,27 +73,40 @@ def _ref_keywords(ref_types):
     return kw
 
 
+def _tokens(label):
+    """Singularized word tokens of a label, e.g. 'Skeletal myocytes' -> {'skeletal','myocyte'}."""
+    toks = [w for w in re.split(r"[^a-z0-9]+", str(label).lower()) if w and w not in _STOP]
+    return {w[:-1] if w.endswith("s") and len(w) > 3 else w for w in toks}
+
+
 def build_harmonization(source_labels, ref_types):
     """source consensus_label -> reference cell type.
-    Priority: exact match -> reference-type keyword (handles synonyms/subtypes,
-    e.g. 'Hepatic endothelial cells' -> 'Endothelial cells', 'Metabolic hepatocytes'
-    -> 'Hepatocytes') -> immune synonym -> coarse immune bucket -> None (dropped)."""
+    Priority: exact match -> best whole-token overlap with a reference type's
+    keywords (handles synonyms/subtypes, e.g. 'Hepatic endothelial cells' ->
+    'Endothelial cells', 'Skeletal myocytes' -> 'Skeletal muscle cells') -> immune
+    synonym -> coarse immune bucket -> None (dropped).
+
+    Matching is WHOLE-TOKEN, not substring: critical because short ref keywords like
+    't' (from 'T cells') or 'b' (from 'B cells') would substring-match almost any
+    label ('t' in 'skeletal'), silently dumping parenchyma into a T-cell bucket. We
+    also pick the ref type with the MOST shared tokens, not merely the first hit."""
     immune_target = next((t for t in ref_types if "immune" in t.lower()), None)
     ref_set = set(ref_types)
-    kw = _ref_keywords(ref_types)
+    kw = {t: set(ws) for t, ws in _ref_keywords(ref_types).items()}
     mapping = {}
     for lab in source_labels:
         ll = str(lab).lower()
         if lab in ref_set:
             mapping[lab] = lab
             continue
-        hit = None
+        src = _tokens(lab)
+        hit, best = None, 0
         for t, words in kw.items():
             if t == immune_target:                 # immune handled via synonyms below
                 continue
-            if any(w in ll for w in words):
-                hit = t
-                break
+            ov = len(src & words)                  # whole-token overlap count
+            if ov > best:
+                best, hit = ov, t
         if hit is None and immune_target and ("immune" in ll
                                               or any(s in ll for s in IMMUNE_SUBSTR)):
             hit = immune_target
@@ -160,7 +174,13 @@ def main():
     ap.add_argument("--source-study", help="cross mode: mixture source study")
     ap.add_argument("--ref-dir", help="cross mode: existing reference dir")
     ap.add_argument("--conditions", help="comma-sep condition_resolved filter (source)")
+    ap.add_argument("--sample-ids", help="comma-sep explicit source sample_id list (when the "
+                    "healthy split is only in geo_title, not condition_resolved)")
     ap.add_argument("--sex", help="cross mode: sex_resolved filter (e.g. male/female)")
+    ap.add_argument("--label-scheme", default="none",
+                    help="merge collinear consensus-label fragments on the source/holdout cells "
+                    "(must match the scheme the --ref-dir reference was built with, so the "
+                    "harmonized labels exact-match the reference's; e.g. 'brain')")
     ap.add_argument("--holdout-frac", type=float, default=0.30)
     ap.add_argument("--n-mixtures", type=int, default=50)
     ap.add_argument("--cells-per-mixture", type=int, default=1000)
@@ -172,11 +192,14 @@ def main():
     out = Path(args.out)
     (out / "mixtures").mkdir(parents=True, exist_ok=True)
     conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
+    sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
 
     # ---- obtain mixture-pool cells + reference cell types/genes ----
     if args.mode == "holdout":
         assert args.study, "--study required for holdout mode"
-        adata = clean_cells(load_study(args.study, args.tissue))
+        adata = load_study(args.study, args.tissue, conds, sample_ids=sids)
+        adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
+        adata = clean_cells(adata)
         # stratified split by cell_type
         is_mix = np.zeros(adata.n_obs, dtype=bool)
         for t, idx in adata.obs.groupby("cell_type").indices.items():
@@ -194,7 +217,9 @@ def main():
         ref_meta = pd.read_csv(Path(args.ref_dir) / "cells_meta.tsv", sep="\t")
         ref_types = sorted(ref_meta["cell_type"].unique())
         ref_genes = [l.strip() for l in open(Path(args.ref_dir) / "genes.tsv")]
-        pool = clean_cells(load_study(args.source_study, args.tissue, conds, args.sex))
+        pool = load_study(args.source_study, args.tissue, conds, args.sex, sids)
+        pool.obs["cell_type"] = canonicalize_labels(pool.obs["cell_type"], args.label_scheme)
+        pool = clean_cells(pool)
         hmap = build_harmonization(sorted(pool.obs["cell_type"].unique()), ref_types)
         pool.obs["ref_type"] = pool.obs["cell_type"].map(hmap)
         hm = (pool.obs.groupby("cell_type")

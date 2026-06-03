@@ -19,6 +19,12 @@ try:
     c = load_config()
     d = c["deconvolution"]
     print(f'CFG_RAT_EXCLUDE_GENES={resolve_path(c, d["rat_exclude_genes"])}')
+    if d.get("rat_protein_coding_genes"):
+        print(f'CFG_RAT_PROTEIN_CODING_GENES={resolve_path(c, d["rat_protein_coding_genes"])}')
+    print(f'CFG_PROTEIN_CODING_ONLY={"1" if d.get("protein_coding_only", False) else "0"}')
+    if d.get("rat_sex_chrom_genes"):
+        print(f'CFG_RAT_SEX_CHROM_GENES={resolve_path(c, d["rat_sex_chrom_genes"])}')
+    print(f'CFG_EXCLUDE_SEX_CHROMOSOMES={"1" if d.get("exclude_sex_chromosomes", False) else "0"}')
     print(f'CFG_N_CORES={d.get("n_cores", 4)}')
     print(f'CFG_R_MODULE={d.get("r_module", "r/4.4.1")}')
 except Exception:

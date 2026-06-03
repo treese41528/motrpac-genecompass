@@ -49,9 +49,54 @@ INVENTORY = resolve_path(_CFG, _DC["annotation_inventory"])
 UNKNOWN = {"Unknown", "unknown", "", "nan", "NA"}
 
 
-def select_samples(study, tissue, conditions=None, sex=None):
+# --- optional cell-type label canonicalization (collinear-fragment merging) ----
+# BayesPrism cannot identify between collinear GEPs. Several rat brain atlases
+# fragment ONE excitatory/pyramidal neuron population across many near-synonymous
+# consensus labels ("CA3 pyramidal cells" vs "CA3 pyramidal neurons", "Pyramidal
+# cells/neurons", "Principal neurons", "Cortical/Mature neurons", generic "Neurons").
+# In cross-dataset deconvolution the source neuron mass then scatters across all of
+# them and every bucket collapses to ~0 (reports/deconvolution/multitissue_validation.md
+# V2). The "brain" scheme merges ONLY those collinear fragments into a few separable
+# classes; biologically distinct, separable populations (GABAergic, granule,
+# dopaminergic, cholinergic, Purkinje, astrocytes, ...) are kept as-is. It also folds
+# two obvious glia synonym-duplicates. Applied IDENTICALLY to the reference and the
+# cross source so harmonization stays an exact match.
+_BRAIN_EXCIT_SUBSTR = ("pyramidal", "glutamat", "glutamin", "vglut", "principal")
+_BRAIN_EXCIT_EXACT = {"neurons", "cortical neurons", "mature neurons", "hippocampal neurons"}
+
+
+def _canon_brain(label):
+    ll = str(label).strip().lower()
+    if any(s in ll for s in _BRAIN_EXCIT_SUBSTR) or ll in _BRAIN_EXCIT_EXACT:
+        return "Excitatory neurons"
+    if ll in ("microglia", "microglial cells"):
+        return "Microglia"
+    if "oligodendrocyte precursor" in ll or "oligodendrocyte progenitor" in ll:
+        return "Oligodendrocyte precursor cells"
+    return label
+
+
+LABEL_SCHEMES = {"brain": _canon_brain}
+
+
+def canonicalize_labels(series, scheme):
+    """Map fine consensus labels onto a coarser separable scheme (or identity)."""
+    if not scheme or scheme == "none":
+        return series
+    fn = LABEL_SCHEMES.get(scheme)
+    if fn is None:
+        sys.exit(f"ERROR: unknown --label-scheme {scheme!r}; choices: {sorted(LABEL_SCHEMES)}")
+    return series.map(fn)
+
+
+def select_samples(study, tissue, conditions=None, sex=None, sample_ids=None):
     """In-corpus sample IDs for study+tissue, optionally filtered by
-    condition_resolved and/or sex_resolved."""
+    condition_resolved and/or sex_resolved.
+
+    sample_ids (explicit list) restricts to exactly those IDs -- needed when the
+    healthy/disease (or genotype) split lives only in geo_title, not in
+    condition_resolved (which is unreliable; e.g. GSE305314 WT-vs-Tau). The IDs
+    are still validated against the study/tissue/in_corpus selection."""
     inv = pd.read_csv(INVENTORY, sep="\t", dtype=str)
     sel = inv[
         (inv["accession"] == study)
@@ -62,10 +107,18 @@ def select_samples(study, tissue, conditions=None, sex=None):
         sel = sel[sel["condition_resolved"].isin(conditions)]
     if sex:
         sel = sel[sel["sex_resolved"].str.lower() == sex.lower()]
+    if sample_ids:
+        want = set(sample_ids)
+        sel = sel[sel["sample_id"].isin(want)]
+        got = set(sel["sample_id"])
+        missing = want - got
+        if missing:
+            sys.exit(f"ERROR: --sample-ids not in corpus for {study}/{tissue}: "
+                     f"{sorted(missing)}")
     samples = sorted(sel["sample_id"].tolist())
     if not samples:
         sys.exit(f"ERROR: no in-corpus {tissue} samples for {study} "
-                 f"(conditions={conditions}, sex={sex}) in {INVENTORY}")
+                 f"(conditions={conditions}, sex={sex}, sample_ids={sample_ids}) in {INVENTORY}")
     return samples
 
 
@@ -107,9 +160,9 @@ def load_sample(sample):
     return sub
 
 
-def load_study(study, tissue, conditions=None, sex=None):
+def load_study(study, tissue, conditions=None, sex=None, sample_ids=None):
     """Concatenate all (loadable) samples of a study/tissue on the shared gene set."""
-    samples = select_samples(study, tissue, conditions, sex)
+    samples = select_samples(study, tissue, conditions, sex, sample_ids)
     print(f"{study} / {tissue}: {len(samples)} samples -> {samples}")
     parts = [s for s in (load_sample(x) for x in samples) if s is not None]
     if not parts:
@@ -157,11 +210,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--study", required=True)
     ap.add_argument("--tissue", required=True)
+    ap.add_argument("--conditions", help="comma-sep condition_resolved filter "
+                    "(restrict the reference to healthy/control arms)")
+    ap.add_argument("--sex", help="sex_resolved filter (e.g. male/female)")
+    ap.add_argument("--sample-ids", help="comma-sep explicit sample_id list (use when the "
+                    "healthy/genotype split is only in geo_title, not condition_resolved)")
     ap.add_argument("--min-state-cells", type=int, default=20)
+    ap.add_argument("--label-scheme", default="none", choices=["none"] + sorted(LABEL_SCHEMES),
+                    help="merge collinear consensus-label fragments before building the GEP "
+                    "(e.g. 'brain' merges pyramidal/glutamatergic neuron synonyms into "
+                    "'Excitatory neurons'); apply the SAME scheme to the cross source")
+    ap.add_argument("--out", help="output dir (default deconvolution/reference/{tissue}_{study}); "
+                    "set explicitly to avoid clobbering when tissue+study collide, e.g. a WT subset")
     args = ap.parse_args()
-    adata = load_study(args.study, args.tissue)
+    conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
+    sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
+    adata = load_study(args.study, args.tissue, conds, args.sex, sids)
+    adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
-    out = PROJECT / "deconvolution/reference" / f"{args.tissue}_{args.study}"
+    out = Path(args.out) if args.out else PROJECT / "deconvolution/reference" / f"{args.tissue}_{args.study}"
     export_reference(adata, out)
 
 

@@ -315,6 +315,18 @@ deconvolution:
   annotation_inventory: reports/annotations/annotation_inventory.tsv
   # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup)
   rat_exclude_genes: deconvolution/reference/rat_exclude_genes.tsv
+  # Rat protein-coding gene list (Gene type == protein_coding from biomart
+  # rat_gene_info.tsv -- the same biotype source GeneCompass Stage 2 uses).
+  # Replaces BayesPrism's hs/mm-only select.gene.type="protein_coding". Derived
+  # via deconvolution/build_protein_coding_list.py.
+  rat_protein_coding_genes: deconvolution/reference/rat_protein_coding_genes.tsv
+  protein_coding_only: true   # subset reference to protein-coding before new.prism
+  # Rat sex-chromosome gene list (chrX/chrY from biomart rat_gene_info.tsv),
+  # replacing BayesPrism's hs/mm-only cleanup.genes chrX/chrY groups. Removing them
+  # stops sex composition from confounding cell-type fractions in mixed-sex bulk.
+  # Derived via deconvolution/build_sex_chrom_list.py.
+  rat_sex_chrom_genes: deconvolution/reference/rat_sex_chrom_genes.tsv
+  exclude_sex_chromosomes: true
   # Outputs
   reference_dir: deconvolution/reference
   validation_dir: deconvolution/validation
