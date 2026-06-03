@@ -24,6 +24,13 @@ export EXCLUDE_SEX_CHROMOSOMES="${EXCLUDE_SEX_CHROMOSOMES:-${CFG_EXCLUDE_SEX_CHR
 export OMNIDECONV_METHODS="${OMNIDECONV_METHODS:-music,dwls,scdc,bisque}"
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
+# Python methods (AutoGeneS, Scaden) run via reticulate against the SINGLE project env
+# (motrpac-env, py3.12). Force TF onto the Keras-2 shim (tf-keras) and CPU-only so it never
+# contends with torch for the GPU or trip over the CUDA-13/TF-2.21 version gap. See
+# deconvolution/R/install_omnideconv_python.sh.
+export RETICULATE_PYTHON="${RETICULATE_PYTHON:-/depot/reese18/apps/motrpac-env/bin/python}"
+export TF_USE_LEGACY_KERAS="${TF_USE_LEGACY_KERAS:-1}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:--1}"
 export N_CORES="${N_CORES:-${CFG_N_CORES:-4}}"
 R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null

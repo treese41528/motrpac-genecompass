@@ -42,6 +42,23 @@ safetensors>=0.3.1         # Model checkpoint format
 # APIs). We pin >=4.38 for Python 3.12 wheel compatibility.
 transformers>=4.38,<5.0
 
+# ── Deconvolution: omnideconv Python methods (Stage 8) ─────
+# AutoGeneS + Scaden are driven via reticulate from the R omnideconv panel, in THIS same env
+# (one env for the whole repo). TF>=2.17 is required for Python 3.12 + numpy>=2 wheels; Scaden
+# is a small DNN run CPU-only with the Keras-2 compat shim (TF_USE_LEGACY_KERAS=1,
+# CUDA_VISIBLE_DEVICES=-1 -- set by run_omnideconv.sh). Validated on TF 2.21.0; exact lockfile
+# in deconvolution/setup/requirements-omnideconv.txt.
+tensorflow>=2.17,<3.0      # Scaden deep-learning deconvolution backend (CPU)
+tf-keras>=2.17,<3.0        # Keras-2 API shim (Scaden's code predates Keras 3)
+autogenes @ git+https://github.com/omnideconv/AutoGeneS.git@9ba0328217020384c62ef7688a6535d39ead5fe9
+deap>=1.3                  # genetic-algorithm backend used by AutoGeneS
+# NOTE: Scaden's fork pins an ancient tensorflow==2.13.0, so it must be added with --no-deps
+# AFTER this file (otherwise pip conflict-downgrades TF and fails on Python 3.12). The
+# canonical installer that does this correctly is deconvolution/R/install_omnideconv_python.sh.
+# Manual clone-and-go:
+#   pip install -r requirements.txt
+#   pip install --no-deps "git+https://github.com/omnideconv/scaden.git@03f4ee3e4cce8808a5d1a2467ea5b87f04c90a09"
+
 # ── Training monitoring ───────────────────────────────────
 wandb                      # Weights & Biases for Stage 7 metrics
 
