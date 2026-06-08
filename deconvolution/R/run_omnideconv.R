@@ -111,15 +111,30 @@ orient <- function(theta) {
 }
 
 # ---- run each method tolerantly ----
+# DWLS: omnideconv's one-shot deconvolute(method="dwls") does NOT forward ncores or
+# dwls_method into the signature build, so it silently runs the slowest path (plain
+# MAST) on a SINGLE core regardless of N_CORES. Build the DWLS signature explicitly so
+# the MAST DE is parallelized across N_CORES, then deconvolute against it. dwls_method
+# defaults to "mast" (identical to the unforwarded default) but is overridable via
+# DWLS_METHOD (e.g. "mast_optimized"); verbose=TRUE so the long MAST build logs progress.
+dwls_method <- Sys.getenv("DWLS_METHOD", unset = "mast")
 ok <- character(0)
 for (m in methods) {
   cat(sprintf("\n===== %s =====\n", m))
   t0 <- Sys.time()
   theta <- tryCatch(
-    orient(omnideconv::deconvolute(
-      bulk_gene_expression = bulk, model = NULL, method = m,
-      single_cell_object = sc, cell_type_annotations = cell_type,
-      batch_ids = batch_ids, verbose = FALSE)),
+    if (m == "dwls") {
+      sig <- omnideconv::build_model(
+        single_cell_object = sc, cell_type_annotations = cell_type,
+        method = "dwls", dwls_method = dwls_method, ncores = n.cores, verbose = TRUE)
+      orient(omnideconv::deconvolute(
+        bulk_gene_expression = bulk, model = sig, method = "dwls", verbose = TRUE))
+    } else {
+      orient(omnideconv::deconvolute(
+        bulk_gene_expression = bulk, model = NULL, method = m,
+        single_cell_object = sc, cell_type_annotations = cell_type,
+        batch_ids = batch_ids, verbose = FALSE))
+    },
     error = function(e) { cat(sprintf("!! %s FAILED: %s\n", m, conditionMessage(e))); NULL })
   if (is.null(theta)) next
   cat(sprintf("%s wall time: %.2f min\n", m,

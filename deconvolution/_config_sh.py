@@ -27,5 +27,14 @@ try:
     print(f'CFG_EXCLUDE_SEX_CHROMOSOMES={"1" if d.get("exclude_sex_chromosomes", False) else "0"}')
     print(f'CFG_N_CORES={d.get("n_cores", 4)}')
     print(f'CFG_R_MODULE={d.get("r_module", "r/4.4.1")}')
+    # MoTrPAC bulk gene-ID liftover (prepare_motrpac_bulk.sh) -- guarded so a missing
+    # key skips only its own line, never the emissions above.
+    if d.get("motrpac_bulk_dir"):
+        print(f'CFG_MOTRPAC_DATA_DIR={resolve_path(c, d["motrpac_bulk_dir"])}')
+    if d.get("rat_token_mapping"):
+        print(f'CFG_RAT_TOKEN_MAPPING={resolve_path(c, d["rat_token_mapping"])}')
+    _b = c.get("biomart", {})
+    if _b.get("rat_gene_info"):
+        print(f'CFG_RAT_GENE_INFO={resolve_path(c, _b["rat_gene_info"])}')
 except Exception:
     pass

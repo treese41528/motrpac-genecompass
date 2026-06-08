@@ -1,0 +1,48 @@
+MoTrPAC bulk gene-ID liftover -- coverage report
+=================================================
+
+token vocab: /depot/reese18/apps/motrpac-genecompass/data/training/ortholog_mappings/rat_token_mapping.tsv (22213 current ENSRNOG, 20455 symbols)
+biomart    : /depot/reese18/apps/motrpac-genecompass/data/references/biomart/rat_gene_info.tsv (43360 current ENSRNOG)
+current-ID universe (vocab ∪ biomart): 43360
+symbols with >1 vocab ENSRNOG (resolved to smallest): 158
+
+-- bulk gene liftover (canonical 32,883-gene set) --
+  direct  : 20203 (61.4%)
+  symbol  :  2702 (8.2%)
+  unmapped:  9978 (30.3%)
+
+-- primary genes (training-regulated transcriptome union = 9800) --
+  in vocab directly       :  8768  (89.5%)
+  orphans (not in vocab)  :  1032
+  recovered via symbol    :   498
+  vocab coverage  BEFORE  : 89.5%
+  vocab coverage  AFTER   : 94.6%
+
+-- spot checks (orphan recovered -> lifted ID present in output?) --
+  PLN      recovered=TRUE  lifted_id=ENSRNOG00000079579   in_output=TRUE
+  EP300    recovered=TRUE  lifted_id=ENSRNOG00000065659   in_output=TRUE
+  LTB      recovered=TRUE  lifted_id=ENSRNOG00000070531   in_output=TRUE
+  HINT1    recovered=TRUE  lifted_id=ENSRNOG00000086472   in_output=TRUE
+  PPP1R18  recovered=TRUE  lifted_id=ENSRNOG00000071251   in_output=TRUE
+
+-- per-tissue summary --
+ tissue in_genes  kept out_genes direct symbol dropped collapsed samples
+  ADRNL    32883 22905     21183  20203   2702    9978      1722      50
+    BAT    32883 22905     21183  20203   2702    9978      1722      50
+  BLOOD    32883 22905     21183  20203   2702    9978      1722      50
+  COLON    32883 22905     21183  20203   2702    9978      1722      50
+ CORTEX    32883 22905     21183  20203   2702    9978      1722      50
+  HEART    32883 22905     21183  20203   2702    9978      1722      50
+ HIPPOC    32883 22905     21183  20203   2702    9978      1722      50
+ HYPOTH    32883 22905     21183  20203   2702    9978      1722      50
+ KIDNEY    32883 22905     21183  20203   2702    9978      1722      50
+  LIVER    32883 22905     21183  20203   2702    9978      1722      50
+   LUNG    32883 22905     21183  20203   2702    9978      1722      50
+  OVARY    32883 22905     21183  20203   2702    9978      1722      24
+  SKMGN    32883 22905     21183  20203   2702    9978      1722      50
+  SKMVL    32883 22905     21183  20203   2702    9978      1722      50
+ SMLINT    32883 22905     21183  20203   2702    9978      1722      50
+ SPLEEN    32883 22905     21183  20203   2702    9978      1722      50
+ TESTES    32883 22905     21183  20203   2702    9978      1722      25
+ VENACV    32883 22905     21183  20203   2702    9978      1722      50
+  WATSC    32883 22905     21183  20203   2702    9978      1722      50
