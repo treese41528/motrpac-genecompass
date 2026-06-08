@@ -18,6 +18,7 @@ command -v python3 >/dev/null 2>&1 && \
 export MOTRPAC_DATA_DIR="${MOTRPAC_DATA_DIR:-${CFG_MOTRPAC_DATA_DIR:-${PROJECT_ROOT}/data/motrpac/rat_training_6mo/data}}"
 export RAT_TOKEN_MAPPING="${RAT_TOKEN_MAPPING:-${CFG_RAT_TOKEN_MAPPING:-${PROJECT_ROOT}/data/training/ortholog_mappings/rat_token_mapping.tsv}}"
 export RAT_GENE_INFO="${RAT_GENE_INFO:-${CFG_RAT_GENE_INFO:-${PROJECT_ROOT}/data/references/biomart/rat_gene_info.tsv}}"
+export RAT_RGD_GENES="${RAT_RGD_GENES:-${CFG_RAT_RGD_GENES:-${PROJECT_ROOT}/data/references/biomart/GENES_RAT.txt}}"
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
 R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"

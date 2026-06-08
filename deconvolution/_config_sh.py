@@ -36,5 +36,8 @@ try:
     _b = c.get("biomart", {})
     if _b.get("rat_gene_info"):
         print(f'CFG_RAT_GENE_INFO={resolve_path(c, _b["rat_gene_info"])}')
+    _r = c.get("rgd", {})
+    if _r.get("genes_file"):
+        print(f'CFG_RAT_RGD_GENES={resolve_path(c, _r["genes_file"])}')
 except Exception:
     pass
