@@ -1,0 +1,91 @@
+MoTrPAC training-regulated ('primary') genes NOT tokenizable after the bulk gene-ID liftover
+=============================================================================================
+
+534 of the 9,800 training-regulated transcriptome genes remain without a GeneCompass
+token even after the liftover (8,768 already in vocab + 498 recovered by the symbol bridge
+= 9,266 covered; these 534 are the residual). Flagged by importance (n_tissues + curation).
+
+By category:
+
+         clone   real_curated      predicted        MHC_RT1      no_symbol 
+           271            154             68             10              7 
+     ribosomal   ncRNA/pseudo     hemoglobin mito_ribosomal        histone 
+             7              5              4              4              2 
+immunoglobulin 
+             2 
+
+By importance tier:
+
+high  med  low 
+  28   45  461 
+
+MHC (RT1-*) genes are training-regulated immune genes (paper emphasizes immune trajectories)
+but are hyper-polymorphic and excluded from ortholog-based vocabularies.
+
+IMPORTANT CAVEAT on 'can we recover these by growing the vocab?':
+  Determining whether each missed gene occurs in our single-cell corpus (the prerequisite
+  for minting a GeneCompass token) could NOT be settled locally: the biomart rat_gene_info
+  Gene-name column is empty for 43% of rat genes (it lacks even ACTB/CD36), so symbol->
+  current-ENSRNOG resolution is unreliable. A proper rat symbol map (RGD) or an Ensembl
+  stable-ID HISTORY converter (Rnor_6.0 -> mRatBN7.2) is needed to resolve SC presence and
+  to attempt a third (ID-history) liftover bridge. Deferred per user.
+
+TOP 'high' importance (curated, training-regulated in >=4 tissues):
+    symbol n_tissues_trainreg     category
+    RT1-A1                  8      MHC_RT1
+    RT1-A2                  8      MHC_RT1
+    TMSB10                  7 real_curated
+     LYVE1                  6 real_curated
+   NDUFA13                  6 real_curated
+  RT1-CE16                  5      MHC_RT1
+   RT1-CE7                  5      MHC_RT1
+       C4A                  5 real_curated
+       GPT                  5 real_curated
+      TPI1                  5 real_curated
+  RT1-CE10                  4      MHC_RT1
+   RT1-CE4                  4      MHC_RT1
+   RT1-CE5                  4      MHC_RT1
+    RT1-S3                  4      MHC_RT1
+ RT1-T24-3                  4      MHC_RT1
+       C4A                  4 real_curated
+      CD36                  4 real_curated
+       CFB                  4 real_curated
+    CYP2B1                  4 real_curated
+     GPSM3                  4 real_curated
+    MAN2B2                  4 real_curated
+      MUC4                  4 real_curated
+     SLFN4                  4 real_curated
+      TGM2                  4 real_curated
+    TUBA1A                  4 real_curated
+     UBA52                  4 real_curated
+       UBD                  4 real_curated
+      VBP1                  4 real_curated
+                                         tissues
+ ADRNL,BAT,BLOOD,CORTEX,LUNG,OVARY,SPLEEN,WAT-SC
+  ADRNL,BAT,BLOOD,COLON,KIDNEY,LUNG,OVARY,WAT-SC
+      ADRNL,BAT,KIDNEY,LUNG,SPLEEN,TESTES,WAT-SC
+               ADRNL,BAT,COLON,LUNG,OVARY,WAT-SC
+             ADRNL,BAT,BLOOD,COLON,SPLEEN,WAT-SC
+                    ADRNL,BAT,BLOOD,OVARY,WAT-SC
+                    ADRNL,BAT,BLOOD,OVARY,WAT-SC
+                   ADRNL,BAT,KIDNEY,LIVER,SPLEEN
+                     ADRNL,BAT,HEART,LUNG,SKM-VL
+                ADRNL,BLOOD,HYPOTH,KIDNEY,SKM-VL
+                           ADRNL,BAT,BLOOD,OVARY
+                            ADRNL,BAT,LUNG,OVARY
+                          ADRNL,BAT,BLOOD,WAT-SC
+                           ADRNL,BAT,BLOOD,HEART
+                          ADRNL,BAT,BLOOD,KIDNEY
+                         BLOOD,LIVER,LUNG,SPLEEN
+                          ADRNL,BAT,BLOOD,SKM-VL
+                           ADRNL,BAT,LUNG,WAT-SC
+                           ADRNL,BAT,LUNG,WAT-SC
+                         BAT,COLON,SMLINT,WAT-SC
+                           ADRNL,BAT,LUNG,WAT-SC
+                       ADRNL,COLON,SMLINT,WAT-SC
+                         ADRNL,BAT,KIDNEY,WAT-SC
+                          ADRNL,BAT,BLOOD,SPLEEN
+                        BLOOD,COLON,HEART,SPLEEN
+                        ADRNL,BLOOD,HEART,KIDNEY
+                           ADRNL,BAT,LUNG,SKM-VL
+                        BLOOD,COLON,HEART,WAT-SC
