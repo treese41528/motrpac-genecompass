@@ -1,8 +1,9 @@
 # MoTrPAC Bulk Gene-ID Liftover & Deconvolution Prep — Findings & Status
 
-_Status as of 2026-06-08. For collaborator review. Branch `stage8-omnideconv-setup`._
+_Status as of 2026-06-09. For collaborator review. Branch `stage8-omnideconv-setup`._
 _Commits: `3bd9fb8` (Fix 1 + DWLS), `1bdccd9` (missed-gene record), `fd530e5` (bridge-3),
-`05cb123` (Fix 2 cortex), `cde5e00` (ID-space audit)._
+`05cb123` (Fix 2 cortex), `cde5e00` (ID-space audit); **id_history bridge re-targeted to rel-113 —
+the §5 correctness bug is now FIXED, all artifacts regenerated** (this revision)._
 
 ## Goal
 
@@ -14,15 +15,20 @@ annotations**, which drives most of the work below.
 ## TL;DR
 
 - The real bulk is **deconv-ready for all 19 tissues** (`deconvolution/motrpac_bulk/<TISSUE>/`).
-- A 3-bridge **gene-ID liftover** maps 98.6% of bulk genes to (intended) current IDs; primary
-  (training-regulated) **token-vocab coverage 89.5% → 95.0%**.
+- A 3-bridge **gene-ID liftover** lands **73.0%** of bulk genes on current **rel-113** IDs; the other
+  27% are non-current Rnor_6.0 orphans with no rel-113 home (dropped — lossless for deconv, they never
+  intersect the modern references). Primary (training-regulated) **token-vocab coverage 89.5% → 94.8%**.
 - **The references — not the bulk or the vocabulary — are the binding constraint** on how many
   genes can be deconvolved. Lifting the bulk helps only where a reference already contains the gene.
 - **Fix 2 (cortex) is done**: the cortex reference was gene-poor (5,536 genes) due to a *build bug*,
   not shallow data — fixed to **18,162 genes** (training-regulated coverage 23% → 94%), no new data.
-- ⚠️ **Known correctness bug (open):** the 3rd liftover bridge (Entrez/RGD) emits **GRCr8-era IDs**,
-  not the rel-113 IDs our references use. Harmless to deconvolution (wrong-release IDs are
-  intersected away) but incorrect and slightly lossy. Fix is scoped below.
+- ✅ **§5 correctness bug FIXED:** bridge 3 previously mapped to RGD's **GRCr8** `ENSEMBL_ID`. Because
+  `rowsum` collapses bulk rows by lifted-ID *before* the reference intersection, and GRCr8 accessions
+  overlap rel-113 ~60%, that **silently mis-summed ~101 unrelated genes' bulk counts onto a different
+  rel-113 gene that *does* enter deconvolution** (e.g. real CD36 → the *Cd36-ps1* pseudogene row) — so
+  the earlier "harmless, intersected away" assessment was wrong. The bridge now recovers the **current
+  symbol** (RGD Entrez/old-symbol) and resolves it through the rel-113 symbol map, so every lifted ID
+  is rel-113 and the corruption is gone. Details in §5.
 
 ---
 
@@ -48,11 +54,17 @@ then writes deconv-ready `bulk.mtx` (samples×genes) + `bulk_genes.tsv` + `bulk_
 |---|---|---|---|
 | `direct` | bulk ID already current (in vocab ∪ biomart rel-113) | 20,203 | 61.4% |
 | `symbol` | `FEATURE_TO_GENE` gene_symbol → vocab/biomart current ENSRNOG | 2,702 | 8.2% |
-| `id_history` | Entrez (`FEATURE_TO_GENE.entrez_gene`) → RGD → RGD `ENSEMBL_ID` (⚠ see §5) | 9,527 | 29.0% |
-| `unmapped` | no bridge | 451 | 1.4% |
+| `id_history` | Entrez/old-symbol → RGD **current SYMBOL** → rel-113 vocab/biomart ENSRNOG (§5) | 1,098 | 3.3% |
+| `unmapped` | no rel-113 home (non-current Rnor_6.0 orphan) — dropped | 8,880 | 27.0% |
+
+The big shift from the earlier draft (`id_history` 9,527→1,098, `unmapped` 451→8,880) **is** the §5 fix:
+the ~8.4k genes that previously received a wrong-release **GRCr8** ID — which never validly intersected a
+rel-113 reference — are now correctly dropped instead of carried as junk (or, worse, mis-summed; §5).
 
 **Primary-gene token-vocab coverage: 89.5% (8,768/9,800 already in vocab) → 94.6% (+498 symbol) →
-95.0% (+39 id_history).** Spot-checks (PLN, EP300, LTB, HINT1, PPP1R18) recover correctly.
+94.8% (+29 id_history).** Spot-checks (PLN, EP300, LTB, HINT1, PPP1R18) recover correctly. The report,
+map, and missed-gene record are all emitted by `prepare_motrpac_bulk.R` from one recovery pass, so their
+numbers cannot drift (the earlier 39-vs-42 `id_history` discrepancy between report and record is gone).
 
 **Reliable rat symbol map = RGD `GENES_RAT.txt`** (`SYMBOL`/`OLD_SYMBOL`/`NCBI_GENE_ID`/`ENSEMBL_ID`).
 ⚠️ **Do NOT use biomart `rat_gene_info.tsv` "Gene name" for rat symbol matching — it is empty for 43%
@@ -64,16 +76,19 @@ The earlier claim that the build mismatch "drops ~12k bulk genes from bulk∩ref
 **unmeasured inference and is wrong**. Measured directly, the liftover's effect on the deconvolution
 intersection (`bulk ∩ reference`) is **tissue-specific and never negative (Δ≥0)**:
 
-| reference | bulk∩ref before | after lift | Δ |
+| reference | bulk∩ref (raw bulk) | after lift | Δ |
 |---|---|---|---|
-| gastrocnemius | 16,940 | 17,836 | **+896** |
-| hippocampus | 17,599 | 18,045 | +446 |
-| skeletal muscle | 17,499 | 17,923 | +424 |
-| cortex (old ref) | 5,317 | 5,482 | +165 |
+| gastrocnemius | 16,940 | 18,580 | **+1,640** |
+| cortex (union ref) | 16,170 | 17,012 | +842 |
+| hippocampus | 17,599 | 18,175 | +576 |
+| skeletal muscle | 17,499 | 18,052 | +553 |
+| cortex (old inner ref) | 5,317 | 5,482 | +165 |
 | heart / kidney / liver / lung / PBMC / WAT | =ref | =ref | **0** |
 
 The "0" tissues already had their reference IDs covered by the raw bulk. **Takeaway: the bulk/vocab
 are nearly complete; what limits deconvolution is which genes each single-cell reference contains.**
+(These Δ are *larger* than the earlier draft's because the rel-113 fix lands symbol-recovered genes on
+IDs that actually match the references — the old GRCr8 IDs did not intersect, so they added nothing.)
 
 ## 4. Fix 2 — cortex reference (DONE)
 
@@ -90,62 +105,67 @@ Fix: added opt-in `--gene-join {inner,outer}` (default `inner` ⇒ every other r
 |---|---|---|
 | cortex reference genes | 5,536 | **18,162** |
 | training-regulated coverage | 22.9% | **94.3%** |
-| lifted bulk ∩ reference | 5,482 | **16,925** |
+| lifted bulk ∩ reference | 5,482 | **17,012** |
 
 New reference at `deconvolution/reference/cortex_GSE303115_union/` (gitignored); 35 cell types kept.
 **No external download needed** — and note the two cortex datasets named in earlier planning notes
 were the **wrong species** (`GSE253415` = human pulmonary artery, `GSE271209` = mouse lung). If a
 different cortex source is ever wanted, `GSE262970` (rat auditory cortex, 255k nuclei) is a real option.
 
-## 5. ⚠️ Known correctness bug — the `id_history` bridge emits the wrong release (OPEN)
+## 5. ✅ FIXED — the `id_history` bridge now targets rel-113 (was: emitted GRCr8)
 
-The Entrez/RGD `id_history` bridge maps to RGD's `ENSEMBL_ID`. An ID-space audit
-(`deconvolution/audit_idspace.py` → `deconvolution/reference/idspace_audit/`) shows:
+**The bug (now fixed).** Bridge 3 used to map to RGD's `ENSEMBL_ID`. An ID-space audit
+(`deconvolution/audit_idspace.py` → `deconvolution/reference/idspace_audit/`) showed why that is wrong:
 
 - The **SC corpus** (864 samples, 22,489-gene union, 9.48M cells) is **100% in biomart rel-113**.
 - **RGD `ENSEMBL_ID`s are only 60.6% in rel-113** — RGD tracks the newer **GRCr8** assembly.
 
-So the 9,527 `id_history` genes were lifted to **GRCr8-era IDs that do not exist in our rel-113
-references**, reading "absent" by ID (1.2% in corpus) when **by symbol 1,167 are actually present**.
-This is harmless to deconvolution (wrong-release IDs simply don't intersect and are dropped) but is
-**incorrect** and leaves recoverable genes on the table.
+The earlier draft called this "harmless (wrong-release IDs are intersected away)." **That was wrong.**
+`process_tissue` collapses bulk rows with `rowsum(counts, group = lifted_id)` **before** the reference
+intersection, keyed on the lifted-ID *string*. Because 60.6% of GRCr8 accessions textually coincide with
+a rel-113 ID — often a **different gene** after the Rnor_6.0→mRatBN7.2 rebuild — the bridge summed an
+orphan's counts onto that other, real, rel-113 gene, which then **does** intersect the references. Net:
+**101 rel-113 genes that appear in our single-cell references had their MoTrPAC bulk counts corrupted**
+(126 mis-merged bulk rows), e.g.:
 
-**Re-targeting properly** (`old ID → Entrez → RGD current SYMBOL → rel-113 vocab ENSRNOG`) recovers
-**~719 genes** into the references — but the payoff is small and mostly inert:
-
-| of the 719 recovered | count |
+| corrupted rel-113 gene (target) | unrelated bulk gene summed in |
 |---|---|
-| olfactory / chemoreceptors (not expressed in MoTrPAC tissues) | 653 |
-| non-receptor (mostly paralog/RIKEN-clone variants) | ~50 |
-| **training-regulated** | **~16** (≈15 unique; NDUFS6 counted twice) |
+| `ENSRNOG00000005906` = **Cd36-ps1** (CD36 *pseudogene*) | **CD36** (real) |
+| `ENSRNOG00000000133` = TXNDC15 | PCBD2 |
+| `ENSRNOG00000003703` = MCM6 | DARS1 |
+| SURF1, RPL10A, SENP7, … (98 more) | SURF4, LOC680700, IMPG2, … |
 
-The ~15 training-regulated genes, cross-checked three ways:
+**The fix.** Bridge 3 now recovers the **current symbol** (assembly-stable: `FEATURE_TO_GENE.entrez_gene`
+→ RGD `NCBI_GENE_ID` → RGD `SYMBOL`, or RGD `OLD_SYMBOL`) and resolves *that* to a rel-113 ENSRNOG through
+the **same `sym2ens` map bridge 2 uses**. Every lifted ID is now rel-113, so `rowsum` only ever merges
+annotations of the *same* current gene. Verified on the regenerated map: **935 distinct `id_history`
+targets, 100% valid rel-113, 0 GRCr8; the 101 cross-gene collisions are gone** — CD36 and PCBD2 now drop
+cleanly to `unmapped` rather than corrupting a pseudogene / TXNDC15. (The residual same-ID merges are
+legitimate, e.g. bulk `AKAP2`+`PALM2` → rel-113 **Pakap**, whose RGD record lists both as old symbols.)
 
-| symbol | tissues (train-reg) | SC corpus occurrence | named in MoTrPAC papers |
-|---|---|---|---|
-| **NDUFS6** (mito complex I) | 6 (incl. both skeletal muscles) | **466/864 samples, 4.7% of cells** | no (pathway OXPHOS *is* discussed) |
-| C3H15ORF48 (= C15orf48/NMES1) | 1 | 403 samples, 3.3% | no |
-| C7H8ORF82 | 2 | 434 samples, 1.8% | no |
-| ZFP534L1 | 1 | 434 samples, 1.3% | no |
-| DMBT1 | 4 | **52 samples, 0.017%** (barely read) | no |
-| (10 others: C3H15ORF62, PDXKL1, KCTD12B, H3C13, 4930426D05RIKL, LY6M, USP12L1, SULT1C2AL1, NXPE5L3, OR6X1) | 1 each | sparse → inert | no |
-
-**None of the 15 are named in the MoTrPAC papers** (checked readings 20 / **21 = main rat Nature paper** /
-22; the extraction does capture named hubs — e.g. HSPA1B appears — so the absence is real). They live
-only in the training-regulated supplement by construction. **NDUFS6** (broadly read, OXPHOS/complex-I,
-both skeletal muscles) is the single worthwhile recovery; everything else is sparse or inert.
-
-**Conclusion:** fix the bridge for **correctness** (drop ~8,000 wrong-release GRCr8 IDs, land all lifted
-IDs on rel-113), not for a biological prize — there is none hiding here.
+**No biological prize hiding.** The rel-113 `id_history` bridge lands 1,098 bulk genes and adds **29**
+training-regulated genes to the token vocab. As the pre-fix analysis already found, the only
+broadly-expressed one is **NDUFS6** (mito complex I, training-regulated in 6 tissues incl. both skeletal
+muscles, read in 466/864 SC samples); the rest are sparse/inert and **none are named in the MoTrPAC
+papers**. So the value of the fix is **correctness** — it removes count corruption of 101
+reference-present genes and drops ~8.4k wrong-release GRCr8 IDs — not a new biological signal.
 
 ## 6. What's still missing, and can it be recovered?
 
-`deconvolution/reference/motrpac_missed_genes.tsv` (+ `_summary.txt`): **495** training-regulated genes
-remain without a GeneCompass token after the liftover. Using the reliable RGD map, **0 of the 495 occur
-in our single-cell corpus** — so they **cannot be recovered by growing the GeneCompass vocabulary from
-the current SC data**; that would require deeper/different single-cell data. Notable members: the
-`RT1-*` rat-MHC immune cluster (training-regulated in up to 8 tissues; hyper-polymorphic, excluded from
-ortholog vocabularies) and a few real metabolic/immune genes (CD36, NDUFA13, TPI1, GPT, LYVE1, C4A, CFB).
+`deconvolution/reference/motrpac_missed_genes.tsv` (+ `_summary.txt`, both now emitted by
+`prepare_motrpac_bulk.R` from the same recovery pass as the report — so they can't drift): **505**
+training-regulated genes remain without a GeneCompass token after the liftover. **503 of the 505 do not
+occur in our single-cell corpus** (the 2 that do are `IGHL13` immunoglobulin features, present by
+symbol) — so they **cannot be recovered by growing the GeneCompass vocabulary from the current SC
+data**; that would require deeper/different single-cell data. Notable members: the `RT1-*` rat-MHC
+immune cluster (training-regulated in up to 8 tissues; hyper-polymorphic, excluded from ortholog
+vocabularies) and a few real metabolic/immune genes (CD36, NDUFA13, TPI1, GPT, LYVE1, C4A, CFB).
+
+> The count rose 495→505 and `in_current_annot` fell 472→34 **because of the same §5 fix**: the prior
+> record used RGD's GRCr8 `ENSEMBL_ID` (so it both spuriously "recovered" ~10 genes via collision and
+> marked 472 as having a "current" ID). `current_ensrnog`/`in_current_annot` are now strict **rel-113**
+> tests; the 471 with no rel-113 ID are genes rel-113 lacks under that symbol (e.g. NDUFA13 exists only
+> as `Ndufa13-ps1`). `category`/`importance` are documented rules in the script (`high 29/med 50/low 426`).
 
 ## 7. Artifacts / file map
 
@@ -153,7 +173,7 @@ ortholog vocabularies) and a few real metabolic/immune genes (CD36, NDUFA13, TPI
 |---|---|---|
 | `deconvolution/R/prepare_motrpac_bulk.{R,sh}` | the 3-bridge liftover + bulk writer | yes |
 | `deconvolution/reference/motrpac_bulk_liftover.tsv` / `…_report.txt` | per-gene map + coverage report | yes |
-| `deconvolution/reference/motrpac_missed_genes.tsv` / `…_summary.txt` | still-missing training-regulated genes | yes |
+| `deconvolution/reference/motrpac_missed_genes.tsv` / `…_summary.txt` | still-missing training-regulated genes (emitted by `prepare_motrpac_bulk.R`) | yes |
 | `deconvolution/motrpac_bulk/<TISSUE>/{bulk.mtx,bulk_genes.tsv,bulk_samples.tsv}` | per-tissue deconv-ready bulk | gitignored |
 | `deconvolution/build_reference.py` (`--gene-join`) + `build_references_v2.sh` | cortex union fix | yes |
 | `deconvolution/reference/cortex_GSE303115_union/` | rebuilt cortex reference (18,162 genes) | gitignored |
@@ -162,15 +182,14 @@ ortholog vocabularies) and a few real metabolic/immune genes (CD36, NDUFA13, TPI
 
 ## 8. Next stages
 
-1. **Fix the `id_history` correctness bug** — re-target bridge 3 to rel-113
-   (`old ID → Entrez → RGD current/old SYMBOL → vocab rat_gene`), drop the wrong-release GRCr8 IDs, re-run
-   `prepare_motrpac_bulk.R` for all 19 tissues, regenerate the map/report (+ the missed-gene record),
-   re-commit. Net: every lifted ID on rel-113; ~8k inert GRCr8 IDs removed; NDUFS6 + ~14 training-regulated
-   genes correctly recovered.
-2. **Deconv-validate the rebuilt cortex reference** (`run_deconvolution.R`, compute node) — gene count is
+0. ✅ **`id_history` correctness bug — DONE** (this revision): bridge 3 re-targeted to rel-113, all 19
+   tissues + map/report/missed-gene record regenerated (§5). Every lifted ID is rel-113; ~8.4k inert
+   GRCr8 IDs dropped; the 101-gene count corruption removed; NDUFS6 + 28 other training-regulated genes
+   correctly recovered into the token vocab.
+1. **Deconv-validate the rebuilt cortex reference** (`run_deconvolution.R`, compute node) — gene count is
    fixed (18,162) but cell-fraction recovery has not been re-checked. Optionally apply `--label-scheme brain`
    (merges collinear neuron labels) for cross-dataset validation.
-3. **Prepare & run the real MoTrPAC-bulk deconvolution** — for each tissue, pair
+2. **Prepare & run the real MoTrPAC-bulk deconvolution** — for each tissue, pair
    `deconvolution/motrpac_bulk/<TISSUE>` with its single-cell reference and run BayesPrism; then feed the
    per-cell-type expression to GeneCompass. Production considerations (separate notes): relative/differential
    framing, sex-split references (WAT only — the only sex-balanced rat SC reference), per-tissue references,
