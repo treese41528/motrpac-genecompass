@@ -15,9 +15,10 @@
 # Output: deconvolution/validation_v2/<TAG>/
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
 PY=/depot/reese18/apps/motrpac-env/bin/python3
-REF=deconvolution/reference_v2
-VAL=deconvolution/validation_v2
+REF="${CFG_REFERENCE_V2_DIR:-data/deconvolution/references_v2}"
+VAL="${CFG_VALIDATION_V2_DIR:-data/deconvolution/validation_v2}"
 mkdir -p tmp/dsbuild_v2 "$VAL"
 
 run () { local tag="$1"; shift

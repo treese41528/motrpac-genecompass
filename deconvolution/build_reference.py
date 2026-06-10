@@ -244,7 +244,7 @@ def main():
                        gene_join=args.gene_join, min_gene_cells=args.min_gene_cells)
     adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
-    out = Path(args.out) if args.out else PROJECT / "deconvolution/reference" / f"{args.tissue}_{args.study}"
+    out = Path(args.out) if args.out else Path(resolve_path(_CFG, _DC["built_reference_dir"])) / f"{args.tissue}_{args.study}"
     export_reference(adata, out)
 
 

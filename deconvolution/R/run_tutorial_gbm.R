@@ -23,7 +23,7 @@ suppressWarnings(suppressPackageStartupMessages({
 # ---- config ----
 proj    <- Sys.getenv("PROJECT_ROOT", unset = ".")   # exported by run_tutorial_gbm.sh
 data_f  <- file.path(proj, "vendor/BayesPrism/tutorial.dat/tutorial.gbm.rdata")
-out_dir <- file.path(proj, "deconvolution/results/tutorial_gbm")
+out_dir <- file.path(Sys.getenv("DECONV_RESULTS_DIR", file.path(proj, "data/deconvolution/results")), "tutorial_gbm")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 smoke   <- Sys.getenv("SMOKE", unset = "0") == "1"

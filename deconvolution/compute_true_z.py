@@ -19,8 +19,8 @@ Writes under <out>/mixtures/true_z/:
 
 Usage mirrors make_pseudobulk cross mode, e.g.:
   python deconvolution/compute_true_z.py --source-study GSE137869 --tissue liver \
-     --sex male --ref-dir deconvolution/reference/liver_GSE220075 \
-     --out deconvolution/validation/V2_GSE137869_male
+     --sex male --ref-dir data/deconvolution/references/liver_GSE220075 \
+     --out data/deconvolution/validation/V2_GSE137869_male
 """
 import argparse
 import re

@@ -35,12 +35,12 @@ Output (project-local):
 Usage (project venv):
   # V0
   python deconvolution/make_pseudobulk.py --mode holdout --study GSE220075 \
-      --tissue liver --holdout-frac 0.30 --out deconvolution/validation/V0_liver
+      --tissue liver --holdout-frac 0.30 --out data/deconvolution/validation/V0_liver
   # V1
   python deconvolution/make_pseudobulk.py --mode cross --source-study GSE285476 \
       --tissue liver --conditions "syngeneic group,healthy control group" \
-      --ref-dir deconvolution/reference/liver_GSE220075 \
-      --out deconvolution/validation/V1_liver
+      --ref-dir data/deconvolution/references/liver_GSE220075 \
+      --out data/deconvolution/validation/V1_liver
 """
 import argparse
 import re

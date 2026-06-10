@@ -85,4 +85,4 @@ python-docx>=1.1           # .docx annotation reports (analysis/build_annotation
 # datetime, ftplib, functools, gzip, hashlib, itertools,
 # json, logging, multiprocessing, os, pathlib, pickle,
 # random, re, shutil, subprocess, sys, tarfile, time,
-# traceback, typing, urllib, xml, zipfile
+# traceback, typing, urllib, xml, zipfileplotly  # interactive UMAP HTML (deconvolution/umap_embeddings.py)

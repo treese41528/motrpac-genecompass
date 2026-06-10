@@ -22,8 +22,8 @@ Output: <out>/dataset  (datasets.load_from_disk-able; cols input_ids, values, le
 
 Usage (project venv):
   python deconvolution/tokenize_pseudocells.py \
-      --h5ad deconvolution/genecompass_input/liver/pseudocells.h5ad \
-      --out  deconvolution/genecompass_input/liver --target-sum 10000
+      --h5ad data/deconvolution/genecompass_input/liver/pseudocells.h5ad \
+      --out  data/deconvolution/genecompass_input/liver --target-sum 10000
 """
 import argparse
 import json
@@ -45,6 +45,45 @@ from tokenize_corpus import (load_token_dict, load_median_dict,         # noqa: 
                              TOP_N_DEFAULT, CELL_BATCH_SIZE)
 
 
+def tokenize_cell_batch_pa(X, tokens, medians, top_n, pa_mask, pa_max_rank):
+    """Like tokenize_corpus.tokenize_cell_batch, but among EXPRESSED genes give PA genes (pa_mask)
+    priority into the top_n IF sufficiently expressed (value-rank <= pa_max_rank), displacing the
+    LOWEST-value non-PA genes. The emitted sequence stays expression-descending and the `values`
+    are the true log2 values -- only membership at the margin changes. Returns (..., n_promoted)."""
+    LOG2 = float(np.log(2.0))
+    ids_out, vals_out, lens, promoted = [], [], [], 0
+    for i in range(X.shape[0]):
+        x = np.log1p(X[i] / medians) / LOG2
+        nz = np.where(x > 0.0)[0]
+        if nz.size == 0:
+            ids_out.append([0] * top_n); vals_out.append([0.0] * top_n); lens.append(0); continue
+        order = nz[np.argsort(-x[nz])]                       # expressed, value-descending
+        if order.size <= top_n:
+            sel = order
+        else:
+            base = order[:top_n]
+            window = order[:min(pa_max_rank, order.size)]
+            pa_in_window = window[pa_mask[window]]            # PA genes that are sufficiently expressed
+            base_set = set(base.tolist())
+            missing = np.array([g for g in pa_in_window.tolist() if g not in base_set], dtype=int)
+            if missing.size:
+                base_nonpa = base[~pa_mask[base]]             # value-descending; tail = lowest value
+                ndrop = int(min(missing.size, base_nonpa.size))
+                drop_set = set(base_nonpa[base_nonpa.size - ndrop:].tolist())
+                keep = np.array([g for g in base.tolist() if g not in drop_set], dtype=int)
+                sel = np.concatenate([keep, missing[:ndrop]])  # promote the highest-value missing PA
+                promoted += ndrop
+            else:
+                sel = base
+            sel = sel[np.argsort(-x[sel])][:top_n]            # keep the sequence expression-descending
+        n = int(sel.size)
+        toks = tokens[sel].tolist(); vv = x[sel].tolist()
+        if n < top_n:
+            toks += [0] * (top_n - n); vv += [0.0] * (top_n - n)
+        ids_out.append(toks); vals_out.append(vv); lens.append(n)
+    return ids_out, vals_out, lens, promoted
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -58,6 +97,15 @@ def main():
     ap.add_argument("--species", type=int, default=2, help="GeneCompass species id (rat=2)")
     ap.add_argument("--min-genes", type=int, default=200,
                     help="drop pseudo-cells expressing < this many eligible genes (GeneCompass QC parity)")
+    ap.add_argument("--pa-genes", help="optional TSV with a 'feature_ID' column of PA/training-regulated "
+                    "rel-113 ENSRNOG; these are PREFERRED into the top-N when sufficiently expressed")
+    ap.add_argument("--pa-max-rank", type=int, default=4096,
+                    help="'sufficiently expressed' bar for PA-preference: a PA gene is promoted only if "
+                    "its expression ranks within the top this-many in the pseudo-cell (default 4096 = 2x top-N). "
+                    "Bounds how far below the top-N cut a PA gene can be promoted from, limiting OOD drift.")
+    ap.add_argument("--pa-tissue", help="if --pa-genes has a 'tissue' column, restrict the PA set to genes "
+                    "training-regulated in THIS tissue (MoTrPAC label, e.g. LIVER, SKM-GN) -- the per-tissue "
+                    "set is far more selective than the cross-tissue union (~43%% of genes)")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -83,12 +131,42 @@ def main():
     Xn = (X / full_libsize) * args.target_sum            # normalize_total(target_sum) over all genes
     Xn_elig = Xn[:, col_idx]                              # then restrict to the tokenizable genes
 
-    # --- tokenize in batches (reusing the corpus per-cell transform exactly) ---
+    # --- PA-gene mask over the eligible-mapped columns (preferred into top-N if sufficiently expressed) ---
+    pa_mask = None
+    if args.pa_genes:
+        with open(args.pa_genes) as fh:
+            hdr = fh.readline().rstrip("\n").split("\t")
+            fi = hdr.index("feature_ID"); ti = hdr.index("tissue") if "tissue" in hdr else None
+            pa = set()
+            for ln in fh:
+                if not ln.strip():
+                    continue
+                p = ln.rstrip("\n").split("\t")
+                if args.pa_tissue and ti is not None and args.pa_tissue not in p[ti].split(","):
+                    continue
+                pa.add(p[fi].strip().split(".")[0].upper())
+        mapped_base = [str(adata.var_names[c]).strip().split(".")[0].upper() for c in col_idx]
+        pa_mask = np.array([g in pa for g in mapped_base], dtype=bool)
+        print(f"PA-preference: {len(pa)} PA genes"
+              f"{f' (tissue={args.pa_tissue})' if args.pa_tissue else ' (cross-tissue union)'}; "
+              f"{int(pa_mask.sum())}/{len(pa_mask)} eligible pseudo-cell genes are PA; "
+              f"sufficiently-expressed bar = expression-rank <= {args.pa_max_rank}")
+
+    # --- tokenize in batches (corpus per-cell transform; PA-preferred selection if --pa-genes) ---
     all_ids, all_vals, all_lens = [], [], []
+    n_promoted = 0
     for s in range(0, Xn_elig.shape[0], CELL_BATCH_SIZE):
-        ids, vals, lens = tokenize_cell_batch(Xn_elig[s:s + CELL_BATCH_SIZE],
-                                              file_tokens, file_medians, args.top_n)
+        Xb = Xn_elig[s:s + CELL_BATCH_SIZE]
+        if pa_mask is not None:
+            ids, vals, lens, prom = tokenize_cell_batch_pa(Xb, file_tokens, file_medians,
+                                                           args.top_n, pa_mask, args.pa_max_rank)
+            n_promoted += prom
+        else:
+            ids, vals, lens = tokenize_cell_batch(Xb, file_tokens, file_medians, args.top_n)
         all_ids.extend(ids); all_vals.extend(vals); all_lens.extend(lens)
+    if pa_mask is not None:
+        print(f"PA-preference: promoted {n_promoted} PA slots "
+              f"({n_promoted/max(len(all_ids),1):.1f}/pseudo-cell avg into the top-{args.top_n})")
 
     # --- QC parity + value-scale calibration check ---
     keep = np.asarray(all_lens) >= args.min_genes

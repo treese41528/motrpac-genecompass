@@ -39,5 +39,19 @@ try:
     _r = c.get("rgd", {})
     if _r.get("genes_file"):
         print(f'CFG_RAT_RGD_GENES={resolve_path(c, _r["genes_file"])}')
+    # Output dirs + committed liftover artifacts (so R/bash/SLURM source these from config too).
+    for key, env in [("motrpac_bulk_liftover", "CFG_MOTRPAC_BULK_LIFTOVER"),
+                     ("motrpac_bulk_liftover_report", "CFG_MOTRPAC_BULK_LIFTOVER_REPORT"),
+                     ("rat_genecompass_genes", "CFG_RAT_GENECOMPASS_GENES"),
+                     ("built_reference_dir", "CFG_BUILT_REFERENCE_DIR"),
+                     ("reference_v2_dir", "CFG_REFERENCE_V2_DIR"),
+                     ("results_dir", "CFG_RESULTS_DIR"),
+                     ("validation_dir", "CFG_VALIDATION_DIR"),
+                     ("validation_v2_dir", "CFG_VALIDATION_V2_DIR"),
+                     ("motrpac_bulk_out", "CFG_MOTRPAC_BULK_OUT"),
+                     ("genecompass_input_dir", "CFG_GENECOMPASS_INPUT_DIR"),
+                     ("idspace_audit_dir", "CFG_IDSPACE_AUDIT_DIR")]:
+        if d.get(key):
+            print(f'{env}={resolve_path(c, d[key])}')
 except Exception:
     pass

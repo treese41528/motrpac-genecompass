@@ -15,11 +15,12 @@
 #   deconvolution/run_purity_sweep.sh all       # build -> deconv -> score
 set -eo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # project root
+export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
 PY=/depot/reese18/apps/motrpac-env/bin/python3
-REF=deconvolution/reference/liver_GSE220075
+REF="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}/liver_GSE220075"
 FOCAL="Hepatocytes"
-HOLD=deconvolution/validation/SWEEP_hepato_holdout
-CROSS=deconvolution/validation/SWEEP_hepato_cross
+HOLD="${CFG_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_holdout"
+CROSS="${CFG_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_cross"
 STAGES=("$HOLD" "$CROSS")
 # Sweep by CELL fraction but denser at the high end: hepatocyte RNA fraction lags
 # cell fraction in the snRNA cross source, so we need high cell-frac points to
