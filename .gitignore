@@ -71,6 +71,7 @@ deconvolution/reference_v2/
 deconvolution/validation_v2/
 deconvolution/results/
 deconvolution/validation/
+deconvolution/motrpac_bulk/
 # stray single-cell matrix exports, anywhere
 *.h5ad
 

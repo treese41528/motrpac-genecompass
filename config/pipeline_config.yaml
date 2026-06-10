@@ -334,3 +334,14 @@ deconvolution:
   # Runtime (R / BayesPrism)
   n_cores: 4
   r_module: r/4.4.1
+  # Real MoTrPAC bulk gene-ID liftover (Fix 1): lift consortium TRNSCRPT_<TISSUE>_RAW_COUNTS
+  # (older Ensembl rat build) -> current mRatBN7.2 ENSRNOG via three bridges: direct match,
+  # a FEATURE_TO_GENE symbol bridge, and an Entrez/RGD ID-history bridge (rgd.genes_file
+  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed across
+  # the Rnor_6.0->mRatBN7.2 rebuild). Then write deconv-ready samples x genes bulk per
+  # tissue. Built by deconvolution/R/prepare_motrpac_bulk.{R,sh}; biomart rat_gene_info
+  # (above) supplies the current-ID universe.
+  motrpac_bulk_dir: data/motrpac/rat_training_6mo/data        # source TRNSCRPT_*_RAW_COUNTS.rda
+  rat_token_mapping: data/training/ortholog_mappings/rat_token_mapping.tsv  # GeneCompass token vocab
+  motrpac_bulk_liftover: deconvolution/reference/motrpac_bulk_liftover.tsv  # auditable per-gene map (committed)
+  motrpac_bulk_out: deconvolution/motrpac_bulk                # per-tissue lifted bulk (gitignored)

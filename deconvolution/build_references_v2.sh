@@ -22,7 +22,11 @@ launch () {  # tag  -- then build_reference.py args
 }
 
 # CROSS-tissue references (healthy arms)
-launch cortex_GSE303115        --study GSE303115 --tissue cortex
+# Fix 2 (2026-06-08): GSE303115 cortex samples have uneven gene depth (per-sample 9.5k-21k);
+# the default inner (intersection) join collapsed the reference to 5,536 genes (~20% primary
+# coverage). --gene-join outer + --min-gene-cells 10 recovers the 21,248-gene union -> 18,162
+# genes, lifting training-regulated coverage to ~94%. (173k-cell union OOMs on login -> SLURM.)
+launch cortex_GSE303115        --study GSE303115 --tissue cortex --gene-join outer --min-gene-cells 10
 launch hippocampus_GSE305314_WT --study GSE305314 --tissue hippocampus --sample-ids "$WT_HIPPO"
 launch kidney_GSE240658        --study GSE240658 --tissue kidney --conditions "No treatment"
 launch lung_GSE178405          --study GSE178405 --tissue lung

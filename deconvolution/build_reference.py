@@ -160,15 +160,24 @@ def load_sample(sample):
     return sub
 
 
-def load_study(study, tissue, conditions=None, sex=None, sample_ids=None):
-    """Concatenate all (loadable) samples of a study/tissue on the shared gene set."""
+def load_study(study, tissue, conditions=None, sex=None, sample_ids=None,
+               gene_join="inner", min_gene_cells=0):
+    """Concatenate all (loadable) samples of a study/tissue. gene_join='inner' keeps the
+    shared (intersection) gene set -- the default, but it COLLAPSES studies with uneven
+    per-sample gene depth (cortex GSE303115: per-sample 9.5k-21k -> 5.5k shared). Use
+    gene_join='outer' to take the UNION (0-filled), optionally pruned by min_gene_cells
+    (drop genes expressed in < that many pooled cells) to trim the union's long tail."""
     samples = select_samples(study, tissue, conditions, sex, sample_ids)
     print(f"{study} / {tissue}: {len(samples)} samples -> {samples}")
     parts = [s for s in (load_sample(x) for x in samples) if s is not None]
     if not parts:
         sys.exit("ERROR: no samples loaded.")
-    adata = ad.concat(parts, join="inner", merge="same")
-    print(f"concatenated: {adata.n_obs} cells x {adata.n_vars} genes (shared)")
+    adata = ad.concat(parts, join=gene_join, merge="same", fill_value=0)
+    print(f"concatenated ({gene_join}): {adata.n_obs} cells x {adata.n_vars} genes")
+    if min_gene_cells > 0:
+        before = adata.n_vars
+        sc.pp.filter_genes(adata, min_cells=min_gene_cells)
+        print(f"min-gene-cells={min_gene_cells}: {before} -> {adata.n_vars} genes kept")
     return adata
 
 
@@ -222,10 +231,17 @@ def main():
                     "'Excitatory neurons'); apply the SAME scheme to the cross source")
     ap.add_argument("--out", help="output dir (default deconvolution/reference/{tissue}_{study}); "
                     "set explicitly to avoid clobbering when tissue+study collide, e.g. a WT subset")
+    ap.add_argument("--gene-join", choices=["inner", "outer"], default="inner",
+                    help="combine per-sample gene sets by intersection ('inner', default) or "
+                    "union ('outer', 0-filled) -- use 'outer' for uneven-depth studies (cortex)")
+    ap.add_argument("--min-gene-cells", type=int, default=0,
+                    help="after concat, drop genes expressed in < this many pooled cells "
+                    "(prunes a 'outer'-join union's long tail; e.g. 10)")
     args = ap.parse_args()
     conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
     sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
-    adata = load_study(args.study, args.tissue, conds, args.sex, sids)
+    adata = load_study(args.study, args.tissue, conds, args.sex, sids,
+                       gene_join=args.gene_join, min_gene_cells=args.min_gene_cells)
     adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
     out = Path(args.out) if args.out else PROJECT / "deconvolution/reference" / f"{args.tissue}_{args.study}"

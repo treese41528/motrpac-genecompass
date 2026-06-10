@@ -1,0 +1,19 @@
+MoTrPAC training-regulated ('primary') genes still NOT tokenizable after the
+3-bridge gene-ID liftover  (direct + symbol + Entrez/RGD ID-history -> rel-113)
+=============================================================================
+
+505 of the 9800 training-regulated transcriptome genes remain without a
+GeneCompass token: 8768 already in vocab + 498 symbol-recovered + 29 id_history-recovered
+= 9295 covered (94.8%). Per-gene record: motrpac_missed_genes.tsv,
+flagged by category and importance: high 29, med 50, low 426.
+
+Can these be recovered by GROWING the GeneCompass vocab?  NO -- not from our current
+single-cell corpus: 2 of the 505 still-missed genes occur in any SC reference
+(in_sc_corpus, by current ID and by symbol -- release-robust). They are simply absent
+from our SC data, so tokens would require deeper/different single-cell data, not vocab
+growth. Notable members: the RT1-* rat-MHC immune cluster (training-regulated in up to
+8 tissues; hyper-polymorphic, excluded from ortholog vocabularies) and a few real
+metabolic/immune genes (e.g. CD36, NDUFA13, TPI1, GPT, LYVE1, C4A, CFB).
+
+Columns: symbol, old_ensrnog, current_ensrnog (rel-113: own id if current, else symbol-
+resolved), n_tissues_trainreg, tissues, in_current_annot, in_sc_corpus, category, importance.
