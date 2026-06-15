@@ -10,7 +10,7 @@ and, crucially, the pooled value for the >=0.5-purity samples -- the number that
 lines up 1-1 with the paper's >50% claim.
 
 Usage: python deconvolution/score_purity_sweep.py \
-    --stage-dir deconvolution/validation/SWEEP_hepato_cross
+    --stage-dir data/deconvolution/validation/SWEEP_hepato_cross
 """
 import argparse
 from pathlib import Path

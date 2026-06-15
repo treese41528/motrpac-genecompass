@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>deconv&#8594;GeneCompass &middot; pseudo-cell UMAP</title>
+<style>
+:root, [data-theme="dark"]{
+  --bg:#0b0f17; --panel:#121826; --panel2:#0e1422; --rail:#0f1521;
+  --border:#222c3d; --border2:#2c3a52; --fg:#e6edf3; --muted:#8b97a7;
+  --accent:#5aa9ff; --accent2:#7c5cff; --sig:#ff9f43; --good:#36d399; --bad:#f87272;
+  --shadow:0 8px 30px rgba(0,0,0,.45); --radius:14px;
+}
+[data-theme="light"]{
+  --bg:#eef1f6; --panel:#ffffff; --panel2:#f4f6fa; --rail:#f7f9fc;
+  --border:#dde3ec; --border2:#cbd4e1; --fg:#1b2430; --muted:#5d6b7c;
+  --accent:#2f6fed; --accent2:#6b4bff; --sig:#e07b1a; --good:#1a9e6a; --bad:#d4504e;
+  --shadow:0 8px 26px rgba(60,80,120,.16); --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:radial-gradient(1200px 800px at 80% -10%, color-mix(in srgb,var(--accent) 9%, transparent), transparent 60%),var(--bg);
+  color:var(--fg);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+  display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;
+}
+header{
+  display:flex;align-items:center;gap:18px;padding:14px 22px;
+  border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--panel) 70%, transparent);
+  backdrop-filter:blur(8px);position:sticky;top:0;z-index:10;
+}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:6px}
+.brand h1{font-size:15px;margin:0;font-weight:650;letter-spacing:.2px}
+.brand span{font-size:11.5px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;background:var(--panel2);padding:4px;border-radius:11px;border:1px solid var(--border)}
+nav.tabs button{
+  appearance:none;border:0;background:transparent;color:var(--muted);
+  padding:7px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer;transition:.15s;
+}
+nav.tabs button:hover{color:var(--fg)}
+nav.tabs button.active{background:var(--panel);color:var(--fg);box-shadow:var(--shadow)}
+.spacer{flex:1}
+.iconbtn{
+  appearance:none;border:1px solid var(--border2);background:var(--panel2);color:var(--fg);
+  width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:15px;transition:.15s;
+}
+.iconbtn:hover{border-color:var(--accent)}
+main{flex:1;min-height:0;position:relative}
+.tab{position:absolute;inset:0;display:none}
+.tab.active{display:flex}
+
+/* ---- Atlas ---- */
+#tab-atlas{flex-direction:row}
+.rail{
+  width:260px;flex:none;overflow-y:auto;padding:16px;background:var(--rail);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;gap:18px;
+}
+.rail h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:7px}
+select,input[type=search]{
+  width:100%;padding:8px 10px;border-radius:9px;border:1px solid var(--border2);
+  background:var(--panel);color:var(--fg);font:inherit;
+}
+select:focus,input:focus{outline:none;border-color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:4px;max-height:230px;overflow:auto}
+.check{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:7px;cursor:pointer;font-size:13px}
+.check:hover{background:var(--panel)}
+.check input{accent-color:var(--accent)}
+.swatch{width:11px;height:11px;border-radius:3px;flex:none}
+.segmented{display:flex;border:1px solid var(--border2);border-radius:9px;overflow:hidden}
+.segmented button{flex:1;border:0;background:var(--panel);color:var(--muted);padding:7px;cursor:pointer;font:inherit;font-weight:600}
+.segmented button.active{background:var(--accent);color:#fff}
+.linkbtn{background:none;border:0;color:var(--accent);cursor:pointer;font:inherit;padding:0;text-align:left}
+.canvas-wrap{flex:1;position:relative;min-width:0}
+canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+canvas:active{cursor:grabbing}
+.legend{
+  position:absolute;top:12px;right:12px;max-height:calc(100% - 24px);overflow:auto;
+  background:color-mix(in srgb,var(--panel) 88%, transparent);border:1px solid var(--border);
+  border-radius:11px;padding:10px 12px;box-shadow:var(--shadow);font-size:12px;min-width:120px;backdrop-filter:blur(6px);
+}
+.legend .title{font-weight:650;margin-bottom:6px;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px}
+.legend .row{display:flex;align-items:center;gap:8px;padding:2px 0}
+.overlay-tl{position:absolute;top:12px;left:12px;display:flex;gap:8px}
+.pill{background:color-mix(in srgb,var(--panel) 88%, transparent);border:1px solid var(--border);border-radius:9px;padding:6px 10px;font-size:12px;color:var(--muted);box-shadow:var(--shadow)}
+.pill b{color:var(--fg);font-weight:600}
+#tooltip{
+  position:fixed;pointer-events:none;z-index:50;display:none;
+  background:var(--panel);border:1px solid var(--border2);border-radius:10px;padding:9px 11px;
+  box-shadow:var(--shadow);font-size:12.5px;max-width:240px;
+}
+#tooltip .ct{font-weight:650;margin-bottom:3px}
+#tooltip .kv{color:var(--muted)}
+#tooltip .kv b{color:var(--fg);font-weight:600}
+
+/* ---- Signal ---- */
+#tab-signal{flex-direction:column;overflow:hidden}
+.signal-head{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:1px}
+.stat .big{font-size:20px;font-weight:700}
+.stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.signal-head input[type=search]{width:220px;margin-left:auto}
+.table-wrap{flex:1;overflow:auto;padding:0 22px 22px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+thead th{
+  position:sticky;top:0;background:var(--bg);z-index:2;text-align:left;
+  padding:10px 10px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border2);
+  cursor:pointer;white-space:nowrap;user-select:none;
+}
+thead th:hover{color:var(--fg)}
+thead th.num{text-align:right}
+tbody td{padding:7px 10px;border-bottom:1px solid var(--border)}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--panel)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.eta-cell{position:relative;border-radius:6px}
+.eta-cell .p{font-size:10.5px;color:var(--muted);margin-left:5px}
+.eta-cell.sig{font-weight:700}
+.eta-cell.sig .p{color:var(--sig)}
+.tisbadge{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:middle}
+
+/* ---- Focus ---- */
+#tab-focus{flex-direction:row}
+.focus-side{width:320px;flex:none;padding:18px;background:var(--rail);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.focus-side h2{font-size:16px;margin:0;display:flex;align-items:center;gap:8px}
+.verdict{padding:10px 12px;border-radius:11px;border:1px solid var(--border2);background:var(--panel);font-size:13px}
+.verdict.hot{border-color:var(--sig);background:color-mix(in srgb,var(--sig) 12%, var(--panel))}
+.verdict.sexdom{border-color:var(--accent2);background:color-mix(in srgb,var(--accent2) 12%, var(--panel))}
+.metric{display:flex;flex-direction:column;gap:6px}
+.metric .bar-row{display:flex;align-items:center;gap:10px}
+.metric .name{width:78px;font-size:12px;color:var(--muted)}
+.bar{flex:1;height:9px;border-radius:5px;background:var(--panel2);overflow:hidden;border:1px solid var(--border)}
+.bar>span{display:block;height:100%;border-radius:5px}
+.metric .val{width:96px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.metric .val.sig{color:var(--sig);font-weight:700}
+.focus-canvas{flex:1;position:relative;min-width:0}
+.note{font-size:11.5px;color:var(--muted);line-height:1.5}
+.kbd{font:inherit;background:var(--panel2);border:1px solid var(--border2);border-radius:5px;padding:1px 6px;font-size:11px}
+.row2{display:flex;gap:10px}
+.row2>*{flex:1}
+.warnbox{border:1px solid var(--border2);border-radius:11px;padding:11px 12px;background:var(--panel);font-size:12px;line-height:1.5}
+.warn-h{font-weight:650;margin-bottom:6px;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.warn-show{color:var(--good);margin-bottom:5px}
+.warn-show::before{content:"\2713  ";font-weight:800}
+.warn-hide{color:var(--sig);margin-bottom:5px}
+.warn-hide::before{content:"\26A0  "}
+.warn-hide:last-child,.warn-show:last-child{margin-bottom:0}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>deconv&#8594;GeneCompass &middot; pseudo-cell UMAP</h1>
+    <span id="subtitle">&hellip;</span>
+  </div>
+  <nav class="tabs">
+    <button data-tab="atlas" class="active">Atlas</button>
+    <button data-tab="signal">Signal</button>
+    <button data-tab="focus">Focus</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="theme-toggle" title="Toggle light / dark">&#9789;</button>
+</header>
+
+<main>
+  <!-- ATLAS -->
+  <section id="tab-atlas" class="tab active">
+    <aside class="rail">
+      <div class="field">
+        <h3>Color by</h3>
+        <select id="atlas-color">
+          <option value="tissue">Tissue</option>
+          <option value="cell">Cell type</option>
+          <option value="sex">Sex</option>
+          <option value="week">Week (exercise dose)</option>
+        </select>
+      </div>
+      <div class="field">
+        <h3>Tissue</h3>
+        <div class="checks" id="f-tissue"></div>
+        <button class="linkbtn" id="tissue-all">all / none</button>
+      </div>
+      <div class="field">
+        <h3>Sex</h3>
+        <div class="segmented" id="f-sex">
+          <button data-v="all" class="active">Both</button>
+          <button data-v="female">Female</button>
+          <button data-v="male">Male</button>
+        </div>
+      </div>
+      <div class="field">
+        <h3>Week</h3>
+        <div class="checks" id="f-week"></div>
+      </div>
+      <div class="field">
+        <h3>Cell type</h3>
+        <input type="search" id="f-cell" placeholder="filter by name&hellip;">
+      </div>
+      <button class="linkbtn" id="atlas-reset">&#8634; reset view</button>
+    </aside>
+    <div class="canvas-wrap">
+      <canvas id="atlas-canvas"></canvas>
+      <div class="overlay-tl"><div class="pill" id="atlas-count">&hellip;</div></div>
+      <div class="legend" id="atlas-legend"></div>
+    </div>
+  </section>
+
+  <!-- SIGNAL -->
+  <section id="tab-signal" class="tab">
+    <div class="signal-head">
+      <div class="stat"><span class="big" id="s-group">&ndash;</span><span class="lbl">group (5-lvl) sig</span></div>
+      <div class="stat"><span class="big" id="s-trained">&ndash;</span><span class="lbl">trained sig</span></div>
+      <div class="stat"><span class="big" id="s-sex">&ndash;</span><span class="lbl">sex sig</span></div>
+      <div class="note" style="max-width:340px">Within-cell-type variance-explained (&eta;<sup>2</sup>) of the exercise / sex design on the 768-d embedding, with a 1000-permutation p. <b>Bold</b>&nbsp;=&nbsp;p&lt;0.05. Click a row to inspect it in Focus.</div>
+      <input type="search" id="sig-search" placeholder="filter tissue / cell type&hellip;">
+    </div>
+    <div class="table-wrap">
+      <table id="sig-table">
+        <thead><tr>
+          <th data-k="tissue">Tissue</th>
+          <th data-k="cell">Cell type</th>
+          <th data-k="n" class="num">n</th>
+          <th data-k="eg" class="num">group &eta;<sup>2</sup></th>
+          <th data-k="et" class="num">trained &eta;<sup>2</sup></th>
+          <th data-k="es" class="num">sex &eta;<sup>2</sup></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FOCUS -->
+  <section id="tab-focus" class="tab">
+    <aside class="focus-side">
+      <div class="row2">
+        <div class="field"><h3>Tissue</h3><select id="focus-tissue"></select></div>
+        <div class="field"><h3>Cell type</h3><select id="focus-cell"></select></div>
+      </div>
+      <div class="field">
+        <h3>Projection</h3>
+        <div class="segmented" id="focus-proj">
+          <button data-v="design" class="active">Design axes</button>
+          <button data-v="pca">Within-PCA</button>
+          <button data-v="global">Global</button>
+        </div>
+      </div>
+      <div class="warnbox" id="focus-warn"></div>
+      <div class="verdict" id="focus-verdict">&hellip;</div>
+      <div class="field">
+        <h3>Variance explained (&eta;<sup>2</sup>)</h3>
+        <div class="metric" id="focus-metrics"></div>
+      </div>
+    </aside>
+    <div class="focus-canvas">
+      <canvas id="focus-canvas"></canvas>
+      <div class="overlay-tl"><div class="pill" id="focus-count">&hellip;</div></div>
+      <div class="legend" id="focus-legend"></div>
+    </div>
+  </section>
+</main>
+
+<div id="tooltip"></div>
+
+<script id="viewer-data" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const DATA = JSON.parse(document.getElementById('viewer-data').textContent);
+const P = DATA.points, N = P.x.length;
+
+/* ---------- palettes ---------- */
+const TISSUE_COLORS = ["#e6394b","#4363d8","#f58231","#a531c4","#3cb44b","#9a6324","#33c9e0","#f032c6","#9bd62a","#e8c100"];
+const SEX_COLORS = {female:"#ff6f91", male:"#3aa0ff"};
+const WEEK_COLORS = ["#5b3a9b","#3b6fb5","#1f9e89","#5fd06a","#f4d03f"]; // control->8w
+const CELL_PALETTE = ["#5aa9ff","#ff9f43","#36d399","#f87272","#a78bfa","#f472b6","#22d3ee","#facc15","#fb923c","#4ade80","#60a5fa","#e879f9","#2dd4bf","#fca5a5","#c084fc","#34d399","#fbbf24","#f9a8d4","#38bdf8","#a3e635","#fda4af","#818cf8","#fcd34d","#5eead4"];
+const weekIdx = w => DATA.weeks.indexOf(w);
+function tissueColor(i){return TISSUE_COLORS[P.t[i]%TISSUE_COLORS.length];}
+function cellColor(i){return CELL_PALETTE[P.c[i]%CELL_PALETTE.length];}
+function sexColor(i){return SEX_COLORS[DATA.sexes[P.s[i]]];}
+function weekColor(i){return WEEK_COLORS[weekIdx(P.w[i])];}
+
+/* gate lookup: "t_c" -> entry */
+const GATE = new Map();
+for(const g of DATA.gate) GATE.set(g.t+"_"+g.c, g);
+
+/* ---------- generic scatter ---------- */
+class Scatter{
+  constructor(cv,{r=2.6,onHover=null}={}){
+    this.cv=cv;this.ctx=cv.getContext('2d');this.idx=[];this.r=r;this.onHover=onHover;
+    this.colorOf=()=>'#888';this.shapeOf=()=>'circle';this.view={cx:0,cy:0,scale:1};this.xs=P.x;this.ys=P.y;this._bind();
+  }
+  size(){const b=this.cv.getBoundingClientRect();return{w:b.width||1,h:b.height||1};}
+  setData(idx){this.idx=idx;}
+  fit(pad=0.9){
+    if(!this.idx.length){this.draw();return;}
+    let a=Infinity,b=-Infinity,c=Infinity,d=-Infinity;
+    const xs=this.xs,ys=this.ys;for(const i of this.idx){const x=xs[i],y=ys[i];if(x<a)a=x;if(x>b)b=x;if(y<c)c=y;if(y>d)d=y;}
+    const{w,h}=this.size();const dx=(b-a)||1,dy=(d-c)||1;
+    this.view={cx:(a+b)/2,cy:(c+d)/2,scale:pad*Math.min(w/dx,h/dy)};this.draw();
+  }
+  toScreen(x,y){const{w,h}=this.size();const v=this.view;return[(x-v.cx)*v.scale+w/2,(v.cy-y)*v.scale+h/2];}
+  toData(px,py){const{w,h}=this.size();const v=this.view;return[(px-w/2)/v.scale+v.cx,v.cy-(py-h/2)/v.scale];}
+  draw(){
+    const dpr=window.devicePixelRatio||1,{w,h}=this.size();
+    this.cv.width=w*dpr;this.cv.height=h*dpr;const ctx=this.ctx;ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,w,h);const r=this.r;const xs=this.xs,ys=this.ys;
+    for(const i of this.idx){
+      const[sx,sy]=this.toScreen(xs[i],ys[i]);
+      if(sx<-6||sx>w+6||sy<-6||sy>h+6)continue;
+      ctx.fillStyle=this.colorOf(i);
+      if(this.shapeOf(i)==='triangle'){ctx.beginPath();ctx.moveTo(sx,sy-r-.5);ctx.lineTo(sx-r-.3,sy+r);ctx.lineTo(sx+r+.3,sy+r);ctx.closePath();ctx.fill();}
+      else{ctx.beginPath();ctx.arc(sx,sy,r,0,6.2832);ctx.fill();}
+    }
+  }
+  _bind(){
+    let drag=null;
+    this.cv.addEventListener('mousedown',e=>{drag={x:e.offsetX,y:e.offsetY,cx:this.view.cx,cy:this.view.cy};});
+    window.addEventListener('mouseup',()=>{drag=null;});
+    this.cv.addEventListener('mousemove',e=>{
+      if(drag){const v=this.view;v.cx=drag.cx-(e.offsetX-drag.x)/v.scale;v.cy=drag.cy+(e.offsetY-drag.y)/v.scale;this.draw();}
+      else if(this.onHover)this._hover(e);
+    });
+    this.cv.addEventListener('mouseleave',()=>{if(this.onHover)this.onHover(null);});
+    this.cv.addEventListener('wheel',e=>{
+      e.preventDefault();const[bx,by]=this.toData(e.offsetX,e.offsetY);
+      this.view.scale*=(e.deltaY<0?1.18:1/1.18);
+      const[ax,ay]=this.toData(e.offsetX,e.offsetY);this.view.cx+=bx-ax;this.view.cy+=by-ay;this.draw();
+    },{passive:false});
+  }
+  _hover(e){
+    let best=-1,bd=121;const xs=this.xs,ys=this.ys;
+    for(const i of this.idx){const[sx,sy]=this.toScreen(xs[i],ys[i]);const dd=(sx-e.offsetX)**2+(sy-e.offsetY)**2;if(dd<bd){bd=dd;best=i;}}
+    this.onHover(best>=0?{i:best,x:e.clientX,y:e.clientY}:null);
+  }
+}
+
+/* ---------- tabs ---------- */
+const tabEls={atlas:document.getElementById('tab-atlas'),signal:document.getElementById('tab-signal'),focus:document.getElementById('tab-focus')};
+let curTab='atlas';
+function showTab(t){
+  curTab=t;
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  for(const k in tabEls)tabEls[k].classList.toggle('active',k===t);
+  if(t==='atlas')requestAnimationFrame(()=>atlas.draw());
+  if(t==='focus')requestAnimationFrame(()=>focusS.fit());
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+/* ---------- theme ---------- */
+document.getElementById('theme-toggle').onclick=()=>{
+  const h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';
+  atlas.draw();if(curTab==='focus')focusS.draw();
+};
+
+/* ================= ATLAS ================= */
+const atlasTip=document.getElementById('tooltip');
+const atlas=new Scatter(document.getElementById('atlas-canvas'),{onHover:h=>{
+  if(!h){atlasTip.style.display='none';return;}
+  const i=h.i;const g=GATE.get(P.t[i]+"_"+P.c[i]);
+  atlasTip.innerHTML=`<div class="ct">${DATA.cellTypes[P.c[i]]}</div>`+
+    `<div class="kv">tissue <b>${DATA.tissues[P.t[i]]}</b> &middot; sex <b>${DATA.sexes[P.s[i]]}</b> &middot; week <b>${P.w[i]}</b></div>`+
+    (g?`<div class="kv" style="margin-top:4px">trained &eta;<sup>2</sup> <b>${fmt(g.et)}</b> &middot; sex &eta;<sup>2</sup> <b>${fmt(g.es)}</b></div>`:'');
+  atlasTip.style.display='block';atlasTip.style.left=(h.x+14)+'px';atlasTip.style.top=(h.y+14)+'px';
+}});
+const atlasState={color:'tissue',tissues:new Set(DATA.tissues.map((_,i)=>i)),sex:'all',weeks:new Set(DATA.weeks),cell:''};
+function atlasFilter(){
+  const s=atlasState,q=s.cell.toLowerCase();
+  const out=[];
+  for(let i=0;i<N;i++){
+    if(!s.tissues.has(P.t[i]))continue;
+    if(s.sex!=='all'&&DATA.sexes[P.s[i]]!==s.sex)continue;
+    if(!s.weeks.has(P.w[i]))continue;
+    if(q&&!DATA.cellTypes[P.c[i]].toLowerCase().includes(q))continue;
+    out.push(i);
+  }
+  return out;
+}
+function colorFn(mode){return mode==='tissue'?tissueColor:mode==='cell'?cellColor:mode==='sex'?sexColor:weekColor;}
+function atlasRefresh(refit){
+  atlas.colorOf=colorFn(atlasState.color);
+  const idx=atlasFilter();atlas.setData(idx);
+  document.getElementById('atlas-count').innerHTML=`<b>${idx.length.toLocaleString()}</b> / ${N.toLocaleString()} pseudo-cells`;
+  atlasLegend();if(refit)atlas.fit();else atlas.draw();
+}
+function atlasLegend(){
+  const el=document.getElementById('atlas-legend');const m=atlasState.color;let html='';
+  if(m==='tissue'){html='<div class="title">tissue</div>'+DATA.tissues.map((t,i)=>`<div class="row"><span class="swatch" style="background:${TISSUE_COLORS[i%TISSUE_COLORS.length]}"></span>${t}</div>`).join('');}
+  else if(m==='sex'){html='<div class="title">sex</div>'+DATA.sexes.map(s=>`<div class="row"><span class="swatch" style="background:${SEX_COLORS[s]}"></span>${s}</div>`).join('');}
+  else if(m==='week'){html='<div class="title">week (dose)</div>'+DATA.weeks.map((w,i)=>`<div class="row"><span class="swatch" style="background:${WEEK_COLORS[i]}"></span>${w===0?'control':w+'w'}</div>`).join('');}
+  else{const seen=new Set();for(const i of atlas.idx)seen.add(P.c[i]);const list=[...seen].sort((a,b)=>DATA.cellTypes[a].localeCompare(DATA.cellTypes[b]));html='<div class="title">cell type ('+list.length+')</div>'+list.map(c=>`<div class="row"><span class="swatch" style="background:${CELL_PALETTE[c%CELL_PALETTE.length]}"></span>${DATA.cellTypes[c]}</div>`).join('');}
+  el.innerHTML=html;
+}
+// rail wiring
+document.getElementById('atlas-color').onchange=e=>{atlasState.color=e.target.value;atlasRefresh(false);};
+const ftis=document.getElementById('f-tissue');
+ftis.innerHTML=DATA.tissues.map((t,i)=>`<label class="check"><input type="checkbox" data-t="${i}" checked><span class="swatch" style="background:${TISSUE_COLORS[i%TISSUE_COLORS.length]}"></span>${t}</label>`).join('');
+ftis.querySelectorAll('input').forEach(cb=>cb.onchange=()=>{const i=+cb.dataset.t;cb.checked?atlasState.tissues.add(i):atlasState.tissues.delete(i);atlasRefresh(false);});
+document.getElementById('tissue-all').onclick=()=>{const all=atlasState.tissues.size<DATA.tissues.length;atlasState.tissues=new Set(all?DATA.tissues.map((_,i)=>i):[]);ftis.querySelectorAll('input').forEach(cb=>cb.checked=all);atlasRefresh(false);};
+document.getElementById('f-sex').querySelectorAll('button').forEach(b=>b.onclick=()=>{document.getElementById('f-sex').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));atlasState.sex=b.dataset.v;atlasRefresh(false);});
+const fweek=document.getElementById('f-week');
+fweek.innerHTML=DATA.weeks.map((w,i)=>`<label class="check"><input type="checkbox" data-w="${w}" checked><span class="swatch" style="background:${WEEK_COLORS[i]}"></span>${w===0?'control':w+' week'+(w>1?'s':'')}</label>`).join('');
+fweek.querySelectorAll('input').forEach(cb=>cb.onchange=()=>{const w=+cb.dataset.w;cb.checked?atlasState.weeks.add(w):atlasState.weeks.delete(w);atlasRefresh(false);});
+let cellT;document.getElementById('f-cell').oninput=e=>{clearTimeout(cellT);cellT=setTimeout(()=>{atlasState.cell=e.target.value.trim();atlasRefresh(false);},140);};
+document.getElementById('atlas-reset').onclick=()=>atlas.fit();
+
+/* ================= SIGNAL ================= */
+function fmt(v){return v==null?'&ndash;':v.toFixed(3);}
+function etaCellHTML(eta,p){
+  if(eta==null)return '<span class="eta-cell">&ndash;</span>';
+  const sig=p!=null&&p<0.05;const a=Math.min(eta/0.45,1);
+  return `<span class="eta-cell${sig?' sig':''}" style="background:rgba(255,159,67,${(a*0.55).toFixed(3)});padding:2px 7px">${eta.toFixed(3)}<span class="p">p${p<0.001?'&lt;.001':('='+p.toFixed(3).slice(1))}</span></span>`;
+}
+let sigSort={k:'tissue',dir:1};
+function buildSignal(){
+  const sg=DATA.gate.filter(g=>g.pg!=null&&g.pg<0.05).length;
+  const st=DATA.gate.filter(g=>g.pt!=null&&g.pt<0.05).length;
+  const sx=DATA.gate.filter(g=>g.ps!=null&&g.ps<0.05).length;
+  const n=DATA.gate.length;
+  document.getElementById('s-group').textContent=`${sg}/${n}`;
+  document.getElementById('s-trained').textContent=`${st}/${n}`;
+  document.getElementById('s-sex').textContent=`${sx}/${n}`;
+  renderSignal();
+}
+function renderSignal(){
+  const q=document.getElementById('sig-search').value.trim().toLowerCase();
+  let rows=DATA.gate.filter(g=>!q||DATA.tissues[g.t].includes(q)||DATA.cellTypes[g.c].toLowerCase().includes(q));
+  const k=sigSort.k,d=sigSort.dir;
+  const key=g=>k==='tissue'?DATA.tissues[g.t]:k==='cell'?DATA.cellTypes[g.c]:g[k];
+  rows.sort((a,b)=>{const x=key(a),y=key(b);if(k==='tissue'||k==='cell')return d*String(x).localeCompare(String(y));return d*(((y==null?-1:y))-((x==null?-1:x)));});
+  const tb=document.querySelector('#sig-table tbody');
+  tb.innerHTML=rows.map(g=>`<tr data-t="${g.t}" data-c="${g.c}">
+    <td><span class="tisbadge" style="background:${TISSUE_COLORS[g.t%TISSUE_COLORS.length]}"></span>${DATA.tissues[g.t]}</td>
+    <td>${DATA.cellTypes[g.c]}</td>
+    <td class="num">${g.n}</td>
+    <td class="num">${etaCellHTML(g.eg,g.pg)}</td>
+    <td class="num">${etaCellHTML(g.et,g.pt)}</td>
+    <td class="num">${etaCellHTML(g.es,g.ps)}</td></tr>`).join('');
+  tb.querySelectorAll('tr').forEach(tr=>tr.onclick=()=>openFocus(+tr.dataset.t,+tr.dataset.c));
+}
+document.querySelectorAll('#sig-table thead th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sigSort.dir=(sigSort.k===k?-sigSort.dir:(k==='tissue'||k==='cell'?1:-1));sigSort.k=k;renderSignal();});
+document.getElementById('sig-search').oninput=renderSignal;
+
+/* ================= FOCUS ================= */
+const focusS=new Scatter(document.getElementById('focus-canvas'),{r:5,onHover:h=>{
+  if(!h){atlasTip.style.display='none';return;}
+  atlasTip.innerHTML=`<div class="kv">sex <b>${DATA.sexes[P.s[h.i]]}</b> &middot; week <b>${P.w[h.i]}</b></div>`;
+  atlasTip.style.display='block';atlasTip.style.left=(h.x+14)+'px';atlasTip.style.top=(h.y+14)+'px';
+}});
+focusS.colorOf=weekColor;focusS.shapeOf=i=>DATA.sexes[P.s[i]]==='male'?'triangle':'circle';
+
+// ---- swappable Focus projections, each with an explicit shows / doesn't-show warning ----
+const HAS_EMB=Array.isArray(P.dx);
+const PROJ={
+  design:{xs:P.dx,ys:P.dy,warn:
+    `<div class="warn-h">Design axes &middot; supervised, leave-one-out</div>`+
+    `<div class="warn-show">Shows the <b>shape</b> of the gate-tested effect: x = dose (control&rarr;8w), y = sex (&#9792;&rarr;&#9794;). Each cell scored leave-one-out, so a cell type with no real effect collapses to a blob.</div>`+
+    `<div class="warn-hide">Axes are defined <b>by</b> the design &mdash; significance is the &eta;<sup>2</sup>/p below, not the visual spread.</div>`},
+  pca:{xs:P.px,ys:P.py,warn:
+    `<div class="warn-h">Within-type PCA &middot; pooled, unsupervised</div>`+
+    `<div class="warn-show">Shows the largest within-type variance in a stable, drift-free common frame; spread is comparable across cell types.</div>`+
+    `<div class="warn-hide">Does <b>not</b> specifically show sex/exercise &mdash; those are only a few % of within-type variance, so these axes are mostly individual/replicate variation. Use Design axes + the &eta;<sup>2</sup> bars.</div>`},
+  global:{xs:P.x,ys:P.y,warn:
+    `<div class="warn-h">Global UMAP &middot; zoomed</div>`+
+    `<div class="warn-show">Shows where this cell type sits among all cells in the global GeneCompass embedding.</div>`+
+    `<div class="warn-hide">Does <b>not</b> show within-type structure &mdash; between-type variance (~83%) dominates, so it is compressed to a blob.</div>`}};
+const focusState={proj:HAS_EMB?'design':'global'};
+document.querySelectorAll('#focus-proj button').forEach(b=>{
+  if(!HAS_EMB&&b.dataset.v!=='global'){b.style.display='none';return;}
+  b.classList.toggle('active',b.dataset.v===focusState.proj);
+  b.onclick=()=>{focusState.proj=b.dataset.v;document.querySelectorAll('#focus-proj button').forEach(x=>x.classList.toggle('active',x===b));applyProj();};
+});
+function applyProj(){
+  const m=PROJ[focusState.proj];
+  focusS.xs=m.xs;focusS.ys=m.ys;focusS.fit(0.78);
+  let extra='';
+  if(focusState.proj==='design'&&!focusS.idx.some(i=>Math.abs(P.dy[i])>1e-6))
+    extra=`<div class="warn-hide">Sex axis N/A &mdash; single-sex tissue (y collapses to 0).</div>`;
+  document.getElementById('focus-warn').innerHTML=m.warn+extra;
+}
+const fTis=document.getElementById('focus-tissue'),fCell=document.getElementById('focus-cell');
+fTis.innerHTML=DATA.tissues.map((t,i)=>`<option value="${i}">${t}</option>`).join('');
+function fillFocusCells(t){
+  const list=(DATA.tissueCellTypes[t]||[]).slice().sort((a,b)=>DATA.cellTypes[a].localeCompare(DATA.cellTypes[b]));
+  fCell.innerHTML=list.map(c=>`<option value="${c}">${DATA.cellTypes[c]}</option>`).join('');
+}
+fTis.onchange=()=>{fillFocusCells(+fTis.value);renderFocus();};
+fCell.onchange=renderFocus;
+function openFocus(t,c){fTis.value=t;fillFocusCells(t);fCell.value=c;showTab('focus');renderFocus();}
+function metricRow(name,label,eta,p){
+  const sig=p!=null&&p<0.05;const w=eta==null?0:Math.min(eta/0.45,1)*100;
+  const col=name==='sex'?'var(--accent2)':'var(--sig)';
+  return `<div class="bar-row"><span class="name">${label}</span>
+    <span class="bar"><span style="width:${w}%;background:${col}"></span></span>
+    <span class="val${sig?' sig':''}">${eta==null?'&ndash;':eta.toFixed(3)} ${p==null?'':('p'+(p<0.001?'&lt;.001':'='+p.toFixed(3).slice(1)))}</span></div>`;
+}
+function renderFocus(){
+  const t=+fTis.value,c=+fCell.value;
+  const idx=[];for(let i=0;i<N;i++)if(P.t[i]===t&&P.c[i]===c)idx.push(i);
+  focusS.setData(idx);
+  document.getElementById('focus-count').innerHTML=`<b>${idx.length}</b> pseudo-cells &middot; ${DATA.tissues[t]}`;
+  const g=GATE.get(t+"_"+c);
+  const m=document.getElementById('focus-metrics');
+  if(g){m.innerHTML=metricRow('group','group (5-lvl)',g.eg,g.pg)+metricRow('trained','trained',g.et,g.pt)+metricRow('sex','sex',g.es,g.ps);}
+  else{m.innerHTML='<div class="note">No gate statistic for this cell type (filtered out: a group cell had &lt;3 samples, or it is heart awaiting the refreshed gate).</div>';}
+  // verdict
+  const v=document.getElementById('focus-verdict');
+  if(g){
+    const exHot=g.pt!=null&&g.pt<0.05&&g.et>=0.05;
+    const sexDom=g.ps!=null&&g.ps<0.05&&g.es>=0.15;
+    if(exHot){v.className='verdict hot';v.innerHTML=`<b>Exercise hotspot.</b> Trained vs control explains a real slice of this cell type&rsquo;s embedding (&eta;<sup>2</sup>=${g.et.toFixed(3)}, p${g.pt<0.001?'&lt;.001':'='+g.pt.toFixed(3).slice(1)}).`;}
+    else if(sexDom){v.className='verdict sexdom';v.innerHTML=`<b>Sex-dominated.</b> Sex explains most within-type variation (&eta;<sup>2</sup>=${g.es.toFixed(3)}); exercise signal is weak here.`;}
+    else{v.className='verdict';v.innerHTML=`Modest / no significant exercise signal at the embedding level for this cell type. The group (5-level) term is the more sensitive dose probe here.`;}
+  } else {v.className='verdict';v.innerHTML='Select a cell type with computed gate statistics.';}
+  applyProj();
+  focusLegend();
+}
+function focusLegend(){
+  document.getElementById('focus-legend').innerHTML=
+    '<div class="title">week (dose)</div>'+DATA.weeks.map((w,i)=>`<div class="row"><span class="swatch" style="background:${WEEK_COLORS[i]}"></span>${w===0?'control':w+'w'}</div>`).join('')+
+    '<div class="title" style="margin-top:8px">sex</div><div class="row">&#9679;&nbsp;female</div><div class="row">&#9650;&nbsp;male</div>';
+}
+
+/* ---------- init ---------- */
+document.getElementById('subtitle').innerHTML=`${N.toLocaleString()} pseudo-cells &middot; ${DATA.tissues.length} tissues &middot; ${DATA.cellTypes.length} cell types &middot; ${DATA.gate.length} gated &middot; ${DATA.generated||''}`;
+buildSignal();
+fillFocusCells(0);
+// default Focus to the strongest exercise responder
+let best=DATA.gate.filter(g=>g.et!=null).sort((a,b)=>b.et-a.et)[0];
+if(best){fTis.value=best.t;fillFocusCells(best.t);fCell.value=best.c;}
+renderFocus();
+atlasRefresh(true);
+window.addEventListener('resize',()=>{if(curTab==='atlas')atlas.draw();if(curTab==='focus')focusS.draw();});
+</script>
+</body>
+</html>

@@ -13,7 +13,7 @@ Inputs (under --stage-dir):
 Output:
   scores/metrics.tsv, scores/merged_long.tsv, and a printed summary.
 
-Usage:  python deconvolution/score_validation.py --stage-dir deconvolution/validation/V0_liver
+Usage:  python deconvolution/score_validation.py --stage-dir data/deconvolution/validation/V0_liver
 """
 import argparse
 from pathlib import Path

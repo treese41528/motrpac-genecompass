@@ -38,12 +38,12 @@ Usage:
   # paper-faithful (same study as reference atlas)
   python deconvolution/make_purity_sweep.py --mode holdout --study GSE220075 \
       --tissue liver --focal-type Hepatocytes \
-      --out deconvolution/validation/SWEEP_hepato_holdout
+      --out data/deconvolution/validation/SWEEP_hepato_holdout
   # cross-dataset (our real setting)
   python deconvolution/make_purity_sweep.py --mode cross --source-study GSE245240 \
       --tissue liver --conditions Nave --focal-type Hepatocytes \
-      --ref-dir deconvolution/reference/liver_GSE220075 \
-      --out deconvolution/validation/SWEEP_hepato_cross
+      --ref-dir data/deconvolution/references/liver_GSE220075 \
+      --out data/deconvolution/validation/SWEEP_hepato_cross
 """
 import argparse
 import sys

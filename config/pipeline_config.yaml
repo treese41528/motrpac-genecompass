@@ -327,10 +327,20 @@ deconvolution:
   # Derived via deconvolution/build_sex_chrom_list.py.
   rat_sex_chrom_genes: deconvolution/reference/rat_sex_chrom_genes.tsv
   exclude_sex_chromosomes: true
-  # Outputs
-  reference_dir: deconvolution/reference
-  validation_dir: deconvolution/validation
-  results_dir: deconvolution/results
+  # Committed reference artifacts (small, tracked; live with the code under deconvolution/reference/)
+  rat_genecompass_genes: deconvolution/reference/rat_genecompass_genes.tsv  # GeneCompass token-gene keep-list
+  sample_pheno: deconvolution/reference/motrpac_sample_pheno.tsv            # PHENO viallabel -> sex/group/weeks
+  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, rel-113
+  reference_dir: deconvolution/reference   # root for the committed reference TSVs above
+  # Outputs -- regenerable + gitignored, under data/deconvolution/ (NOT in the code tree)
+  output_root: data/deconvolution
+  built_reference_dir: data/deconvolution/references     # build_reference.py per-tissue SC references
+  idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
+  validation_dir: data/deconvolution/validation
+  results_dir: data/deconvolution/results
+  genecompass_input_dir: data/deconvolution/genecompass_input  # pseudo-cells/tokenized/embeddings/umap
+  reference_v2_dir: data/deconvolution/references_v2     # V2 re-audited SC references
+  validation_v2_dir: data/deconvolution/validation_v2    # V2 validation pseudobulk/results
   # Runtime (R / BayesPrism)
   n_cores: 4
   r_module: r/4.4.1
@@ -344,4 +354,5 @@ deconvolution:
   motrpac_bulk_dir: data/motrpac/rat_training_6mo/data        # source TRNSCRPT_*_RAW_COUNTS.rda
   rat_token_mapping: data/training/ortholog_mappings/rat_token_mapping.tsv  # GeneCompass token vocab
   motrpac_bulk_liftover: deconvolution/reference/motrpac_bulk_liftover.tsv  # auditable per-gene map (committed)
-  motrpac_bulk_out: deconvolution/motrpac_bulk                # per-tissue lifted bulk (gitignored)
+  motrpac_bulk_liftover_report: deconvolution/reference/motrpac_bulk_liftover_report.txt  # coverage report (committed)
+  motrpac_bulk_out: data/deconvolution/motrpac_bulk          # per-tissue lifted bulk (gitignored output)

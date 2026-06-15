@@ -13,7 +13,7 @@ Both compared via Spearman (rank) and Pearson on log1p (counts are heavy-tailed,
 so raw Pearson is dominated by a few high-count genes). log-Pearson is scale-
 invariant, so pred (bulk-count space) and true (summed sc counts) are comparable.
 
-Usage: python deconvolution/score_z.py --stage-dir deconvolution/validation/V2_GSE137869_male
+Usage: python deconvolution/score_z.py --stage-dir data/deconvolution/validation/V2_GSE137869_male
 """
 import argparse
 import re

@@ -72,6 +72,8 @@ deconvolution/validation_v2/
 deconvolution/results/
 deconvolution/validation/
 deconvolution/motrpac_bulk/
+# pseudo-cell h5ad + tokenized dataset + CLS embeddings (regenerable via build_pseudocells/tokenize_pseudocells/embed_cells)
+deconvolution/genecompass_input/
 # stray single-cell matrix exports, anywhere
 *.h5ad
 

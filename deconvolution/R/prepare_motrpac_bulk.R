@@ -46,15 +46,15 @@ if (length(args) < 2)
   stop("usage: prepare_motrpac_bulk.R <TISSUE|ALL> <out_dir> [map_out] [report_out]")
 which_tissue <- toupper(args[1])
 out_dir      <- args[2]
-MAP_OUT    <- if (length(args) >= 3) args[3] else "deconvolution/reference/motrpac_bulk_liftover.tsv"
-REPORT_OUT <- if (length(args) >= 4) args[4] else "deconvolution/reference/motrpac_bulk_liftover_report.txt"
+MAP_OUT    <- if (length(args) >= 3) args[3] else Sys.getenv("MOTRPAC_BULK_LIFTOVER", "deconvolution/reference/motrpac_bulk_liftover.tsv")
+REPORT_OUT <- if (length(args) >= 4) args[4] else Sys.getenv("MOTRPAC_BULK_LIFTOVER_REPORT", "deconvolution/reference/motrpac_bulk_liftover_report.txt")
 # still-missed training-regulated record (committed; emitted from the SAME recovery logic as the
 # report, so it can never drift from it). Written next to the map. SC-corpus membership is filled
 # from the audit's gene sets when present (else left NA) -- release-robust, by current ID and symbol.
 MISSED_TSV <- file.path(dirname(MAP_OUT), "motrpac_missed_genes.tsv")
 MISSED_SUM <- file.path(dirname(MAP_OUT), "motrpac_missed_genes_summary.txt")
-CORPUS_F   <- Sys.getenv("SC_CORPUS_GENES", "deconvolution/reference/idspace_audit/corpus_genes.txt")
-ID2SYM_F   <- Sys.getenv("SC_ID2SYMBOL",    "deconvolution/reference/idspace_audit/id2symbol.tsv")
+CORPUS_F   <- Sys.getenv("SC_CORPUS_GENES", "data/deconvolution/idspace_audit/corpus_genes.txt")
+ID2SYM_F   <- Sys.getenv("SC_ID2SYMBOL",    "data/deconvolution/idspace_audit/id2symbol.tsv")
 
 DATA_DIR <- Sys.getenv("MOTRPAC_DATA_DIR",  "data/motrpac/rat_training_6mo/data")
 VOCAB_F  <- Sys.getenv("RAT_TOKEN_MAPPING", "data/training/ortholog_mappings/rat_token_mapping.tsv")

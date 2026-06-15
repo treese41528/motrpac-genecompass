@@ -4,16 +4,23 @@ single-cell CORPUS (all qc_matrices, not just the filtered built references),
 the built references, biomart rel-113, and RGD -- so an old/new Ensembl release
 mismatch is detectable and reconcilable BY SYMBOL afterward (counts alone hide it).
 
-Writes deconvolution/reference/idspace_audit/:
+Writes data/deconvolution/idspace_audit/:
   corpus_genes.txt, builtref_genes.txt, rgd_ens.txt   -- the raw ID sets
   id2symbol.tsv                                        -- ID -> symbol (biomart+vocab+rgd)
   lifted_membership.tsv  -- per bulk gene: old_id, lifted_id, method, cur_symbol,
                             in_biomart113, in_corpus_byID, in_corpus_bySymbol, in_builtref
   summary.txt            -- the release checks + per-method tallies
 Reuses tmp/corpus_genes.txt if present (the slow 864-h5ad union)."""
-import anndata as ad, glob, pandas as pd, re, os, warnings
+import anndata as ad, glob, pandas as pd, re, os, sys, warnings
+from pathlib import Path
 warnings.filterwarnings("ignore")
-OUT = "deconvolution/reference/idspace_audit"; os.makedirs(OUT, exist_ok=True)
+sys.path.insert(0, str(Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
+from gene_utils import load_config, resolve_path           # paths from config (none hardcoded)
+_C = load_config(); _D = _C["deconvolution"]
+OUT = resolve_path(_C, _D["idspace_audit_dir"]); os.makedirs(OUT, exist_ok=True)
+QC_DIR = resolve_path(_C, _D["qc_matrices_dir"]); BUILTREF_DIR = resolve_path(_C, _D["built_reference_dir"])
+BIOMART_F = resolve_path(_C, _C["biomart"]["rat_gene_info"]); VOCAB_F = resolve_path(_C, _D["rat_token_mapping"])
+RGD_F = resolve_path(_C, _C["rgd"]["genes_file"]); LIFTOVER_F = resolve_path(_C, _D["motrpac_bulk_liftover"])
 
 # --- single-cell corpus gene union (reuse cache if present) ---
 cache = "tmp/corpus_genes.txt"
@@ -21,7 +28,7 @@ if os.path.exists(cache) and os.path.getsize(cache) > 0:
     corpus = set(x.strip() for x in open(cache) if x.strip())
     print(f"corpus: reused {cache} -> {len(corpus)} genes")
 else:
-    fs = sorted(glob.glob("data/training/preprocessed/qc_matrices/*.h5ad")); corpus = set(); bad = 0
+    fs = sorted(glob.glob(f"{QC_DIR}/*.h5ad")); corpus = set(); bad = 0
     for f in fs:
         try:
             corpus |= set(map(str, ad.read_h5ad(f, backed="r").var_names))
@@ -31,12 +38,12 @@ else:
 
 # --- reference / annotation sets ---
 builtref = set()
-for g in glob.glob("deconvolution/reference/*/genes.tsv"):
+for g in glob.glob(f"{BUILTREF_DIR}/*/genes.tsv"):
     builtref |= set(x.strip() for x in open(g) if x.strip())
-bm = pd.read_csv("data/references/biomart/rat_gene_info.tsv", sep="\t")
+bm = pd.read_csv(BIOMART_F, sep="\t")
 bm_ids = set(bm["Gene stable ID"].dropna())
-voc = pd.read_csv("data/training/ortholog_mappings/rat_token_mapping.tsv", sep="\t")
-rgd = pd.read_csv("data/references/biomart/GENES_RAT.txt", sep="\t", comment="#",
+voc = pd.read_csv(VOCAB_F, sep="\t")
+rgd = pd.read_csv(RGD_F, sep="\t", comment="#",
                   dtype=str, low_memory=False)
 rgd["ens"] = rgd["ENSEMBL_ID"].map(lambda s: (re.search(r"ENSRNOG\d+", s).group(0)
                                               if isinstance(s, str) and re.search(r"ENSRNOG\d+", s) else None))
@@ -56,7 +63,7 @@ pd.DataFrame({"id": list(id2sym), "symbol": list(id2sym.values())}).to_csv(
 corpus_sym = set(filter(None, (id2sym.get(g) for g in corpus)))
 
 # --- per-gene membership of the lifted bulk ---
-m = pd.read_csv("deconvolution/reference/motrpac_bulk_liftover.tsv", sep="\t")
+m = pd.read_csv(LIFTOVER_F, sep="\t")
 lid = m["lifted_id"]
 m["cur_symbol"]         = lid.map(lambda x: id2sym.get(x, "") if isinstance(x, str) else "")
 m["in_biomart113"]      = lid.isin(bm_ids)

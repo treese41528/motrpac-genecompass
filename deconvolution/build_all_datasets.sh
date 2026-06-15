@@ -8,9 +8,10 @@
 # Run on a compute node (loads many h5ads): sbatch slurm/analysis/build_datasets.slurm
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
 PY=/depot/reese18/apps/motrpac-env/bin/python3
-REFROOT=deconvolution/reference
-VAL=deconvolution/validation
+REFROOT="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}"
+VAL="${CFG_VALIDATION_DIR:-data/deconvolution/validation}"
 mkdir -p tmp/dsbuild
 
 # CROSS jobs: tag<TAB>tissue_normalized<TAB>ref_study<TAB>source_study<TAB>source_conditions(optional)
