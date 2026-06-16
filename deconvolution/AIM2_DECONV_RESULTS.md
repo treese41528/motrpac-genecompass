@@ -1,6 +1,6 @@
 # Deconvolution → GeneCompass (Aim 2 bridge) — Results & Next Stages
 
-_Status 2026-06-11. Branch `stage8-omnideconv-setup`. Companion to `MOTRPAC_BULK_LIFTOVER.md` (bulk gene-ID prep) and `README.md`._
+_Status 2026-06-15 (supervised re-measurement + cross-method corroboration in §3b; external + cross-species validation in §3c; the §3 "exercise is small" reading is superseded — but see the §3c magnitude reconciliation). Companions: `MOTRPAC_BULK_LIFTOVER.md` (bulk gene-ID prep), `EMBEDDING_DE_STANDARDS.md` (methods in the literature), `README.md`._
 
 ---
 
@@ -23,6 +23,9 @@ The question Aim 2 asks of those embeddings: **does within-cell-type variation t
 | End-to-end run (all 10 tissues) | ✅ | **9,300 pseudo-cells** embedded (768-d) on disk |
 | Aim-2 validation gate | ✅ | **186** (tissue × cell-type) rows across all 10 tissues (heart added 2026-06-11) |
 | Interactive viewer | ✅ | self-contained, offline 3-tab `viewer.html` (Atlas / Signal / Focus) |
+| **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: held-out AUC up to **0.91**; **22** FDR-significant hotspots (vs 5 under the trace gate) |
+| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it (Spearman **r=0.83**; 19–22/22 hotspots); embedding beats PCA-50, ties full genes |
+| **External + cross-species validation** (§3c) | ✅ | same-data **Vetr 2024** corroborates hotspot geography + supplies the DE recipe & rat→human blueprint; human PBMC scRNA (**Yu 2023**) validates the immune hotspot; per-gene magnitude is modest → "reliably detectable," not "large" |
 
 Tissues covered: blood, cortex, heart, hippoc, kidney, liver, lung, skmgn (gastrocnemius), skmvl (vastus lateralis), watsc (WAT). Design per tissue: 2 sex × 5 exercise group (control / 1w / 2w / 4w / 8w) × 5 reps = ~50 samples per cell type.
 
@@ -84,13 +87,56 @@ That trained median η² ≈ **0.023** is the honest size of the exercise effect
 
 **Top exercise responders (by trained η²):** blood Megakaryocytes 0.132, skmvl Skeletal muscle fibers 0.099, blood Basophils 0.098, skmvl Skeletal muscle cells 0.092, blood Classical monocytes 0.091, skmvl Schwann 0.091, skmvl B cells 0.079, skmvl Endothelial 0.078, blood ISG-T 0.075, blood Non-classical monocytes 0.075.
 
-**Interpretation.** The embeddings separate cell types and tissues strongly and capture sex cleanly where it is real — so the substrate is sound. Exercise is a **small within-cell-type axis concentrated in immune and muscle cells**, not a global axis visible in the raw embedding. The GROUP-but-not-TRAINED pattern is direct evidence we should **model dose**, not a binary contrast.
+**Interpretation (revised — see §3b).** The embeddings separate cell types and tissues strongly and capture sex cleanly where it is real — so the substrate is sound. But the trained median η² ≈ 0.023 is **not** the biological size of the exercise effect — it is what a *global, variance-weighted* trace measure reports, and that measure structurally **dilutes** a low-dimensional signal (the exercise axis is low-variance, so it is swamped by the ~760 off-target dimensions in the denominator). A supervised re-measurement (§3b) shows exercise is in fact **concentrated and reliably detectable** (held-out AUC up to 0.91) in the same immune + muscle cells, a published method (Augur) independently confirms it, and external literature (§3c) corroborates the hotspot geography — though the per-gene *magnitude* stays modest (§3c). The GROUP-but-not-TRAINED pattern remains direct evidence we should **model dose**, not a binary contrast.
+
+---
+
+## 3b. Supervised re-measurement & cross-method corroboration (2026-06-15)
+
+**Why re-measure.** The §3 gate's η² is `trace(between-group SS) / trace(total SS)` over all 768 dims — formally a PERMANOVA / `adonis` R² (Anderson 2001), and a *variance-weighted average* of the per-dimension η². That makes it a deliberately **conservative global screen**: a signal living in a low-dimensional (low-variance) subspace is diluted across the ~760 off-target dimensions in the denominator, and broad high-variance axes (sex) dominate. So the trained median η² ≈ 0.023 is a *lower bound*, not the effect size. Three less-conservative measures (`subspace_probe.py`, 1000-permutation null) test whether exercise is genuinely weak or merely diluted:
+
+| measure (trained vs control) | median | max | reading |
+|---|---|---|---|
+| global trace η² (the gate) | 0.023 | 0.132 | conservative baseline |
+| standardized trace η² (z-score dims first) | 0.024 | 0.090 | ≈ unchanged → **not** a variance-weighting artifact |
+| per-dimension max η² (max-stat null) | 0.216 | 0.464 | individual dims carry signal (scan-inflated) |
+| **supervised CV PLS-1, held-out AUC** | 0.593 | **0.910** | the real axis: cross-validated separability |
+| supervised CV PLS-1, ordinal-dose Spearman | 0.069 | 0.654 | dose is recoverable in muscle |
+
+**The supervised probe is decisive.** A cross-validated single-component PLS direction (the standard p≫n supervised projection) separates trained-vs-control out-of-fold at **AUC up to 0.91** (skmvl skeletal muscle fibers), 0.80–0.89 across blood immune + skeletal muscle. Multiple-testing makes the contrast with the gate stark: at **BH-FDR < 0.05** the global trace gate retains only **5/186** trained hits, the supervised probe retains **22** (AUC ≥ 0.70) — blood 7, skmvl 6, skmgn 5, lung 2, heart 1, kidney 1 (immune trafficking + muscle parenchyma/stroma, the biologically expected cells). The standardized η² ≈ global confirms the exercise axis is a *diagonal supervised direction*, invisible to any rotation-invariant trace ratio. Negative controls hold (cortex/kidney median AUC ≈ chance 0.50/0.45; sex positive control 93/186 FDR-significant), so this is not p≫n overfitting.
+
+**Cross-method corroboration** (`run_augur.R`, `corroborate_summary.py`; see `EMBEDDING_DE_STANDARDS.md` for the methods context):
+- **Method robustness.** Canonical **Augur** (Skinnider/Squair 2021 — the published cross-validated-RF standard for cell-type perturbation-responsiveness) reproduces our PLS-1 ranking at **Spearman r = 0.83** (n=186) and independently confirms **19/22 hotspots at AUC ≥ 0.70 (22/22 at ≥ 0.65)**; Augur's median AUC on the FDR-significant set is **0.82** vs 0.55 elsewhere; sex positive control max AUC **1.00** (liver, WAT). The finding is not an artifact of our specific linear method — a different, published, nonlinear method finds the same cells.
+- **Representation control** (does GeneCompass beat a plain PCA? cf. "one PCA still rules them all"). The embedding beats a **PCA-50** baseline modestly and method-dependently — significant under the linear probe (median AUC 0.609 vs 0.562, p=0.001) but only a trend under Augur-RF (Δ+0.014, p=0.14) — and it **ties a full-gene probe** (0.609 vs 0.599, p=0.39). PCA-50 keeps the *top-variance* directions, exactly where exercise *isn't*, so it discards the signal the embedding and a full-gene probe both retain. Net: GeneCompass is a **faithful, compact** representation of the exercise axis, not a unique source of signal.
+
+**Caveat.** A few skmgn immune types our linear PLS-1 rated high but Augur-RF rated only moderate (e.g. skmgn Monocytes 0.892 vs 0.682); where the two methods disagree, treat the call as softer. The muscle-parenchyma and blood hotspots, where all measures agree, are the solid ground.
+
+**Bottom line.** Exercise is a **real, method-robust, concentrated** signal in blood-immune and skeletal-muscle cell types, and the embedding faithfully carries it. The §3 gate's "small/patchy" *detectability* was a property of the conservative trace measure — but per-gene *magnitude* genuinely is modest (same-data Vetr 2024, §3c), so the precise reading is **reliably detectable and concentrated, not large**. Proceed to per-cell-type DE (§4–5) with confidence on the hotspot set.
+
+---
+
+## 3c. External validation & cross-species benchmark (literature, 2026-06-15)
+
+Two papers — read in full — anchor the §3b hotspots against published biology and the *same* MoTrPAC data. PDFs in `readings/` (`Gene_Impact_PA.pdf`, `sc_marathon.pdf`).
+
+**A — Same-data disease-genetics map: Vetr, Gay, MoTrPAC Study Group & Montgomery 2024, _Nat Commun_ 15:3346** (doi:10.1038/s41467-024-45966-w). Uses the *identical* MoTrPAC PASS1B EET rat data we deconvolve (F344, both sexes, 1/2/4/8 wk, 48h post-bout, 47–50 rats/tissue, 8wk = adapted state; 15 tissues). Three things it gives us:
+- **The DE recipe template** (matches the `EMBEDDING_DE_STANDARDS.md` pseudobulk prescription): per sex × tissue **DESeq2 LRT** (`nbinomLRT`) over the training time course with RNA-seq technical covariates (RIN, 5′-3′ bias, globin %, PCR-dup %); male/female combined by **Fisher**; multiple-testing by **IHW with tissue covariate**; per-timepoint contrasts vs sex-matched sedentary; sex-consistent states via `repfdr` (F1_M1 … F-1_M-1). Our per-cell-type DE (§5.1) should mirror it.
+- **Independent corroboration of the hotspot geography.** Exercise DE is *extremely* tissue-specific — **78% of DE genes are DE in exactly one tissue, 95% in ≤2**; the only strongly-overlapping pair is gastrocnemius + vastus lateralis (Jaccard ≈ 0.21), echoing our skmgn+skmvl muscle hotspot and the "not a global axis" finding. The **strongest heritability enrichment is in blood, "especially traits corresponding to densities of immune cells"** (spleen carries 51% of significant immune/blood enrichments) — our #1 (blood-immune) hotspot from an orthogonal genetics angle. Per-tissue gene benchmarks for our DE: blood cholesterol program (NDUFA13, FADS2, PNKD, AAMP, OGDH), SKM-VL TMBIM1/ATP6V1G2, asthma-blood (BAG6, CCNF, CRAT, PTPA, FAM89B), LDLR (cortex/hippoc/both muscles), FOXP3 (heart/spleen).
+- **The cross-species blueprint — and our novelty.** Their whole pipeline *is* grant Aim 2's cross-species step: rat exercise DE → human ortholog (94.5% map) → GTEx eQTL / 114 GWAS / S-PrediXcan / Open Targets → **5,523 trait-tissue-gene triplets**. It is all *bulk-tissue*; **our cell-type-resolved DE is the natural extension** that adds resolution their map lacks. Code + data: github.com/NikVetr/MoTrPAC_Complex_Traits (Zenodo 10211801).
+
+**The magnitude reconciliation (refines §3b).** Vetr — *same data* — repeatedly finds the effect **small in magnitude**: trait enrichments within 0 ± 0.3 log-odds (max ≈ 7.5% on the probability scale), and per-gene only ~1 gene/tissue exceeds 2 SD of *genetic* and ~52/tissue exceed 2 SD of *phenotypic* expression variance — i.e. **most exercise DE sits within normal inter-individual variation.** This is *not* in tension with our "AUC up to 0.91": the two measure different things. Our AUC is cross-validated **separability** (the signal is *reliably present and concentrated*); Vetr's is per-gene **magnitude** and disease-genetics **enrichment** (both *modest but real*). The reviewer-proof joint claim: **exercise is a reliably detectable, cell-type-concentrated axis composed of many small per-gene changes, with subtle-but-real disease enrichment in blood/immune and muscle.** Read §3b's "strong" as "reliably detectable," not "large-magnitude."
+
+**B — Human single-cell immune validation: Yu et al. 2023, _iScience_ 26:106532** (doi:10.1016/j.isci.2023.106532). Longitudinal human PBMC scRNA-seq (275k cells) after **acute** exercise (marathon n=3 / CPX n=3, male). It validates *which* blood cells are exercise-responsive and *what* programs:
+- The most exercise-dynamic PBMC populations are **monocytes** (accumulate, peak 1h, with an S100A8/A9-hi ↔ HLA-DPA1/DPB1-hi state switch) and **effector/cytotoxic T cells** (selectively reduced), plus defined platelet (PPBP/PF4) clusters — mapping onto our top blood responders (classical/non-classical monocytes, megakaryocytes/platelets, ISG-T). Gene programs to check in our blood DE: **CXCR4, S100A8/A9**, cytotoxicity (PRF1, GNLY, NKG7, GZMA/B/H/K), naive (CCR7, TCF7, LEF1, SELL), ISG20 (→ ISG-T), monocyte cardiac-risk (VCAN, RETN, ACSL1, NAMPT).
+- **Caveats before leaning on it.** Acute single-bout / human / male / n=3 vs our chronic 1–8 wk / rat / both-sexes / 48h-post (the *adapted* state). So it validates **cell types and gene programs, not effect direction/dynamics** — acute open-window immunodepression ≠ chronic adaptation. It also vividly underscores our **composition confound**: exercise moves cell *fractions* massively (T↓, mono↑), so per-cell-type DE on `Z` (expression) must be read against `θ` (fractions) — the Milo point in `EMBEDDING_DE_STANDARDS.md`.
+
+**Three-way convergence.** Our deconv flags blood **Basophils** as a top responder (trained η² 0.098); Vetr finds basophil/eosinophil counts genetically correlate with asthma and exercise (Sastre 2013, "basophils, a new player" in exercise bronchoconstriction); Yu supplies the single-cell immune dynamics — deconv + disease-genetics + single-cell all landing on the same cells.
 
 ---
 
 ## 4. Implications for Aim 2 — the pivot
 
-Exercise will **not** fall out of the raw embeddings globally, so do not gate downstream work on a global embedding signal. Pivot to **per-cell-type differential expression on the deconvolved `Z`**, with three design rules the gate hands us directly:
+The §3b re-measurement and §3c external validation settle the gate's question: exercise is **recoverable and reliably detectable** in the hotspot cell types (held-out AUC up to 0.91, method-robust via Augur, hotspot geography corroborated by same-data Vetr 2024), but it does **not** fall out of the raw embedding as a *global* axis — it lives in a low-dimensional supervised direction, and its per-gene magnitude is modest (§3c). So: don't gate downstream work on a global embedding signal; instead proceed with confidence to **per-cell-type differential expression on the deconvolved `Z`** for the hotspot set, with three design rules the analysis hands us directly:
 
 1. **Focus the hotspots** — blood immune subsets and skeletal-muscle parenchyma/stroma/endothelium. Expect little to nothing in kidney/liver/cortex/heart.
 2. **Control for sex** — it is the dominant axis in 3–4 tissues and will otherwise masquerade as exercise.
@@ -100,10 +146,10 @@ Exercise will **not** fall out of the raw embeddings globally, so do not gate do
 
 ## 5. Next stages
 
-1. **Per-cell-type DE on `Z` (immediate).** Linear model per (tissue, cell type): expression ~ dose(ordinal week) + sex (+ interaction), empirical-Bayes / permutation for significance. Start with blood + vastus lateralis. Output: ranked exercise-responsive genes per cell type, sex-adjusted, with a dose shape. This is the deliverable that turns the gate signal into biology.
+1. **Per-cell-type DE on `Z` (immediate; the field-standard route — see `EMBEDDING_DE_STANDARDS.md`).** Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
 2. **GRN / perturbation routes (after DE).** Caveats from the connector work: pseudo-cell GRN/perturbation is only valid for **abundant** cell types (rare ones sit at the reference prior, no exercise signal); n ≈ 50 samples/cell type is too thin for data-driven GRN (DeepSEM) → default to the **model-driven in-silico-perturbation** GRN route in GeneCompass.
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
-4. **Cross-species (grant aim).** Needs a human side — not free; scope separately.
+4. **Cross-species (grant aim).** **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets; our contribution is the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). Still needs a human single-cell side for direct cross-species cell-type matching — not free; scope separately.
 5. **Secondary / hardening.**
    - Multi-method θ cross-check (omnideconv: MuSiC/DWLS/SCDC/Bisque) on the production tissues, as done for WAT, to confirm the deconvolution fractions feeding the hotspots.
    - **Lung caveat:** lung is the weakest cross-dataset deconvolution (~0.73); treat any lung exercise claim cautiously.
@@ -118,11 +164,13 @@ Exercise will **not** fall out of the raw embeddings globally, so do not gate do
 
 **Outputs** (under `data/deconvolution/genecompass_input/`, gitignored):
 - `<tissue>/embeddings/cell_embeddings.npy` + `<tissue>/dataset/` — per-tissue pseudo-cell embeddings (768-d) and tokenized datasets.
-- `pheno_merge_test.tsv` — the gate (186 rows).
+- `pheno_merge_test.tsv` — the gate (186 rows); `subspace_probe.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv` — the §3b re-measurement + corroboration; `augur_input/<tissue>/` — Augur inputs.
 - `umap/umap_coords.tsv`, `umap/viewer.html`, `umap/viewer_data.json` — UMAP + interactive viewer.
 
 **Committed code** (`deconvolution/`):
-- `pheno_merge_test.py` — the Aim-2 gate.
+- `pheno_merge_test.py` — the Aim-2 gate (global trace-η²).
+- `subspace_probe.py` — the §3b re-measurement (standardized η², per-dim max-stat scan, supervised PLS-1 CV probe; 1000-perm null).
+- `augur_prep.py` + `run_augur.R` + `corroborate_summary.py` — canonical Augur (R, neurorestore 1.0.3) + PCA-vs-embedding control + the merge/verdict.
 - `build_umap_viewer.py` + `umap_viewer_template.html` — extract data → self-contained viewer.
 
 **Regenerate:**
