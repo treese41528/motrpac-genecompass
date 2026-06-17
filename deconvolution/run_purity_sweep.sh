@@ -16,7 +16,7 @@
 set -eo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # project root
 export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
-PY=/depot/reese18/apps/motrpac-env/bin/python3
+PY="${DECONV_PYTHON:-python3}"
 REF="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}/liver_GSE220075"
 FOCAL="Hepatocytes"
 HOLD="${CFG_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_holdout"

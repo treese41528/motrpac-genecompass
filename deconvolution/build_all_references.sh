@@ -9,7 +9,7 @@
 # Or directly:  deconvolution/build_all_references.sh
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PY=/depot/reese18/apps/motrpac-env/bin/python3
+PY="${DECONV_PYTHON:-python3}"
 mkdir -p tmp/refbuild
 
 # tissue<TAB>study<TAB>conditions(optional)  -- tissue must match tissue_normalized exactly
