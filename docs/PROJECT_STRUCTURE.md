@@ -52,8 +52,7 @@ motrpac-genecompass/
 ├── LICENSE                            # MIT or Apache 2.0
 ├── .gitignore
 ├── .gitmodules                        # Points to vendor/GeneCompass
-├── environment.yml                    # Conda environment specification
-├── requirements.txt                   # pip fallback
+├── requirements.txt                   # Python deps (python3.12 -m venv; see deconvolution/setup/SETUP.md)
 │
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │   CONFIGURATION
@@ -146,12 +145,13 @@ motrpac-genecompass/
 │   Bridging bulk and single-cell resolution
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │
-├── deconvolution/
-│   ├── README.md
-│   ├── unicell_wrapper.py             # UniCell deconvolution integration
-│   ├── scdeal_wrapper.py              # scDEAL domain transfer learning
-│   ├── scissor_wrapper.py             # Scissor phenotype-cell linking
-│   └── compare_methods.py             # Benchmark deconvolution approaches
+├── deconvolution/                     # Stages 8–9: BayesPrism + omnideconv panel
+│   ├── README.md                      #   per-tissue runbook
+│   ├── setup/                         #   R/BayesPrism env, site profile, container (SETUP.md)
+│   ├── R/                             #   R wrappers: prepare_motrpac_bulk / run_deconvolution / extract_z / ...
+│   ├── build_pseudocells.py           #   bulk → per-cell-type pseudo-cells
+│   ├── tokenize_pseudocells.py        #   pseudo-cells → GeneCompass tokens
+│   └── ...                            #   (UniCell/scDEAL/Scissor are secondary/planned, not yet wrapped)
 │
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │   AIM 2: DOWNSTREAM ANALYSIS
@@ -271,7 +271,7 @@ motrpac-genecompass/
 |-----------|-------------------|-------------|
 | **Aim 1a:** Data acquisition & preprocessing | `pipeline/01-07` | Stages 1–7 |
 | **Aim 1b:** Fine-tune GeneCompass for rat | `finetune/` + `vendor/GeneCompass/` | `pretrain_rat.py`, `finetune_motrpac.py` |
-| **Aim 1c:** Bulk-SC deconvolution | `deconvolution/` | UniCell, scDEAL, Scissor wrappers |
+| **Aim 1c:** Bulk-SC deconvolution | `deconvolution/` | BayesPrism + omnideconv panel (Stages 8–9); UniCell/scDEAL/Scissor secondary/planned |
 | **Aim 2a:** Differential expression | `analysis/deg_analysis.py` | Tissue × sex × timepoint DEG |
 | **Aim 2b:** GRN inference | `analysis/grn_inference.py` | DeepSEM integration |
 | **Aim 2c:** Temporal modeling | `analysis/temporal_modeling.py` | Dynamic trajectory |
@@ -351,14 +351,15 @@ cd motrpac-genecompass
 # Or if already cloned without submodules
 git submodule update --init --recursive
 
-# Set project root for HPC
-export PIPELINE_ROOT=/depot/reese18
+# Set project root = your clone (the repo root, NOT a data root)
+export PIPELINE_ROOT=$PWD
 
 # Validate config
 python -c "from lib.gene_utils import load_config, validate_config; validate_config(load_config())"
 
-# Run pipeline (stages 2-7)
-# See pipeline/README.md for stage-by-stage instructions
+# Run pipeline (stages 1-9; see pipeline/README.md). Deconvolution Stages 8-9 first-time
+# setup: deconvolution/setup/SETUP.md
+
 ```
 
 ---

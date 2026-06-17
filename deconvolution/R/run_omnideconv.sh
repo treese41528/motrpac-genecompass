@@ -24,26 +24,25 @@ export EXCLUDE_SEX_CHROMOSOMES="${EXCLUDE_SEX_CHROMOSOMES:-${CFG_EXCLUDE_SEX_CHR
 export OMNIDECONV_METHODS="${OMNIDECONV_METHODS:-music,dwls,scdc,bisque}"
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
-# Python methods (AutoGeneS, Scaden) run via reticulate against the SINGLE project env
-# (motrpac-env, py3.12). Force TF onto the Keras-2 shim (tf-keras) and CPU-only so it never
-# contends with torch for the GPU or trip over the CUDA-13/TF-2.21 version gap. See
-# deconvolution/R/install_omnideconv_python.sh.
-export RETICULATE_PYTHON="${RETICULATE_PYTHON:-/depot/reese18/apps/motrpac-env/bin/python}"
+# Python methods (AutoGeneS, Scaden) run via reticulate against the project venv. Force TF
+# onto the Keras-2 shim (tf-keras) and CPU-only so it never contends with torch for the GPU
+# or trips over the CUDA-13/TF-2.21 version gap. See deconvolution/R/install_omnideconv_python.sh.
+# RETICULATE_PYTHON is resolved AFTER site_env.sh below (site.env MGC_PYTHON -> active venv).
 export TF_USE_LEGACY_KERAS="${TF_USE_LEGACY_KERAS:-1}"
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:--1}"
 export N_CORES="${N_CORES:-${CFG_N_CORES:-4}}"
-R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load "${R_MODULE}" libpng/1.6.37 zlib/1.3.1
+# Reproduce the build/run env via the shared site profile: load modules (R_MODULES -- on a
+# module cluster this MUST include libpng/zlib for Seurat) and strip conda (STRIP_CONDA) only
+# where site.env declares them and Lmod exists; a no-op on a laptop/container, where R comes
+# from PATH. Also derives ENV_PY/RETICULATE_PYTHON from site.env MGC_PYTHON. See site_env.sh.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
-# Conda strip (PATH + PKG_CONFIG_PATH only; CPATH keeps conda's openssl/ICU headers).
-export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
-export PATH=$(echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# reticulate target: site.env MGC_PYTHON (set above) -> active venv -> python3 on PATH.
+export RETICULATE_PYTHON="${RETICULATE_PYTHON:-${VIRTUAL_ENV:+${VIRTUAL_ENV}/bin/python}}"
+export RETICULATE_PYTHON="${RETICULATE_PYTHON:-$(command -v python3 || true)}"
 
 echo "R       : $(which R)"
 echo "N_CORES : ${N_CORES}"

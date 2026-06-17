@@ -14,10 +14,10 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| **Data pipeline** | `pipeline/` | 7-stage preprocessing: corpus assembly → GeneCompass-ready reference files |
+| **Data pipeline** | `pipeline/` | 9-stage orchestrated pipeline: corpus assembly → GeneCompass-ready reference files (Stages 1–7), then the deconvolution bridge (Stages 8–9) |
 | **GeneCompass** | `vendor/GeneCompass/` | Foundation model (git submodule, forked with rat extensions) |
 | **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus |
-| **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration (UniCell, scDEAL, Scissor) |
+| **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration: **BayesPrism** (vendored) + the **omnideconv** panel are the implemented Stage 8–9 stack; UniCell/scDEAL/Scissor are secondary/planned methods |
 | **Analysis** | `analysis/` | Differential expression, GRN inference, temporal modeling |
 | **Translation** | `translation/` | Cross-species embedding alignment, in silico perturbation |
 | **Shared library** | `lib/` | Gene normalization, BioMart reference loading, utilities |
@@ -37,12 +37,15 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 git clone --recurse-submodules https://github.com/treese41528/motrpac-genecompass.git
 cd motrpac-genecompass
 
-# Create environment
-conda env create -f environment.yml
-conda activate motrpac-gc
+# Create the Python environment (a venv, not conda)
+python3.12 -m venv motrpac-env && source motrpac-env/bin/activate
+pip install -U pip && pip install -r requirements.txt
 
-# Set project root (HPC)
-export PIPELINE_ROOT=/depot/reese18    # or your local data root
+# Set project root = your clone (NOT a data root); all config paths resolve under it
+export PIPELINE_ROOT=$PWD
+
+# Machine-specific path overrides (gitignored, deep-merged over the committed template)
+cp config/pipeline_config.local.yaml.example config/pipeline_config.local.yaml
 
 # Validate configuration
 python -c "from lib.gene_utils import load_config, validate_config; c = load_config(); validate_config(c); print('Config OK')"
@@ -73,6 +76,18 @@ sbatch slurm/pipeline/07_export_training_corpus.slurm
 ```
 
 See `pipeline/README.md` for detailed stage descriptions, expected outputs, and troubleshooting.
+
+### Running deconvolution (Stages 8–9, Aim-2 bridge)
+
+```bash
+# MoTrPAC bulk → BayesPrism → pseudo-cells → fine-tuned GeneCompass embeddings (per tissue)
+python pipeline/run_stage8.py --tissue SKM-GN --ref-dir <built ref dir> --dry-run
+python pipeline/run_stage9.py --label skmgn --dry-run
+```
+
+First-time deconvolution setup — the R/BayesPrism environment, the per-site profile, data
+staging, and config — is documented in **`deconvolution/setup/SETUP.md`**; see
+`deconvolution/README.md` for the per-tissue runbook.
 
 ---
 
@@ -110,8 +125,8 @@ All pipeline outputs are indexed by canonical Ensembl rat gene IDs from **BioMar
 All tunable parameters live in `config/pipeline_config.yaml`. Scripts read policy from this file; no hardcoded thresholds or paths in code.
 
 ```bash
-# Override project root via environment variable
-export PIPELINE_ROOT=/your/data/root
+# Override project root via environment variable (the repo/clone root, NOT a data root)
+export PIPELINE_ROOT=$PWD
 
 # Key settings
 cat config/pipeline_config.yaml
@@ -161,9 +176,11 @@ motrpac-genecompass/
 | Tool | Purpose | Integration |
 |------|---------|-------------|
 | [GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Foundation model | Git submodule in `vendor/` |
-| [UniCell](https://github.com/dchary/ucdeconvolve) | Deconvolution | Wrapper in `deconvolution/` |
-| [scDEAL](https://github.com/OSU-BMBL/scDEAL) | Domain transfer learning | Wrapper in `deconvolution/` |
-| [Scissor](https://github.com/sunduanchen/Scissor) | Phenotype-cell linking | Wrapper in `deconvolution/` |
+| [BayesPrism](https://github.com/Danko-Lab/BayesPrism) | Deconvolution (primary) | Vendored submodule `vendor/BayesPrism` |
+| [omnideconv](https://github.com/omnideconv/omnideconv) | Deconvolution cross-check panel | MuSiC/DWLS/SCDC/Bisque + AutoGeneS/Scaden (`deconvolution/`) |
+| [UniCell](https://github.com/dchary/ucdeconvolve) | Deconvolution | Secondary / planned |
+| [scDEAL](https://github.com/OSU-BMBL/scDEAL) | Domain transfer learning | Secondary / planned |
+| [Scissor](https://github.com/sunduanchen/Scissor) | Phenotype-cell linking | Secondary / planned |
 | [DeepSEM](https://github.com/HantaoShu/DeepSEM) | GRN inference | Wrapper in `analysis/` |
 
 ### Python (core)

@@ -29,19 +29,9 @@ export R_ENVIRON_USER=/dev/null
 
 mkdir -p "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load r/4.4.1
-
-# Strip Gilbreth's conda env from discovery so scran/igraph dlopen cleanly
-# at session load (same rationale as install_bayesprism.sh).
-export PKG_CONFIG_PATH=$(
-  echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//'
-)
-export PATH=$(
-  echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//'
-)
+# Reproduce the build/run env via the shared site profile (modules + conda strip from
+# site.env so scran/igraph dlopen cleanly; a no-op off a module cluster). See site_env.sh.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 echo "R        : $(which R)"
 echo "R_LIBS   : ${R_LIBS_USER}"

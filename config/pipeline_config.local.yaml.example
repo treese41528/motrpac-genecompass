@@ -1,0 +1,46 @@
+# config/pipeline_config.local.yaml.example
+#
+# COPY this to config/pipeline_config.local.yaml (gitignored) and edit for YOUR machine:
+#   cp config/pipeline_config.local.yaml.example config/pipeline_config.local.yaml
+#
+# lib.gene_utils.load_config() DEEP-MERGES this file over the committed
+# config/pipeline_config.yaml (the shared, all-relative template). Put ONLY
+# machine-specific values here; never write local paths into the committed template.
+#
+# WHY YOU NEED THIS: the committed template's paths are repo-relative (e.g.
+# data/training/preprocessed/...). On the original author's checkout those resolve
+# because data/ is a forest of SYMLINKS into an external store. A fresh clone has an
+# empty, gitignored data/ tree -- so you must either (a) recreate those symlinks
+# (ln -s /your/store/... data/...) or (b) override the path keys below to point where
+# your inputs actually live. See deconvolution/setup/SETUP.md for the full checklist.
+#
+# NOTE: cluster/env paths (modules, the project python, the MoTrPAC data store) live in
+# deconvolution/setup/site.env, NOT here. This file is for DATA / config-path overrides.
+
+# project_root is normally left as "." and set via the PIPELINE_ROOT env var to your
+# CLONE root (not a data root): `export PIPELINE_ROOT=$PWD`. Uncomment to hard-code it.
+# project_root: "/abs/path/to/your/motrpac-genecompass"
+
+deconvolution:
+  # Runtime (R / BayesPrism).
+  n_cores: 4
+
+  # MoTrPAC bulk source (TRNSCRPT_<TISSUE>_RAW_COUNTS.rda). The reproducible public copy
+  # ships in the vendored submodule -- point at it instead of the author's data symlink:
+  #   git submodule update --init vendor/MotrpacRatTraining6moData
+  motrpac_bulk_dir: vendor/MotrpacRatTraining6moData/data
+
+  # Single-cell corpus + annotations used to BUILD the per-tissue Stage-8 references
+  # (--ref-dir). Produced by pipeline Stages 1-2 (gitignored). Point at your copies:
+  # qc_matrices_dir: /your/path/to/qc_matrices
+  # cell_annotations_dir: /your/path/to/cell_annotations
+  # consensus_annotations_dir: /your/path/to/cell_annotations_consensus
+  # annotation_inventory: /your/path/to/annotation_inventory.tsv
+
+  # Fine-tuned rat GeneCompass checkpoint for Stage 9 (produced by Stage 7, or pass
+  # --model-dir to run_stage9.py). Default lives under the gitignored data/models/ tree.
+  # genecompass_model_dir: /your/path/to/rat_genecompass_finetuned/.../rat_phase2_mixed_species
+
+# Any other path key can be overridden the same way -- mirror its full key path from
+# config/pipeline_config.yaml (e.g. the biomart/RGD reference files the bulk liftover reads)
+# and set your value here.

@@ -1,12 +1,16 @@
-# Setting up the deconvolution R environment
+# Deconvolution setup & first run (Stages 8–9)
+
+This is the authoritative runbook for the deconvolution **Stages 8–9** (the Aim-2 bridge:
+MoTrPAC bulk → BayesPrism → pseudo-cells → fine-tuned rat GeneCompass → embeddings). It
+covers the environment, the per-site profile, the data/config a fresh clone needs, and how
+to run the orchestrators.
 
 This stage needs an R toolchain: **BayesPrism** (Danko-Lab, vendored) for the primary
 deconvolution, the **omnideconv** multi-method panel (MuSiC / DWLS / SCDC / Bisque, plus the
 Python methods **AutoGeneS / Scaden** via reticulate) for the cross-check, and **DESeq2** for
-the paper-faithful VST scoring metric. The pipeline
-also has Python pieces (the `*.py` helpers + the R↔Python `reticulate` bridge); the
-**container path bundles the full repo Python env** (`requirements.txt`) alongside R, so
-it is the entire environment in one image.
+the paper-faithful VST scoring metric. The pipeline also has Python pieces (the `*.py`
+helpers + the R↔Python `reticulate` bridge); the **container path bundles the full repo
+Python env** (`requirements.txt`) alongside R, so it is the entire environment in one image.
 
 The hard part is **not** the R packages — it's the *system libraries* they compile
 against (libpng, openssl, libxml2, …). On a laptop with `sudo` that's one `apt install`;
@@ -24,10 +28,42 @@ consumed by both the containers and the bootstrap — so all paths install the *
 versions (captured 2026-06-02, R 4.4.1 / Bioconductor 3.20). The Python side is the
 repo-root [`requirements.txt`](../../requirements.txt) (Python 3.12).
 
-> First, get the vendored BayesPrism submodule (all paths need it):
+> First, get the vendored submodules (all stages need them):
 > ```bash
-> git submodule update --init vendor/BayesPrism
+> git submodule update --init --recursive
+> #   BayesPrism -> Stage 8 deconvolution | GeneCompass -> Stage 9 embed
+> #   MotrpacRatTraining6moData -> MoTrPAC bulk + training data
 > ```
+
+---
+
+## First-time setup checklist
+
+The fastest portable path is the **container** — it bakes in R + every system lib + the
+Python env, so there are **zero modules** to configure and the bare-metal `module load`
+dance below is an HPC-only escape hatch you skip entirely. Either way:
+
+1. **Clone with submodules** — `git clone --recurse-submodules …`, or in an existing clone
+   `git submodule update --init --recursive`.
+2. **Environment** — pick ONE:
+   - *Container* (recommended; HPC / laptop / CI): build the image (§Path 1) — done, skip to step 4.
+   - *Bare metal*: build the Python venv (§Python environment) **and** the R stack
+     (`bash deconvolution/setup/install_r_env.sh`, §Path 2).
+3. **Site profile** (bare-metal *module cluster* only): `cp deconvolution/setup/site.env.gilbreth.example
+   deconvolution/setup/site.env` and edit it for your machine (§Site variables). On a laptop
+   with R on PATH, or inside the container, you can skip this — the wrappers use the R/python
+   already on PATH.
+4. **Config override** — `cp config/pipeline_config.local.yaml.example config/pipeline_config.local.yaml`
+   and repoint any data paths to where your inputs live (§Data & config). Set `PIPELINE_ROOT`
+   to your **clone root** (not a data root): `export PIPELINE_ROOT=$PWD`.
+5. **Data** — stage the MoTrPAC bulk/training data:
+   `MGC_MOTRPAC_DATA_STORE=/your/store bash deconvolution/R/install_motrpac_data.sh` (~18 GiB),
+   or point `deconvolution.motrpac_bulk_dir` at the vendored `vendor/MotrpacRatTraining6moData/data`.
+   Stage 8 references also need the SC corpus, and Stage 9 needs the fine-tuned model — see
+   §Data & config for what a fresh clone does and doesn't ship.
+6. **Validate + run** — `python -c "from lib.gene_utils import load_config, validate_config;
+   validate_config(load_config()); print('Config OK')"`, then
+   `python pipeline/run_stage8.py --tissue … --ref-dir … --dry-run` (§Run the pipeline).
 
 ---
 
@@ -39,7 +75,7 @@ the whole repo — build once, run anywhere.
 
 ### Docker (laptop / cloud / CI)
 ```bash
-# from the repo root (BayesPrism submodule must be checked out first)
+# from the repo root (submodules must be checked out first)
 docker build -f deconvolution/setup/Dockerfile -t motrpac-genecompass:1.0 .
 
 # R step (deconvolution), mounting the repo at /work
@@ -85,15 +121,15 @@ It sets up the toolchain, then runs [`install_r_packages.R`](install_r_packages.
 **prints the exact system-dependency install command for your OS** (via `pak::pkg_sysreqs`)
 before installing — so you're never guessing what `png.h` you're missing.
 
-**On a module/conda cluster**, point it at your modules first:
+**On a module/conda cluster**, point it at your modules first via the site profile:
 ```bash
 cp deconvolution/setup/site.env.gilbreth.example deconvolution/setup/site.env
-$EDITOR deconvolution/setup/site.env     # set R_MODULES (+ STRIP_CONDA if needed)
+$EDITOR deconvolution/setup/site.env     # set R_MODULES / STRIP_CONDA / MGC_PYTHON / ...
 bash deconvolution/setup/install_r_env.sh
 ```
-`site.env` is gitignored and cluster-specific. The committed
+`site.env` is gitignored and cluster-specific; the committed
 [`site.env.gilbreth.example`](site.env.gilbreth.example) documents the Purdue Gilbreth
-values (which R/libpng/zlib/cmake modules, and the conda-strip) as a template.
+values as a template (see §Site variables for every knob).
 
 **On a laptop/server with R already installed**, no `site.env` is needed — just install
 the system libs it reports (e.g. `sudo apt install libpng-dev libxml2-dev libssl-dev …`)
@@ -131,15 +167,82 @@ On **bare metal** (Path 2/3), set Python up next to the R stack:
 ```bash
 python3.12 -m venv motrpac-env && source motrpac-env/bin/activate
 pip install -U pip && pip install -r requirements.txt
-export RETICULATE_PYTHON="$PWD/motrpac-env/bin/python"   # so R's anndata/reticulate finds it
 ```
 `torch` pulls its default CUDA-capable wheel; for a CPU-only box install it slim first:
 `pip install torch --index-url https://download.pytorch.org/whl/cpu`.
 
+Point the R↔Python bridge and the orchestrators at this venv via `MGC_PYTHON` in `site.env`
+(below), or simply `source motrpac-env/bin/activate` before running — the wrappers fall back
+to the active venv (`$VIRTUAL_ENV`) or `python3` on PATH when `MGC_PYTHON` is unset.
+
 ---
 
-## Running the pipeline (after any path)
+## Site variables (`site.env`)
 
+All machine-specific shell/cluster values live in one gitignored file,
+`deconvolution/setup/site.env` (copy from `site.env.gilbreth.example`). It is sourced by
+`deconvolution/setup/site_env.sh`, which **every** `R/*.sh` wrapper and the bootstrap
+installer load. Every variable is optional — leave one empty and that step is a no-op, so the
+defaults off a configured cluster are "use the R / python already on PATH" (exactly right for
+the container and laptops).
+
+| Variable | Controls | Default if unset |
+|---|---|---|
+| `R_MODULES` | Full Lmod module list to load (R + build-time libs), e.g. `r/4.4.1 libpng/1.6.37 zlib/1.3.1 cmake/3.30.2`. Loaded only if a `module` command exists. | none → R from PATH |
+| `STRIP_CONDA` | Conda prefix to drop from PATH/PKG_CONFIG_PATH (not CPATH) so compiled R deps dlopen against the module toolchain. | none → no strip |
+| `MGC_PYTHON` | Python for `reticulate` + the omnideconv Python methods; feeds `ENV_PY` and `RETICULATE_PYTHON`. | active venv → `python3` |
+| `MGC_MOTRPAC_DATA_STORE` | Writable path (outside the repo, ≥18 GiB) where `install_motrpac_data.sh` stages the MoTrPAC data; gets symlinked to `data/motrpac/rat_training_6mo`. | author's `/depot` path (set this!) |
+
+The wrappers reproduce the build/run env **conditionally**: modules load only when an Lmod
+`module` command is present, the conda strip happens only when `STRIP_CONDA` is set. So the
+same scripts work on Gilbreth, a different module cluster (swap the names), a laptop with R
+on PATH (no `site.env`), and inside the container.
+
+---
+
+## Data & config
+
+The committed `config/pipeline_config.yaml` is all-relative; machine-specific overrides go in
+the gitignored `config/pipeline_config.local.yaml` (deep-merged by `load_config`). Start from
+the template:
+```bash
+cp config/pipeline_config.local.yaml.example config/pipeline_config.local.yaml
+export PIPELINE_ROOT=$PWD     # the CLONE root — NOT a data root
+```
+
+**What a fresh clone ships vs. needs.** On the original checkout, `data/` is a forest of
+symlinks into an external store, so the repo-relative defaults "just work." A fresh clone has
+an empty, gitignored `data/` — so you must supply the inputs and either recreate the symlinks
+(`ln -s /your/store/... data/...`) or override the path keys in `pipeline_config.local.yaml`:
+
+- **MoTrPAC bulk** (Stage 8 step 1): the `TRNSCRPT_<TISSUE>_RAW_COUNTS.rda` files ship in the
+  vendored submodule. Either run `MGC_MOTRPAC_DATA_STORE=/your/store bash
+  deconvolution/R/install_motrpac_data.sh` (installs the R package, mirrors ~789 MB, fetches
+  ~18 GiB from GCS, and symlinks `data/motrpac/rat_training_6mo`), or just point
+  `deconvolution.motrpac_bulk_dir: vendor/MotrpacRatTraining6moData/data`.
+- **SC reference** (Stage 8 `--ref-dir`): per-tissue BayesPrism references are *built*
+  (`deconvolution/build_all_references.sh`), not shipped, and that build needs the QC'd
+  single-cell corpus + annotations (pipeline Stages 1–2 output). A bare clone cannot build a
+  reference without first obtaining that corpus.
+- **Fine-tuned model** (Stage 9): `deconvolution.genecompass_model_dir` points at the Stage-7
+  rat fine-tune (gitignored). Run Stage 7, or pass `--model-dir` to `run_stage9.py`.
+
+---
+
+## Run the pipeline (after setup)
+
+Production Stages 8–9 go through the orchestrators (see `deconvolution/README.md` for the
+per-tissue detail and the tissue-code → reference-dir mapping):
+```bash
+source motrpac-env/bin/activate          # or set MGC_PYTHON in site.env
+
+python pipeline/run_stage8.py --tissue SKM-GN \
+    --ref-dir "data/deconvolution/references/skeletal muscle_GSE254371" --dry-run
+python pipeline/run_stage9.py --label skmgn --dry-run
+```
+
+The individual R steps are also runnable directly via their wrappers (now portable — the
+module/conda setup is a no-op off a module cluster):
 ```bash
 # BayesPrism (primary)
 bash deconvolution/R/run_deconvolution.sh <ref_dir> <mix_dir> <out_dir>
@@ -152,9 +255,8 @@ OMNIDECONV_METHODS=music,scdc,bisque \
 python deconvolution/score_validation.py --stage-dir <stage_dir> \
   --truth cellfrac --est-file results/fractions_music.csv --tag music
 ```
-(Inside a container, drop the `run_*.sh` wrappers and call `Rscript run_omnideconv.R …`
-directly — the wrappers only exist to reproduce the cluster module env, which the
-container already provides.)
+Inside a container (R + libs already present) you can also call `Rscript run_omnideconv.R …`
+directly — the wrapper just adds the (now-conditional) cluster module/conda setup on top.
 
 ---
 
@@ -173,7 +275,10 @@ container already provides.)
 
 - **`png.h: No such file or directory`** (or any `*.h` not found): a missing system
   `-devel`/`-dev` package. Run the install — `pkg_sysreqs` lists exactly what to install;
-  on a module cluster, `module load` the equivalent (e.g. `libpng`).
+  on a module cluster, `module load` the equivalent (add it to `R_MODULES` in `site.env`).
+- **`module: command not found` / `/etc/profile.d/modules.sh: No such file`**: you're not on
+  an Lmod cluster — leave `R_MODULES` empty (the wrappers then use R from PATH). This is the
+  normal laptop/container case, not an error.
 - **Killed / OOM during a run**: deconvolution loads the single-cell reference as a dense
   matrix (a 22k-cell ref is ~3 GB, before copies). Don't run on a login node — use a
   compute node / container with enough RAM (≥ 64 GB for large refs).

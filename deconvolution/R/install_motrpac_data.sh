@@ -10,14 +10,14 @@
 #   3. Fetch the 58 GCS-hosted external .rda files (~18.4 GiB:
 #      56 epigen-rda ~18 GiB + 2 feature-annot ~362 MB) into the data store.
 #
-# Data layout produced (single source of truth):
-#   /depot/reese18/data/motrpac/rat_training_6mo/
+# Data layout produced (single source of truth, under $MGC_MOTRPAC_DATA_STORE):
+#   $MGC_MOTRPAC_DATA_STORE/
 #     data/                    206 .rda files mirrored from package
 #     extdata/epigen-rda/      56 GCS-hosted ATAC/METHYL .rda files
 #     extdata/feature-annot/   2 GCS-hosted feature-annotation files
 #
 # Project-side access (symlink, created at end of script):
-#   data/motrpac/rat_training_6mo -> /depot/reese18/data/motrpac/rat_training_6mo
+#   data/motrpac/rat_training_6mo -> $MGC_MOTRPAC_DATA_STORE
 #
 # Run on a Gilbreth login node. Total time: ~30-60 min on first run
 # (mostly the ~18 GiB GCS download). Reruns are idempotent:
@@ -28,8 +28,15 @@
 set -eo pipefail   # -u dropped: Gilbreth's /etc/profile.d/00-modulepath.sh references unbound vars
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# External data store (~18 GB, lives OUTSIDE the repo). Override via env for reuse;
-# it gets symlinked into data/motrpac/ at the end of this script.
+export PROJECT_ROOT
+
+# Read the per-site profile (modules, conda, data store) FIRST, so MGC_MOTRPAC_DATA_STORE set
+# in site.env is honored below. No-op off a module cluster. See setup/site_env.sh + SETUP.md.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
+
+# External data store (~18 GB, lives OUTSIDE the repo). Set MGC_MOTRPAC_DATA_STORE (in
+# site.env or the environment) to a writable path with ~18 GiB free; it gets symlinked into
+# data/motrpac/ at the end of this script. The /depot default is the author's machine only.
 DATA_STORE="${MGC_MOTRPAC_DATA_STORE:-/depot/reese18/data/motrpac/rat_training_6mo}"
 PROJECT_DATA_LINK="${PROJECT_ROOT}/data/motrpac/rat_training_6mo"
 PKG_SRC="${PROJECT_ROOT}/vendor/MotrpacRatTraining6moData"
@@ -48,9 +55,6 @@ mkdir -p "${R_LIBS_USER}" "${TMPDIR}"
 mkdir -p "${DATA_STORE}/data" \
          "${DATA_STORE}/extdata/epigen-rda" \
          "${DATA_STORE}/extdata/feature-annot"
-
-source /etc/profile.d/modules.sh
-module load r/4.4.1
 
 echo "R           : $(which R)"
 echo "R version   : $(R --version | head -1)"
