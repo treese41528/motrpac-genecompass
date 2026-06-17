@@ -15,7 +15,7 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 | Component | Location | Description |
 |-----------|----------|-------------|
 | **Data pipeline** | `pipeline/` | 9-stage orchestrated pipeline: corpus assembly → GeneCompass-ready reference files (Stages 1–7), then the deconvolution bridge (Stages 8–9) |
-| **GeneCompass** | `vendor/GeneCompass/` | Foundation model (git submodule, forked with rat extensions) |
+| **GeneCompass** | `vendor/GeneCompass/` | Foundation model (upstream git submodule, used as a library; rat adaptations live in `finetune/` + `data/`) |
 | **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus |
 | **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration: **BayesPrism** (vendored) + the **omnideconv** panel are the implemented Stage 8–9 stack; UniCell/scDEAL/Scissor are secondary/planned methods |
 | **Analysis** | `analysis/` | Differential expression, GRN inference, temporal modeling |
@@ -147,7 +147,7 @@ motrpac-genecompass/
 │   ├── io_utils.py             #   h5ad/sparse matrix helpers
 │   └── manifest.py             #   Stage manifest creation
 ├── vendor/
-│   └── GeneCompass/            # Git submodule (upstream fork)
+│   └── GeneCompass/            # Git submodule (tracks upstream xCompass-AI/GeneCompass)
 ├── pipeline/                   # Aim 1: Data preprocessing (Stages 1–7)
 │   ├── 01_data_harvesting/
 │   ├── 02_gene_inventory.py

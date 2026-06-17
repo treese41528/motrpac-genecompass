@@ -24,22 +24,31 @@ The name pairs the data source (MoTrPAC) with the method (GeneCompass), which is
 GeneCompass (https://github.com/xCompass-AI/GeneCompass) is included as a **git submodule** within the project:
 
 ```bash
-# Initial setup
-git submodule add https://github.com/treese41528/GeneCompass.git vendor/GeneCompass
+# Initial setup (tracks UPSTREAM directly; there is no fork)
+git submodule add https://github.com/xCompass-AI/GeneCompass.git vendor/GeneCompass
 ```
 
-**Why submodule (not fork-only or copy)?**
+**Why submodule (not fork or copy)?**
 
 1. **Contained:** GeneCompass lives inside our project tree — no separate clone needed
 2. **Pinned:** Submodule locks to a specific commit — reproducible even if upstream changes
-3. **Modifiable:** Our fork (`treese41528/GeneCompass`) carries rat-specific patches (extended tokenizer, species token, rat prior knowledge embeddings) while tracking upstream
-4. **Clean boundary:** Our pipeline code and their model code stay clearly separated
+3. **Clean boundary (pristine):** We use it as an upstream library and keep it unmodified. All
+   rat-specific work lives in the parent repo (`finetune/genecompass/` code + `data/` assets),
+   so there is no fork to maintain and no patches to rebase onto upstream.
+4. **Library, not a patch target:** `finetune/genecompass/` adds `vendor/GeneCompass` to
+   `sys.path` and imports `from genecompass import ...`; rat behavior (species token, rat
+   tokenizer/dictionary, rat prior-knowledge loader) is implemented in our own modules that
+   wrap or replace upstream functions (e.g. `rat_load_prior_embedding.py`).
 
 **Workflow:**
-- Fork `xCompass-AI/GeneCompass` → `treese41528/GeneCompass`
-- Submodule that fork into `vendor/GeneCompass/`
-- Rat-specific modifications go on a `rat-finetune` branch in the fork
-- Upstream improvements can be merged via `git fetch upstream`
+- The submodule tracks `xCompass-AI/GeneCompass`, pinned to a specific commit; bump the pin to
+  take upstream improvements.
+- Rat code -> `finetune/genecompass/`; rat data (prior-knowledge embeddings, fine-tuned model) ->
+  `data/training/prior_knowledge` and `data/models/` (gitignored).
+- The large UPSTREAM base assets (the `GeneCompass_Base` weights, the human/mouse prior-knowledge
+  embeddings, and the pretraining corpora) are downloaded INTO the submodule tree where upstream's
+  code expects them. They are not source, so the submodule is set `ignore = dirty` in `.gitmodules`:
+  `git status` does not flag those staged assets, but still surfaces a real change to the pinned commit.
 
 ---
 
@@ -79,7 +88,7 @@ motrpac-genecompass/
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │
 ├── vendor/
-│   └── GeneCompass/                   # Submodule → treese41528/GeneCompass
+│   └── GeneCompass/                   # Submodule → xCompass-AI/GeneCompass (upstream)
 │       ├── scdata/                    #   Pretrained reference data
 │       │   ├── dict/                  #     Token dicts, medians, homologs
 │       │   ├── human_protein_coding.txt
@@ -335,8 +344,8 @@ data/**/*.pickle
 ```ini
 [submodule "vendor/GeneCompass"]
     path = vendor/GeneCompass
-    url = https://github.com/treese41528/GeneCompass.git
-    branch = rat-finetune
+    url = https://github.com/xCompass-AI/GeneCompass
+    ignore = dirty   # large upstream base assets are staged into the tree (not source)
 ```
 
 ---
