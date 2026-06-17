@@ -10,7 +10,7 @@
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
-PY=/depot/reese18/apps/motrpac-env/bin/python3
+PY="${DECONV_PYTHON:-python3}"
 OUT="${CFG_REFERENCE_V2_DIR:-data/deconvolution/references_v2}"
 mkdir -p tmp/refbuild_v2 "$OUT"
 WT_HIPPO="GSE305314_sample2,GSE305314_sample5,GSE305314_sample7,GSE305314_sample8,GSE305314_sample12,GSE305314_sample14"

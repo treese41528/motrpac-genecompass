@@ -26,10 +26,17 @@
 set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-ENV_PY="${ENV_PY:-/depot/reese18/apps/motrpac-env/bin/python}"
+export PROJECT_ROOT
+# Per-site profile: gives ENV_PY from site.env MGC_PYTHON and strips STRIP_CONDA from PATH (no
+# modules needed for a pip install). See deconvolution/setup/site_env.sh + SETUP.md.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
+# pip target = the project venv: site.env MGC_PYTHON (-> ENV_PY above) -> active venv -> python3.
+# Resolve from VIRTUAL_ENV BEFORE we unset it below.
+ENV_PY="${ENV_PY:-${VIRTUAL_ENV:+${VIRTUAL_ENV}/bin/python}}"
+ENV_PY="${ENV_PY:-$(command -v python3 || true)}"
 export TMPDIR="${PROJECT_ROOT}/tmp"; mkdir -p "${TMPDIR}"
-# Keep conda + any active venv out of the way so pip targets ONLY motrpac-env.
-export PATH=$(echo "${PATH}" | tr ':' '\n' | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# Keep conda + any active venv out of the way so pip targets ONLY the resolved ENV_PY.
+# (site_env.sh already stripped STRIP_CONDA from PATH; here we also drop env pointers.)
 unset PYTHONPATH CONDA_PREFIX CONDA_DEFAULT_ENV VIRTUAL_ENV
 
 echo "target env : ${ENV_PY} ($(${ENV_PY} --version 2>&1))"

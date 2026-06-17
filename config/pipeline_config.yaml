@@ -339,6 +339,9 @@ deconvolution:
   validation_dir: data/deconvolution/validation
   results_dir: data/deconvolution/results
   genecompass_input_dir: data/deconvolution/genecompass_input  # pseudo-cells/tokenized/embeddings/umap
+  # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
+  # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
+  genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
   reference_v2_dir: data/deconvolution/references_v2     # V2 re-audited SC references
   validation_v2_dir: data/deconvolution/validation_v2    # V2 validation pseudobulk/results
   # Runtime (R / BayesPrism)

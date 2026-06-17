@@ -27,28 +27,11 @@ export R_ENVIRON_USER=/dev/null
 
 mkdir -p "${R_LIBS_USER}" "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load r/4.4.1
-
-# Strip Gilbreth's system-Python env from build-time discovery.
-# /apps/external/conda/2025.09/ is the cluster-supplied Python distribution
-# auto-loaded on PATH by default. It sits at the front of PKG_CONFIG_PATH,
-# which makes pkg-config hand igraph (and friends) the env's libxml2. That
-# libxml2 pulls libicui18n.so.75 as a runtime dependency, but the env's lib
-# dir is not on LD_LIBRARY_PATH at R session load time — so igraph.so
-# dlopens and fails. Stripping the path lets pkg-config fall back to the
-# spack libxml2 module (further down PKG_CONFIG_PATH), which is
-# self-contained on standard rpaths.
-# (This project's Python lives in a venv at /depot/reese18/apps/motrpac-env/,
-# not in this env — that venv stays on PATH and is unaffected.)
-export PKG_CONFIG_PATH=$(
-  echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//'
-)
-export PATH=$(
-  echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//'
-)
+# Reproduce the build env via the shared site profile: load modules (R_MODULES) and strip a
+# conda prefix (STRIP_CONDA) from PATH/PKG_CONFIG_PATH so compiled Bioc deps (scran/igraph)
+# build + dlopen against the module toolchain, not a conda one whose libxml2/libstdc++ would
+# otherwise shadow it. Both come from site.env; a no-op off a module cluster. See site_env.sh.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 echo "R           : $(which R)"
 echo "R version   : $(R --version | head -1)"

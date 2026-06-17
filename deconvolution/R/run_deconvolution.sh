@@ -21,17 +21,13 @@ export EXCLUDE_SEX_CHROMOSOMES="${EXCLUDE_SEX_CHROMOSOMES:-${CFG_EXCLUDE_SEX_CHR
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
 export N_CORES="${N_CORES:-${CFG_N_CORES:-4}}"
-R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load "${R_MODULE}"
-
-export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
-export PATH=$(echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# Reproduce the build/run env via the shared site profile: load modules (R_MODULES) and
+# strip conda (STRIP_CONDA) only where site.env declares them and Lmod exists; a no-op on a
+# laptop/container, where R comes from PATH. See deconvolution/setup/site_env.sh + SETUP.md.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 echo "R       : $(which R)"
 echo "N_CORES : ${N_CORES}"

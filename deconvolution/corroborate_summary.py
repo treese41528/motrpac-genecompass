@@ -13,7 +13,7 @@ import numpy as np, pandas as pd
 from scipy.stats import spearmanr, wilcoxon
 
 sys.path.insert(0, str(Path(os.environ.setdefault(
-    "PIPELINE_ROOT", "/depot/reese18/apps/motrpac-genecompass")) / "lib"))
+    "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
 
 cfg = load_config(); gc = str(resolve_path(cfg, cfg["deconvolution"]["genecompass_input_dir"]))

@@ -25,17 +25,13 @@ export SC_CORPUS_GENES="${SC_CORPUS_GENES:-${CFG_IDSPACE_AUDIT_DIR:-${PROJECT_RO
 export SC_ID2SYMBOL="${SC_ID2SYMBOL:-${CFG_IDSPACE_AUDIT_DIR:-${PROJECT_ROOT}/data/deconvolution/idspace_audit}/id2symbol.tsv}"
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
-R_MODULE="${R_MODULE:-${CFG_R_MODULE:-r/4.4.1}}"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load "${R_MODULE}"
-
-export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
-export PATH=$(echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# Reproduce the build/run env via the shared site profile: load modules (R_MODULES) and
+# strip conda (STRIP_CONDA) only where site.env declares them and Lmod exists; a no-op on a
+# laptop/container, where R comes from PATH. See deconvolution/setup/site_env.sh + SETUP.md.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 echo "R       : $(which R)"
 cd "${PROJECT_ROOT}"

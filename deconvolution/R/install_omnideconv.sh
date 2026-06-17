@@ -35,23 +35,12 @@ export TMPDIR="${PROJECT_ROOT}/tmp"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${R_LIBS_USER}" "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-# r/4.4.1 is the toolchain; the rest provide build-time system headers/libs that the
-# bare conda env lacks: libpng (png.h, for Seurat's png dep), zlib (zlib.h), cmake (for
-# nloptr). libxml2/curl/libtiff come in with the r module already. openssl + ICU headers
-# come from conda's include dir, which we keep on CPATH (we only strip conda from PATH /
-# PKG_CONFIG_PATH below, not CPATH). Verified: png/openssl/stringi/igraph/curl/nloptr all
-# build AND load under exactly this set.
-module load r/4.4.1 libpng/1.6.37 zlib/1.3.1 cmake/3.30.2
-
-# Conda strip (same as install_bayesprism.sh / install_deseq2.sh): keep the module gcc /
-# pkg-config in front so compiled deps build+dlopen against the module toolchain, not the
-# conda one (conda's libstdc++ otherwise shadows it and breaks scran/igraph). NB: we do
-# NOT strip CPATH -- conda's include dir is the only source of openssl/ICU headers here.
-export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
-export PATH=$(echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# Reproduce the build env via the shared site profile: load modules (R_MODULES -- on a module
+# cluster this MUST include the build-time headers Seurat/nloptr need: libpng/zlib/cmake) and
+# strip a conda prefix (STRIP_CONDA) from PATH/PKG_CONFIG_PATH (NOT CPATH -- conda's include
+# dir is the only source of openssl/ICU headers here) so compiled deps build + dlopen against
+# the module toolchain. Both come from site.env; a no-op off a module cluster. See site_env.sh.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 # Let pak compile in parallel.
 export MAKEFLAGS="-j8"
 

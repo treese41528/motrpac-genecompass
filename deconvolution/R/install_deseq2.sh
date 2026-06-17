@@ -13,14 +13,9 @@ export TMPDIR="${PROJECT_ROOT}/tmp"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null
 mkdir -p "${R_LIBS_USER}" "${TMPDIR}"
 
-source /etc/profile.d/modules.sh
-module load r/4.4.1
-
-# Same conda-strip as install_bayesprism.sh so compiled deps dlopen cleanly.
-export PKG_CONFIG_PATH=$(echo "${PKG_CONFIG_PATH:-}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
-export PATH=$(echo "${PATH}" | tr ':' '\n' \
-  | grep -v '/apps/external/conda/2025.09' | tr '\n' ':' | sed 's/:$//')
+# Reproduce the build env via the shared site profile (modules + conda strip from site.env so
+# compiled deps dlopen cleanly; a no-op off a module cluster). See setup/site_env.sh + SETUP.md.
+source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 echo "R           : $(which R)"
 echo "R_LIBS_USER : ${R_LIBS_USER}"
