@@ -1,6 +1,7 @@
 [submodule "vendor/GeneCompass"]
 	path = vendor/GeneCompass
 	url = https://github.com/xCompass-AI/GeneCompass
+	ignore = dirty
 [submodule "vendor/BayesPrism"]
 	path = vendor/BayesPrism
 	url = https://github.com/Danko-Lab/BayesPrism.git
