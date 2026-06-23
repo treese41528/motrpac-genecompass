@@ -1,0 +1,11 @@
+tissue	bulk_code	study	reference_tag	scheme	gene_join	merged	built_by	note
+pbmc	BLOOD	GSE285476	peripheral blood mononuclear cells_GSE285476	none	inner	N	make_pseudobulk(holdout)	14 immune labels; immune subtypes intentionally kept fine (omnideconv)
+cortex	CORTEX	GSE303115	cortex_GSE303115_union_merged	brain	outer	Y	build_references_v2.sh	gene-rich union + Excitatory-neuron merge; quiet exercise tissue (0 signal)
+heart	HEART	GSE280111	heart_GSE280111_LV	none	inner	N	make_pseudobulk(holdout)	left ventricle; holdout-only CM cross-validation (documented limitation)
+hippocampus	HIPPOC	GSE305314	hippocampus_GSE305314_WT_merged	brain	inner	Y	build_references_v2.sh	WT-only (drop Tau) + Excitatory-neuron merge
+kidney	KIDNEY	GSE240658	kidney_GSE240658	none	inner	N	build_references_v2.sh	No-treatment arm
+liver	LIVER	GSE220075	liver_GSE220075	none	inner	N	build_all_references.sh	holdout-built
+lung	LUNG	GSE178405	lung_GSE178405	none	inner	N	build_references_v2.sh	weakest cross-dataset deconvolution (~0.73); read lung claims cautiously
+gastrocnemius	SKMGN	GSE184413	gastrocnemius_GSE184413	none	inner	N	build_references_v2.sh	Normal ambulation; single 'Skeletal muscle cells' label (not over-split)
+vastus_lateralis	SKMVL	GSE254371	skeletal_muscle_GSE254371_muscle_merged	muscle	outer	Y	build_references_v2.sh	MERGED 'Skeletal muscle cells'+'Skeletal muscle fibers' -> 'Skeletal muscle'; bulk-mover recovery 50/41%->57%
+white_adipose	WATSC	GSE137869	white adipose tissue_GSE137869	none	inner	N	make_pseudobulk(holdout)	M+F; the exercise immune signal is cell-fraction recruitment (theta), not within-cell expression

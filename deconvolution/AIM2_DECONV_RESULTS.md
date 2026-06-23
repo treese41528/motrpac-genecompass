@@ -191,6 +191,12 @@ separable issues, each tested:
   Documented limitation — the CM deconvolution is nonetheless externally validated against the MoTrPAC bulk (83%
   bulk-mover recovery, bulk-`Z` r=0.71); not pursued (needs a 2nd rat-heart-CM dataset).
 
+**Now canonical in the pipeline (no ad-hoc rebuild).** The collinear-parenchyma merges — brain for
+cortex + hippocampus, muscle for SKMVL — are built directly by `build_references_v2.sh` via
+`--label-scheme` (the `muscle` scheme added to `build_reference.py`); the per-tissue canonical reference
+(merged where applicable) is recorded in `reference/canonical_references.tsv`, so a standard pipeline run
+produces the merged references without the manual rebuild step.
+
 ### Reporting policy (carry into all downstream use)
 Down-weight absolute per-gene DE on the **dominant parenchyma** per tissue (`dominant_celltype_flags.tsv`); prefer
 relative / 8-wk contrasts there. **Lean the exercise story on the immune + mid-abundance stromal/endothelial cell

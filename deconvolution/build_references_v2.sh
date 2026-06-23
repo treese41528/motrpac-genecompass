@@ -4,6 +4,12 @@
 # select on geo_title — see reports/deconvolution/multitissue_validation.md):
 #   heart: GSE155699 (SHR, NO cardiomyocytes) -> GSE280111 left ventricle (healthy, CM 20%)
 #   hippocampus: GSE305314 ALL-12 (pooled 6 WT + 6 Tau) -> GSE305314 WT-only (6 samples)
+# Collinear-parenchyma merge (2026-06-22, AIM2_DECONV_RESULTS.md 4a): BayesPrism cannot separate
+# collinear GEPs, so the dominant parenchyma must NOT be over-split. Now CANONICAL here (was an
+# ad-hoc rebuild): brain tissues (cortex, hippocampus) use --label-scheme brain (-> 'Excitatory
+# neurons'); skeletal-muscle vastus lateralis uses --label-scheme muscle (-> 'Skeletal muscle',
+# merging 'Skeletal muscle cells'+'Skeletal muscle fibers'; lifts bulk-mover recovery 50->57%).
+# Merge ONLY collinear parenchyma -- NEVER immune subtypes (omnideconv: coarse hurts BayesPrism).
 # Only the CROSS tissues need a prebuilt reference here; the holdout tissues
 # (heart, white adipose, PBMC) build their reference inside make_pseudobulk.
 # Output: deconvolution/reference_v2/<tag>/   (parallel to v1 reference/, kept for comparison)
@@ -27,11 +33,14 @@ launch () {  # tag  -- then build_reference.py args
 # the default inner (intersection) join collapsed the reference to 5,536 genes (~20% primary
 # coverage). --gene-join outer + --min-gene-cells 10 recovers the 21,248-gene union -> 18,162
 # genes, lifting training-regulated coverage to ~94%. (173k-cell union OOMs on login -> SLURM.)
-launch cortex_GSE303115        --study GSE303115 --tissue cortex --gene-join outer --min-gene-cells 10
-launch hippocampus_GSE305314_WT --study GSE305314 --tissue hippocampus --sample-ids "$WT_HIPPO"
+# Brain refs: gene-rich outer-join + brain-merge (collinear neuron fragments -> 'Excitatory neurons').
+launch cortex_GSE303115_union_merged   --study GSE303115 --tissue cortex --gene-join outer --min-gene-cells 10 --label-scheme brain
+launch hippocampus_GSE305314_WT_merged --study GSE305314 --tissue hippocampus --sample-ids "$WT_HIPPO" --label-scheme brain
 launch kidney_GSE240658        --study GSE240658 --tissue kidney --conditions "No treatment"
 launch lung_GSE178405          --study GSE178405 --tissue lung
 launch gastrocnemius_GSE184413 --study GSE184413 --tissue gastrocnemius --conditions "Normal ambulation"
+# Vastus lateralis (SKMVL): merge the two collinear muscle-parenchyma labels into 'Skeletal muscle'.
+launch skeletal_muscle_GSE254371_muscle_merged --study GSE254371 --tissue "skeletal muscle" --gene-join outer --min-gene-cells 10 --label-scheme muscle
 
 pids=($(jobs -p)); echo "launched ${#pids[@]} ref builds; waiting..."
 rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
