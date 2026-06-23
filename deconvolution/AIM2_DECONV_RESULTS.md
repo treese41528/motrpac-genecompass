@@ -144,9 +144,69 @@ The §3b re-measurement and §3c external validation settle the gate's question:
 
 ---
 
+## 4a. Per-cell-type DE — RESULTS, positive-control verdict & reference reconsideration (2026-06-22)
+
+The §4 pivot is executed. Implementation: `deconvolution/R/run_pseudobulk_de.R` (driven by Stage-10 orchestrator
+`pipeline/run_stage10.py`: DE → positive-control comparison). Exhaustive Vetr-faithful design — per (tissue × cell
+type), **limma-trend on log2-CPM of the continuous BayesPrism `Z`** (NOT DESeq2-NB: `Z` is posterior expected
+count-mass, rare-in-tissue types mostly <1, verified on HEART/BLOOD/LUNG — integer rounding would zero rare-type and
+~¼–½ of mid-abundance immune signal), with combined `~ sex * factor(week)` (omnibus dose F + per-timepoint contrasts
++ sex×dose interaction) + ordinal slope; per-sex `~ factor(week)` → signed-z at 8 wk → **Fisher** sex-combine;
+**global IHW~tissue**; **repfdr** 8-wk sex-consistency; composition-confound check. Full gene coverage (only all-zero
+genes dropped, logged). Run: 10 tissues, **186/186 blocks ok, 2,225,006 Fisher tests, IHW + repfdr converged**.
+
+### Positive-control verdict (pre-registered)
+The spec `POSCTRL_PREREG.md` / `reference/posctrl_prereg.tsv` (105 gene×target rows, frozen **before** any per-gene
+result) was scored by `compare_posctrl.py` through the fixed miss-ladder (coverage → power → confound → biology):
+- **Immune cell types recover known biology — the result.** Yu 2023 cytotoxicity program enriched in blood **NK
+  (4.3×, binom p=0.0025), Memory-T (3.5×, p=0.017), ISG-T (3.3×, p=0.021)**; naive program in Memory-T (5.3×,
+  p=0.01). Vetr 2024 blood genes (Fads2, Aamp, Bag6, Fam89b) recover in **ISG-expressing T cells**; Atp6v1g2 in
+  SKMVL muscle fibroblasts (female); Ccnf in blood NK. This is the hotspot region the gate/Augur flagged (§3, §3b).
+- **The direction-anchored Tier-A controls (canonical mito/heat-shock) did NOT recover in the dominant parenchyma**
+  (4/45; Sod2/Mef2c/Slc2a4/Hspa1b/Hsp90aa1 flat in muscle cells/cardiomyocytes/hepatocytes). Per the pre-registration
+  this was flagged as a possible pipeline problem and **investigated, not spun**.
+
+### Resolution — the pipeline is sound; the Tier-A controls were mis-specified
+`deconvolution/diagnose_parenchyma.py` + `validate_parenchyma_dataanchored.py` settle it three ways:
+1. **Parenchyma `Z` faithfully tracks bulk dose genome-wide:** corr(bulk week-slope, parenchyma-`Z` week-slope) =
+   0.68 (SKMGN) / 0.77 (SKMVL) / 0.71 (HEART) / 0.81 (LIVER), p≈0, shrinkage ≈1 (not compressed/prior-regressed).
+2. **The controls are flat or down in the actual rat bulk transcript:** at 8 wk vs control Hspa1b = −0.96 (SKMGN)
+   and down in all four tissues; Sod2/Mef2c ≈0; only Slc2a4/GLUT4 modestly up (+0.12–0.14). The MoTrPAC mito/HSP
+   exercise signature is largely protein/PTM-level — the *transcripts* are weak. So the controls were mis-specified
+   for a transcript-dose test; the DE faithfully reflected their bulk flatness (incl. the HSP down-direction).
+3. **Data-anchored positive control (the correct one):** of genes that *do* move in the matched bulk (8 wk BH<.05,
+   |log2FC|≥.25), the parenchyma DE recovers **cardiomyocytes 83%**, skeletal-muscle ~50% direction-concordant
+   (per-block BH); LIVER has 0 bulk movers (liver's transcript dose signal is genuinely weak). **Pipeline validated.**
+
+### Reference reconsideration (references are a secondary factor)
+References recover the parenchyma fraction near-perfectly where the type is resolved (θ r≈0.99 holdout). Three
+separable issues, each tested:
+- **SKMVL was over-split** ("Skeletal muscle cells" + "Skeletal muscle fibers"). A new `muscle` label-scheme in
+  `build_reference.py` merges them; re-deconvolving SKMVL **improves** recovery of bulk dose movers from 50%/41%
+  (split) to **57%** (merged). **→ Adopt the muscle merge for SKMVL.** (Merged outputs in `*_merged/` dirs.)
+- **Cortex was over-split AND un-merged** (12 collinear neuron labels) — asymmetric with hippocampus (brain-merged).
+  Rebuilding gene-rich + brain-merged fixes the inconsistency, but cortex has **0 bulk exercise movers** (quiet
+  tissue) → zero science impact. Adopt for correctness only.
+- **Heart CM reference has holdout-only validation** (no cross-dataset CM check; v1 cross used a CM-less atlas).
+  Documented limitation — the CM deconvolution is nonetheless externally validated against the MoTrPAC bulk (83%
+  bulk-mover recovery, bulk-`Z` r=0.71); not pursued (needs a 2nd rat-heart-CM dataset).
+
+### Reporting policy (carry into all downstream use)
+Down-weight absolute per-gene DE on the **dominant parenchyma** per tissue (`dominant_celltype_flags.tsv`); prefer
+relative / 8-wk contrasts there. **Lean the exercise story on the immune + mid-abundance stromal/endothelial cell
+types**, which validate against Yu/Vetr and the gate/Augur. The cell-type-resolved DE is the Aim-2 deliverable; the
+parenchyma DE is faithful-to-bulk, but its canonical transcript controls are genuinely weak in rat.
+
+**Artifacts:** `run_pseudobulk_de.{R,sh}`, `pipeline/run_stage10.py`, `POSCTRL_PREREG.md` + `build_posctrl_prereg.py`
++ `reference/posctrl_prereg.tsv`, `compare_posctrl.py`, `diagnose_parenchyma.py`, `validate_parenchyma_dataanchored.py`,
+`build_reference.py` (muscle scheme); outputs under `genecompass_input/pseudobulk_de/` (+ `_merged/` for the
+SKMVL/cortex re-deconvolutions). `DOWNSTREAM_BUILD_PLAN.md` = the GRN/perturbation/cross-species build map.
+
+---
+
 ## 5. Next stages
 
-1. **Per-cell-type DE on `Z` (immediate; the field-standard route — see `EMBEDDING_DE_STANDARDS.md`).** Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
+1. **Per-cell-type DE on `Z` — ✅ DONE 2026-06-22 (see §4a for results, the pre-registered positive-control verdict, the parenchyma diagnostic, and the reference reconsideration).** (field-standard route — see `EMBEDDING_DE_STANDARDS.md`). Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
 2. **GRN / perturbation routes (after DE).** Caveats from the connector work: pseudo-cell GRN/perturbation is only valid for **abundant** cell types (rare ones sit at the reference prior, no exercise signal); n ≈ 50 samples/cell type is too thin for data-driven GRN (DeepSEM) → default to the **model-driven in-silico-perturbation** GRN route in GeneCompass.
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
 4. **Cross-species (grant aim).** **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets; our contribution is the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). Still needs a human single-cell side for direct cross-species cell-type matching — not free; scope separately.

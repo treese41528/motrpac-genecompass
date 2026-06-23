@@ -1,0 +1,106 @@
+tier	group	symbol	ensembl	tissue	cell_type_target	sex	expected_dir	anchored_direction	testable_prior	source	notes
+A	muscle_mito_biogenesis	Sod2	ENSRNOG00000086727	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Slc2a4	ENSRNOG00000017226	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2c	ENSRNOG00000033134	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2a	ENSRNOG00000047756	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2d	ENSRNOG00000031778	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Opa1	ENSRNOG00000001717	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Mfn1	ENSRNOG00000011057	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Prkab1	ENSRNOG00000001142	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Tbc1d1	ENSRNOG00000002180	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin2	ENSRNOG00000007060	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin4	ENSRNOG00000047046	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin5	ENSRNOG00000047860	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Hspa1b	ENSRNOG00000045654	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	SKMVL	Skeletal muscle cells|Skeletal muscle fibers	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)	muscle parenchyma
+A	muscle_mito_biogenesis	Sod2	ENSRNOG00000086727	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Slc2a4	ENSRNOG00000017226	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2c	ENSRNOG00000033134	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2a	ENSRNOG00000047756	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Mef2d	ENSRNOG00000031778	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Opa1	ENSRNOG00000001717	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Mfn1	ENSRNOG00000011057	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Prkab1	ENSRNOG00000001142	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Tbc1d1	ENSRNOG00000002180	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin2	ENSRNOG00000007060	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin4	ENSRNOG00000047046	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Plin5	ENSRNOG00000047860	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Hspa1b	ENSRNOG00000045654	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	muscle_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	SKMGN	Skeletal muscle cells	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)	muscle parenchyma
+A	heart_mito_biogenesis	Sod2	ENSRNOG00000086727	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	heart_mito_biogenesis	Mef2c	ENSRNOG00000033134	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	heart_mito_biogenesis	Opa1	ENSRNOG00000001717	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	heart_mito_biogenesis	Mfn1	ENSRNOG00000011057	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	heart_mito_biogenesis	Hspa1b	ENSRNOG00000045654	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	heart_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	HEART	Cardiomyocytes	any	up	TRUE	TRUE	MoTrPAC #21 Fig4 (heart 8w sex-consistent mito UP) + #22 heart up-ERGs	striated-muscle convergence
+A	liver_metabolic	Stat3	ENSRNOG00000019742	LIVER	Hepatocytes	any	up	TRUE	TRUE	MoTrPAC #21 p7-8 (liver metabolic/regeneration program UP, later in females)	8w; female-delayed onset
+A	liver_metabolic	Pxn	ENSRNOG00000001149	LIVER	Hepatocytes	any	up	TRUE	TRUE	MoTrPAC #21 p7-8 (liver metabolic/regeneration program UP, later in females)	8w; female-delayed onset
+A	liver_metabolic	Hsp90aa1	ENSRNOG00000059714	LIVER	Hepatocytes	any	up	TRUE	TRUE	MoTrPAC #21 p7-8 (liver metabolic/regeneration program UP, later in females)	8w; female-delayed onset
+A	blood_hematopoietic_TF	Gabpa	ENSRNOG00000053205	BLOOD	ANY	any	up	TRUE	TRUE	MoTrPAC #21 p3,p5 (blood = haematopoietic cellular mobilization)	TF-program; broad across blood cells
+A	blood_hematopoietic_TF	Ets1	ENSRNOG00000008941	BLOOD	ANY	any	up	TRUE	TRUE	MoTrPAC #21 p3,p5 (blood = haematopoietic cellular mobilization)	TF-program; broad across blood cells
+A	blood_hematopoietic_TF	Klf3	ENSRNOG00000002163	BLOOD	ANY	any	up	TRUE	TRUE	MoTrPAC #21 p3,p5 (blood = haematopoietic cellular mobilization)	TF-program; broad across blood cells
+A	blood_hematopoietic_TF	Znf143	NA	BLOOD	ANY	any	up	TRUE	FALSE	MoTrPAC #21 p3,p5 (blood = haematopoietic cellular mobilization)	TF-program; broad across blood cells; absent from gene universe (coverage)
+A	wat_adrenergic	Adra1b	ENSRNOG00000060087	WATSC	ANY	any	down	TRUE	TRUE	MoTrPAC #22 p12 (WAT adrenergic GPCR genes DOWN)	WAT deconv has no adipocyte cell type -> coverage caveat
+A	wat_adrenergic	Adra1d	ENSRNOG00000021256	WATSC	ANY	any	down	TRUE	TRUE	MoTrPAC #22 p12 (WAT adrenergic GPCR genes DOWN)	WAT deconv has no adipocyte cell type -> coverage caveat
+A	wat_adrenergic	Adra2b	ENSRNOG00000013887	WATSC	ANY	any	down	TRUE	TRUE	MoTrPAC #22 p12 (WAT adrenergic GPCR genes DOWN)	WAT deconv has no adipocyte cell type -> coverage caveat
+A	wat_adrenergic	Adrb1	ENSRNOG00000017002	WATSC	ANY	any	down	TRUE	TRUE	MoTrPAC #22 p12 (WAT adrenergic GPCR genes DOWN)	WAT deconv has no adipocyte cell type -> coverage caveat
+Ai	heart_structural	Gja1	ENSRNOG00000000805	HEART	Cardiomyocytes	any	none	FALSE	TRUE	MoTrPAC #21 p3-4 (SRC/ECM remodelling; phospho-site, transcript dir unstated)	
+Ai	heart_structural	Cdh2	ENSRNOG00000015602	HEART	Cardiomyocytes	any	none	FALSE	TRUE	MoTrPAC #21 p3-4 (SRC/ECM remodelling; phospho-site, transcript dir unstated)	
+Ai	kidney_signalling	Akt1	ENSRNOG00000028629	KIDNEY	Proximal tubule cells|Distal tubule cells	any	none	FALSE	TRUE	MoTrPAC #21 p3 (AKT/mTOR) + #22 (Hnf4a/Hnf1b TF program)	
+Ai	kidney_signalling	Mtor	ENSRNOG00000009615	KIDNEY	Proximal tubule cells|Distal tubule cells	any	none	FALSE	TRUE	MoTrPAC #21 p3 (AKT/mTOR) + #22 (Hnf4a/Hnf1b TF program)	
+Ai	kidney_signalling	Hnf4a	ENSRNOG00000008895	KIDNEY	Proximal tubule cells|Distal tubule cells	any	none	FALSE	TRUE	MoTrPAC #21 p3 (AKT/mTOR) + #22 (Hnf4a/Hnf1b TF program)	
+Ai	kidney_signalling	Hnf1b	ENSRNOG00000002598	KIDNEY	Proximal tubule cells|Distal tubule cells	any	none	FALSE	TRUE	MoTrPAC #21 p3 (AKT/mTOR) + #22 (Hnf4a/Hnf1b TF program)	
+Ai	liver_tf	Hnf4a	ENSRNOG00000008895	LIVER	Hepatocytes	any	none	FALSE	TRUE	MoTrPAC #22 (Hnf4a/Hnf1b)	
+Ai	liver_tf	Hnf1b	ENSRNOG00000002598	LIVER	Hepatocytes	any	none	FALSE	TRUE	MoTrPAC #22 (Hnf4a/Hnf1b)	
+Ai	lung_prkaca_substrates	Dsp	ENSRNOG00000013928	LUNG	ANY	male	none	FALSE	TRUE	MoTrPAC #21 p7 (male-decreased PRKACA phosphosignalling; transcript dir unstated)	phospho not transcript
+Ai	lung_prkaca_substrates	Mylk	ENSRNOG00000002215	LUNG	ANY	male	none	FALSE	TRUE	MoTrPAC #21 p7 (male-decreased PRKACA phosphosignalling; transcript dir unstated)	phospho not transcript
+Ai	lung_prkaca_substrates	Stmn1	ENSRNOG00000016810	LUNG	ANY	male	none	FALSE	TRUE	MoTrPAC #21 p7 (male-decreased PRKACA phosphosignalling; transcript dir unstated)	phospho not transcript
+Ai	lung_prkaca_substrates	Syne1	ENSRNOG00000018960	LUNG	ANY	male	none	FALSE	TRUE	MoTrPAC #21 p7 (male-decreased PRKACA phosphosignalling; transcript dir unstated)	phospho not transcript
+Ai	lung_prkaca_substrates	Prkaca	ENSRNOG00000005257	LUNG	ANY	male	none	FALSE	TRUE	MoTrPAC #21 p7 (male-decreased PRKACA phosphosignalling; transcript dir unstated)	phospho not transcript
+Ai	hippoc_neuro	Gpr37l1	ENSRNOG00000006237	HIPPOC	ANY	any	none	FALSE	TRUE	MoTrPAC #22 (hippocampus axonogenesis/neurogenesis up-ERGs)	fewest ERGs of 8 tissues
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	CORTEX	ANY	any	none	FALSE	TRUE	Vetr 2024 p3 (LDLR DE in cortex,hippoc,SKM-GN,SKM-VL)	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	HIPPOC	ANY	any	none	FALSE	TRUE	Vetr 2024 p3	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	SKMGN	ANY	any	none	FALSE	TRUE	Vetr 2024 p3	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	SKMVL	ANY	any	none	FALSE	TRUE	Vetr 2024 p3	
+B	vetr_disease_gene	Apob	ENSRNOG00000005542	LUNG	ANY	male	none	FALSE	TRUE	Vetr 2024 p3-4 (APOB male lung +9.7 SDpheno)	strong-effect exception
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	HEART	ANY	any	none	FALSE	TRUE	Vetr 2024 p3 (SLC6A8 DE in heart,liver,lung)	
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	LIVER	ANY	any	none	FALSE	TRUE	Vetr 2024 p3	
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	LUNG	ANY	any	none	FALSE	TRUE	Vetr 2024 p3	
+B	vetr_disease_gene	Foxp3	ENSRNOG00000011702	HEART	ANY	any	none	FALSE	FALSE	Vetr 2024 p3 (FOXP3 DE in heart,spleen)	KNOWN NOT TESTABLE: Foxp3 absent from every pred_z (idmap) -> pre-declared coverage miss
+B	vetr_skmvl_male	Tmbim1	ENSRNOG00000014797	SKMVL	ANY	male	none	FALSE	TRUE	Vetr 2024 p4 (male training VL gene; cholesterol)	
+B	vetr_skmvl_female	Atp6v1g2	ENSRNOG00000000840	SKMVL	ANY	female	none	FALSE	TRUE	Vetr 2024 p5 (female training VL gene; asthma, largest effect)	
+B	vetr_blood_chol_male	Fads2	ENSRNOG00000020440	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p4-5,p7 (male blood cholesterol-lowering program)	Ndufa13/AAMP were novel (no prior lit)
+B	vetr_blood_chol_male	Pnkd	ENSRNOG00000014806	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p4-5,p7 (male blood cholesterol-lowering program)	Ndufa13/AAMP were novel (no prior lit)
+B	vetr_blood_chol_male	Aamp	ENSRNOG00000014399	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p4-5,p7 (male blood cholesterol-lowering program)	Ndufa13/AAMP were novel (no prior lit)
+B	vetr_blood_chol_male	Ogdh	ENSRNOG00000005130	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p4-5,p7 (male blood cholesterol-lowering program)	Ndufa13/AAMP were novel (no prior lit)
+B	vetr_blood_chol_male	Ndufa13	NA	BLOOD	ANY	male	none	FALSE	FALSE	Vetr 2024 p4-5,p7 (male blood cholesterol-lowering program)	Ndufa13/AAMP were novel (no prior lit); absent from gene universe (coverage)
+B	vetr_blood_asthma_male	Bag6	ENSRNOG00000000851	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p5 (male blood asthma program)	PTPA & 'CCNG' uncertain symbols -> omitted to avoid mis-map
+B	vetr_blood_asthma_male	Ccnf	ENSRNOG00000007483	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p5 (male blood asthma program)	PTPA & 'CCNG' uncertain symbols -> omitted to avoid mis-map
+B	vetr_blood_asthma_male	Crat	ENSRNOG00000018145	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p5 (male blood asthma program)	PTPA & 'CCNG' uncertain symbols -> omitted to avoid mis-map
+B	vetr_blood_asthma_male	Fam89b	ENSRNOG00000024239	BLOOD	ANY	male	none	FALSE	TRUE	Vetr 2024 p5 (male blood asthma program)	PTPA & 'CCNG' uncertain symbols -> omitted to avoid mis-map
+B	vetr_wat_female	Endou	ENSRNOG00000056446	WATSC	ANY	female	none	FALSE	TRUE	Vetr 2024 p5 (female WAT asthma gene)	
+B	vetr_liver_female	Abcg8	ENSRNOG00000005420	LIVER	ANY	female	none	FALSE	TRUE	Vetr 2024 p4 (female liver cholesterol gene)	
+C	yu_monocyte_activation	S100a8	ENSRNOG00000011557	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_monocyte_activation	S100a9	ENSRNOG00000011483	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_monocyte_activation	S100a12	NA	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	FALSE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human); absent from gene universe (coverage)
+C	yu_monocyte_activation	Vcan	ENSRNOG00000029212	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_monocyte_activation	Retn	ENSRNOG00000001001	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_monocyte_activation	Acsl1	ENSRNOG00000010633	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_monocyte_activation	Nampt	ENSRNOG00000009754	BLOOD	Classical monocytes|Non-classical monocytes	any	none	FALSE	TRUE	Yu 2023 Fig4 (S100A8/A9-hi activated monocyte state)	direction NOT anchored (acute/human)
+C	yu_cytotoxicity	Prf1	ENSRNOG00000000562	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Gnly	NA	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	FALSE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage; absent from gene universe (coverage)
+C	yu_cytotoxicity	Nkg7	ENSRNOG00000017749	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Gzma	ENSRNOG00000010603	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Gzmb	NA	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	FALSE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage; absent from gene universe (coverage)
+C	yu_cytotoxicity	Gzmk	ENSRNOG00000010661	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Klrb1	ENSRNOG00000057410	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Klrd1	ENSRNOG00000060246	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Klrk1	ENSRNOG00000061739	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Ctsw	ENSRNOG00000027096	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_cytotoxicity	Cst7	ENSRNOG00000006767	BLOOD	Natural killer cells|Memory T cells|ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig2C (cytotoxicity score genes)	Gnly/Gzmb have no rat-universe ortholog -> coverage
+C	yu_naive	Ccr7	ENSRNOG00000010665	BLOOD	Naive B cells|Naive CD4+ T cells|Memory T cells	any	none	FALSE	TRUE	Yu 2023 Fig2D (naive/resting score)	
+C	yu_naive	Tcf7	ENSRNOG00000005872	BLOOD	Naive B cells|Naive CD4+ T cells|Memory T cells	any	none	FALSE	TRUE	Yu 2023 Fig2D (naive/resting score)	
+C	yu_naive	Lef1	ENSRNOG00000010121	BLOOD	Naive B cells|Naive CD4+ T cells|Memory T cells	any	none	FALSE	TRUE	Yu 2023 Fig2D (naive/resting score)	
+C	yu_naive	Sell	ENSRNOG00000002776	BLOOD	Naive B cells|Naive CD4+ T cells|Memory T cells	any	none	FALSE	TRUE	Yu 2023 Fig2D (naive/resting score)	
+C	yu_isg	Isg20	ENSRNOG00000054561	BLOOD	ISG-expressing T cells	any	none	FALSE	TRUE	Yu 2023 Fig3A (ISG/antiviral up-DEG)	
+C	yu_chemokine	Cxcr4	ENSRNOG00000003866	BLOOD	ANY	any	none	FALSE	TRUE	Yu 2023 Fig3A (CXCR4 migration receptor, up across effector NKT)	
