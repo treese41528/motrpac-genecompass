@@ -76,7 +76,19 @@ def _canon_brain(label):
     return label
 
 
-LABEL_SCHEMES = {"brain": _canon_brain}
+def _canon_muscle(label):
+    # Skeletal-muscle parenchyma is split across two collinear labels in GSE254371
+    # ("Skeletal muscle cells" + "Skeletal muscle fibers") -- snRNA recovers some
+    # multinucleated fibers as a separate sparse bucket. Merge ONLY those two
+    # parenchyma fragments into one "Skeletal muscle"; keep stroma/vascular separate
+    # ("Muscle fibroblasts", "Smooth muscle cells" do NOT contain "skeletal muscle").
+    ll = str(label).strip().lower()
+    if "skeletal muscle" in ll or ll in ("myofibers", "muscle fibers"):
+        return "Skeletal muscle"
+    return label
+
+
+LABEL_SCHEMES = {"brain": _canon_brain, "muscle": _canon_muscle}
 
 
 def canonicalize_labels(series, scheme):
