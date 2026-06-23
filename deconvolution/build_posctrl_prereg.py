@@ -37,7 +37,7 @@ with open(GU) as fh:
 #   sex: any|male|female.  expected_dir: up|down|none (none = direction not anchored / reported only).
 SPEC = [
  ("A","muscle_mito_biogenesis", ["Sod2","Slc2a4","Mef2c","Mef2a","Mef2d","Opa1","Mfn1","Prkab1","Tbc1d1","Plin2","Plin4","Plin5","Hspa1b","Hsp90aa1"],
-   "SKMVL", "Skeletal muscle cells|Skeletal muscle fibers", "any", "up", "MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)", "muscle parenchyma"),
+   "SKMVL", "Skeletal muscle", "any", "up", "MoTrPAC #21 Fig4 (8w sex-consistent mito/biogenesis/heat-shock UP)", "muscle parenchyma (label remapped split->merged when the SKMVL muscle merge was adopted; genes/direction/thresholds unchanged)"),
  ("A","muscle_mito_biogenesis", ["Sod2","Slc2a4","Mef2c","Mef2a","Mef2d","Opa1","Mfn1","Prkab1","Tbc1d1","Plin2","Plin4","Plin5","Hspa1b","Hsp90aa1"],
    "SKMGN", "Skeletal muscle cells", "any", "up", "MoTrPAC #21 Fig4 + #22 (SKM-GN up-ERGs = mito energy)", "muscle parenchyma"),
  ("A","heart_mito_biogenesis", ["Sod2","Mef2c","Opa1","Mfn1","Hspa1b","Hsp90aa1"],

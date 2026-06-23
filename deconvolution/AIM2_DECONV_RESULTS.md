@@ -197,6 +197,19 @@ cortex + hippocampus, muscle for SKMVL — are built directly by `build_referenc
 (merged where applicable) is recorded in `reference/canonical_references.tsv`, so a standard pipeline run
 produces the merged references without the manual rebuild step.
 
+**Adopted into production (2026-06-23).** The merges were carried all the way through the embedding
+stack — re-deconvolve → re-build pseudo-cells → **re-embed (Stage 9)** → re-run gate/probe/Augur →
+re-derive hotspots → re-DE — so `pred_z`, the 768-d embeddings, the detection layer, the hotspots, and
+the DE are all internally consistent on the merged references (split versions backed up). New production:
+**178 blocks (was 186; cortex 35→28, SKMVL 15→14), 18 hotspots.** SKMVL's two collinear muscle blocks are
+now one **"Skeletal muscle"** (262 dose-sig genes — the top SKMVL responder); cortex remains quiet (≤2).
+Conclusions are unchanged: the positive-control verdict still has immune programs recovering (Yu/Vetr) and
+the canonical mito/HSP controls `not_significant` (flat in rat bulk). The frozen pre-reg's SKMVL muscle
+target was remapped split→"Skeletal muscle" (a deterministic label change from the merge; genes,
+directions, thresholds untouched). NB: GeneCompass takes single cells, but these merges consolidate only
+*collinear synonym-fragments of one population* (not distinct cell states), so each merged pseudo-cell is a
+coherent single-population profile, not a chimera — a better embedding input than the noisy split estimates.
+
 ### Reporting policy (carry into all downstream use)
 Down-weight absolute per-gene DE on the **dominant parenchyma** per tissue (`dominant_celltype_flags.tsv`); prefer
 relative / 8-wk contrasts there. **Lean the exercise story on the immune + mid-abundance stromal/endothelial cell
