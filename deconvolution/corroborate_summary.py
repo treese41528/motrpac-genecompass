@@ -7,7 +7,7 @@ PCA baseline?
   augur_results.tsv  -> augur_auc (canonical neurorestore Augur, RF) by (representation, condition)
 Writes corroboration_merged.tsv.
 """
-import os, sys
+import argparse, os, sys
 from pathlib import Path
 import numpy as np, pandas as pd
 from scipy.stats import spearmanr, wilcoxon
@@ -16,7 +16,12 @@ sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
 
-cfg = load_config(); gc = str(resolve_path(cfg, cfg["deconvolution"]["genecompass_input_dir"]))
+_ap = argparse.ArgumentParser(description=__doc__)
+_ap.add_argument("--gc-root", default=None,
+                 help="genecompass_input root (default: config; pass the _human root to corroborate the transfer)")
+_args, _ = _ap.parse_known_args()
+cfg = load_config()
+gc = _args.gc_root or str(resolve_path(cfg, cfg["deconvolution"]["genecompass_input_dir"]))
 sp = pd.read_csv(f"{gc}/subspace_probe.tsv", sep="\t")
 pc = pd.read_csv(f"{gc}/pca_control.tsv", sep="\t")
 au = pd.read_csv(f"{gc}/augur_results.tsv", sep="\t")
