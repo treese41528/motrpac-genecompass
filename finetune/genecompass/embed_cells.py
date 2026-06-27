@@ -51,7 +51,7 @@ def extract_embeddings(
     model_dir: str,
     dataset_path: str,
     output_dir: str,
-    n_cells: int = 10000,
+    n_cells: int = None,
     batch_size: int = 32,
     species: int = 2,
     device: str = 'cuda',
@@ -68,7 +68,9 @@ def extract_embeddings(
     output_dir : str
         Output directory for embeddings (.npy) and metadata
     n_cells : int
-        Number of cells to embed (randomly sampled if < total)
+        Cap on cells to embed (order-preserving PREFIX if < total; None = all). A random
+        subsample would permute rows; downstream probes bind labels to embedding rows
+        positionally, so the saved order MUST match the dataset order.
     batch_size : int
         Inference batch size
     species : int
@@ -129,9 +131,12 @@ def extract_embeddings(
 
     # ── Load dataset ─────────────────────────────────────────────────────
     dataset = load_from_disk(dataset_path)
-    if n_cells < len(dataset):
-        indices = np.random.choice(len(dataset), n_cells, replace=False)
-        dataset = dataset.select(indices)
+    if n_cells is not None and n_cells < len(dataset):
+        # deterministic, ORDER-PRESERVING cap: a contiguous prefix keeps embedding row k aligned
+        # with dataset row k. A random subsample (np.random.choice + select) permutes rows and
+        # silently scrambles the cell_type/sample/sex labels the downstream probes bind positionally.
+        logger.warning(f"Capping to first {n_cells} of {len(dataset)} cells (order-preserving prefix)")
+        dataset = dataset.select(range(n_cells))
     logger.info(f"Embedding {len(dataset)} cells")
 
     # ── Extract embeddings ───────────────────────────────────────────────
@@ -183,7 +188,8 @@ def main():
     parser.add_argument('--model-dir', required=True)
     parser.add_argument('--dataset', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--n-cells', type=int, default=10000)
+    parser.add_argument('--n-cells', type=int, default=None,
+                        help='cap on cells to embed (order-preserving prefix if < total; default all)')
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--species', type=int, default=2)
     parser.add_argument('--device', default='cuda')

@@ -223,12 +223,69 @@ SKMVL/cortex re-deconvolutions). `DOWNSTREAM_BUILD_PLAN.md` = the GRN/perturbati
 
 ---
 
+## 4b. Cross-species transfer (Aim 3a) — does the rat exercise axis survive in human embedding space? (2026-06-25)
+
+**The grant's cross-species aim, executed as a TRANSFER (not an alignment).** MoTrPAC's invasive,
+multi-tissue, time-course exercise study cannot be run in humans, so the rat is the experimental proxy and
+GeneCompass is the transfer vehicle: re-express every measured rat pseudo-cell *as a human cell* in the shared
+embedding space, then test whether the trained-vs-control / ordinal-dose axis **survives the transfer**, per
+cell type. One-directional (rat data → human representation → analyze); **no human dataset is required** — a
+human atlas (E.3) is an optional interpretive backdrop, not a gate.
+
+**Method.** `translation/transfer_to_human.py` (E.1): rat ENSRNOG pseudo-cell → human ENSG profile via
+`rat_to_human_mapping.pickle` (many rat orthologs of one human gene are **summed**; ~82% of genes / ~81% of
+count-mass map; rat-specific T4 genes dropped) → tokenize with **human ENSG tokens + human gene medians, the
+SAME target-sum 6500 + top-2048** as the rat path → embed with the **same** fine-tuned checkpoint but
+`species=0`. Tokenization parity was verified before building (5-agent code map + 4-lens adversarial review):
+the rat tokens reuse the GeneCompass ID space, so 13,883/15,234 ortholog-mapped rat genes already carry their
+human ortholog's token (IDs 2–23114, in-vocab for the 55,275-row checkpoint), and only species==1 (mouse)
+triggers homolog token-remapping — so feeding human ENSG tokens with `species=0` is valid. Review caught + fixed
+a real value-channel bug (normalize to the **full** rat library incl. dropped T4 mass, not the mapped-only
+library) → human value median 0.847 (rat 0.872 / corpus 0.869), and a latent row-shuffle in the shared
+`embed_cells.py`. Driver `pipeline/run_stage12.py` (transfer → embed → probe → compare); corroboration runs the
+same gate + canonical Augur-RF the rat hotspots had, on the human embeddings.
+
+**The transfer is a mild but real perturbation — not a trivial copy.** Per-cell cosine(rat, human) = **0.979**
+(same cell lands near its rat embedding; only the species token + ~18% T4 dropout move it), yet global fidelity
+is Spearman **0.683** (PLS-1) / **0.816** (Augur-RF) — not ~1.0 — and per-block AUCs shift both up and down
+(blood NK 0.795→0.860; skmgn skeletal muscle 0.885→0.705). Survival is therefore a genuine result the axis
+withstands, not identity.
+
+**Result — the rat exercise axis transfers.** Paired per (tissue × cell type) on the SAME cells:
+- **Transfer-validity gate (sex) — PASS.** Sex is the pre-registered positive control (dominant,
+  transfer-agnostic biology) and is preserved across all four detectors: PLS-1 `sup_sex_auc` median rat 0.694 →
+  human 0.704 (Spearman **0.911**/178 blocks); Augur-RF sex 0.661 → 0.669; gate η²_sex 0.043 → 0.046. The
+  embedding still carries real biology after transfer, so the exercise readout is interpretable.
+- **18 exercise hotspots (rat q_sup_trained < 0.05): 16/18 PRESERVED, 0 WEAKENED, 2 LOST** (PRESERVED = human
+  PLS-1 AUC ≥ 0.65 and perm p < 0.05). **Canonical Augur-RF independently agrees: 16/18** (human RF AUC ≥ 0.65).
+  Per tissue: blood 7/7, heart 1/1, skmgn 4/4, skmvl 4/5, kidney 0/1. The 2 LOST (skmvl Macrophages 0.782→0.630;
+  kidney proximal tubule 0.775→0.643) are the weakest/borderline hotspots — kidney PT even had a negative rat
+  dose_rho (−0.078). The strongest survive robustly (skmvl Skeletal muscle 0.915→0.855, Myofibroblasts
+  0.907→0.850 — coherent with §4a's SKMVL muscle-merge making skeletal muscle the top responder).
+- **The embedding still beats the PCA baseline in human space** (PLS-1 embed 0.593 vs PCA-50 0.540; embed > pca
+  in 108/178 blocks) — the survival rides on GeneCompass's representation, not on the raw deconvolved expression.
+
+**Honest scope.** This is transferability *in the embedding space* — evidence that GeneCompass's human-species
+representation of the rat data preserves the exercise structure — **not** validation against measured human
+exercise cells. The sex gate is a within-block fidelity control (rat labels), not independent human data. The
+real external check is E.3 (project the transferred cells against a human atlas — e.g. Tabula Sapiens blood +
+skeletal muscle — and recover known cell-type identity before trusting the transferred axis); optional, unbuilt.
+
+**Artifacts:** `translation/transfer_to_human.py` (E.1), `translation/compare_transfer.py` (E.2 verdict),
+`pipeline/run_stage12.py` (driver), `corroborate_summary.py` (+`--gc-root`), `slurm/analysis/run_stage12{,_corroborate}.slurm`
+(local); fix to the shared `finetune/genecompass/embed_cells.py` (order-preserving cap; also hardens rat Stage 9).
+Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddings/`+`dataset/`,
+`subspace_probe.tsv`, `pheno_merge_test.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv`,
+`transfer_comparison.{tsv,md}`). The reframe + build map: `DOWNSTREAM_BUILD_PLAN.md` Module E.
+
+---
+
 ## 5. Next stages
 
 1. **Per-cell-type DE on `Z` — ✅ DONE 2026-06-22 (see §4a for results, the pre-registered positive-control verdict, the parenchyma diagnostic, and the reference reconsideration).** (field-standard route — see `EMBEDDING_DE_STANDARDS.md`). Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
 2. **GRN / perturbation routes (after DE).** Caveats from the connector work: pseudo-cell GRN/perturbation is only valid for **abundant** cell types (rare ones sit at the reference prior, no exercise signal); n ≈ 50 samples/cell type is too thin for data-driven GRN (DeepSEM) → default to the **model-driven in-silico-perturbation** GRN route in GeneCompass.
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
-4. **Cross-species (grant aim).** **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets; our contribution is the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). Still needs a human single-cell side for direct cross-species cell-type matching — not free; scope separately.
+4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE 2026-06-25 (see §4b): 16/18 exercise hotspots survive re-expression of the rat cells in human GeneCompass space (PLS-1 + Augur-RF agree), sex gate PASS.** Remaining: (a) E.3 external validation against a human single-cell atlas (Tabula Sapiens blood + skeletal muscle) — recover known cell-type identity to ground the transferred axis (not free; scope separately); (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
 5. **Secondary / hardening.**
    - Multi-method θ cross-check (omnideconv: MuSiC/DWLS/SCDC/Bisque) on the production tissues, as done for WAT, to confirm the deconvolution fractions feeding the hotspots.
    - **Lung caveat:** lung is the weakest cross-dataset deconvolution (~0.73); treat any lung exercise claim cautiously.

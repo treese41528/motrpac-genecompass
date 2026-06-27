@@ -189,25 +189,63 @@ theta, handle many-to-many (T3) orthologs explicitly.
 
 ---
 
-## Module E -- cross-species embedding alignment (Aim 3a)  `[build]`  (effort M)
+## Module E -- cross-species TRANSFER of the rat exercise response into human embedding space (Aim 3a)  `[E.1/E.2 BUILT 2026-06-24, validating]`  (effort M, GPU)
 
-Blocked on the one binding external gap.
+THE MAIN PURPOSE of the cross-species work. MoTrPAC's invasive, multi-tissue, time-course exercise
+study CANNOT be run on humans (ethics + feasibility) -- so the rat is the experimental proxy and
+GeneCompass is the TRANSFER vehicle: re-express the measured rat exercise data in the HUMAN embedding
+space, then analyze it there. This is one-directional cross-species TRANSFER (rat data -> human space
+-> analyze), NOT alignment of two measured datasets. A human atlas is OPTIONAL (validation/interpretation
+backdrop) -- NOT a binding gap. The output is a COUNTERFACTUAL human representation of the rat response
+(an inference), not a human measurement.
 
-**E.0 Sub-build -- THE BINDING GAP (effort L):** acquire/curate a HUMAN single-cell atlas
-matching our hotspot tissues (blood/PBMC + skeletal muscle minimum; e.g. Tabula Sapiens /
-cellxgene). QC + tokenize through the SAME tokenizer, embed with `species=0` via
-`embed_cells.py`. Docs flag this as "not free; scope separately". Pick hotspot-matched tissues,
-not whole-body, to bound scope.
+> **BUILT 2026-06-24** -- `translation/transfer_to_human.py` (E.1) + `pipeline/run_stage12.py`
+> (orchestrator) + `translation/compare_transfer.py` (E.2) + `slurm/analysis/run_stage12.slurm`.
+> Tokenization parity verified against the actual rat path before writing a line (5-agent map +
+> 4-lens adversarial review): target_sum **6500** (not the corpus 10000 -- all 10 rat runs use 6500),
+> top-2048, log2(1+x/median), species=0. The "rat checkpoint can't embed human tokens" worry was
+> DISPROVEN: rat tokens reuse the GeneCompass ID space, so 13,883/15,234 ortholog-mapped rat genes
+> already carry their human ortholog's token ID; human ENSG token IDs are 2..23114, inside the 55,275
+> checkpoint vocab; only species==1 (mouse) triggers homolog remapping, so human (0) uses identity
+> lookup. Review caught + fixed a real value-channel parity bug (normalize_total must use the FULL rat
+> library incl. dropped T4 genes, not the mapped-only library) -> liver value median now 0.847 (rat
+> 0.872 / corpus 0.869) instead of an inflated 0.974; and a latent embed_cells row-shuffle on
+> `--n-cells < n` (now an order-preserving prefix; fixes the rat path too). Per-tissue ortholog
+> coverage ~82% of genes / ~81% of count-mass (liver 13,134->10,720 eligible human genes); the ~18%
+> T4 rat-specific mass is dropped from the sequence but kept in the normalize denominator. Output
+> layout = `genecompass_input_human/<tissue>/{dataset,embeddings,pseudocells.h5ad symlink}` so the
+> existing detection scripts run unchanged with `--gc-root genecompass_input_human`.
 
-**E.1 New file:** `translation/cross_species_embedding.py` -- align per-cell-type rat embeddings
-vs human cell-type embeddings in the shared space (shared GeneCompass token vocab; T1 tri-species
-tokens common). Score correspondence (mutual-NN / anchor / CCA on 768-d CLS), weighted by
-ortholog confidence.
-**E.2 Inputs:** rat `cell_embeddings.npy` (exists) + human embeddings (E.0) +
-`rat_to_human_mapping.pickle` + `rat_human_mouse_tokens.pickle`.
-**E.3 Validation:** recover KNOWN homology first (rat monocyte ~ human monocyte) before trusting
-novel correspondence. Tokenization PARITY (same tokenizer + species tokens) is the silent-failure
-risk -- assert it. **E.4 Depends on:** E.0; reuses `embed_cells.py` homolog-similarity logic.
+**E.1 -- transfer (`translation/transfer_to_human.py`, effort M, GPU):** re-embed every rat exercise
+pseudo-cell AS human. GeneCompass is cross-species (vocab has 23,113 human ENSG tokens + a species token):
+  rat ENSRNOG expression
+    --ortholog map (`rat_to_human_mapping.pickle`, 15,234 / 94.5%)--> human ENSG profile
+    --tokenize (human ENSG tokens + human/hybrid gene medians, SAME target-sum 6500 + top-N as rat)-->
+    --embed (same fine-tuned GeneCompass checkpoint, `species=0` human)--> HUMAN-space embeddings of the
+      rat exercise cells.
+  Reuses the `embed_cells.py` loader + the (done) ortholog map; NO human dataset needed. Output:
+  `genecompass_input/<tissue>/embeddings_human/cell_embeddings.npy`. **Tokenization PARITY is make-or-break**
+  (human ENSG tokens, human gene medians, same target-sum/top-N, species=0) -- a parity bug silently
+  corrupts the transfer; ~5% non-mappable rat genes are dropped (logged).
+
+**E.2 -- analyze in human space (the deliverable):** re-run the exercise-signal detection (gate /
+supervised probe / Augur) and the within-cell-type DE axis ON the transferred embeddings -- does the
+trained-vs-control / ordinal-dose axis SURVIVE the transfer, per cell type? That is the core test that the
+rat response is human-transferable. Output: per-cell-type human-space exercise-axis report; compare to the
+rat-space detection (signal persists / weakens / shifts). Combine with Module D (genetics) for the human
+disease interpretation of the transferred signatures (3a transfers the representation; 3c gives the clinic).
+
+**E.3 -- validation + interpretation (effort S/M):**
+- **Transfer-validity sanity check FIRST:** a transferred rat monocyte must land near real human monocytes.
+  Validate against a human reference atlas (Tabula Sapiens -- blood + skeletal muscle, CELLxGENE h5ad) used
+  ONLY as an interpretive backdrop; recover known cell-type identity before trusting the transferred axis.
+- **Confidence-gate** by ortholog tier (`rat_token_mapping.tsv`). Cross-species exercise conservation is
+  imperfect (some exerkines go OPPOSITE rat<->human: IL15/BDNF/TGFB2), so the transfer is EMPIRICALLY tested,
+  never assumed.
+
+**E.4 Inputs:** rat pseudo-cells/embeddings (exist) + `rat_to_human_mapping.pickle` (done) + the fine-tuned
+model + human/hybrid gene medians; OPTIONAL Tabula Sapiens for E.3. **Depends on:** the ortholog map (done)
++ `embed_cells.py` (exists) -> the core transfer (E.1/E.2) is buildable NOW, **no human-data dependency**.
 
 ---
 
@@ -235,9 +273,12 @@ Extend the numbered-stage convention (whole-experiment drivers; mirror `run_stag
 - **Stage 10 [exists]** -- Aim-2 analysis: DE -> positive-control comparison.
 - **Stage 11 [build]** -- model-driven downstream: step 1 `perturb_cells.py` (A) -> step 2
   `build_grn.py` (B) -> step 3 `run_cpa_dose.py` (C).
-- **Stage 12 [build]** -- cross-species: step 1 `stage_human_genetics.py` (D.0) -> step 2
-  `validate_human.py` (D) -> step 3 `cross_species_embedding.py` (E) -> step 4
-  `conserved_regulators.py` (F).
+- **Stage 12 [E.1/E.2 BUILT 2026-06-24]** -- cross-species: `run_stage12.py` drives step 1
+  `transfer_to_human.py` (E.1 project+tokenize, CPU) -> step 2 `embed_cells.py --species 0` (GPU) ->
+  step 3 `subspace_probe.py --gc-root <human-root>` (primary E.2 detector) -> step 4
+  `compare_transfer.py` (E.2 deliverable: does the axis survive?). STILL [build]: D.0
+  `stage_human_genetics.py`, D `validate_human.py`, F `conserved_regulators.py`, and folding the
+  pheno/Augur corroboration + E.3 human-atlas backdrop into the driver.
 
 Each: subprocess driver + `--from` + `--dry-run` + config paths + step validation, exactly like
 `pipeline/run_stage10.py`. Viewer v2 (G) stays a standalone script.
@@ -248,23 +289,24 @@ Each: subprocess driver + `--from` + `--dry-run` + config paths + step validatio
   DE final (M0) --> A (perturb engine) --> B (GRN) --> F (conserved reg)
                 \-> C (CPA dose)                       ^
                 \-> D.1 (human validation) ------------/
-  D.0 (stage genetics data) : start NOW, independent.
-  A.5 (rat TF list)         : start NOW, independent.
-  E.0 (human scRNA atlas)   : start NOW (procurement), gates E.1.
-  E.1 (alignment)           : after E.0.
+  D.0 (stage genetics data)             : start NOW, independent.
+  A.5 (rat TF list)                     : start NOW, independent.
+  E.1/E.2 (transfer rat->human + analyze): start NOW (ortholog map + embed_cells exist; GPU). No human data.
+  E.3 (human-atlas backdrop)            : OPTIONAL -- transfer-validity sanity check + interpretation only.
 ```
 
-**Critical path:** M0 -> A -> B/F. Highest-leverage parallel pre-work with no GPU and no DE
-dependency: **D.0** (genetics data), **A.5** (TF list), **E.0** (atlas decision).
+**Critical path:** M0 -> A -> B/F. Highest-leverage parallel pre-work with no DE dependency:
+**D.0** (genetics data), **A.5** (TF list), **E.1/E.2** (transfer the rat exercise data into human space and
+test whether the dose axis survives -- no human-data dependency, the core 3a deliverable).
 
 ## Recommended order
 
 1. M0 close-out (DE + comparison + commit + write-up).  *(in flight)*
-2. In parallel now: A.5 rat TF list; D.0 stage human genetics; E.0 atlas decision.
+2. In parallel now: A.5 rat TF list; D.0 stage human genetics; **E.1/E.2 transfer the rat exercise data into human embedding space + test whether the dose axis survives** (no human-data dependency).
 3. A perturbation engine (keystone) -- validate on Mef2c/muscle positive control.
 4. B model-driven GRN (trained vs control), abundant hotspots only.
 5. D human-genetics validation (replicate Vetr bulk, then cell-type novelty).
-6. C CPA dose (secondary), E.1 alignment (after atlas), F conserved regulators.
+6. C CPA dose (secondary), E.3 human-atlas backdrop (OPTIONAL, validates the transfer), F conserved regulators.
 7. G viewer v2 (last; visualization polish).
 
 ## Out of scope (do not build)
