@@ -118,6 +118,48 @@ orient <- function(theta) {
 # defaults to "mast" (identical to the unforwarded default) but is overridable via
 # DWLS_METHOD (e.g. "mast_optimized"); verbose=TRUE so the long MAST build logs progress.
 dwls_method <- Sys.getenv("DWLS_METHOD", unset = "mast")
+
+# ---- CIBERSORTx (license-gated): credentials + Apptainer container (Docker is unavailable on
+# this cluster). container_path = directory holding fractions_latest.sif (omnideconv pulls it via
+# `apptainer pull docker://cibersortx/fractions` on first use if absent). Credentials come from env
+# so no token lands in code/logs. No batch correction (S/B-mode off) for the apples-to-apples panel.
+# NB: the CIBERSORTx container validates the token against the Stanford server at RUNTIME -> the
+# host must have outbound internet when this method runs. ----
+cx_sif_dir <- Sys.getenv("CIBERSORTX_SIF_DIR",
+  unset = file.path(Sys.getenv("PROJECT_ROOT", unset = "."), "data/deconvolution/cibersortx"))
+if ("cibersortx" %in% methods) {
+  cx_email <- Sys.getenv("CIBERSORTX_EMAIL"); cx_token <- Sys.getenv("CIBERSORTX_TOKEN")
+  if (!nzchar(cx_email) || !nzchar(cx_token))
+    stop("cibersortx requested but CIBERSORTX_EMAIL / CIBERSORTX_TOKEN are not set")
+  omnideconv::set_cibersortx_credentials(cx_email, cx_token)
+  cat(sprintf("cibersortx: apptainer container_path=%s user=%s\n", cx_sif_dir, cx_email))
+
+  # PATCH omnideconv 0.1.1's hardcoded apptainer invocation. Its `apptainer exec --no-home -c`
+  # gives the container no writable HOME, so the CIBERSORTx binary's internal R subprocess (used
+  # for the nu-SVR signature-matrix build) can't initialise -> "no package called e1071" -> empty
+  # matrix -> Eigen assertion abort (code 134). Replace with `--cleanenv` (drop host env + the
+  # host XALT LD_PRELOAD that otherwise breaks the container's glibc) + a writable `--home` so the
+  # container's R/MCR run in their intended environment. Keeps omnideconv's input-prep + parsing.
+  cx_home <- file.path(tempdir(), "cibersortx_home")   # per-R-session -> safe under parallel array runs
+  dir.create(cx_home, showWarnings = FALSE, recursive = TRUE)
+  Sys.setenv(CX_HOME = cx_home)
+  .cx_cmd <- function(in_dir, out_dir, container, apptainer_container_path,
+                      method = c("create_sig", "impute_cell_fractions"), verbose = FALSE, ...) {
+    method <- match.arg(method)
+    base <- paste0("apptainer exec --cleanenv --home ", Sys.getenv("CX_HOME"),
+                   " -B ", in_dir, "/:/src/data -B ", out_dir, "/:/src/outdir ",
+                   apptainer_container_path, " /src/CIBERSORTxFractions --single_cell TRUE")
+    if (verbose) base <- paste(base, "--verbose TRUE")
+    check_credentials()
+    credentials <- paste("--username", get("cibersortx_email", envir = config_env),
+                         "--token", get("cibersortx_token", envir = config_env))
+    paste(base, credentials, get_method_options(method, ...))
+  }
+  environment(.cx_cmd) <- asNamespace("omnideconv")
+  assignInNamespace("create_container_command", .cx_cmd, ns = "omnideconv")
+  cat("cibersortx: patched container command -> --cleanenv --home (writable)\n")
+}
+
 ok <- character(0)
 for (m in methods) {
   cat(sprintf("\n===== %s =====\n", m))
@@ -129,6 +171,20 @@ for (m in methods) {
         method = "dwls", dwls_method = dwls_method, ncores = n.cores, verbose = TRUE)
       orient(omnideconv::deconvolute(
         bulk_gene_expression = bulk, model = sig, method = "dwls", verbose = TRUE))
+    } else if (m == "cibersortx") {
+      # explicit two-step so BOTH the signature build (create_sig) and the impute run are
+      # verbose -> the Apptainer/container stderr is captured (the one-shot path silences the
+      # build). NB: verbose prints the apptainer command incl. --token to the log (gitignored).
+      # verbose=FALSE in production so the --token never lands in logs (omnideconv only message()s
+      # the apptainer command when verbose). Re-run a single tissue with verbose=TRUE to debug.
+      cx_model <- omnideconv::build_model(
+        single_cell_object = sc, cell_type_annotations = cell_type,
+        method = "cibersortx", container = "apptainer", container_path = cx_sif_dir,
+        verbose = FALSE)
+      orient(omnideconv::deconvolute(
+        bulk_gene_expression = bulk, model = cx_model, method = "cibersortx",
+        container = "apptainer", container_path = cx_sif_dir,
+        rmbatch_B_mode = FALSE, rmbatch_S_mode = FALSE, verbose = FALSE))
     } else {
       orient(omnideconv::deconvolute(
         bulk_gene_expression = bulk, model = NULL, method = m,

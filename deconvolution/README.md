@@ -69,3 +69,60 @@ These are run on demand, separately from the pipeline:
   R/bash via `_config_sh.py` (emits `CFG_*` shell vars from the same YAML). Machine-specific
   path overrides go in the gitignored `config/pipeline_config.local.yaml` (template:
   `config/pipeline_config.local.yaml.example`); cluster/python paths go in `setup/site.env`.
+
+## CIBERSORTx on an HPC cluster (license token + IP binding)
+
+CIBERSORTx is the one license-gated method in the cross-method panel (`R/run_omnideconv.R`,
+method `cibersortx`). It is **closed-source** and distributed as a Docker image
+([`cibersortx/fractions`](https://hub.docker.com/r/cibersortx/fractions)) gated by registration +
+a per-account **token**.
+
+**Links & licensing**
+- Register + generate the token: <https://cibersortx.stanford.edu> (log in → *Account* / "Download Token").
+- Docker image: `docker pull cibersortx/fractions` ([Docker Hub](https://hub.docker.com/r/cibersortx/fractions)).
+- **License:** CIBERSORTx is provided by the Alizadeh/Newman labs (Stanford) and is **free for
+  academic / non-profit / government, non-commercial use only**; commercial use requires a separate
+  license from Stanford. Review the Terms of Use on the site before use — we redistribute **no**
+  CIBERSORTx code or the container image in this repo (only our `run_omnideconv.R` wrapper); each user
+  must register and obtain their own token. The `token.txt` and `.sif` are gitignored.
+- **Cite:** Newman A.M. *et al.*, "Determining cell type abundance and expression from bulk tissues
+  with digital cytometry," *Nat. Biotechnol.* 37, 773–782 (2019); and the original CIBERSORT:
+  Newman A.M. *et al.*, *Nat. Methods* 12, 453–457 (2015).
+
+Two HPC-specific gotchas make it awkward — neither is cluster-vendor-specific:
+
+**1. The token is bound to the IP address that contacts the license server *at run time*.**
+The CIBERSORTx container phones home to validate `(email, token, IP)` every run. The bound IP is
+the **egress (NAT) IP** the license server sees — which on a cluster is usually *not* the IP your
+browser used to generate the token. So a token minted on your laptop/login node fails on a compute
+node with `Token/username/ip combination is invalid … your IP address has changed`.
+To fix it, mint the token from a context that egresses via the **same** IP your jobs will use:
+  - Find the compute egress IP from inside a batch job: `curl https://api.ipify.org`. Check it's
+    **stable across nodes** (run it on several) — clusters often NAT all compute nodes through one IP,
+    but login nodes and compute nodes typically differ, and some clusters round-robin.
+  - Generate the token through a browser **tunneled to egress via that IP** — e.g. an SSH dynamic
+    SOCKS proxy (`ssh -D <port> …`) through a node whose egress matches where jobs run, with the
+    browser pointed at `socks5://127.0.0.1:<port>` (enable remote DNS). Confirm with
+    `https://api.ipify.org` in the proxied browser before generating.
+  - The token is **reusable as long as that egress IP is stable** (here it's good for ~6 months),
+    so this is a one-time setup. Browser notes: Chromium honors the Windows/system cert store (like
+    `curl`) and may need `--disable-quic` over a TCP SOCKS proxy; Firefox uses its own cert store
+    (`security.enterprise_roots.enabled=true` to trust system roots) and may need OCSP soft-fail.
+
+**2. Run the container with a writable HOME + clean env (Docker is usually unavailable on HPC → use
+Apptainer/Singularity).** `apptainer pull docker://cibersortx/fractions` → `fractions_latest.sif`.
+The container ships **its own R** for the nu-SVR signature-matrix build, which needs a writable
+`$HOME` and an uncontaminated environment; running it `--no-home`/`--contain` (omnideconv 0.1.1's
+default) breaks that R (`there is no package called 'e1071'` → empty matrix → abort 134). Run it as:
+```
+apptainer exec --cleanenv --home <writable_dir> \
+  -B <input_dir>:/src/data -B <output_dir>:/src/outdir \
+  fractions_latest.sif /src/CIBERSORTxFractions --single_cell TRUE \
+  --username <email> --token <token> --refsample <sig> --mixture <bulk> ...
+```
+`--cleanenv` also drops any host `LD_PRELOAD`/`R_*` vars that would otherwise leak into the
+container. `R/run_omnideconv.R` does all of this for you: it reads `CIBERSORTX_EMAIL` and
+`CIBERSORTX_TOKEN` from the environment (so the token never lands in code or, with `verbose=FALSE`,
+in logs), pulls/uses the `.sif` under `CIBERSORTX_SIF_DIR`, and patches omnideconv's container
+command to the `--cleanenv --home` form above. Invoke with
+`OMNIDECONV_METHODS=…,cibersortx CIBERSORTX_EMAIL=… CIBERSORTX_TOKEN=$(cat token.txt) … run_omnideconv.sh`.
