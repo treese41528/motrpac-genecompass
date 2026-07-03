@@ -146,6 +146,20 @@ The §3b re-measurement and §3c external validation settle the gate's question:
 
 ## 4a. Per-cell-type DE — RESULTS, positive-control verdict & reference reconsideration (2026-06-22)
 
+> **UPDATE 2026-07-02 (post reference-integrity + lung fix; PR `deconv-reference-integrity`).** Two production
+> references were corrected after this section was written — liver Visium-spatial contamination removed; engineered
+> lung GSE178405 → native pooled `lung_native_pooled` — and the full stack (deconv → Z → embeddings → DE → hotspots →
+> transfer) was re-run. Net changes to the numbers below: **178 → 185 DE blocks, 18 → 21 exercise hotspots** (lung
+> goes **0 → 3**: Myeloid dendritic cells + Alveolar macrophages + Pulmonary fibroblasts — an immune-led exercise
+> signal the engineered reference had erased), and the §4b cross-species transfer is now **19/21 preserved** (was
+> 16/18; the 2 conserved lung hotspots are the DCs + alveolar macrophages). The §4a scientific conclusions are
+> UNCHANGED. The completed **mRNA-bias analysis** (`OMNIDECONV_RESULTS.md`) independently CORROBORATES the reporting
+> policy below: BayesPrism does not correct mRNA-content bias, and each tissue's dominant parenchyma is exactly its
+> bias driver — so absolute parenchyma fractions/DE stay down-weighted; differential + immune/stromal + embedding-
+> based claims stay trusted. Reference selection is now gated (`reference_qc.py`, `tissue_references.yaml`,
+> `REFERENCE_QC.md`). Inline "178/18" figures in this section and §4b predate this update (notebooks pending
+> re-execution, `notebooks/RERUN_EDITS.md`).
+
 The §4 pivot is executed. Implementation: `deconvolution/R/run_pseudobulk_de.R` (driven by Stage-10 orchestrator
 `pipeline/run_stage10.py`: DE → positive-control comparison). Exhaustive Vetr-faithful design — per (tissue × cell
 type), **limma-trend on log2-CPM of the continuous BayesPrism `Z`** (NOT DESeq2-NB: `Z` is posterior expected
@@ -287,8 +301,8 @@ Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddi
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
 4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE 2026-06-25 (see §4b): 16/18 exercise hotspots survive re-expression of the rat cells in human GeneCompass space (PLS-1 + Augur-RF agree), sex gate PASS.** Remaining: (a) E.3 external validation against a human single-cell atlas (Tabula Sapiens blood + skeletal muscle) — recover known cell-type identity to ground the transferred axis (not free; scope separately); (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
 5. **Secondary / hardening.**
-   - Multi-method θ cross-check (omnideconv: MuSiC/DWLS/SCDC/Bisque) on the production tissues, as done for WAT, to confirm the deconvolution fractions feeding the hotspots.
-   - **Lung caveat:** lung is the weakest cross-dataset deconvolution (~0.73); treat any lung exercise claim cautiously.
+   - Multi-method θ cross-check (omnideconv) — **✅ DONE:** 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agrees with the omnideconv paper (MuSiC/SCDC correct the bias, BayesPrism/CIBERSORTx don't; DWLS the one rat caveat) + downstream-claims guidance. See `OMNIDECONV_RESULTS.md`.
+   - **Lung — ✅ FIXED:** the weak cross-dataset lung was the engineered GSE178405 reference; replaced by the native pooled reference (`REFERENCE_QC.md`), giving lung 3 real exercise hotspots. Reference selection is now QC-gated (`reference_qc.py`, `tissue_references.yaml`).
    - Viewer v2: real per-cell-type **local PCA** projection in Focus (from the 768-d embeddings) so the within-type exercise/sex axis shows on its own canvas rather than the zoomed global coords.
 6. **Risks to keep in view.**
    - **Activity confound** (the key threat): bulk fraction shifts can reflect expression drift, not true cell-fraction change → frame exercise results **relative / differential**, not as absolute fractions.

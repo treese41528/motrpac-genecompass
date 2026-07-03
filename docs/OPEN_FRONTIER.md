@@ -5,13 +5,20 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-06-26.
+**Last updated:** 2026-07-03.
 **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked (external) · ⊘ out-of-scope.
 
-**Verified canonical figures** (so numbers below are consistent): 8,900 pseudo-cells; 178 per-cell-type DE
-blocks / 18 hotspots; 2,110,403 DE meta-tests; fine-tuned checkpoint `rat_phase2_mixed_species/checkpoint-147941`;
-ortholog map 15,234 rat→human pairs (~69% of 22,213 rat genes; 100% get a token, incl. random-init T4); cross-species
-transfer commit `fc4a497`.
+**Recently closed (2026-07, PR `deconv-reference-integrity`):** reference-integrity hardening (QC gate +
+canonical `tissue_references.yaml` manifest + from-scratch driver `run_deconv_all.py`; liver-Visium and
+engineered-lung references fixed), the full omnideconv cross-method panel + mRNA-bias analysis + downstream-
+claims guidance, and the lung fix (0→3 exercise hotspots). These moved the headline figures.
+
+**Verified canonical figures** (so numbers below are consistent): ~9,250 pseudo-cells (lung native ref:
+1,350→1,700); **185 per-cell-type DE blocks / 21 hotspots** (was 178/18 pre-lung-fix); ~2.2M DE meta-tests;
+fine-tuned checkpoint `rat_phase2_mixed_species/checkpoint-147941`; ortholog map 15,234 rat→human pairs
+(~69% of 22,213 rat genes; 100% get a token, incl. random-init T4); cross-species transfer commit `fc4a497`
+— **19/21 hotspots survive** (was 16/18). NB: committed `AIM2_DECONV_RESULTS.md` + `notebooks/pipeline8-12`
+still show the pre-lung-fix 178/18, pending re-execution (`notebooks/RERUN_EDITS.md`).
 
 ---
 
@@ -22,8 +29,9 @@ transfer commit `fc4a497`.
 | **1** | Rat GeneCompass model (pipeline Stages 1–7): corpus, ortholog tokens, medians, tokenization, two-phase mixed-species fine-tuning | checkpoint-147941; `reports/pipeline_report.md` |
 | **1** | Catastrophic-forgetting validation (human/mouse preserved, rat learned 7.82→3.90 id-loss) | `reports/forgetting/forgetting_report.md` |
 | **1** | Representation-quality validation trio (§3.6) — see [Aim-1 validation results](#aim-1-validation-results-2026-06-2526) | `reports/aim1_validation/` |
-| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); 178 blocks, 18 exercise hotspots; pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
-| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; 16/18 hotspots survive (PLS-1 + Augur agree) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
+| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); **185 blocks, 21 exercise hotspots** (post-lung-fix; was 178/18); pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
+| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **19/21 hotspots survive** (was 16/18; PLS-1 + Augur agree) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
+| **hardening** | Reference integrity (QC gate + manifest + from-scratch driver; liver-Visium + engineered-lung fixed); full omnideconv panel + mRNA-bias analysis | PR `deconv-reference-integrity`; `REFERENCE_QC.md`, `OMNIDECONV_RESULTS.md` |
 
 ---
 
@@ -71,9 +79,10 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 
 | Status | Item | Effort |
 |---|---|---|
+| ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`) | — |
+| ✅ | **Reference integrity** — DONE (2026-07): `reference_qc.py` gate (wired into `build_reference`), `tissue_references.yaml`, `run_deconv_all.py`; liver Visium contamination + engineered→native lung fixed (`REFERENCE_QC.md`) | — |
+| ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; **0→3 exercise hotspots, 2 conserved rat→human** (was ◐ weak) | — |
 | ☐ | Per-tissue expression **purity sweeps** (Chu-2022 Fig-1h paper-faithful done only for liver; other 9 untested at that rigor) | M |
-| ☐ | **omnideconv** multi-method θ cross-check on production tissues (panel ran only on WAT; phases 2–4 scripted, unsubmitted) | M |
-| ◐ | **Lung** — genuinely weak deconvolution (cross ≈0.30–0.73); label harmonization + source swap flagged, not done. *Gate lung claims.* | S |
 | ◐ | **E.3** Tabula Sapiens human-atlas backdrop (external identity check the sex-gate doesn't provide; needs the atlas) | S |
 | ☐ | Minor: technical covariates (RIN/globin) absent from DE; activity/composition (θ) confound sweep on the 18 hotspots; heart-CM cross-dataset (holdout-only today) | S |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
