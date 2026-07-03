@@ -175,6 +175,8 @@ def perturb_gene(model, ids, vals, token, device, mode="delete", overexpress_lev
         agg = {t: float(np.mean(v)) for t, v in target_scores.items() if len(v) >= max(3, 0.5 * out["n_cells"])}
         top = sorted(agg.items(), key=lambda x: -x[1])[:25]
         out["top_targets"] = [(invert.get(t, str(t)) if invert else str(t), round(sh, 5)) for t, sh in top]
+        # full per-target shift dict (ENSRNOG -> shift), for GRN construction (Module B)
+        out["all_targets"] = {(invert.get(t, str(t)) if invert else str(t)): sh for t, sh in agg.items()}
     return out
 
 
