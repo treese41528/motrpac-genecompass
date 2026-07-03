@@ -1,0 +1,84 @@
+# Canonical MoTrPAC tissue -> deconvolution reference map (single source of truth).
+#
+# WHY THIS EXISTS: the Stage-8 orchestration takes --ref-dir per tissue from an operator submit loop,
+# and reference builds are split across build_all_references.sh / build_references_v2.sh / build_lung_pooled.py.
+# There was no one place saying which study/reference each tissue should use, which let two wrong
+# references (liver Visium contamination, engineered lung) reach production. This file is the authoritative
+# map: any Stage-8 run, validation build, or new operator should read these `reference_dir` values.
+# Every reference here PASSES `python deconvolution/reference_qc.py --ref-dir <dir>` (native/adult/healthy/
+# single-cell-or-nucleus). Rebuild with the `build` command; the reference_qc gate in build_reference.py
+# auto-drops any contaminated sample.
+#
+# schema: <BULK_CODE>: {reference_dir, study, assay, build, notes}
+version: 2026-07-02
+
+BLOOD:
+  reference_dir: data/deconvolution/references/peripheral blood mononuclear cells_GSE285476
+  study: GSE285476 (healthy control arm)
+  assay: scRNA
+  build: build_reference.py --study GSE285476 --tissue "peripheral blood mononuclear cells" --conditions "healthy control group"
+  notes: single donor.
+
+CORTEX:
+  reference_dir: data/deconvolution/references_v2/cortex_GSE303115_union_merged
+  study: GSE303115
+  assay: snRNA
+  build: build_reference.py --study GSE303115 --tissue cortex --gene-join outer --min-gene-cells 10 --label-scheme brain
+  notes: outer gene-join (Fix-2, 18k genes) + brain merge of collinear neuron fragments.
+
+HEART:
+  reference_dir: data/deconvolution/references/heart_GSE280111_LV
+  study: GSE280111 (left ventricle, healthy)
+  assay: snRNA
+  build: build_reference.py --study GSE280111 --tissue "left ventricle"
+  notes: v2 heart; superseded GSE155699 (SHR, no cardiomyocytes).
+
+HIPPOC:
+  reference_dir: data/deconvolution/references_v2/hippocampus_GSE305314_WT_merged
+  study: GSE305314 (WT-only samples)
+  assay: snRNA
+  build: build_reference.py --study GSE305314 --tissue hippocampus --sample-ids "<6 WT sample_ids>" --label-scheme brain
+  notes: WT-only (drop Tau arm); brain merge.
+
+KIDNEY:
+  reference_dir: data/deconvolution/references_v2/kidney_GSE240658
+  study: GSE240658 (No treatment)
+  assay: snRNA
+  build: build_reference.py --study GSE240658 --tissue kidney --conditions "No treatment"
+
+LIVER:
+  reference_dir: data/deconvolution/references/liver_GSE220075
+  study: GSE220075 (4 snRNA validation samples; Visium samples 2/11 EXCLUDED)
+  assay: snRNA
+  build: build_reference.py --study GSE220075 --tissue liver   # reference_qc gate auto-drops the 2 Visium spatial samples
+  notes: >
+    FIXED 2026-07-01 — the 2 Visium spatial samples (Rat_A1/B1_VIS) were removed. The QC gate now drops
+    them by default, so no --sample-ids needed. See project_liver_reference_visium_contamination memory.
+
+LUNG:
+  reference_dir: data/deconvolution/references/lung_native_pooled
+  study: GSE273062 (VeNx) + GSE252844 (C3) + GSE242310 (NOX) — healthy control arms, pooled
+  assay: scRNA
+  build: build_lung_pooled.py    # multi-study pool; NOT a single build_reference call
+  notes: >
+    FIXED 2026-07-01 — REPLACES the engineered/in-vitro GSE178405 (cell isolates / engineered-d7 /
+    tri-culture / P7-developing), which reference_qc.py FAILs and which made lung the weakest tissue.
+    Native pooled reference gives lung a real exercise signal (0->3 hotspots).
+
+SKMGN:   # gastrocnemius
+  reference_dir: data/deconvolution/references_v2/gastrocnemius_GSE184413
+  study: GSE184413 (Normal ambulation)
+  assay: scRNA
+  build: build_reference.py --study GSE184413 --tissue gastrocnemius --conditions "Normal ambulation"
+
+SKMVL:   # vastus lateralis
+  reference_dir: data/deconvolution/references_v2/skeletal_muscle_GSE254371_muscle_merged
+  study: GSE254371
+  assay: scRNA
+  build: build_reference.py --study GSE254371 --tissue "skeletal muscle" --gene-join outer --min-gene-cells 10 --label-scheme muscle
+
+WATSC:   # white adipose (subcutaneous)
+  reference_dir: data/deconvolution/references/white adipose tissue_GSE137869
+  study: GSE137869 (WAT arm)
+  assay: scRNA
+  build: build_reference.py --study GSE137869 --tissue "white adipose tissue"

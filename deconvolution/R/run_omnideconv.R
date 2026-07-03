@@ -89,6 +89,32 @@ cat(sprintf("low-expression filter: dropped %d genes (<3 cells); %d genes kept\n
             sum(!keepg), sum(keepg)))
 ref <- ref[, keepg, drop = FALSE]
 
+# ---- reference size cap (per cell type) ----
+# The cross-dataset references are full SC datasets (up to ~232k cells); at that size the
+# signature-building methods (esp. DWLS/MAST) blow memory and gain nothing -- a signature is a
+# stable per-type estimate, not improved by 100k+ cells. Downsample each cell type to
+# REF_MAX_CELLS_PER_TYPE (seeded -> reproducible; logged exactly what is dropped), which also
+# BALANCES the reference (rare types keep all cells; dominant types are capped) for better signatures.
+# Set REF_MAX_CELLS_PER_TYPE=0 to use every cell (the prior behaviour).
+ref_max <- suppressWarnings(as.integer(Sys.getenv("REF_MAX_CELLS_PER_TYPE", unset = "2000")))
+if (!is.na(ref_max) && ref_max > 0L && nrow(ref) > 0L) {
+  set.seed(1L)
+  idx_by_type <- split(seq_len(nrow(ref)), cell_type)
+  keep <- sort(unlist(lapply(idx_by_type, function(ix)
+    if (length(ix) > ref_max) sample(ix, ref_max) else ix), use.names = FALSE))
+  if (length(keep) < nrow(ref)) {
+    dropped <- vapply(idx_by_type, function(ix) max(0L, length(ix) - ref_max), integer(1))
+    cat(sprintf("reference cap: %d -> %d cells (<=%d/type); downsampled: %s\n",
+                nrow(ref), length(keep), ref_max,
+                paste(sprintf("%s(-%d)", names(dropped)[dropped > 0], dropped[dropped > 0]),
+                      collapse = ", ")))
+    ref <- ref[keep, , drop = FALSE]; cell_type <- cell_type[keep]; batch_ids <- batch_ids[keep]
+  } else {
+    cat(sprintf("reference cap: all %d cell types already <= %d cells; no downsampling\n",
+                length(idx_by_type), ref_max))
+  }
+}
+
 # ---- orient for omnideconv: single cell = genes x cells, bulk = genes x samples ----
 sc <- t(ref)                                  # genes x cells
 mix <- as.matrix(readMM(file.path(mix_dir, paste0(mtx_base, ".mtx"))))
@@ -160,11 +186,42 @@ if ("cibersortx" %in% methods) {
   cat("cibersortx: patched container command -> --cleanenv --home (writable)\n")
 }
 
+# ---- DWLS robustness patch. DWLS::DEAnalysisMAST initialises its per-cell-type result list to a
+# scalar `0` and only overwrites an entry when a cell type has >=2 markers above its (hardcoded) 0.5
+# log2FC cutoff. For a transcriptionally-similar type (e.g. an ISG-expressing T subset sitting next to
+# other T cells) <2 genes clear the cutoff, so the entry stays `0`; buildSignatureMatrixMAST then runs
+# p.adjust(cluster_lrTest.table[[3]]) on that scalar -> "subscript out of bounds" and the ENTIRE DWLS
+# run aborts (observed on PBMC/HIP/LNG references). The downstream signature assembly already guards on
+# numberofGenes>0 and still emits a signature COLUMN for every cell type (mean expression over the
+# selected genes), so the only missing guard is at the p.adjust. We splice that guard in: a degenerate
+# per-type table is counted as 0 marker genes -- the type contributes no markers of its own but remains
+# a deconvolvable signature column. Patched at runtime (same assignInNamespace mechanism as CIBERSORTx
+# above) so the installed DWLS in R_libs/ is left untouched. ----
+if ("dwls" %in% methods && requireNamespace("DWLS", quietly = TRUE)) {
+  .bsm <- deparse(getFromNamespace("buildSignatureMatrixMAST", "DWLS"))
+  .hit <- grep("p\\.adjust\\(cluster_lrTest\\.table\\[\\[3\\]\\]", .bsm)
+  if (length(.hit) == 1L) {
+    .guard <- c(
+      "        if (is.null(dim(cluster_lrTest.table)) || NCOL(cluster_lrTest.table) < 3) {",
+      "            numberofGenes <- c(numberofGenes, 0)",
+      "            next",
+      "        }")
+    .bsm_fn <- eval(parse(text = paste(append(.bsm, .guard, after = .hit - 1L), collapse = "\n")))
+    environment(.bsm_fn) <- asNamespace("DWLS")
+    assignInNamespace("buildSignatureMatrixMAST", .bsm_fn, ns = "DWLS")
+    cat("dwls: patched buildSignatureMatrixMAST -> tolerate cell types with <2 distinct markers\n")
+  } else {
+    cat(sprintf("dwls: WARNING could not patch buildSignatureMatrixMAST (%d candidate sites)\n",
+                length(.hit)))
+  }
+}
+
 ok <- character(0)
 for (m in methods) {
   cat(sprintf("\n===== %s =====\n", m))
   t0 <- Sys.time()
   theta <- tryCatch(
+    withCallingHandlers(
     if (m == "dwls") {
       sig <- omnideconv::build_model(
         single_cell_object = sc, cell_type_annotations = cell_type,
@@ -191,6 +248,15 @@ for (m in methods) {
         single_cell_object = sc, cell_type_annotations = cell_type,
         batch_ids = batch_ids, verbose = FALSE))
     },
+    # METHOD_TRACEBACK=1 dumps the call stack at the point of failure (withCallingHandlers fires
+    # before the stack unwinds; the outer tryCatch then swallows the error). Diagnostic only.
+    error = function(e) {
+      if (nzchar(Sys.getenv("METHOD_TRACEBACK"))) {
+        cat("---- call stack at error ----\n")
+        cs <- sys.calls(); for (i in seq_along(cs))
+          cat(sprintf("%2d: %s\n", i, substr(paste(deparse(cs[[i]]), collapse = " "), 1, 200)))
+      }
+    }),
     error = function(e) { cat(sprintf("!! %s FAILED: %s\n", m, conditionMessage(e))); NULL })
   if (is.null(theta)) next
   cat(sprintf("%s wall time: %.2f min\n", m,

@@ -1,5 +1,12 @@
 # MoTrPAC → GeneCompass Deconvolution Pipeline — Technical Reference Report
 
+> ⚠️ **SUPERSEDED for liver + lung references (2026-07-02).** This report predates the reference-quality
+> fixes: **liver** dropped its 2 Visium spatial samples, and **lung** replaced the engineered GSE178405
+> with the native pooled `lung_native_pooled` (GSE273062+GSE252844+GSE242310). Any row below citing
+> `lung_GSE178405` or a 31,820-cell / Visium-containing liver is stale. **Authoritative sources:**
+> `deconvolution/tissue_references.yaml` (the canonical tissue→reference map), `REFERENCE_QC.md`
+> (the QC gate), and `OMNIDECONV_RESULTS.md` (results + bias analysis).
+
 > Comprehensive, code-grounded reference for the full deconvolution pipeline: MoTrPAC rat bulk
 > RNA-seq → BayesPrism cell-type deconvolution → pseudo-cells → fine-tuned rat GeneCompass
 > embeddings → exercise-signal detection & per-cell-type DE → cross-species transfer to human

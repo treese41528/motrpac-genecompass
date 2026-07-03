@@ -12,7 +12,9 @@ run(){ local tag="$1"; shift; local log="tmp/dsbuild_v2/${tag}.log"; echo "[laun
 run CTX_cross --mode cross --tissue "cerebral cortex"           --source-study GSE213978 --conditions sham        --ref-dir "$REF/cortex_GSE303115"
 run HIP_cross --mode cross --tissue "hippocampal dentate gyrus" --source-study GSE307917 --conditions "naïve,sham" --ref-dir "$REF/hippocampus_GSE305314_WT"
 run KID_cross --mode cross --tissue kidney                      --source-study GSE137869                          --ref-dir "$REF/kidney_GSE240658"
-run LNG_cross --mode cross --tissue lung                        --source-study GSE196313 --conditions control     --ref-dir "$REF/lung_GSE178405"
+# LUNG ref updated to native pooled (was engineered GSE178405); NB source GSE196313 is EMBRYONIC E21.5 --
+# replace with a native adult cross source before trusting LNG_cross accuracy. See tissue_references.yaml.
+run LNG_cross --mode cross --tissue lung                        --source-study GSE196313 --conditions control     --ref-dir "data/deconvolution/references/lung_native_pooled"
 run GAS_cross --mode cross --tissue "skeletal muscle"           --source-study GSE137869                          --ref-dir "$REF/gastrocnemius_GSE184413"
 pids=($(jobs -p)); rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
 echo "cross rebuilds done (rc=$rc)"; for f in tmp/dsbuild_v2/{CTX,HIP,KID,LNG,GAS}*.log; do echo "=== $f ==="; tail -3 "$f"; done

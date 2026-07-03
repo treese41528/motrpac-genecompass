@@ -37,7 +37,12 @@ launch () {  # tag  -- then build_reference.py args
 launch cortex_GSE303115_union_merged   --study GSE303115 --tissue cortex --gene-join outer --min-gene-cells 10 --label-scheme brain
 launch hippocampus_GSE305314_WT_merged --study GSE305314 --tissue hippocampus --sample-ids "$WT_HIPPO" --label-scheme brain
 launch kidney_GSE240658        --study GSE240658 --tissue kidney --conditions "No treatment"
-launch lung_GSE178405          --study GSE178405 --tissue lung
+# LUNG: GSE178405 is an IN-VITRO tissue-ENGINEERING study (cell isolates / engineered-d7 / tri-culture /
+# P7-developing) -- NOT native adult lung, and the root cause of lung being the weakest deconv tissue
+# (reference_qc.py FAILs it; superseded 2026-07-01). Build the NATIVE POOLED reference instead, from the
+# healthy control arms of 3 adult rat lung scRNA studies (GSE273062 VeNx + GSE252844 C3 + GSE242310 NOX)
+# -> data/deconvolution/references/lung_native_pooled. (Multi-study pool, so not a single `launch`.)
+$PY deconvolution/build_lung_pooled.py > tmp/refbuild_v2/lung_native_pooled.log 2>&1 &
 launch gastrocnemius_GSE184413 --study GSE184413 --tissue gastrocnemius --conditions "Normal ambulation"
 # Vastus lateralis (SKMVL): merge the two collinear muscle-parenchyma labels into 'Skeletal muscle'.
 launch skeletal_muscle_GSE254371_muscle_merged --study GSE254371 --tissue "skeletal muscle" --gene-join outer --min-gene-cells 10 --label-scheme muscle

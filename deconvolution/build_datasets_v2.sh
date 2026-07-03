@@ -29,7 +29,11 @@ run () { local tag="$1"; shift
 run CTX_cross  --mode cross --tissue "cerebral cortex"          --source-study GSE213978 --conditions sham        --ref-dir "$REF/cortex_GSE303115"
 run HIP_cross  --mode cross --tissue "hippocampal dentate gyrus" --source-study GSE307917 --conditions "naïve,sham" --ref-dir "$REF/hippocampus_GSE305314_WT"
 run KID_cross  --mode cross --tissue kidney                      --source-study GSE137869                          --ref-dir "$REF/kidney_GSE240658"
-run LNG_cross  --mode cross --tissue lung                        --source-study GSE196313 --conditions control     --ref-dir "$REF/lung_GSE178405"
+# LUNG: ref updated 2026-07-02 to the native pooled reference (references/lung_native_pooled), replacing
+# the engineered GSE178405 (see tissue_references.yaml / REFERENCE_QC.md). WARNING: the cross SOURCE
+# GSE196313 is EMBRYONIC (E21.5) -> developmental-mismatched for adult native lung; replace with a native
+# adult source before trusting LNG_cross accuracy (reference_qc.py FLAGs GSE196313 as developmental).
+run LNG_cross  --mode cross --tissue lung                        --source-study GSE196313 --conditions control     --ref-dir "data/deconvolution/references/lung_native_pooled"
 run GAS_cross  --mode cross --tissue "skeletal muscle"           --source-study GSE137869                          --ref-dir "$REF/gastrocnemius_GSE184413"
 
 # HOLDOUT (ref built in-place from the one healthy study)

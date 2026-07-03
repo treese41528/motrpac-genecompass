@@ -5,6 +5,14 @@ MoTrPAC bulk RNA-seq → **BayesPrism** per-cell-type deconvolution → per-cell
 `AIM2_DECONV_RESULTS.md` for the science and `MOTRPAC_BULK_LIFTOVER.md` for the
 bulk gene-ID prep.
 
+**Reference integrity — start here.** `tissue_references.yaml` is the canonical tissue→reference map
+(single source of truth). `REFERENCE_QC.md` documents the build-time QC gate (`reference_qc.py`) and the
+two reference bugs it now prevents: the **liver** Visium-spatial contamination (removed) and the
+**engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`, which gave lung a real
+0→3 exercise-hotspot signal). Cross-method validation, the full **mRNA-bias analysis**, and **which
+downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. Analysis notebooks
+(`../notebooks/pipeline8–12`) still need re-executing per `../notebooks/RERUN_EDITS.md`.
+
 ## Pipeline (production path)
 
 Two orchestrators in `pipeline/` drive the scripts in this folder in place
@@ -27,16 +35,29 @@ python pipeline/run_stage9.py --label skmgn
 ```
 
 You supply `--tissue` (MoTrPAC bulk code, matches `TRNSCRPT_<TISSUE>_RAW_COUNTS.rda`)
-and `--ref-dir` (the per-tissue SC reference). The tissue code differs from the reference
-dir name (e.g. `SKM-GN` → `skeletal muscle_GSE254371`, `BLOOD` → `peripheral blood
-mononuclear cells_GSE285476`, `HEART` → `heart_GSE280111_LV`); the full per-tissue mapping
-is the `JOBS` table in `build_all_references.sh`. References are **built, not shipped**
-(`build_all_references.sh`, from the SC corpus), so a fresh clone must set up data first —
-see [`setup/SETUP.md`](setup/SETUP.md) (Data & config). All other paths default from
-`config/pipeline_config.yaml` `[deconvolution]`. Outputs land under `data/deconvolution/`
-(gitignored). The per-tissue SLURM job (`slurm/`, local) remains the production driver for
-the heavy steps; the orchestrators run the chain serially for one tissue (local /
-single-node) and document the SLURM split.
+and `--ref-dir` (the per-tissue SC reference). The tissue→reference mapping is
+**`tissue_references.yaml`** — the canonical single source of truth (each tissue's correct reference +
+study + build command). The bulk code differs from the reference dir name (e.g. `LUNG` →
+`lung_native_pooled`, `LIVER` → `liver_GSE220075`, `BLOOD` → `peripheral blood mononuclear cells_GSE285476`).
+
+**Recommended — from-scratch, correct-by-construction:** `pipeline/run_deconv_all.py` reads that
+manifest, runs the QC gate (`reference_qc.py --fail`) on every reference — refusing a missing or
+contaminated one, so a fresh run cannot silently use the wrong study — and submits Stage-8+9 for all 10
+tissues with the right `--ref-dir`:
+
+```bash
+python pipeline/run_deconv_all.py --dry-run     # validate every reference + print the plan
+python pipeline/run_deconv_all.py --submit      # sbatch one job per tissue (refs from the manifest)
+# then the cross-tissue layer (once all tissues finish):
+sbatch slurm/analysis/redetect_redE.slurm       # Stage 11 probe + Augur + hotspots + Stage 10 DE
+sbatch slurm/analysis/run_stage12.slurm         # Stage 12 cross-species transfer
+```
+
+References are **built, not shipped** — `build_references_v2.sh` + `build_lung_pooled.py` (native lung),
+and liver via `build_reference.py --study GSE220075 --tissue liver` (its QC gate auto-drops the Visium
+samples). So a fresh clone must set up data first — see [`setup/SETUP.md`](setup/SETUP.md) (Data & config).
+Other paths default from `config/pipeline_config.yaml` `[deconvolution]`; outputs land under
+`data/deconvolution/` (gitignored).
 
 ## Not in the pipeline (exploration / analysis)
 
@@ -48,9 +69,14 @@ These are run on demand, separately from the pipeline:
 - **Deconvolution validation:** `make_pseudobulk.py`, `make_purity_sweep.py`,
   `score_purity_sweep.py`, `score_validation.py`, `score_z.py`, `compute_true_z.py`,
   `R/score_z_vst.R`, `R/run_tutorial_gbm.R`, `build_all_datasets.sh`.
-- **Cross-method θ check:** `R/run_omnideconv.R` (see `OMNIDECONV_BENCHMARK_PLAN.md`).
-- **Reference / setup:** `build_reference.py`, `build_all_references.sh`,
-  `build_protein_coding_list.py`, `build_sex_chrom_list.py`, `audit_idspace.py`,
+- **Cross-method θ check + mRNA-bias battery (COMPLETE):** `R/run_omnideconv.R` +
+  `omnideconv_bench/` (the SimBu simulator `simulate_simbu.{R,sh}`, `bias_delta.py`, `dose_response.py`)
+  → results + paper comparison + downstream-claims guidance in `OMNIDECONV_RESULTS.md`
+  (plan: `OMNIDECONV_BENCHMARK_PLAN.md`).
+- **Reference build + QC:** `build_reference.py` (with the built-in QC gate), `build_references_v2.sh`,
+  `build_lung_pooled.py` (native-lung pool); **`reference_qc.py`** (the contamination gate — run
+  `python deconvolution/reference_qc.py --all --deep` to audit every reference); **`tissue_references.yaml`**
+  (the map). Plus `build_protein_coding_list.py`, `build_sex_chrom_list.py`, `audit_idspace.py`,
   `setup/` (container + bootstrap). References are inputs to Stage 8.
 
 ## Setup & environment
