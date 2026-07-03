@@ -88,7 +88,26 @@ def _canon_muscle(label):
     return label
 
 
-LABEL_SCHEMES = {"brain": _canon_brain, "muscle": _canon_muscle}
+def _canon_lung(label):
+    # Pooling healthy control arms across independent rat lung studies (GSE273062 VeNx,
+    # GSE252844 C3, GSE242310 NOX) to build a NATIVE reference (replacing the engineered
+    # in-vitro GSE178405) leaves near-synonymous EPITHELIAL fragments the per-study consensus
+    # annotators split differently: Clara == Club == airway-club (one secretory bronchiolar
+    # cell), and Ciliated == ciliated-airway. Merge ONLY those collinear epithelial synonyms,
+    # plus the "natural killer"/"NK" duplicate (keep NKT separate). Immune subtypes
+    # (CD4/CD8/naive/memory/monocyte fragments) are KEPT resolved -- coarsening them hurts
+    # BayesPrism (omnideconv benchmark). Endothelial/AT2/fibroblast/macrophage stay as-is.
+    ll = str(label).strip().lower()
+    if ll in ("clara cells", "club cells", "airway club cells"):
+        return "Club cells"
+    if "ciliated" in ll:
+        return "Ciliated cells"
+    if ll in ("natural killer cells", "nk cells"):
+        return "NK cells"
+    return label
+
+
+LABEL_SCHEMES = {"brain": _canon_brain, "muscle": _canon_muscle, "lung": _canon_lung}
 
 
 def canonicalize_labels(series, scheme):
@@ -131,6 +150,32 @@ def select_samples(study, tissue, conditions=None, sex=None, sample_ids=None):
     if not samples:
         sys.exit(f"ERROR: no in-corpus {tissue} samples for {study} "
                  f"(conditions={conditions}, sex={sex}, sample_ids={sample_ids}) in {INVENTORY}")
+    # --- reference-QC gate: drop categorically non-native samples (spatial/Visium, engineered/
+    # cultured/sorted, bulk) so a contaminated study can't silently seed a reference. Structural guard
+    # against the liver-Visium / engineered-lung class of bug (see reference_qc.py). Developmental
+    # (embryonic/postnatal) samples are WARNed, not dropped. Override the drop with ALLOW_NONNATIVE_REF=1.
+    import os
+    from reference_qc import SPATIAL, ENGINEERED, BULK, DEVEL
+    def _title(sid):
+        row = sel[sel["sample_id"] == sid]
+        return "" if row.empty else " | ".join(
+            str(row.iloc[0].get(c, "")) for c in ("geo_title", "geo_source_name", "geo_cell_type"))
+    titles = {s: _title(s) for s in samples}
+    bad   = {s: t for s, t in titles.items()
+             if SPATIAL.search(t) or ENGINEERED.search(t) or BULK.search(t)}
+    devel = {s: t for s, t in titles.items() if s not in bad and DEVEL.search(t)}
+    if devel:
+        print("  [reference-QC] WARNING: developmental (non-adult) sample(s): "
+              + ", ".join(f"{s}[{t[:30]}]" for s, t in devel.items()))
+    if bad and os.environ.get("ALLOW_NONNATIVE_REF") != "1":
+        print(f"  [reference-QC] DROPPING {len(bad)} non-native sample(s) (spatial/engineered/sorted/bulk); "
+              "set ALLOW_NONNATIVE_REF=1 to keep them:")
+        for s, t in bad.items():
+            print(f"      {s}: {t[:60]}")
+        samples = [s for s in samples if s not in bad]
+        if not samples:
+            sys.exit(f"ERROR: every {study}/{tissue} sample is non-native (spatial/engineered/sorted/"
+                     f"bulk) -> pick a native single-cell/nucleus study for this tissue (see reference_qc.py).")
     return samples
 
 

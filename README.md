@@ -80,14 +80,23 @@ See `pipeline/README.md` for detailed stage descriptions, expected outputs, and 
 ### Running deconvolution (Stages 8–9, Aim-2 bridge)
 
 ```bash
-# MoTrPAC bulk → BayesPrism → pseudo-cells → fine-tuned GeneCompass embeddings (per tissue)
+# All 10 tissues, correct-by-construction: reads deconvolution/tissue_references.yaml (the canonical
+# tissue→reference map), QC-gates every reference, submits Stage-8+9 with the right --ref-dir.
+python pipeline/run_deconv_all.py --dry-run      # validate refs + print the plan
+python pipeline/run_deconv_all.py --submit       # sbatch per tissue
+# ...or one tissue manually:
 python pipeline/run_stage8.py --tissue SKM-GN --ref-dir <built ref dir> --dry-run
 python pipeline/run_stage9.py --label skmgn --dry-run
 ```
 
+**Reference integrity:** references are chosen from `deconvolution/tissue_references.yaml` and gated by
+`deconvolution/reference_qc.py` (blocks spatial/engineered/developmental/mixed samples — the class of bug
+behind the liver-Visium / engineered-lung fixes). Cross-method validation + the mRNA-bias analysis +
+which downstream claims to trust are in `deconvolution/OMNIDECONV_RESULTS.md`.
+
 First-time deconvolution setup — the R/BayesPrism environment, the per-site profile, data
 staging, and config — is documented in **`deconvolution/setup/SETUP.md`**; see
-`deconvolution/README.md` for the per-tissue runbook.
+`deconvolution/README.md` for the runbook.
 
 ---
 

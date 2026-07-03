@@ -89,6 +89,32 @@ cat(sprintf("low-expression filter: dropped %d genes (<3 cells); %d genes kept\n
             sum(!keepg), sum(keepg)))
 ref <- ref[, keepg, drop = FALSE]
 
+# ---- reference size cap (per cell type) ----
+# The cross-dataset references are full SC datasets (up to ~232k cells); at that size the
+# signature-building methods (esp. DWLS/MAST) blow memory and gain nothing -- a signature is a
+# stable per-type estimate, not improved by 100k+ cells. Downsample each cell type to
+# REF_MAX_CELLS_PER_TYPE (seeded -> reproducible; logged exactly what is dropped), which also
+# BALANCES the reference (rare types keep all cells; dominant types are capped) for better signatures.
+# Set REF_MAX_CELLS_PER_TYPE=0 to use every cell (the prior behaviour).
+ref_max <- suppressWarnings(as.integer(Sys.getenv("REF_MAX_CELLS_PER_TYPE", unset = "2000")))
+if (!is.na(ref_max) && ref_max > 0L && nrow(ref) > 0L) {
+  set.seed(1L)
+  idx_by_type <- split(seq_len(nrow(ref)), cell_type)
+  keep <- sort(unlist(lapply(idx_by_type, function(ix)
+    if (length(ix) > ref_max) sample(ix, ref_max) else ix), use.names = FALSE))
+  if (length(keep) < nrow(ref)) {
+    dropped <- vapply(idx_by_type, function(ix) max(0L, length(ix) - ref_max), integer(1))
+    cat(sprintf("reference cap: %d -> %d cells (<=%d/type); downsampled: %s\n",
+                nrow(ref), length(keep), ref_max,
+                paste(sprintf("%s(-%d)", names(dropped)[dropped > 0], dropped[dropped > 0]),
+                      collapse = ", ")))
+    ref <- ref[keep, , drop = FALSE]; cell_type <- cell_type[keep]; batch_ids <- batch_ids[keep]
+  } else {
+    cat(sprintf("reference cap: all %d cell types already <= %d cells; no downsampling\n",
+                length(idx_by_type), ref_max))
+  }
+}
+
 # ---- orient for omnideconv: single cell = genes x cells, bulk = genes x samples ----
 sc <- t(ref)                                  # genes x cells
 mix <- as.matrix(readMM(file.path(mix_dir, paste0(mtx_base, ".mtx"))))
@@ -118,23 +144,119 @@ orient <- function(theta) {
 # defaults to "mast" (identical to the unforwarded default) but is overridable via
 # DWLS_METHOD (e.g. "mast_optimized"); verbose=TRUE so the long MAST build logs progress.
 dwls_method <- Sys.getenv("DWLS_METHOD", unset = "mast")
+
+# ---- CIBERSORTx (license-gated): credentials + Apptainer container (Docker is unavailable on
+# this cluster). container_path = directory holding fractions_latest.sif (omnideconv pulls it via
+# `apptainer pull docker://cibersortx/fractions` on first use if absent). Credentials come from env
+# so no token lands in code/logs. No batch correction (S/B-mode off) for the apples-to-apples panel.
+# NB: the CIBERSORTx container validates the token against the Stanford server at RUNTIME -> the
+# host must have outbound internet when this method runs. ----
+cx_sif_dir <- Sys.getenv("CIBERSORTX_SIF_DIR",
+  unset = file.path(Sys.getenv("PROJECT_ROOT", unset = "."), "data/deconvolution/cibersortx"))
+if ("cibersortx" %in% methods) {
+  cx_email <- Sys.getenv("CIBERSORTX_EMAIL"); cx_token <- Sys.getenv("CIBERSORTX_TOKEN")
+  if (!nzchar(cx_email) || !nzchar(cx_token))
+    stop("cibersortx requested but CIBERSORTX_EMAIL / CIBERSORTX_TOKEN are not set")
+  omnideconv::set_cibersortx_credentials(cx_email, cx_token)
+  cat(sprintf("cibersortx: apptainer container_path=%s user=%s\n", cx_sif_dir, cx_email))
+
+  # PATCH omnideconv 0.1.1's hardcoded apptainer invocation. Its `apptainer exec --no-home -c`
+  # gives the container no writable HOME, so the CIBERSORTx binary's internal R subprocess (used
+  # for the nu-SVR signature-matrix build) can't initialise -> "no package called e1071" -> empty
+  # matrix -> Eigen assertion abort (code 134). Replace with `--cleanenv` (drop host env + the
+  # host XALT LD_PRELOAD that otherwise breaks the container's glibc) + a writable `--home` so the
+  # container's R/MCR run in their intended environment. Keeps omnideconv's input-prep + parsing.
+  cx_home <- file.path(tempdir(), "cibersortx_home")   # per-R-session -> safe under parallel array runs
+  dir.create(cx_home, showWarnings = FALSE, recursive = TRUE)
+  Sys.setenv(CX_HOME = cx_home)
+  .cx_cmd <- function(in_dir, out_dir, container, apptainer_container_path,
+                      method = c("create_sig", "impute_cell_fractions"), verbose = FALSE, ...) {
+    method <- match.arg(method)
+    base <- paste0("apptainer exec --cleanenv --home ", Sys.getenv("CX_HOME"),
+                   " -B ", in_dir, "/:/src/data -B ", out_dir, "/:/src/outdir ",
+                   apptainer_container_path, " /src/CIBERSORTxFractions --single_cell TRUE")
+    if (verbose) base <- paste(base, "--verbose TRUE")
+    check_credentials()
+    credentials <- paste("--username", get("cibersortx_email", envir = config_env),
+                         "--token", get("cibersortx_token", envir = config_env))
+    paste(base, credentials, get_method_options(method, ...))
+  }
+  environment(.cx_cmd) <- asNamespace("omnideconv")
+  assignInNamespace("create_container_command", .cx_cmd, ns = "omnideconv")
+  cat("cibersortx: patched container command -> --cleanenv --home (writable)\n")
+}
+
+# ---- DWLS robustness patch. DWLS::DEAnalysisMAST initialises its per-cell-type result list to a
+# scalar `0` and only overwrites an entry when a cell type has >=2 markers above its (hardcoded) 0.5
+# log2FC cutoff. For a transcriptionally-similar type (e.g. an ISG-expressing T subset sitting next to
+# other T cells) <2 genes clear the cutoff, so the entry stays `0`; buildSignatureMatrixMAST then runs
+# p.adjust(cluster_lrTest.table[[3]]) on that scalar -> "subscript out of bounds" and the ENTIRE DWLS
+# run aborts (observed on PBMC/HIP/LNG references). The downstream signature assembly already guards on
+# numberofGenes>0 and still emits a signature COLUMN for every cell type (mean expression over the
+# selected genes), so the only missing guard is at the p.adjust. We splice that guard in: a degenerate
+# per-type table is counted as 0 marker genes -- the type contributes no markers of its own but remains
+# a deconvolvable signature column. Patched at runtime (same assignInNamespace mechanism as CIBERSORTx
+# above) so the installed DWLS in R_libs/ is left untouched. ----
+if ("dwls" %in% methods && requireNamespace("DWLS", quietly = TRUE)) {
+  .bsm <- deparse(getFromNamespace("buildSignatureMatrixMAST", "DWLS"))
+  .hit <- grep("p\\.adjust\\(cluster_lrTest\\.table\\[\\[3\\]\\]", .bsm)
+  if (length(.hit) == 1L) {
+    .guard <- c(
+      "        if (is.null(dim(cluster_lrTest.table)) || NCOL(cluster_lrTest.table) < 3) {",
+      "            numberofGenes <- c(numberofGenes, 0)",
+      "            next",
+      "        }")
+    .bsm_fn <- eval(parse(text = paste(append(.bsm, .guard, after = .hit - 1L), collapse = "\n")))
+    environment(.bsm_fn) <- asNamespace("DWLS")
+    assignInNamespace("buildSignatureMatrixMAST", .bsm_fn, ns = "DWLS")
+    cat("dwls: patched buildSignatureMatrixMAST -> tolerate cell types with <2 distinct markers\n")
+  } else {
+    cat(sprintf("dwls: WARNING could not patch buildSignatureMatrixMAST (%d candidate sites)\n",
+                length(.hit)))
+  }
+}
+
 ok <- character(0)
 for (m in methods) {
   cat(sprintf("\n===== %s =====\n", m))
   t0 <- Sys.time()
   theta <- tryCatch(
+    withCallingHandlers(
     if (m == "dwls") {
       sig <- omnideconv::build_model(
         single_cell_object = sc, cell_type_annotations = cell_type,
         method = "dwls", dwls_method = dwls_method, ncores = n.cores, verbose = TRUE)
       orient(omnideconv::deconvolute(
         bulk_gene_expression = bulk, model = sig, method = "dwls", verbose = TRUE))
+    } else if (m == "cibersortx") {
+      # explicit two-step so BOTH the signature build (create_sig) and the impute run are
+      # verbose -> the Apptainer/container stderr is captured (the one-shot path silences the
+      # build). NB: verbose prints the apptainer command incl. --token to the log (gitignored).
+      # verbose=FALSE in production so the --token never lands in logs (omnideconv only message()s
+      # the apptainer command when verbose). Re-run a single tissue with verbose=TRUE to debug.
+      cx_model <- omnideconv::build_model(
+        single_cell_object = sc, cell_type_annotations = cell_type,
+        method = "cibersortx", container = "apptainer", container_path = cx_sif_dir,
+        verbose = FALSE)
+      orient(omnideconv::deconvolute(
+        bulk_gene_expression = bulk, model = cx_model, method = "cibersortx",
+        container = "apptainer", container_path = cx_sif_dir,
+        rmbatch_B_mode = FALSE, rmbatch_S_mode = FALSE, verbose = FALSE))
     } else {
       orient(omnideconv::deconvolute(
         bulk_gene_expression = bulk, model = NULL, method = m,
         single_cell_object = sc, cell_type_annotations = cell_type,
         batch_ids = batch_ids, verbose = FALSE))
     },
+    # METHOD_TRACEBACK=1 dumps the call stack at the point of failure (withCallingHandlers fires
+    # before the stack unwinds; the outer tryCatch then swallows the error). Diagnostic only.
+    error = function(e) {
+      if (nzchar(Sys.getenv("METHOD_TRACEBACK"))) {
+        cat("---- call stack at error ----\n")
+        cs <- sys.calls(); for (i in seq_along(cs))
+          cat(sprintf("%2d: %s\n", i, substr(paste(deparse(cs[[i]]), collapse = " "), 1, 200)))
+      }
+    }),
     error = function(e) { cat(sprintf("!! %s FAILED: %s\n", m, conditionMessage(e))); NULL })
   if (is.null(theta)) next
   cat(sprintf("%s wall time: %.2f min\n", m,

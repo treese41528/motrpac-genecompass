@@ -1,6 +1,15 @@
 # omnideconv Benchmark Replication on MoTrPAC Rat Data — Execution Plan
 
-**Status:** PLAN (not yet executed). Authored 2026-06-03.
+**Status (updated 2026-06-30):** Phase 2 (core fraction benchmark, Fig-2 analog) DONE and
+PRODUCTION-ALIGNED across the 10 `genecompass_input` tissues + BayesPrism — see
+`OMNIDECONV_RESULTS.md` for the full panel + the comparison to the paper. Phase 5 CIBERSORTx is
+also done (token acquired; in the panel). **Phase 3 (SimBu confounder battery) is now BUILT and
+the mRNA-bias scenario is RUNNING:** `deconvolution/omnideconv_bench/simulate_simbu.{R,sh}`
+(simulator, smoke-passed), `bias_delta.py` (ΔRMSE aggregator), driver
+`slurm/analysis/simbu_mrna_bias.slurm` (job 11167195, array 0-9, 500 cells/type). The
+pure/weighted/mirror_db scenarios reuse the same simulator (different `--scenario`) — not yet driven.
+Still to build: AutoGeneS/Scaden method branches, bulk-TPM (D1), the Fig-3/4/5 plot module.
+Original plan (authored 2026-06-03) below.
 **Trigger to execute:** Phases 0–4 can start immediately (no license needed). Phase 5
 (CIBERSORTx + Bseq-SC) is gated on the Stanford CIBERSORT/CIBERSORTx license, expected
 "in a few days."
