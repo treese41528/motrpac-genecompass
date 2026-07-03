@@ -1,0 +1,10 @@
+role	symbol	ensrnog	cell_type	expectation
+perturb_pos	Mef2c	ENSRNOG00000033134	Skeletal muscle	large CLS shift (> 90th pctile of matched-expression null); top targets enrich the Mef2/myogenic set below
+perturb_pos	Spi1	ENSRNOG00000012172	Classical monocytes	large CLS shift vs matched-expression null; top targets enrich myeloid genes
+perturb_pos_alt	Cebpa	ENSRNOG00000010918	Classical monocytes	large CLS shift vs matched-expression null (myeloid master-TF)
+target_mef2	Myog	ENSRNOG00000030743	Skeletal muscle	appears in Mef2c top-25 targets
+target_mef2	Ckm	ENSRNOG00000016837	Skeletal muscle	appears in Mef2c top-25 targets
+target_mef2	Des	ENSRNOG00000019810	Skeletal muscle	appears in Mef2c top-25 targets
+target_mef2	Actn2	ENSRNOG00000017833	Skeletal muscle	appears in Mef2c top-25 targets
+neg_notexpressed	Alb	ENSRNOG00000002911	Skeletal muscle	~zero shift / n_cells~0 (hepatocyte gene, absent in muscle)
+neg_notexpressed	Snap25	ENSRNOG00000006037	Skeletal muscle	~zero shift / n_cells~0 (neuronal gene, absent in muscle)
