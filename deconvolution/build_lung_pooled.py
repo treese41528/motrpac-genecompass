@@ -27,26 +27,38 @@ HEALTHY = [
 ]
 OUT = "data/deconvolution/references/lung_native_pooled"
 
-parts = []
-for study, sids in HEALTHY:
-    a = br.load_study(study, "lung", sample_ids=sids, gene_join="outer", min_gene_cells=0)
-    a.obs["source_study"] = study
-    print(f"  {study}: {a.n_obs} cells, {a.obs['cell_type'].nunique()} consensus labels")
-    parts.append(a)
+def build_pooled_lung():
+    """Assemble the 3-study pooled native-lung AnnData (the production recipe) and RETURN it
+    (no export). Importable so make_purity_sweep.py --pooled-lung can run a within-pool purity
+    sweep on the exact production reference."""
+    parts = []
+    for study, sids in HEALTHY:
+        a = br.load_study(study, "lung", sample_ids=sids, gene_join="outer", min_gene_cells=0)
+        a.obs["source_study"] = study
+        print(f"  {study}: {a.n_obs} cells, {a.obs['cell_type'].nunique()} consensus labels")
+        parts.append(a)
 
-adata = ad.concat(parts, join="outer", merge="same", fill_value=0)
-print(f"\npooled: {adata.n_obs} cells x {adata.n_vars} genes from {len(HEALTHY)} studies")
-before = adata.n_vars
-sc.pp.filter_genes(adata, min_cells=10)           # trim the outer-join union's long tail
-print(f"min-gene-cells=10: {before} -> {adata.n_vars} genes")
+    adata = ad.concat(parts, join="outer", merge="same", fill_value=0)
+    print(f"\npooled: {adata.n_obs} cells x {adata.n_vars} genes from {len(HEALTHY)} studies")
+    before = adata.n_vars
+    sc.pp.filter_genes(adata, min_cells=10)           # trim the outer-join union's long tail
+    print(f"min-gene-cells=10: {before} -> {adata.n_vars} genes")
 
-adata.obs["cell_type"] = br.canonicalize_labels(adata.obs["cell_type"], "lung")
-adata = br.clean_cells(adata, 20)                 # >=20 cells per (sample x state)
-print(f"\nafter clean_cells: {adata.n_obs} cells, {adata.obs['cell_type'].nunique()} cell types")
-print("cell-type counts:")
-print(adata.obs["cell_type"].value_counts().to_string())
-print("cells per source study:")
-print(adata.obs["source_study"].value_counts().to_string())
+    adata.obs["cell_type"] = br.canonicalize_labels(adata.obs["cell_type"], "lung")
+    adata = br.clean_cells(adata, 20)                 # >=20 cells per (sample x state)
+    print(f"\nafter clean_cells: {adata.n_obs} cells, {adata.obs['cell_type'].nunique()} cell types")
+    print("cell-type counts:")
+    print(adata.obs["cell_type"].value_counts().to_string())
+    print("cells per source study:")
+    print(adata.obs["source_study"].value_counts().to_string())
+    return adata
 
-br.export_reference(adata, OUT)
-print(f"\nwrote pooled native lung reference -> {OUT}")
+
+def main():
+    adata = build_pooled_lung()
+    br.export_reference(adata, OUT)
+    print(f"\nwrote pooled native lung reference -> {OUT}")
+
+
+if __name__ == "__main__":
+    main()
