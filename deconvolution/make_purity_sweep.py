@@ -54,7 +54,7 @@ import pandas as pd
 import scipy.io as sio
 import scipy.sparse as sp
 
-from build_reference import load_study, clean_cells, export_reference
+from build_reference import load_study, clean_cells, export_reference, canonicalize_labels
 from make_pseudobulk import build_harmonization
 
 
@@ -147,17 +147,39 @@ def main():
     ap.add_argument("--holdout-frac", type=float, default=0.30)
     ap.add_argument("--min-pool-cells", type=int, default=20)
     ap.add_argument("--seed", type=int, default=1)
+    # ---- production-reference build flags (holdout mode; defaults reproduce the old behavior) ----
+    ap.add_argument("--sample-ids", help="holdout: comma-sep sample_id whitelist (e.g. HIPPOC 6 WT ids)")
+    ap.add_argument("--label-scheme", default="none",
+                    help="holdout: merge collinear labels BEFORE the split (brain/muscle/lung) so the "
+                         "focal parenchyma carries its production label")
+    ap.add_argument("--gene-join", choices=["inner", "outer"], default="inner",
+                    help="holdout: per-sample gene combine (cortex/skmvl production = outer)")
+    ap.add_argument("--min-gene-cells", type=int, default=0,
+                    help="holdout: drop genes expressed in < N pooled cells after concat (cortex/skmvl = 10)")
+    ap.add_argument("--pooled-lung", action="store_true",
+                    help="holdout: build the 3-study pooled native-lung reference instead of a single "
+                         "--study (reproduces build_lung_pooled.py); ignores --study/--label-scheme/--gene-join")
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
     out = Path(args.out)
     (out / "mixtures").mkdir(parents=True, exist_ok=True)
     conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
+    sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
     grid = [float(x) for x in args.purity_grid.split(",")]
 
     if args.mode == "holdout":
-        assert args.study, "--study required for holdout mode"
-        adata = clean_cells(load_study(args.study, args.tissue))
+        if args.pooled_lung:
+            from build_lung_pooled import build_pooled_lung   # 3-study native-lung pool
+            adata = build_pooled_lung()
+        else:
+            assert args.study, "--study required for holdout mode"
+            # reproduce the production reference build: same arm/sample filter + gene-join +
+            # min-gene-cells + label-scheme merge, so the focal parenchyma carries its production label
+            adata = load_study(args.study, args.tissue, conds, args.sex, sids,
+                               gene_join=args.gene_join, min_gene_cells=args.min_gene_cells)
+            adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
+            adata = clean_cells(adata)
         is_mix = np.zeros(adata.n_obs, dtype=bool)
         for t, idx in adata.obs.groupby("cell_type").indices.items():
             idx = np.array(idx); rng.shuffle(idx)
