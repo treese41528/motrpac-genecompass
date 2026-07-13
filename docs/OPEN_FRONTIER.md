@@ -5,10 +5,20 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-07-03.
+**Last updated:** 2026-07-13.
 **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked (external) · ⊘ out-of-scope.
 
-**Recently closed (2026-07, PR `deconv-reference-integrity`):** reference-integrity hardening (QC gate +
+**Recently closed (2026-07-06/13, branch `aim2b-perturbation-engine`):** **the keystone landed.** Module A
+(rat in-silico perturbation engine) is built and its pre-registration is **CLOSED — all 4 criteria PASS**
+(`b162409`); Module A.5 (rat TF list) shipped with it (`bca3221`). Module B (model-driven differential GRN)
+is built, including the dose-pooling refinement (`ffbebff`, `fb07c3c`). **Aim 3b** (perturbation on the
+already-transferred human cells) + human-space GRN conservation, pathway enrichment, DE robustness, and the
+per-tissue purity-sweep extension all deployed (`bbf33de`). These are now orchestrated as **Stage 13**
+(mechanism) and **Stage 14** (hardening) (`bb47beb`). Finally, a non-injective cell-type filename sanitizer
+was root-caused and fixed (`f4cbf12`) — it had destroyed a BayesPrism Z matrix; DE, enrichment, and the
+kidney/hippocampus purity sweeps were rebuilt. Headline biology unchanged (185 blocks / 21 hotspots).
+
+**Earlier (2026-07, PR `deconv-reference-integrity`):** reference-integrity hardening (QC gate +
 canonical `tissue_references.yaml` manifest + from-scratch driver `run_deconv_all.py`; liver-Visium and
 engineered-lung references fixed), the full omnideconv cross-method panel + mRNA-bias analysis + downstream-
 claims guidance, and the lung fix (0→3 exercise hotspots). These moved the headline figures.
@@ -31,6 +41,9 @@ still show the pre-lung-fix 178/18, pending re-execution (`notebooks/RERUN_EDITS
 | **1** | Representation-quality validation trio (§3.6) — see [Aim-1 validation results](#aim-1-validation-results-2026-06-2526) | `reports/aim1_validation/` |
 | **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); **185 blocks, 21 exercise hotspots** (post-lung-fix; was 178/18); pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
 | **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **19/21 hotspots survive** (was 16/18; PLS-1 + Augur agree) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
+| **2b** | **Rat in-silico perturbation engine (the keystone)** — pre-registration CLOSED, all 4 criteria PASS; + the model-driven **differential GRN** (dose-pooled, bootstrapped). Independently re-surfaced **Nr4a1**, the regulator the proposal itself predicted. | commits `bca3221`, `b162409`, `ffbebff`, `fb07c3c`; Stage 13 |
+| **3b** | **Perturbation on the transferred human cells** — human-space GRN + rat↔human regulatory conservation | commit `bbf33de`; Stage 13 |
+| **hardening** | Purity sweeps (8/10 meet the Chu-2022 bar), composition-confound on all 185 blocks, RIN/globin robustness (18/21 hotspots ROBUST) | commit `bbf33de`; Stage 14 |
 | **hardening** | Reference integrity (QC gate + manifest + from-scratch driver; liver-Visium + engineered-lung fixed); full omnideconv panel + mRNA-bias analysis | PR `deconv-reference-integrity`; `REFERENCE_QC.md`, `OMNIDECONV_RESULTS.md` |
 
 ---
@@ -60,12 +73,12 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 
 | Status | Item | Aim | Effort | Blocker |
 |---|---|---|---|---|
-| ☐ | **Module A — rat in-silico perturbation engine (KEYSTONE)**: adapt vendored `perturb_delete_chipseq.py` (~5 rat edits). Unblocks 2b, 3b, and Module F. | 2b/3b | M–L (GPU) | none |
-| ☐ | Module A.5 — rat TF list (AnimalTFDB → ENSRNOG ∩ expressed). Startable now. | 2b/3b | S | none |
-| ☐ | Module B — model-driven GRN: TF-deletion → differential trained-vs-control network on abundant hotspots | 2b | L | Module A |
+| ✅ | **Module A — rat in-silico perturbation engine (KEYSTONE)** — DONE. Pre-registration **CLOSED, all 4 criteria PASS** (Mef2c 98th pctile; self-consistency ρ=0.70; target enrichment p=2e-7). Use the per-gene **target** shift, not the near-noise cell shift. | 2b/3b | — | — |
+| ✅ | Module A.5 — rat TF list (AnimalTFDB → ENSRNOG ∩ expressed) — DONE (shipped with Module A). | 2b/3b | — | — |
+| ✅ | Module B — model-driven differential GRN (TF-deletion → trained-vs-control network) — DONE, incl. dose-pooling + bootstrap refinement. Top hubs = Mef2c/Myf6/Epas1/Tfeb/**Nr4a1**/Nr1d2 (muscle/exercise regulators). | 2b | — | — |
 | ☐ | Module C — CPA dose model (ordinal week; compare to DE slope) | 2c | L (GPU) | none (n≈50/cell-type thin) |
-| ⛔ | Aim 3b — perturbation on the already-transferred human cells | 3b | S | Module A |
-| ☐ | Stage 11 orchestrator — chain A→B→C | — | S | A/B/C |
+| ✅ | Aim 3b — perturbation on the already-transferred human cells — DONE (human-space GRN + rat↔human conservation). | 3b | — | — |
+| ✅ | Stage orchestrators — realized as **Stage 13** (mechanism: perturb→GRN→conservation→enrichment) and **Stage 14** (hardening). *There is no `run_stage11.py`; the build plan's "Stage 11" chain became Stage 13.* | — | — | — |
 
 ### Aim 3c — human genetics / disease translation (highest-value *startable now*)
 
@@ -73,7 +86,7 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 |---|---|---|---|
 | ☐ | **Module D.0 — stage genetics data** (GTEx v8 eQTL, ~114-GWAS set, S-PrediXcan MASHR/JTI, Open Targets). No GPU, no DE dependency → can start immediately. | M | none |
 | ☐ | Module D.1 — `validate_human.py`: replicate Vetr 2024 bulk pipeline (control), then swap in our per-cell-type DE → **cell-type-resolved trait–tissue–gene triplets** (the novel deliverable). | L | D.0 |
-| ☐ | Module F — conserved regulators (join perturbation/GRN + genetics). Aim-3 capstone. | S | A, B, D |
+| ☐ | Module F — conserved regulators (join perturbation/GRN + genetics). Aim-3 capstone. **2 of its 3 input streams are now on disk** (differential GRN + human-space conservation); it awaits only the genetics. | S | **D** (A and B are done) |
 
 ### Validation / hardening (completeness, not new aims)
 
@@ -82,9 +95,11 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 | ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`) | — |
 | ✅ | **Reference integrity** — DONE (2026-07): `reference_qc.py` gate (wired into `build_reference`), `tissue_references.yaml`, `run_deconv_all.py`; liver Visium contamination + engineered→native lung fixed (`REFERENCE_QC.md`) | — |
 | ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; **0→3 exercise hotspots, 2 conserved rat→human** (was ◐ weak) | — |
-| ☐ | Per-tissue expression **purity sweeps** (Chu-2022 Fig-1h paper-faithful done only for liver; other 9 untested at that rigor) | M |
+| ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; 10 sweeps on disk). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on **8 of 10** tissues: ≥0.986 at 50% purity, ≥0.99 at 85%. BLOOD and subcutaneous fat are excluded honestly — neither has a capturable dominant parenchyma to sweep. | — |
+| ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): **18 of 21 hotspots ROBUST**; the 3 that need a caveat are reported, not hidden. Composition (θ) confound run on all 185 blocks: 145 QUIET / 30 PASS_EXPRESSION / 10 FLAG_COMPOSITION. | — |
 | ◐ | **E.3** Tabula Sapiens human-atlas backdrop (external identity check the sex-gate doesn't provide; needs the atlas) | S |
-| ☐ | Minor: technical covariates (RIN/globin) absent from DE; activity/composition (θ) confound sweep on the 18 hotspots; heart-CM cross-dataset (holdout-only today) | S |
+| ☐ | **Second heart reference** — heart CM is the one cardinal cell type with *holdout-only* validation (`GSE280111` LV, CM r≈0.995). Needs an independent native adult healthy rat-LV snRNA study. Data availability is the whole blocker; the machinery is tissue-agnostic and built. | S |
+| ☐ | **(new, 2026-07-13) Degenerate-block gate in the DE.** `run_pseudobulk_de.R` sets `status="ok"` unconditionally on the success path — it records `median_libsize` / `frac_zero` and never gates on them. KIDNEY's over-split intercalated labels leave two near-empty blocks (`Intercalated cells`, median libsize **51**; `Beta-intercalated cells`, median libsize **10**, 80% zeros) marked `ok` and pooled into the **global IHW/repfdr fit** — the same failure class as the phantom duplicate that forced the `f4cbf12` re-run. Neither is a hotspot, so no headline result rests on them; the exposure is to the shared calibration and is unmeasured. Fix = degeneracy gate **or** merge the over-split reference labels; either changes the 185 count and needs a DE re-run → a deliberate science call. | S–M |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
 
 ### Blocked / out of scope
@@ -96,10 +111,24 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 
 ## Critical path / next moves
 
-Two moves unlock most of what's left:
+**The keystone is no longer the constraint.** Module A (the perturbation engine) and Module B (the GRN) are
+done, and Aim 3b with them — so the old critical path `M0 → A → B/F` is cleared up to the capstone. What
+remains is a single chain:
 
-1. **Module A** (the perturbation engine) — keystone for Aim 2b GRN, Aim 3b, and Module F.
-2. **Module D.0 → D.1** (human genetics) — the clinical translation, and the **lowest-friction high-value start** (public data, zero blockers, Vetr 2024 as a working blueprint).
+1. **Module D.0 → D.1** (human genetics) — now the *only* thing on the critical path, and still the
+   **lowest-friction high-value start**: public data (GTEx v8 / PredictDB / Open Targets / Vetr's ~114-GWAS
+   set), no GPU, no dependency on the fine-tuned model or the perturbation engine, with Vetr 2024 as a
+   working blueprint. Led by the human-genetics co-investigator (Dr. Boran Gao).
+2. **Module F** (the Aim-3 capstone) — once D lands. Two of its three evidence streams (differential GRN +
+   human-space conservation) are already on disk, so the capstone itself is a join and a ranking, roughly a
+   day's work. Its central risk is **circularity** (GeneCompass carries human/mouse regulatory priors), which
+   the independence guard + leakage log exist to control — recruit an outside skeptic to attack it.
 
-The Aim-1 validation trio (just completed) closed a literally-promised gap; the remaining Aim-1 items (fine-tuning
+Off the critical path: **Module C** (CPA dose model — confirmatory, thin-N) and the **hardening** items
+(E.3 Tabula Sapiens atlas backdrop; a second heart reference; the degenerate-block DE gate above).
+
+The Aim-1 validation trio closed a literally-promised gap; the remaining Aim-1 items (fine-tuning
 ablations, per-tier loss, end-to-end Stages 1–7 reproduction) are lower-priority methods depth.
+
+**Detailed handoff specs** for the four remaining items — including what to actually *say* to each
+collaborator — live in `manuscript/wip/` (local-only; see its `README.md`).
