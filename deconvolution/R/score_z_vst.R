@@ -27,11 +27,18 @@ suppressWarnings(suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) stop("usage: score_z_vst.R <stage_dir> <focal_type>")
 sd <- args[1]; focal <- args[2]
-safe <- function(s) gsub("[^A-Za-z0-9]+", "_", s)
+# Shared cell-type -> filename contract. resolve_ct_file() prefers the current name but
+# falls back to the legacy one, so sweep artifacts written before the 2026-07-12 sanitizer
+# fix still load without a rebuild.
+source(file.path(local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+}), "celltype_names.R"))
 
 true <- as.matrix(read.csv(file.path(sd, "mixtures", "true_z_focal.csv"),
                            row.names = 1, check.names = FALSE))
-predf <- file.path(sd, "results", "pred_z", paste0("predz__", safe(focal), ".csv"))
+predf <- resolve_ct_file(file.path(sd, "results", "pred_z"), focal, "predz__", ".csv")
 pred <- as.matrix(read.csv(predf, row.names = 1, check.names = FALSE))
 design <- read.delim(file.path(sd, "mixtures", "sweep_design.tsv"),
                      stringsAsFactors = FALSE)

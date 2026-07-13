@@ -15,6 +15,15 @@ suppressWarnings(suppressPackageStartupMessages({
   library(BayesPrism)
 }))
 
+# Shared cell-type -> filename contract. This script is where the KIDNEY alpha/beta
+# collision destroyed a Z matrix, so the injectivity assert below is load-bearing.
+.script_dir <- local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+})
+source(file.path(.script_dir, "celltype_names.R"))
+
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) stop("usage: extract_z.R <bp_result.rds> <out_dir>")
 rds <- args[1]; out_dir <- args[2]
@@ -34,10 +43,16 @@ writeLines(genes, file.path(zdir, "genes.txt"))
 writeLines(types, file.path(zdir, "types.txt"))
 cat(sprintf("Z dims: %d samples x %d genes x %d types\n", dim(Z)[1], dim(Z)[2], dim(Z)[3]))
 
-safe <- function(s) gsub("[^A-Za-z0-9]+", "_", s)
+# One file per cell type -- so two cell types must never claim the same filename.
+assert_ct_injective(types, sprintf("%s pred_z", basename(out_dir)))
+keep <- sprintf("predz__%s.csv", safe(types))
+purge_stale(zdir, "^predz__.*\\.csv$", keep = keep)
+
 for (t in types) {
   m <- get.exp(bp = bp, state.or.type = "type", cell.name = t)   # sample x gene
   write.csv(m, file.path(zdir, paste0("predz__", safe(t), ".csv")))
   cat(sprintf("  wrote %-28s %d x %d\n", t, nrow(m), ncol(m)))
 }
-cat(sprintf("Wrote pred Z -> %s/\n", zdir))
+write_ct_manifest(file.path(zdir, "celltype_files.tsv"),
+                  basename(out_dir), types, "predz__", ".csv")
+cat(sprintf("Wrote pred Z (%d types) + celltype_files.tsv -> %s/\n", length(types), zdir))

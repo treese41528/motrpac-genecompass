@@ -18,7 +18,13 @@ HOT      <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de/
 OUT      <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de/rin_globin_robustness.tsv")
 META_RDA <- "/depot/reese18/apps/MotrpacRatTraining6moData/data/TRNSCRPT_META.rda"
 
-safe <- function(s) gsub("[^A-Za-z0-9]+", "_", s)
+# Shared cell-type -> filename contract (see deconvolution/R/celltype_names.R).
+source(file.path(local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+}), "celltype_names.R"))
+
 WEEK_NUM <- c("control"=0,"1w"=1,"2w"=2,"4w"=4,"8w"=8); WEEK_LV <- names(WEEK_NUM)
 MIN_SAMPLES_BLOCK <- 12; MIN_GENES <- 50
 

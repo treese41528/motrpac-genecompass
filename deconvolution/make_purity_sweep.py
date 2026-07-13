@@ -55,6 +55,7 @@ import scipy.io as sio
 import scipy.sparse as sp
 
 from build_reference import load_study, clean_cells, export_reference, canonicalize_labels
+from celltype_names import safe, assert_injective, purge_stale   # shared filename contract
 from make_pseudobulk import build_harmonization
 
 
@@ -231,7 +232,8 @@ def main():
 
     genes = list(map(str, pool.var_names))
     zdir = md / "true_z"; zdir.mkdir(exist_ok=True)
-    safe = lambda s: __import__("re").sub(r"[^A-Za-z0-9]+", "_", s)
+    assert_injective(types, "purity-sweep cell types")   # never let two types claim one file
+    purge_stale(zdir, types, "truez__", ".npy")          # and leave no orphan behind
     for t in types:
         np.save(zdir / f"truez__{safe(t)}.npy", z_true[t].astype(np.float64))
     (zdir / "genes.txt").write_text("\n".join(genes) + "\n")

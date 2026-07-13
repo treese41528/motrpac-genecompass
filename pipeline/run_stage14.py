@@ -80,6 +80,15 @@ def sweep_key(t: str) -> str:
 def build_steps(ctx: dict, subset: list) -> list:
     valdir, de_dir = ctx['valdir'], ctx['de_dir']
     want = {sweep_key(t) for t in subset}
+    # A token that matches nothing must be an ERROR, not a silent no-op: the tags come from the
+    # sweep NAME (SWEEP_hippoc_holdout -> "hippoc"), so a plausible-looking "hippocampus" matches
+    # zero sweeps and the run exits 0 having done nothing -- which reads exactly like success.
+    tags = [c['sweep'].replace('SWEEP_', '').replace('_holdout', '') for c in PURITY]
+    unmatched = [w for w in want if not any(w == t or w in t for t in tags)]
+    if unmatched:
+        raise SystemExit(
+            f"--tissues matched no purity sweep: {sorted(unmatched)}\n"
+            f"  known sweeps: {', '.join(sorted(tags))}")
     items = []
     for cfg in PURITY:
         tag = cfg['sweep'].replace('SWEEP_', '').replace('_holdout', '')

@@ -14,6 +14,14 @@ suppressWarnings(suppressMessages({
   library(fgsea); library(msigdbr); library(data.table)
 }))
 
+# Shared cell-type -> filename contract.
+.script_dir <- local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+})
+source(file.path(.script_dir, "celltype_names.R"))
+
 ROOT   <- Sys.getenv("PIPELINE_ROOT", unset = normalizePath("."))
 DE_DIR <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de")
 OUT    <- file.path(DE_DIR, "enrichment"); dir.create(OUT, showWarnings = FALSE)
@@ -42,13 +50,27 @@ cat("loading MSigDB Hallmark + Reactome ...\n"); PATHWAYS <- get_sets()
 cat(sprintf("  %d gene sets\n", length(PATHWAYS)))
 
 # ---- per-block fgsea ----
-block_files <- list.files(DE_DIR, pattern = "^de__.*\\.tsv$",
-                          full.names = TRUE, recursive = TRUE)
-cat(sprintf("blocks: %d\n", length(block_files)))
+# Drive off de_summary.tsv (status == "ok"), NOT a list.files() glob: a glob also picks up
+# orphan de__ files left behind when a tissue is relabelled, and it recovers the cell type
+# from the sanitized FILENAME rather than the real label. Both bit us -- the 2026-07-06 run
+# scored 10 dead CORTEX/SKMVL blocks and reported cell types as "Pyramidal_neurons".
+summ_f <- file.path(DE_DIR, "de_summary.tsv")
+if (!file.exists(summ_f)) stop("de_summary.tsv not found -- run Stage 10 first: ", summ_f)
+blocks <- fread(summ_f)[status == "ok", .(tissue, cell_type)]
+blocks[, file := file.path(DE_DIR, tissue, sprintf("de__%s.tsv", safe(cell_type)))]
+missing <- blocks[!file.exists(file)]
+if (nrow(missing))
+  stop(sprintf("%d block(s) in de_summary have no de__ file (first: %s / %s) -- re-run Stage 10",
+               nrow(missing), missing$tissue[1], missing$cell_type[1]))
+cat(sprintf("blocks: %d (from de_summary.tsv, status == ok)\n", nrow(blocks)))
+purge_stale(OUT, "^gsea__.*\\.tsv$",
+            keep = sprintf("gsea__%s__%s.tsv", blocks$tissue, safe(blocks$cell_type)))
+
 all_rows <- list()
-for (bf in block_files) {
-  tissue <- basename(dirname(bf))
-  ct <- sub("^de__", "", sub("\\.tsv$", "", basename(bf)))
+for (i in seq_len(nrow(blocks))) {
+  tissue <- blocks$tissue[i]
+  ct     <- blocks$cell_type[i]          # the REAL label, not the sanitized filename stem
+  bf     <- blocks$file[i]
   d <- fread(bf)
   if (!all(c("gene","slope_week","P_dose_comb") %in% names(d))) next
   d <- d[is.finite(slope_week) & is.finite(P_dose_comb)]
@@ -66,7 +88,7 @@ for (bf in block_files) {
   res <- as.data.table(res)[order(padj)]
   res[, `:=`(tissue = tissue, cell_type = ct)]
   res[, leadingEdge := sapply(leadingEdge, function(x) paste(head(x, 20), collapse = ","))]
-  fwrite(res, file.path(OUT, sprintf("gsea__%s__%s.tsv", tissue, gsub("[^A-Za-z0-9]+","_",ct))), sep = "\t")
+  fwrite(res, file.path(OUT, sprintf("gsea__%s__%s.tsv", tissue, safe(ct))), sep = "\t")
   all_rows[[length(all_rows)+1]] <- res[padj < 0.05,
       .(tissue, cell_type, pathway, NES, pval, padj, size)]
   cat(sprintf("  %-7s %-28s ranks=%d  sig(padj<.05)=%d\n", tissue, ct, length(ranks),
