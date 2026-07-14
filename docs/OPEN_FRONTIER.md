@@ -12,7 +12,7 @@ dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PL
 (rat in-silico perturbation engine) is built and its pre-registration is **CLOSED — all 4 criteria PASS**
 (`b162409`); Module A.5 (rat TF list) shipped with it (`bca3221`). Module B (model-driven differential GRN)
 is built, including the dose-pooling refinement (`ffbebff`, `fb07c3c`). **Aim 3b** (perturbation on the
-already-transferred human cells) + human-space GRN conservation, pathway enrichment, DE robustness, and the
+already-transferred human cells) + the human-space GRN self-consistency score, pathway enrichment, DE robustness, and the
 per-tissue purity-sweep extension all deployed (`bbf33de`). These are now orchestrated as **Stage 13**
 (mechanism) and **Stage 14** (hardening) (`bb47beb`). Finally, a non-injective cell-type filename sanitizer
 was root-caused and fixed (`f4cbf12`) — it had destroyed a BayesPrism Z matrix; DE, enrichment, and the
@@ -42,7 +42,7 @@ still show the pre-lung-fix 178/18, pending re-execution (`notebooks/RERUN_EDITS
 | **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); **185 blocks, 21 exercise hotspots** (post-lung-fix; was 178/18); pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
 | **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **19/21 hotspots survive** (was 16/18; PLS-1 + Augur agree) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
 | **2b** | **Rat in-silico perturbation engine (the keystone)** — pre-registration CLOSED, all 4 criteria PASS; + the model-driven **differential GRN** (dose-pooled, bootstrapped). Independently re-surfaced **Nr4a1**, the regulator the proposal itself predicted. | commits `bca3221`, `b162409`, `ffbebff`, `fb07c3c`; Stage 13 |
-| **3b** | **Perturbation on the transferred human cells** — human-space GRN + rat↔human regulatory conservation | commit `bbf33de`; Stage 13 |
+| **3b** | **Perturbation on the transferred human cells** — human-space GRN + a rat↔human **self-consistency** score. ⚠️ NOT cross-species biological conservation (same cells, 91.1% identical tokens) — see the Aim-3b row below. | commit `bbf33de`; Stage 13 |
 | **hardening** | Purity sweeps (8/10 meet the Chu-2022 bar), composition-confound on all 185 blocks, RIN/globin robustness (18/21 hotspots ROBUST) | commit `bbf33de`; Stage 14 |
 | **hardening** | Reference integrity (QC gate + manifest + from-scratch driver; liver-Visium + engineered-lung fixed); full omnideconv panel + mRNA-bias analysis | PR `deconv-reference-integrity`; `REFERENCE_QC.md`, `OMNIDECONV_RESULTS.md` |
 
@@ -75,9 +75,9 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 |---|---|---|---|---|
 | ✅ | **Module A — rat in-silico perturbation engine (KEYSTONE)** — DONE. Pre-registration **CLOSED, all 4 criteria PASS** (Mef2c 98th pctile; self-consistency ρ=0.70; target enrichment p=2e-7). Use the per-gene **target** shift, not the near-noise cell shift. | 2b/3b | — | — |
 | ✅ | Module A.5 — rat TF list (AnimalTFDB → ENSRNOG ∩ expressed) — DONE (shipped with Module A). | 2b/3b | — | — |
-| ✅ | Module B — model-driven differential GRN (TF-deletion → trained-vs-control network) — DONE, incl. dose-pooling + bootstrap refinement. Top hubs = Mef2c/Myf6/Epas1/Tfeb/**Nr4a1**/Nr1d2 (muscle/exercise regulators). | 2b | — | — |
+| ✅ | Module B — model-driven differential GRN — DONE, and **REBUILT UNCAPPED 2026-07-13** (`grn_uncapped/`: 3,478,564 edges / 398,586 reproducible / 389 TFs; `delta` bit-identical to the old capped tables → strict superset). Top hubs = Tfeb/**Mef2c**/Epas1/Myf6/**Nr4a1** — but **only under the corrected statistic `sum\|Δ\|`**; ranking by *count* of `\|z\|≥2` edges inverts the biology (anchors 33rd pctile, Nr4a1 17th) because `z` diverges where the model is numerically inert. See [[project_grn_hub_statistic]]. | 2b | — | — |
 | ☐ | Module C — CPA dose model (ordinal week; compare to DE slope) | 2c | L (GPU) | none (n≈50/cell-type thin) |
-| ✅ | Aim 3b — perturbation on the already-transferred human cells — DONE (human-space GRN + rat↔human conservation). | 3b | — | — |
+| ✅ | Aim 3b — perturbation on the transferred human cells — DONE, rebuilt uncapped. **⚠️ RE-SCOPED 2026-07-13: this is NOT cross-species biological conservation.** The transfer re-expresses the *same* pseudo-cells (identical 700 cells, same order) and **91.1% of orthologous rat genes carry the identical GeneCompass token as their human ortholog** — so the human-space perturbation deletes the same token from a near-identical sequence in the same model. No human measurement enters. It is a **model self-consistency** score (median ρ 0.451, unbiased; the published 0.507 was selection-inflated). **The capstone therefore has TWO independent evidence legs, not three.** | 3b | — | — |
 | ✅ | Stage orchestrators — realized as **Stage 13** (mechanism: perturb→GRN→conservation→enrichment) and **Stage 14** (hardening). *There is no `run_stage11.py`; the build plan's "Stage 11" chain became Stage 13.* | — | — | — |
 
 ### Aim 3c — human genetics / disease translation (highest-value *startable now*)
@@ -99,6 +99,7 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 | ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): **18 of 21 hotspots ROBUST**; the 3 that need a caveat are reported, not hidden. Composition (θ) confound run on all 185 blocks: 145 QUIET / 30 PASS_EXPRESSION / 10 FLAG_COMPOSITION. | — |
 | ◐ | **E.3** Tabula Sapiens human-atlas backdrop (external identity check the sex-gate doesn't provide; needs the atlas) | S |
 | ☐ | **Second heart reference** — heart CM is the one cardinal cell type with *holdout-only* validation (`GSE280111` LV, CM r≈0.995). Needs an independent native adult healthy rat-LV snRNA study. Data availability is the whole blocker; the machinery is tissue-agnostic and built. | S |
+| ☐ | **(new, 2026-07-13) A valid null for the GRN's `|z|` statistic.** `|z|≥2` is a *ranking* device, **not** FDR-calibrated, and a permutation null is **impossible** for this design — `label` is a deterministic function of `week` (week 0 ⟺ control), so no shuffle can break the label while preserving dose (`deconvolution/GRN_NULL_WHY_ABANDONED.md`). Any FDR statement about GRN edges is currently unsupported. A valid null needs a non-dose-confounded contrast. | M |
 | ☐ | **(new, 2026-07-13) Degenerate-block gate in the DE.** `run_pseudobulk_de.R` sets `status="ok"` unconditionally on the success path — it records `median_libsize` / `frac_zero` and never gates on them. KIDNEY's over-split intercalated labels leave two near-empty blocks (`Intercalated cells`, median libsize **51**; `Beta-intercalated cells`, median libsize **10**, 80% zeros) marked `ok` and pooled into the **global IHW/repfdr fit** — the same failure class as the phantom duplicate that forced the `f4cbf12` re-run. Neither is a hotspot, so no headline result rests on them; the exposure is to the shared calibration and is unmeasured. Fix = degeneracy gate **or** merge the over-split reference labels; either changes the 185 count and needs a DE re-run → a deliberate science call. | S–M |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
 
