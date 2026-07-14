@@ -40,9 +40,7 @@ import numpy as np
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve().parents[1])
 
 
-def safe(s: str) -> str:
-    """Mirror the R safe(): gsub('[^A-Za-z0-9]+','_')."""
-    return re.sub(r'[^A-Za-z0-9]+', '_', s)
+from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 
 
 def binom_upper_tail(m: int, k: int, p: float) -> float:

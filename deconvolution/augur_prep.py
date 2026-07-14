@@ -106,10 +106,11 @@ def main():
         pcs = PCA(n_components=ncomp, random_state=0).fit_transform(Xz)
 
         # ---- (A) export canonical-Augur inputs (embedding + PCA-50 + meta; all small) ----
-        # cell_id (= sanitized pseudocell_id) can COLLIDE across cell-type subtypes whose names
-        # sanitized to the same string (e.g. kidney alpha/beta intercalated cells -> "_intercalated_cells"),
-        # and R rejects duplicate row names -> index by a guaranteed-unique positional rowid instead;
-        # keep cell_id as an informational column.
+        # Index by a guaranteed-unique positional rowid, not cell_id: R rejects duplicate row
+        # names, and cell_id derives from a cell-type name. The sanitizer that made those names
+        # collide (kidney alpha/beta intercalated cells -> "_intercalated_cells") is fixed in
+        # deconvolution/celltype_names.py, but keep the rowid guard -- it costs nothing and does
+        # not depend on the naming contract holding.
         od = os.path.join(args.out, tis); os.makedirs(od, exist_ok=True)
         rowid = pd.Index([f"c{i}" for i in range(len(cells))], name="rowid")
         pd.DataFrame(emb[keep], index=rowid).to_csv(os.path.join(od, "embed.tsv"), sep="\t")

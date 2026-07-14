@@ -53,6 +53,14 @@ suppressWarnings(suppressPackageStartupMessages({
   library(limma); library(edgeR); library(IHW); library(repfdr)
 }))
 
+# Shared cell-type -> filename contract (safe / assert_ct_injective / purge_stale).
+.script_dir <- local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+})
+source(file.path(.script_dir, "celltype_names.R"))
+
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 5)
   stop("usage: run_pseudobulk_de.R <results_root> <bulk_root> <pheno_tsv> <hotspots_tsv> <out_dir> [TISSUE ...]")
@@ -60,7 +68,6 @@ results_root <- args[1]; bulk_root <- args[2]; pheno_tsv <- args[3]
 hotspots_tsv <- args[4]; out_dir <- args[5]
 tissue_filter <- if (length(args) >= 6) toupper(args[6:length(args)]) else NULL
 
-safe      <- function(s) gsub("[^A-Za-z0-9]+", "_", s)
 WEEK_NUM  <- c("control" = 0, "1w" = 1, "2w" = 2, "4w" = 4, "8w" = 8)
 WEEK_LV   <- c("control", "1w", "2w", "4w", "8w")
 TP        <- c("1w", "2w", "4w", "8w")
@@ -130,7 +137,8 @@ G_zM <- c(); G_zF <- c(); G_zkey <- c()                # global repfdr inputs (8
 
 for (TIS in tissues) {
   pz    <- file.path(results_root, TIS, "pred_z")
-  types <- trimws(readLines(file.path(pz, "types.txt"))); types <- types[types != ""]
+  types <- trimws(readLines(file.path(pz, "types.txt"), encoding = "UTF-8"))
+  types <- types[types != ""]
   via   <- trimws(readLines(file.path(bulk_root, TIS, "bulk_samples.tsv"))); via <- via[via != ""]
   n     <- length(via)
   meta  <- data.frame(mix = paste0("mix", seq_len(n)), viallabel = via,
@@ -139,6 +147,11 @@ for (TIS in tissues) {
   fracs <- if (file.exists(frac_file)) read.csv(frac_file, row.names = 1, check.names = FALSE) else NULL
   out_tis <- file.path(out_dir, TIS); dir.create(out_tis, showWarnings = FALSE, recursive = TRUE)
   cat(sprintf("\n[%s] %d samples x %d cell types\n", TIS, n, length(types)))
+
+  # Two cell types must never claim the same de__ filename (see celltype_names.R), and a
+  # relabelled tissue must not leave orphan blocks behind for a downstream glob to ingest.
+  assert_ct_injective(types, TIS)
+  purge_stale(out_tis, "^de__.*\\.tsv$", keep = sprintf("de__%s.tsv", safe(types)))
 
   for (ct in types) {
     csv    <- file.path(pz, paste0("predz__", safe(ct), ".csv"))
@@ -375,6 +388,17 @@ summ <- summ[order(-summ$is_hotspot,
 write.table(summ, file.path(out_dir, "de_summary.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 write.table(summ[summ$is_hotspot %in% TRUE, ], file.path(out_dir, "de_hotspots.tsv"),
             sep = "\t", quote = FALSE, row.names = FALSE)
+
+# cell_type -> file manifest for the ok blocks, so consumers join on a table instead of
+# re-deriving the filename (which is how the collision went unnoticed for three weeks).
+ok <- summ[summ$status == "ok", ]
+write.table(data.frame(tissue    = ok$tissue,
+                       cell_type = ok$cell_type,
+                       file      = file.path(ok$tissue, sprintf("de__%s.tsv", safe(ok$cell_type))),
+                       stringsAsFactors = FALSE),
+            file.path(out_dir, "celltype_files.tsv"), sep = "\t",
+            quote = FALSE, row.names = FALSE)
+
 # provenance sidecar
 writeLines(c(
   sprintf("multiple_testing\t%s", ihw_used),

@@ -24,8 +24,9 @@ import pandas as pd
 from scipy.stats import pearsonr, spearmanr
 
 
-def safe(s):
-    return re.sub(r"[^A-Za-z0-9]+", "_", s)
+# Shared filename contract. resolve() prefers the current name but falls back to the
+# legacy one, so sweep artifacts written before the 2026-07-12 sanitizer fix still load.
+from celltype_names import resolve  # noqa: E402
 
 
 def corr(a, b):
@@ -61,13 +62,13 @@ def main():
           f"(true {len(tgenes)}, pred {len(pgenes)}); types scored: {ttypes}")
 
     # true per-type Z (n_mix x n_common); mixture totals for the per-sample filter
-    true_z = {t: np.load(zt / f"truez__{safe(t)}.npy")[:, ti] for t in ttypes}
+    true_z = {t: np.load(resolve(zt, t, "truez__", ".npy"))[:, ti] for t in ttypes}
     mix_total = np.sum([true_z[t].sum(1) for t in ttypes], axis=0)  # per mixture
 
     rows = []
     for t in ttypes:
         true_m = true_z[t]
-        pred = pd.read_csv(zp / f"predz__{safe(t)}.csv", index_col=0)
+        pred = pd.read_csv(resolve(zp, t, "predz__", ".csv"), index_col=0)
         pred = pred.reindex(columns=common).fillna(0.0).to_numpy()  # n_mix x n_common
 
         agg_sp, agg_lp = corr(true_m.sum(0), pred.sum(0))           # aggregated GEP

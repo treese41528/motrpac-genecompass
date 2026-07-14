@@ -26,7 +26,7 @@ THR_LFC, ALPHA, MINNZ = 0.25, 0.05, 25
 PAR = {'SKMGN': ['Skeletal muscle cells'],
        'SKMVL': ['Skeletal muscle cells', 'Skeletal muscle fibers'],
        'HEART': ['Cardiomyocytes'], 'LIVER': ['Hepatocytes']}
-def safe(s): return re.sub(r'[^A-Za-z0-9]+', '_', s)
+from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 ph = pd.read_csv(PH, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')
 summ = pd.read_csv(os.path.join(DE, 'de_summary.tsv'), sep='\t')
 

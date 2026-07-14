@@ -36,8 +36,7 @@ from build_reference import load_study, clean_cells
 from make_pseudobulk import build_harmonization, generate_mixtures
 
 
-def safe(s):
-    return re.sub(r"[^A-Za-z0-9]+", "_", s)
+from celltype_names import safe, assert_injective, purge_stale  # noqa: E402  (shared filename contract)
 
 
 def main():
@@ -98,6 +97,8 @@ def main():
     genes = [l.strip() for l in open(mixd / "pseudobulk_genes.tsv")]
     zdir = mixd / "true_z"
     zdir.mkdir(parents=True, exist_ok=True)
+    assert_injective(types, "true-Z cell types")   # never let two types claim one file
+    purge_stale(zdir, types, "truez__", ".npy")    # and leave no orphan behind
     for t in types:
         np.save(zdir / f"truez__{safe(t)}.npy", z_true[t].astype(np.float64))
     (zdir / "genes.txt").write_text("\n".join(genes) + "\n")
