@@ -69,8 +69,16 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--bootstrap", type=int, default=30)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--top-edges", type=int, default=40)
+    ap.add_argument("--top-edges", type=int, default=0,
+                    help="candidate edges per TF, by |point delta|. 0 = NO CAP (default); must match "
+                         "build_grn_pooled.py or the rat/human target lists are not comparable.")
     ap.add_argument("--device", default="cuda")
+    ap.add_argument("--permute-seed", type=int, default=-1,
+                    help="SEX-STRATIFIED PERMUTATION NULL, identical logic and seed semantics to "
+                         "build_grn_pooled.py. Because the human pseudo-cells are the SAME cells in the same "
+                         "order (transfer_to_human.py re-expresses them), the same seed yields the SAME arm "
+                         "split in both spaces -- which is exactly what is needed to ask whether the rat<->human "
+                         "conservation score survives when there is no real exercise contrast.")
     ap.add_argument("--max-tfs", type=int, default=None)
     args = ap.parse_args()
 
@@ -104,12 +112,31 @@ def main():
     if idc is None or idt is None:
         sys.exit(f"ERROR: empty arm(s) for cell type {args.cell_type!r} in {args.dataset}")
     nC, nT = idc.shape[0], idt.shape[0]
+
+    if args.permute_seed >= 0:
+        import sys as _sys
+        _sys.path.insert(0, str(_ROOT / "finetune" / "genecompass"))
+        from build_grn_pooled import load_arm_sex
+        sexc, sext = load_arm_sex(args.dataset, args.meta, args.cell_type)
+        prng = np.random.default_rng(args.permute_seed)
+        all_id = torch.cat([idc, idt], dim=0); all_vl = torch.cat([vlc, vlt], dim=0)
+        all_sx = np.concatenate([sexc, sext])
+        n_ctrl_by_sex = {s: int((sexc == s).sum()) for s in np.unique(all_sx)}
+        ci, ti = [], []
+        for s in np.unique(all_sx):
+            pool = np.where(all_sx == s)[0]; prng.shuffle(pool)
+            k = n_ctrl_by_sex.get(s, 0); ci.extend(pool[:k]); ti.extend(pool[k:])
+        ci, ti = np.array(ci), np.array(ti)
+        idc, vlc = all_id[ci], all_vl[ci]
+        idt, vlt = all_id[ti], all_vl[ti]
+        print(f"  *** SEX-STRATIFIED PERMUTATION NULL (seed={args.permute_seed}) *** {n_ctrl_by_sex}", flush=True)
+
     print(f"  control={nC} trained={nT}; bootstrap={args.bootstrap}", flush=True)
     model = pc.load_model(args.model_dir, args.device)
     rng = np.random.default_rng(args.seed)
 
     pbc, pbt = pseudobulk(idc, vlc), pseudobulk(idt, vlt)
-    point, cand, expressed = {}, {}, []
+    point, cand, cidx, expressed = {}, {}, {}, []
     for g in tfs:
         d = diff(perturb_profile_human(model, *pbc, tf_htok[g], args.device, tok2ensg),
                  perturb_profile_human(model, *pbt, tf_htok[g], args.device, tok2ensg))
@@ -117,27 +144,46 @@ def main():
             continue
         expressed.append(g)
         point[g] = d
-        cand[g] = [k for k, _ in sorted(d.items(), key=lambda x: -abs(x[1]))[:args.top_edges]]
-    print(f"expressed TFs (human ortholog present in profile): {len(expressed)}; bootstrapping...", flush=True)
+        ks = sorted(d, key=lambda k: -abs(d[k]))
+        if args.top_edges and args.top_edges > 0:      # 0 = no cap (default); see build_grn_pooled.py
+            ks = ks[:args.top_edges]
+        cand[g] = ks
+        cidx[g] = {k: i for i, k in enumerate(ks)}
+    ncand = sum(len(v) for v in cand.values())
+    print(f"expressed TFs (human ortholog present in profile): {len(expressed)}; candidate edges: {ncand:,} "
+          f"({'UNCAPPED' if not args.top_edges else f'capped at {args.top_edges}/TF'}); bootstrapping...",
+          flush=True)
 
-    boot = defaultdict(lambda: defaultdict(list))
+    # resample WHOLE CELLS: one index vector per arm, used for both ids and values.
+    bsum = {g: np.zeros(len(cand[g])) for g in expressed}
+    bsq = {g: np.zeros(len(cand[g])) for g in expressed}
     for b in range(args.bootstrap):
-        pbc_b = pseudobulk(idc[rng.integers(0, nC, nC)], vlc[rng.integers(0, nC, nC)])
-        pbt_b = pseudobulk(idt[rng.integers(0, nT, nT)], vlt[rng.integers(0, nT, nT)])
+        bi = rng.integers(0, nC, nC)
+        bt = rng.integers(0, nT, nT)
+        pbc_b = pseudobulk(idc[bi], vlc[bi])
+        pbt_b = pseudobulk(idt[bt], vlt[bt])
         for g in expressed:
             d = diff(perturb_profile_human(model, *pbc_b, tf_htok[g], args.device, tok2ensg),
                      perturb_profile_human(model, *pbt_b, tf_htok[g], args.device, tok2ensg))
-            for k in cand[g]:
-                boot[g][k].append(d.get(k, 0.0))
+            ci = cidx[g]
+            vec = np.zeros(len(cand[g]))
+            for k, v in d.items():
+                p = ci.get(k)
+                if p is not None:
+                    vec[p] = v
+            bsum[g] += vec
+            bsq[g] += vec * vec
         if (b + 1) % 10 == 0:
             print(f"  bootstrap {b + 1}/{args.bootstrap}", flush=True)
 
+    B = float(args.bootstrap)
     edges = []
     for g in expressed:
-        for k in cand[g]:
+        mean = bsum[g] / B
+        sds = np.sqrt(np.maximum(bsq[g] / B - mean * mean, 0.0))
+        for i, k in enumerate(cand[g]):
             d = point[g][k]
-            bd = boot[g][k]
-            sd = float(np.std(bd)) if len(bd) > 1 else 0.0
+            sd = float(sds[i])
             z = d / sd if sd > 0 else 0.0
             edges.append((g, sym.get(g, ""), r2h.get(g, ""), k, round(d, 6), round(sd, 6), round(z, 2)))
     edges.sort(key=lambda e: -abs(e[6]))

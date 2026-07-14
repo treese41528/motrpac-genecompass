@@ -82,6 +82,28 @@ def diff(tc, tt):
     return {k: tt.get(k, 0.0) - tc.get(k, 0.0) for k in set(tc) | set(tt)}
 
 
+def load_arm_sex(dataset_path, meta_path, cell_type):
+    """Per-cell sex for the control and trained arms, in the SAME order load_arms() emits them.
+
+    Mirrors load_arms exactly (iterate the dataset in order, keep rows of this cell type whose meta label is
+    'control'/'trained'), so index i of sex_ctrl corresponds to index i of ids_ctrl. Used only by the
+    sex-stratified permutation null.
+    """
+    from datasets import load_from_disk
+    ds = load_from_disk(dataset_path)
+    meta = {}
+    for r in csv.DictReader(open(meta_path), delimiter="\t"):
+        meta[(r["sample"], r["cell_type"])] = (r.get("label", "").strip().lower(), r.get("sex", "").strip().lower())
+    arms = {"control": [], "trained": []}
+    for r in ds:
+        if r["cell_type"] != cell_type:
+            continue
+        lab, sx = meta.get((r["sample"], r["cell_type"]), ("", ""))
+        if lab in arms:
+            arms[lab].append(sx)
+    return np.array(arms["control"]), np.array(arms["trained"])
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model-dir", required=True)
@@ -92,9 +114,21 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--bootstrap", type=int, default=30)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--top-edges", type=int, default=40, help="candidate edges per TF (by |point delta|)")
+    ap.add_argument("--top-edges", type=int, default=0,
+                    help="candidate edges per TF, by |point delta|. 0 = NO CAP (keep every surviving "
+                         "target; the default). A cap selects edges on the same statistic that z then "
+                         "tests (winner's curse) and makes 'hub strength = #confident edges' meaningless, "
+                         "since every TF would carry exactly `cap` candidates. Costs nothing to disable: "
+                         "perturb_profile already computes every target's shift on every bootstrap pass.")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--max-tfs", type=int, default=None)
+    ap.add_argument("--permute-seed", type=int, default=-1,
+                    help="PERMUTATION NULL. >=0 shuffles the trained/control labels among the cell type's "
+                         "pseudo-cells (preserving the arm SIZES) before anything else, so there is no real "
+                         "exercise contrast left. Everything downstream is identical. The resulting |z| "
+                         "distribution is the null, and is what calibrates the |z|>=2 'confident' threshold: "
+                         "empirical FDR(t) = P_null(|z|>=t) / P_observed(|z|>=t). Without this, |z|>=2 is a "
+                         "relative ranking dressed up as a significance claim.")
     args = ap.parse_args()
 
     tok = pc.load_token_dict()
@@ -110,13 +144,42 @@ def main():
 
     (idc, vlc), (idt, vlt) = load_arms(args.dataset, args.meta, args.cell_type)
     nC, nT = idc.shape[0], idt.shape[0]
+
+    if args.permute_seed >= 0:
+        # NULL: shuffle arm membership, keeping arm sizes fixed -> destroys the exercise contrast and nothing
+        # else, so the resulting |z| distribution is the null.
+        #
+        # STRATIFIED BY SEX, and this is NOT optional. The real arms are exactly sex-balanced (e.g. 5M/5F
+        # control vs 20M/20F trained), and SEX is the DOMINANT axis in this data. A *free* permutation does
+        # not preserve that balance -- one draw can hand the control arm 8 males -- which manufactures a
+        # spurious arm difference driven by sex rather than exercise, inflating the null tail and making the
+        # FDR estimate meaningless (conservative, and measuring the wrong contrast). Permuting WITHIN each
+        # sex stratum holds sex fixed and isolates the exercise contrast, which is what we want to null out.
+        sexc, sext = load_arm_sex(args.dataset, args.meta, args.cell_type)
+        prng = np.random.default_rng(args.permute_seed)
+        all_id = torch.cat([idc, idt], dim=0)
+        all_vl = torch.cat([vlc, vlt], dim=0)
+        all_sx = np.concatenate([sexc, sext])
+        n_ctrl_by_sex = {s: int((sexc == s).sum()) for s in np.unique(all_sx)}
+        ctrl_idx, trn_idx = [], []
+        for s in np.unique(all_sx):
+            pool = np.where(all_sx == s)[0]
+            prng.shuffle(pool)
+            k = n_ctrl_by_sex.get(s, 0)
+            ctrl_idx.extend(pool[:k]); trn_idx.extend(pool[k:])
+        ctrl_idx, trn_idx = np.array(ctrl_idx), np.array(trn_idx)
+        idc, vlc = all_id[ctrl_idx], all_vl[ctrl_idx]
+        idt, vlt = all_id[trn_idx], all_vl[trn_idx]
+        print(f"[{args.cell_type}] *** SEX-STRATIFIED PERMUTATION NULL (seed={args.permute_seed}) *** "
+              f"per-sex control counts preserved: {n_ctrl_by_sex}", flush=True)
+
     print(f"[{args.cell_type}] control={nC} trained={nT}; TFs={len(tfs)}; bootstrap={args.bootstrap}", flush=True)
     model = pc.load_model(args.model_dir, args.device)
     rng = np.random.default_rng(args.seed)
 
     # point estimate on the full-arm pseudobulks
     pbc, pbt = pseudobulk(idc, vlc), pseudobulk(idt, vlt)
-    point, cand = {}, {}
+    point, cand, cidx = {}, {}, {}
     expressed = []
     for g in tfs:
         d = diff(perturb_profile(model, *pbc, tok[g], args.device, invert),
@@ -125,28 +188,49 @@ def main():
             continue
         expressed.append(g)
         point[g] = d
-        cand[g] = [k for k, _ in sorted(d.items(), key=lambda x: -abs(x[1]))[:args.top_edges]]
-    print(f"expressed TFs: {len(expressed)}; bootstrapping...", flush=True)
+        ks = sorted(d, key=lambda k: -abs(d[k]))
+        if args.top_edges and args.top_edges > 0:      # 0 = no cap (default)
+            ks = ks[:args.top_edges]
+        cand[g] = ks
+        cidx[g] = {k: i for i, k in enumerate(ks)}
+    ncand = sum(len(v) for v in cand.values())
+    print(f"expressed TFs: {len(expressed)}; candidate edges: {ncand:,} "
+          f"({'UNCAPPED' if not args.top_edges else f'capped at {args.top_edges}/TF'}); bootstrapping...",
+          flush=True)
 
-    # bootstrap: resample each arm, re-pseudobulk once, perturb all expressed TFs, read candidate deltas
-    boot = defaultdict(lambda: defaultdict(list))
+    # bootstrap: resample each arm (WHOLE CELLS -- one index vector per arm, used for BOTH ids and values;
+    # drawing ids and values independently would pair cell i's genes with cell j's expression), re-pseudobulk,
+    # perturb every expressed TF, accumulate running sum/sum-of-squares so memory does not scale with B.
+    bsum = {g: np.zeros(len(cand[g])) for g in expressed}
+    bsq = {g: np.zeros(len(cand[g])) for g in expressed}
     for b in range(args.bootstrap):
-        pbc_b = pseudobulk(idc[rng.integers(0, nC, nC)], vlc[rng.integers(0, nC, nC)])
-        pbt_b = pseudobulk(idt[rng.integers(0, nT, nT)], vlt[rng.integers(0, nT, nT)])
+        bi = rng.integers(0, nC, nC)                   # one draw per arm -> resamples CELLS, not id/val pairs
+        bt = rng.integers(0, nT, nT)
+        pbc_b = pseudobulk(idc[bi], vlc[bi])
+        pbt_b = pseudobulk(idt[bt], vlt[bt])
         for g in expressed:
             d = diff(perturb_profile(model, *pbc_b, tok[g], args.device, invert),
                      perturb_profile(model, *pbt_b, tok[g], args.device, invert))
-            for k in cand[g]:
-                boot[g][k].append(d.get(k, 0.0))
+            ci = cidx[g]
+            vec = np.zeros(len(cand[g]))
+            for k, v in d.items():
+                p = ci.get(k)
+                if p is not None:
+                    vec[p] = v
+            bsum[g] += vec
+            bsq[g] += vec * vec
         if (b + 1) % 10 == 0:
             print(f"  bootstrap {b + 1}/{args.bootstrap}", flush=True)
 
+    B = float(args.bootstrap)
     edges = []
     for g in expressed:
-        for k in cand[g]:
+        mean = bsum[g] / B
+        var = np.maximum(bsq[g] / B - mean * mean, 0.0)   # population SD, matches np.std(ddof=0)
+        sds = np.sqrt(var)
+        for i, k in enumerate(cand[g]):
             d = point[g][k]
-            bd = boot[g][k]
-            sd = float(np.std(bd)) if len(bd) > 1 else 0.0
+            sd = float(sds[i])
             z = d / sd if sd > 0 else 0.0
             edges.append((g, sym.get(g, ""), k, sym.get(k, ""), round(d, 6), round(sd, 6), round(z, 2)))
     edges.sort(key=lambda e: -abs(e[6]))
