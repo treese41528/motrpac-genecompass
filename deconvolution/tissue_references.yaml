@@ -374,16 +374,16 @@ HIPPOC:
     63.6% debris "Intermediate monocytes" / 0.2% neurons; GSE295314 gives 73.9% excitatory neurons / 0% debris.
     Native non-transgenic ventral HPC. NOTE: 278k-cell reference needs ~500G RAM to deconvolve. Watch microglia (~19%).
 
-# ============================ NEEDS-ONLINE-DATA (download/ingest first) ============================
+# ============================ BUILT 2026-07-16 (staged OMIX767, paper-panel annotation) ==============
 TESTES:
-  status: needs-online-data
+  status: needs-build                    # reference BUILT; not yet deconvolved (Stage 8). run_deconv_all picks it up.
   reference_dir: data/deconvolution/references_v3/TESTES_OMIX767
   study: OMIX767
   tissue: testis
   organism: Rattus norvegicus
-  data_present: false                    # staged 10x mtx exists but NOT ingested into the corpus pipeline
   staged_path: data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices
   sample_ids: [OMIX767_sampleC, OMIX767_sampleE7W]   # pool C + E7W = normal-testosterone arms (Geyu)
+  min_state_cells: 20
   label_scheme: none
   assay: scRNA
   expect:
@@ -392,9 +392,21 @@ TESTES:
     qc_dropped: []
     organism: Rattus norvegicus
   build: >
-    # 2-phase: (1) ingest OMIX767 C+E7W mtx->h5ad + QC/annotate + append inventory rows;
-    # (2) python deconvolution/build_reference.py --study OMIX767 --tissue testis
-    #        --sample-ids OMIX767_sampleC,OMIX767_sampleE7W --out data/deconvolution/references_v3/TESTES_OMIX767
+    # 3-phase ingest (OMIX767 is external NGDC 10x, not GEO):
+    # (1) python deconvolution/ingest_omix767_testes.py         # mtx->qc h5ads (C 2155 + E7W 3693) + inventory rows
+    # (2) python deconvolution/annotate_omix767_testes.py       # PAPER-PANEL per-cell annotation (see below)
+    # (3) python deconvolution/build_reference.py --study OMIX767 --tissue testis
+    #        --sample-ids OMIX767_sampleC,OMIX767_sampleE7W --min-state-cells 20
+    #        --out data/deconvolution/references_v3/TESTES_OMIX767
+  notes: >
+    Generic PanglaoDB/ScType panels lack the spermatogenesis stages -> collapse the germ lineage to one
+    "Germ cells" bucket. FIX: annotate with the SOURCE PAPER's own scheme (Guan et al. Sci Data 2022;
+    OMIX767-20-02.xlsx "DEG list for 7 cell types" + rat-validated markers Dazl/Sohlh2/Elavl3, NOT the
+    mouse Stra8/Zbtb16 the paper says fail in rat), scored PER CELL with a marker-consistency gate on the
+    sparse somatics. Built 6 types: full germ trajectory (Spermatogonia/Spermatocytes/Round-Elongating-
+    Condensed spermatids) + Sertoli (42). Leydig/immune/endothelial are genuinely too thin (<20 cells/state)
+    and were dropped -> germ-stage resolution is trustworthy; absolute SOMATIC fractions are NOT
+    (differential only). GSE268104 snRNA is the alternative if somatic fractions matter.
   notes: Only rat testis scRNA; C+E7W = 5,850 cells (Geyu). Heavy ambient -> differential. Ingestion required.
 
 SPLEEN:
