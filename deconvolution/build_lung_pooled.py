@@ -3,29 +3,30 @@
 
 Replaces the engineered/in-vitro GSE178405 lung reference (cell isolates / engineered-d7 /
 tri-culture / P7-developing -- the root cause of lung being the weakest deconv tissue) with a
-native reference pooled from the HEALTHY control arms of three independent adult rat lung
-scRNA studies (all already in-corpus + consensus-annotated):
+native reference pooled from the HEALTHY control arms of adult rat lung scRNA studies
+(all already in-corpus + consensus-annotated):
     GSE273062  VeNx (vehicle+normoxia) controls  -> sample0, sample2   (2)
     GSE252844  C3 control (blast-injury study)    -> sample0           (1)
-    GSE242310  NOX (normoxia) control             -> sample1           (1)
-= 4 healthy native adult lung samples. (GSE247625's 2 healthy are deferred -- mouse-mm10 aligned,
-needs re-alignment.) Reuses build_reference machinery: per-study load_study (consensus labels via
-barcode->leiden->consensus_label), cross-study OUTER gene join (studies differ in depth), the
-'lung' label-scheme (merge Club/Clara/ciliated/NK synonyms; keep immune resolved), clean_cells,
-export_reference. Run on a compute node (loads h5ads).
+= 3 healthy native adult lung samples.
+DROPPED 2026-07-15 (StudyDescriptions review): GSE242310 -- BOTH its arms (NOX/HOX) are P1-P10 NEONATES
+(a rule-6 developmental violation the reference_qc DEVEL check only WARNs on, so it slipped through). The
+prior build wrongly included GSE242310_sample1 as a "normoxia control"; it is a P10 neonate. (GSE247625's
+2 healthy adults are deferred -- mouse-mm10 aligned, needs re-alignment.) Reuses build_reference machinery:
+per-study load_study (consensus labels via barcode->leiden->consensus_label), cross-study OUTER gene join
+(studies differ in depth), the 'lung' label-scheme (merge Club/Clara/ciliated/NK synonyms; keep immune
+resolved), clean_cells, export_reference. Run on a compute node (loads h5ads).
 """
-import sys
+import argparse, sys
 import anndata as ad
 import scanpy as sc
 sys.path.insert(0, "deconvolution")
 import build_reference as br
 
 HEALTHY = [
-    ("GSE273062", ["GSE273062_sample0", "GSE273062_sample2"]),   # VeNx normoxia controls
-    ("GSE252844", ["GSE252844_sample0"]),                        # C3 control
-    ("GSE242310", ["GSE242310_sample1"]),                        # NOX normoxia control
+    ("GSE273062", ["GSE273062_sample0", "GSE273062_sample2"]),   # VeNx normoxia controls (adult)
+    ("GSE252844", ["GSE252844_sample0"]),                        # C3 control (adult)
 ]
-OUT = "data/deconvolution/references/lung_native_pooled"
+OUT = "data/deconvolution/references_v3/LUNG_native_pooled"
 
 def build_pooled_lung():
     """Assemble the 3-study pooled native-lung AnnData (the production recipe) and RETURN it
@@ -55,9 +56,12 @@ def build_pooled_lung():
 
 
 def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--out", default=OUT, help=f"output reference dir (default {OUT})")
+    args = ap.parse_args()
     adata = build_pooled_lung()
-    br.export_reference(adata, OUT)
-    print(f"\nwrote pooled native lung reference -> {OUT}")
+    br.export_reference(adata, args.out)
+    print(f"\nwrote pooled native lung reference -> {args.out}")
 
 
 if __name__ == "__main__":
