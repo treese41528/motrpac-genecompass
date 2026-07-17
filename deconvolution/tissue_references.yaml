@@ -157,7 +157,10 @@ HEART:
   notes: Healthy Wistar LV (all-male, 17wk); dedup fixes the 38->19 double-count. CM r=0.995.
 
 VENACV:
-  status: needs-build
+  status: blocked                        # DROPPED 2026-07-16: no genuine rat vena-cava (or any large systemic
+                                         # vein) single-cell reference exists anywhere (confirmed by exhaustive
+                                         # search); the only proxy (GSE280111 pulmonary_veins) is irreducibly
+                                         # lung/heart-contaminated -> untrustworthy theta. Excluded from the panel.
   reference_dir: data/deconvolution/references_v3/VENACV_GSE280111_PV
   study: GSE280111
   tissue: pulmonary veins
