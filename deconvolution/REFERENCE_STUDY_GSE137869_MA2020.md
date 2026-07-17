@@ -3,10 +3,12 @@
 **Caloric Restriction Reprograms the Single-Cell Transcriptional Landscape of *Rattus Norvegicus* Aging**
 Ma S, Sun S, Geng L, Song M, *et al.* **Cell** 2020 Mar 5;180(5):984–1001.e22. **PMID 32109414.**
 
-This is the source of our **white adipose (WATSC)** deconvolution reference — and the only reference in the
-panel drawn from a *multi-tissue* atlas. It deserves its own dossier for three reasons: it is the reference
-behind one of our two confirmed BROKEN tissues; almost every design axis is mismatched to MoTrPAC; and it
-covers tissues we are **not** using it for but should consider.
+This is the source of our **white adipose (WATSC)** deconvolution reference — and, since the 2026-07-16
+rebuild, also of the shared **skeletal-muscle (SKMGN + SKMVL)** reference (young `-Y` arm; myofiber
+over-split merged → 5 clean types; see §6). It is the only reference in the panel drawn from a
+*multi-tissue* atlas. It deserves its own dossier for three reasons: it is the reference behind one of our
+confirmed BROKEN tissues (WATSC); almost every design axis is mismatched to MoTrPAC; and it covers tissues
+we are **not** using it for but should consider.
 
 Companion: [`TISSUE_REFERENCE_AND_PROPORTIONS.md`](TISSUE_REFERENCE_AND_PROPORTIONS.md) §3 (WATSC), §6.
 
@@ -93,7 +95,7 @@ correct fix rather than a judgment call.
 | WAT | WATSC (subcutaneous) | **depot unstated in Ma** — see §4.3 |
 | Skeletal muscle | SKMGN / SKMVL | **muscle group unstated** |
 | Brain | CORTEX / HIPPOC / HYPOTH | **region unstated** — not a usable substitute |
-| Aorta | VENACV | **no** — artery ≠ vein; and aorta has no cardiomyocytes, so it is not HEART either |
+| Aorta | VENACV | **no** — artery ≠ vein; and aorta has no cardiomyocytes, so it is not HEART either. (VENACV was **dropped 2026-07-16** — no genuine rat vena-cava reference exists anywhere.) |
 | Bone marrow | BLOOD / SPLEEN | **no** — marrow carries progenitors (pro-B, erythroid precursors, MDSC) absent from circulation |
 | Skin | — | no MoTrPAC counterpart |
 
@@ -279,17 +281,22 @@ Recommended sequencing:
 
 The mismatch cuts both ways, and one direction is a genuine missed opportunity.
 
-**We use Ma 2020 for exactly one tissue — WATSC — and it is the tissue it fits *worst*** (unknown depot,
-no adipocytes, pooled arms). Meanwhile:
+As of the 2026-07-16 rebuild we use Ma 2020 for **WATSC and both skeletal muscles (SKMGN + SKMVL)** — WATSC
+being the tissue it fits *worst* (unknown depot, no adipocytes, pooled arms), muscle the tissue it fits
+*best* (young `-Y` snRNA, myonuclei captured; §6 muscle bullet). Meanwhile:
 
-- **BAT.** MoTrPAC has **brown adipose bulk** (`data/deconvolution/motrpac_bulk/BAT/`) and Ma has **BAT
-  scRNA** — an exact tissue match, full Y/O/CR × M/F factorial. **We never deconvolved BAT at all.**
-  ⚠️ Caveat: BAT was dissociated with the *same* collagenase protocol, so it will have the *same* missing-
-  adipocyte problem. BAT adipocytes are multilocular and smaller, but this should be checked before
-  building, not after.
-- **Skeletal muscle.** Ma's young-AL muscle is **snRNA** (so it *does* contain myonuclei), sex-balanced and
-  young-adult. Our incumbent SKMGN reference (GSE184413) is **aged rats recovering from disuse** with only
-  2 donors. Ma is a plausible **cross-check**, though its muscle group is unstated (§4.3).
+- **BAT — since deconvolved, but NOT via Ma.** MoTrPAC has **brown adipose bulk**
+  (`data/deconvolution/motrpac_bulk/BAT/`) and Ma has **BAT scRNA** (exact tissue match, full Y/O/CR × M/F
+  factorial), but Ma's BAT was dissociated with the *same* collagenase protocol → the *same* missing-adipocyte
+  hole. **BAT is now deconvolved from GSE244451** (subscapular-BAT snRNA, the authors' deposited SCP-annotated
+  labels → **6 clean types**), which recovers brown adipocytes — chosen over Ma precisely to avoid that hole.
+- **Skeletal muscle. — ADOPTED as the production muscle reference (2026-07-16).** Ma's young-AL `-Y` muscle
+  is **snRNA** (so it *does* contain myonuclei), sex-balanced and young-adult. It **replaced** the former
+  incumbents — SKMGN's GSE184413 (aged disuse, 2 donors) and SKMVL's GSE254371 (52% rat-mouse chimera) — and
+  now serves **both** muscles as one shared reference. The myofiber over-split was **merged → 5 clean cell
+  types: Skeletal myocytes · Fibroblasts · Endothelial cells · Vascular smooth muscle cells · Macrophages**
+  (`references_v3/MUSCLE_GSE137869_Y`, 10,763 cells). Caveat unchanged: its muscle group is unstated (§4.3),
+  and dropping GSE184413 loses the only F344-strain / omnideconv-validated gastroc ref → head-to-head pending.
 - **Kidney / Liver.** Exact tissue matches, but Ma is **scRNA** where our incumbents are **snRNA**, and
   snRNA is strictly better for fragile proximal tubule and hepatocyte parenchyma. **Cross-check only — do
   not replace.**

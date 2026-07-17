@@ -1,11 +1,14 @@
 # MoTrPAC → GeneCompass Deconvolution Pipeline — Technical Reference Report
 
-> ⚠️ **SUPERSEDED for liver + lung references (2026-07-02).** This report predates the reference-quality
-> fixes: **liver** dropped its 2 Visium spatial samples, and **lung** replaced the engineered GSE178405
-> with the native pooled `lung_native_pooled` (GSE273062+GSE252844+GSE242310). Any row below citing
-> `lung_GSE178405` or a 31,820-cell / Visium-containing liver is stale. **Authoritative sources:**
-> `deconvolution/tissue_references.yaml` (the canonical tissue→reference map), `REFERENCE_QC.md`
-> (the QC gate), and `OMNIDECONV_RESULTS.md` (results + bias analysis).
+> ⚠️ **Headline figures updated to the 2026-07-16 reference rebuild; some deep-body build/validation detail predates it.**
+> Current production = **14 deconvolved tissues** (VENACV dropped — no genuine rat vena-cava reference; BAT/HYPOTH/SMLINT/TESTES
+> added), **172 DE blocks / 15 exercise hotspots**, and **8,450 pseudo-cells**. The rebuild adopted author-deposited labels for
+> **BAT** (GSE244451 SCP) and **HEART** (GSE280111 SCP2828, 16 types), merged the collinear myofiber over-split so **SKMGN + SKMVL
+> now share a 5-type GSE137869 "Skeletal myocytes" reference**, and switched **hippocampus** to GSE295314. Earlier fixes still hold:
+> **liver** dropped its 2 Visium spatial samples; **lung** replaced the engineered GSE178405 with the native pooled `lung_native_pooled`.
+> Detailed §5 validation cross-r, §3.2 parenchyma diagnostics, and the Augur/PCA-human controls were **not re-run** for this rebuild
+> (each is flagged inline). **Authoritative sources:** `deconvolution/tissue_references.yaml` (the canonical tissue→reference map,
+> SCHEMA v3), the on-disk TSVs under `data/deconvolution/`, `REFERENCE_QC.md`, and `OMNIDECONV_RESULTS.md`.
 
 > Comprehensive, code-grounded reference for the full deconvolution pipeline: MoTrPAC rat bulk
 > RNA-seq → BayesPrism cell-type deconvolution → pseudo-cells → fine-tuned rat GeneCompass
@@ -43,32 +46,34 @@ external data (Yu 2023, Vetr 2024) and survive the cross-species transfer.
 
 | Quantity | Value | Source |
 |---|---|---|
-| Tissues with exercise data | 10 (blood, cortex, heart, hippoc, kidney, liver, lung, skmgn, skmvl, watsc) | — |
+| Tissues with exercise data | 14 (bat, blood, cortex, heart, hippoc, hypoth, kidney, liver, lung, skmgn, skmvl, smlint, testes, watsc); VENACV dropped (no genuine rat vena-cava reference) | — |
 | MoTrPAC bulk genes | 32,883 ENSRNOG (Rnor_6.0), identical across all 19 tissues | liftover report |
 | Bulk → rel-113 liftover | 24,003 / 32,883 mapped (**73.0%**); 8,880 dropped; primary-gene vocab coverage 89.5% → 94.8% | `MOTRPAC_BULK_LIFTOVER.md` |
 | Bulk design | 2 sex × 5 group {control,1w,2w,4w,8w} × 5 rep = 50 samples/tissue | — |
-| Pseudo-cells embedded (rat space) | **8,900** total (1 per sample × cell type; merged refs) | sum of `embeddings/*.npy` |
+| Pseudo-cells embedded (rat space) | **8,450** total across 14 tissues (1 per sample × cell type; merged refs) | sum of `embeddings/*.npy` |
 | Fine-tuned checkpoint | `rat_phase2_mixed_species/checkpoint-147941` (12-layer BERT, hidden 768, vocab 55,275) | config resolve |
 | Tokenization | target-sum **6500**, top-**2048**, log2(1+x/hybrid-median), species=2 (rat) | `tokenize_pseudocells.py` |
-| DE blocks (merged-reference production) | **178** blocks (status ok), **18** hotspots (q_sup_trained < 0.05) | `de_summary.tsv`, `corroboration_merged.tsv` |
-| DE meta-tests | **2,110,403** Fisher tests; IHW~tissue; repfdr 8w sex-consistency | `de_methods.tsv` |
-| Embedding vs PCA-50 (rat space) | embed median **0.589** > PCA **0.540** > genes 0.564; embed wins **108/178** | `pca_control.tsv` |
+| DE blocks (merged-reference production) | **172** blocks (status ok), **13** hotspots (q_sup_trained < 0.05) | `de_summary.tsv`, `de_hotspots.tsv` |
+| DE meta-tests | **2,017,173** Fisher tests; IHW~tissue; repfdr 8w sex-consistency | `de_methods.tsv` |
+| Embedding vs PCA-50 (rat space) | embed median **0.583** > genes 0.575 > PCA **0.564**; embed > PCA in **91/172** | `pca_control.tsv` |
 | Holdout / cross deconvolution (liver) | r = 0.998 / 0.949 (paper bar > 0.95) | `AIM2_DECONV_RESULTS.md` |
-| Cross-species transfer | **16/18** hotspots PRESERVED (PLS-1 **and** Augur-RF); sex gate Spearman 0.911; fidelity 0.683 (PLS-1)/0.816 (Augur); cosine(rat,human) 0.979 | `transfer_comparison.md` |
+| Cross-species transfer | **24 blocks PRESERVED / 8 WEAKENED** whole-table (185 paired; **10/21** hotspots PRESERVED, PLS-1 **and** Augur-RF); sex gate Spearman 0.782; fidelity 0.420 (PLS-1)/0.767 (Augur); cosine(rat,human) 0.979 | `transfer_comparison.md` |
 
 ### Reconciliation notes (auto-generated body vs. verified ground truth)
 
 This report's body sections were drafted by parallel readers; a few numbers were reconciled here. **Where the
 body and this box disagree, this box is authoritative:**
 
-- **178 blocks / 18 hotspots / 2,110,403 Fisher tests** is the **current** merged-reference production. The
-  body's **186 blocks / 22 hotspots / 2,225,006 tests** is the **superseded pre-merge** run (before the
-  cortex/SKMVL collinear-label merges were adopted in commit 414a4f4); both appear because the agents read
+- **172 blocks / 15 hotspots / 2,017,173 Fisher tests** is the **current** production (the **2026-07-16 reference
+  rebuild**: 14 deconvolved tissues, VENACV dropped, BAT + HEART author-deposited labels adopted, SKMGN+SKMVL
+  collinear myofiber merge). Earlier body figures — **178 blocks / 18 hotspots** (post-liver/lung fix) and
+  **186 blocks / 22 hotspots** (pre-merge) — are superseded pre-rebuild runs; both appear because the agents read
   different artifacts.
-- **Pseudo-cells = 8,900** (per-tissue: blood 700, cortex 1400, heart 1150, hippoc 750, kidney 850, liver 300,
-  lung 1350, skmgn 850, skmvl 700, watsc 850). Body mentions of 8,600 / 9,300 / "~3,000 transferred" are wrong.
-- **The GeneCompass embedding DOES beat the PCA-50 baseline** in both rat space (embed 0.589 vs PCA 0.540, 108/178)
-  and human space (0.593 vs 0.540, 108/178). The Detection/DE section's statement that "embedding does NOT beat PCA"
+- **Pseudo-cells = 8,450** (per-tissue: bat 300, blood 700, cortex 550, heart 800, hippoc 900, hypoth 650,
+  kidney 850, liver 300, lung 1400, skmgn 250, skmvl 250, smlint 700, testes 150, watsc 650). Body mentions of
+  8,600 / 8,900 / 9,300 are pre-rebuild.
+- **The GeneCompass embedding DOES beat the PCA-50 baseline** in rat space (embed 0.583 vs PCA 0.564, 91/172;
+  human-space PCA control not re-run for the 2026-07-16 rebuild). The Detection/DE section's statement that "embedding does NOT beat PCA"
   (citing embed 0.615 / PCA 0.701) is **incorrect** — those medians were misread; the verified `pca_control.tsv`
   medians are embed 0.589 / PCA 0.540 / genes 0.564, consistent with §3b of `AIM2_DECONV_RESULTS.md`.
 - The checkpoint is **checkpoint-147941** (latest); intermediate dirs (110000–140000) also exist on disk.
@@ -183,7 +188,7 @@ The pipeline stages 8–12 are driven by Python orchestrators in `pipeline/` tha
 **Invocation:**
 ```bash
 python pipeline/run_stage8.py --tissue SKM-GN \
-    --ref-dir "data/deconvolution/references/skeletal muscle_GSE254371" \
+    --ref-dir "data/deconvolution/references_v3/MUSCLE_GSE137869_Y" \
     [--label skmgn] [--from 1] [--dry-run] [--n-cores 4]
 ```
 
@@ -851,20 +856,24 @@ All samples derive from the **MoTrPAC PASS1B Endurance Exercise Training (EET) s
 
 ### Canonical Per-Tissue References
 
-The deconvolution pipeline uses 10 **canonical tissue-specific single-cell references** (from `/depot/reese18/apps/motrpac-genecompass/deconvolution/reference/canonical_references.tsv`):
+The deconvolution pipeline uses **14 canonical tissue-specific single-cell references** (from `/depot/reese18/apps/motrpac-genecompass/deconvolution/tissue_references.yaml`, SCHEMA v3 2026-07-15; VENACV dropped 2026-07-16 — no genuine rat vena-cava reference):
 
 | Tissue (MoTrPAC bulk) | Study | Reference Tag | Scheme | Gene Join | Merged | Notes |
 |---|---|---|---|---|---|---|
-| pbmc (BLOOD) | GSE285476 | peripheral blood mononuclear cells_GSE285476 | none | inner | N | 14 immune labels; fine-grained immune subtypes kept (omnideconv) |
-| cortex (CORTEX) | GSE303115 | cortex_GSE303115_union_merged | brain | outer | Y | **Gene-rich union** (18,162 genes); Excitatory-neuron merge; quiet exercise tissue (0 signal) |
-| heart (HEART) | GSE280111 | heart_GSE280111_LV | none | inner | N | Left ventricle; cardiomyocyte-resolved; holdout-only CM cross-validation (documented limitation) |
-| hippocampus (HIPPOC) | GSE305314 | hippocampus_GSE305314_WT_merged | brain | inner | Y | WT-only (drop Tau transgenic); Excitatory-neuron merge |
-| kidney (KIDNEY) | GSE240658 | kidney_GSE240658 | none | inner | N | No-treatment control arm only |
-| liver (LIVER) | GSE220075 | liver_GSE220075 | none | inner | N | Holdout-built validation |
-| lung (LUNG) | GSE178405 | lung_GSE178405 | none | inner | N | **Weakest cross-dataset deconvolution** (~r=0.73); lung claims read cautiously |
-| gastrocnemius (SKMGN) | GSE184413 | gastrocnemius_GSE184413 | none | inner | N | Single 'Skeletal muscle cells' label (not over-split) |
-| vastus_lateralis (SKMVL) | GSE254371 | skeletal_muscle_GSE254371_muscle_merged | muscle | outer | Y | **MERGED** 'Skeletal muscle cells' + 'Skeletal muscle fibers' → 'Skeletal muscle'; bulk-mover recovery improved 50%/41% → 57% |
-| white_adipose (WATSC) | GSE137869 | white adipose tissue_GSE137869 | none | inner | N | M+F mixed-sex; exercise immune signal is cell-fraction (θ) not within-cell expression |
+| pbmc (BLOOD) | GSE285476 | BLOOD_GSE285476 | none | inner | N | 14 immune labels; control arm only; fine-grained immune subtypes kept (omnideconv) |
+| cortex (CORTEX) | GSE303115 | CORTEX_GSE303115 | brain | inner | Y | Gene-rich; Excitatory-neuron merge; organism-gated (drops non-rat); 11 types; quiet exercise tissue (0 signal) |
+| heart (HEART) | GSE280111 | HEART_GSE280111_LV | none | inner | N | Left ventricle; SCP2828/GSE280111 author-deposited labels (16 cardiac types); purity-VST 1.0 across all purity |
+| hippocampus (HIPPOC) | GSE295314 | HIPPOC_GSE295314 | brain | inner | Y | WT brain; Excitatory-neuron merge; 18 types |
+| kidney (KIDNEY) | GSE240658 | KIDNEY_GSE240658 | none | inner | N | No-treatment control arm; snRNA (~80% proximal-tubule) |
+| liver (LIVER) | GSE220075 | LIVER_GSE220075 | none | inner | N | Holdout-built; 2 Visium samples QC-dropped; only cross-validated tissue |
+| lung (LUNG) | native pooled | LUNG_native_pooled | lung | inner | Y | Native multi-study pool; **weakest cross-dataset deconvolution** (~r=0.73); lung claims read cautiously |
+| gastrocnemius (SKMGN) | GSE137869 | MUSCLE_GSE137869_Y | muscle | inner | Y | **MERGED** 5-type reference (Skeletal myocytes + stroma); ~96% Skeletal myocytes θ |
+| vastus_lateralis (SKMVL) | GSE137869 | MUSCLE_GSE137869_Y | muscle | inner | Y | **MERGED** 5-type reference (Skeletal myocytes + stroma); ~96% Skeletal myocytes θ; SKMGN+SKMVL now share this reference |
+| white_adipose (WATSC) | GSE137869 | WATSC_GSE137869_Y | none | inner | N | M+F mixed-sex; adipocyte-less; exercise immune signal is cell-fraction (θ) not within-cell expression |
+| brown_adipose (BAT) | GSE244451 | BAT_GSE244451 | none | inner | N | Author-deposited SCP labels (6 types); adipocytes under-called (differential-only) |
+| hypothalamus (HYPOTH) | GSE248413 | HYPOTH_GSE248413_Y | none | inner | N | 13 types |
+| small_intestine (SMLINT) | GSE272055 | SMLINT_GSE272055 | none | inner | N | Proximal jejunum; 14 types |
+| testes (TESTES) | OMIX767 | TESTES_OMIX767 | none | inner | N | First rat testis scRNA; 6 types |
 
 **Key feature:** All references are on rel-113 ENSRNOG IDs (biomart `rat_gene_info.tsv`, Ensembl release 113, mRatBN7.2 assembly), established by the Stage 1/2 harvesting pipeline.
 
@@ -1224,7 +1233,7 @@ The **intersection of bulk and reference gene sets** determines the maximum cove
 
 ### **Per-Tissue Reference × Bulk Intersection**
 
-The following tissues are **production-ready** (V3 final panel, all with full gene cleanup applied):
+The following tissues are **production-ready** (all with full gene cleanup applied). **⚠ The reference studies + cross-r values below reflect the pre-2026-07-16 panel** — the 2026-07-16 rebuild replaced the muscle references (SKMGN GSE184413 + SKMVL GSE254371 → merged 5-type GSE137869), the hippocampus reference (GSE305314 → GSE295314), and re-annotated HEART (GSE280111, 16 types) and BAT (GSE244451); this validation table was not re-run for those references (HEART's new SCP reference validates at purity-VST 1.0 across all purity):
 
 | Tissue | Reference study | Cells | Types | Bulk genes | Common genes (bulk ∩ ref) | Overall pooled r | Macro per-type r | Median per-type r | Notes |
 |---|---|---|---|---|---|---|---|---|---|
@@ -1368,7 +1377,7 @@ All outputs are **gitignored** and regenerable; large outputs (bulk, deconv resu
 
 ## Overview
 
-Stage 8 builds 10 tissue-specific rat single-cell references for BayesPrism deconvolution of MoTrPAC bulk RNA-seq (Danko Lab BayesPrism v2.2.3, `new.prism(key=NULL)` for normal tissue). References are single-study, paper-faithful (no pooling/balancing of cells across studies); the reference construction pipeline applies three orthogonal isolation axes (tissue-split, sex-split, strain-split) and a critical collinear-label-merging step to fix over-fragmentation of the dominant parenchyma.
+Stage 8 builds 14 tissue-specific rat single-cell references for BayesPrism deconvolution of MoTrPAC bulk RNA-seq (Danko Lab BayesPrism v2.2.3, `new.prism(key=NULL)` for normal tissue). References are single-study, paper-faithful (no pooling/balancing of cells across studies); the reference construction pipeline applies three orthogonal isolation axes (tissue-split, sex-split, strain-split) and a critical collinear-label-merging step to fix over-fragmentation of the dominant parenchyma.
 
 ---
 
@@ -1406,7 +1415,7 @@ The pipeline loads raw counts from the annotated rat single-cell corpus (stage 7
 **Label canonicalization** (canonicalize_labels(), lines 94–101; LABEL_SCHEMES dict at line 91):
 Applied before cell cleaning; schemes are collinear-fragment merges that consolidate synonym-split single populations (not distinct cell states or chimeras):
 - **"brain" scheme** (_canon_brain, lines 68–76): maps all excitatory-neuron synonyms (pyramidal/glutamatergic/glutaminergic/vglut/principal/neurons/cortical neurons/mature neurons/hippocampal neurons) to "Excitatory neurons"; merges microglia synonyms (microglia/microglial cells); consolidates oligodendrocyte-precursor synonyms (OPC/OPP). Applied to cortex + hippocampus references.
-- **"muscle" scheme** (_canon_muscle, lines 79–88): merges parenchymal skeletal-muscle fragments (Skeletal muscle cells / Skeletal muscle fibers / myofibers) to "Skeletal muscle"; preserves stroma (fibroblasts, smooth muscle) separate. Applied to vastus lateralis (SKMVL) only; gastrocnemius (SKMGN) has no over-split (single "Skeletal muscle cells" label).
+- **"muscle" scheme** (_canon_muscle): merges parenchymal skeletal-muscle fragments (Skeletal muscle cells / Skeletal muscle fibers / myofibers) to **"Skeletal myocytes"**; preserves stroma (fibroblasts, endothelial, vascular smooth muscle, macrophages) separate → a 5-type reference. Applied to **both SKMGN and SKMVL** (2026-07-16 rebuild: both now use the merged GSE137869 muscle reference).
 
 **Cell cleaning** (clean_cells(), lines 196–207):
 - Drops cells with null/Unknown/NA cell_type (configurable drop_unknown=True)
@@ -1424,20 +1433,24 @@ Output directory: `deconvolution/reference_v2/<tag>/` (v2 = canonical production
 
 ## Canonical References Manifest: canonical_references.tsv
 
-The authoritative per-tissue reference registry, with one row per tissue. All production deconvolutions reference this manifest. Read directly from `deconvolution/reference/canonical_references.tsv` (lines 1–12):
+The authoritative per-tissue reference registry, with one row per tissue. All production deconvolutions reference this manifest. Read directly from `deconvolution/tissue_references.yaml` (SCHEMA v3, 2026-07-15; supersedes the stale `canonical_references.tsv`). VENACV was dropped 2026-07-16 (no genuine rat vena-cava reference):
 
 | tissue | bulk_code | study | reference_tag | scheme | gene_join | merged | built_by | note |
 |--------|-----------|-------|----------------|--------|-----------|--------|----------|------|
-| pbmc | BLOOD | GSE285476 | peripheral blood mononuclear cells_GSE285476 | none | inner | N | make_pseudobulk(holdout) | 14 immune labels; immune subtypes intentionally kept fine (omnideconv) |
-| cortex | CORTEX | GSE303115 | cortex_GSE303115_union_merged | brain | outer | Y | build_references_v2.sh | gene-rich union + Excitatory-neuron merge; quiet exercise tissue (0 signal) |
-| heart | HEART | GSE280111 | heart_GSE280111_LV | none | inner | N | make_pseudobulk(holdout) | left ventricle; holdout-only CM cross-validation (documented limitation) |
-| hippocampus | HIPPOC | GSE305314 | hippocampus_GSE305314_WT_merged | brain | inner | Y | build_references_v2.sh | WT-only (drop Tau) + Excitatory-neuron merge |
-| kidney | KIDNEY | GSE240658 | kidney_GSE240658 | none | inner | N | build_references_v2.sh | No-treatment arm |
-| liver | LIVER | GSE220075 | liver_GSE220075 | none | inner | N | build_all_references.sh | holdout-built |
-| lung | LUNG | GSE178405 | lung_GSE178405 | none | inner | N | build_references_v2.sh | weakest cross-dataset deconvolution (0.30 Pearson); read lung claims cautiously |
-| gastrocnemius | SKMGN | GSE184413 | gastrocnemius_GSE184413 | none | inner | N | build_references_v2.sh | Normal ambulation; single 'Skeletal muscle cells' label (not over-split) |
-| vastus_lateralis | SKMVL | GSE254371 | skeletal_muscle_GSE254371_muscle_merged | muscle | outer | Y | build_references_v2.sh | MERGED 'Skeletal muscle cells'+'Skeletal muscle fibers' -> 'Skeletal muscle'; bulk-mover recovery 50/41% → 57% |
-| white_adipose | WATSC | GSE137869 | white adipose tissue_GSE137869 | none | inner | N | make_pseudobulk(holdout) | M+F; the exercise immune signal is cell-fraction recruitment (theta), not within-cell expression |
+| pbmc | BLOOD | GSE285476 | BLOOD_GSE285476 | none | inner | N | build_references_from_config.py | 14 immune labels; control arm only; immune subtypes intentionally kept fine (omnideconv) |
+| cortex | CORTEX | GSE303115 | CORTEX_GSE303115 | brain | inner | Y | build_references_from_config.py | gene-rich + Excitatory-neuron merge; organism-gated (drops non-rat); 11 types; quiet exercise tissue (0 signal) |
+| heart | HEART | GSE280111 | HEART_GSE280111_LV | none | inner | N | build_references_from_config.py | left ventricle; SCP2828 author-deposited labels (16 cardiac types); purity-VST 1.0 across all purity |
+| hippocampus | HIPPOC | GSE295314 | HIPPOC_GSE295314 | brain | inner | Y | build_references_from_config.py | WT brain; Excitatory-neuron merge; 18 types |
+| kidney | KIDNEY | GSE240658 | KIDNEY_GSE240658 | none | inner | N | build_references_from_config.py | No-treatment arm; snRNA |
+| liver | LIVER | GSE220075 | LIVER_GSE220075 | none | inner | N | build_references_from_config.py | holdout-built; 2 Visium samples QC-dropped |
+| lung | LUNG | native pooled | LUNG_native_pooled | lung | inner | Y | build_references_from_config.py | native multi-study pool; weakest cross-dataset deconvolution (~0.73); read lung claims cautiously |
+| gastrocnemius | SKMGN | GSE137869 | MUSCLE_GSE137869_Y | muscle | inner | Y | build_references_from_config.py | MERGED 5-type reference (Skeletal myocytes + stroma); ~96% Skeletal myocytes θ |
+| vastus_lateralis | SKMVL | GSE137869 | MUSCLE_GSE137869_Y | muscle | inner | Y | build_references_from_config.py | MERGED 5-type reference; shares the SKMGN reference |
+| white_adipose | WATSC | GSE137869 | WATSC_GSE137869_Y | none | inner | N | build_references_from_config.py | M+F; the exercise immune signal is cell-fraction recruitment (theta), not within-cell expression |
+| brown_adipose | BAT | GSE244451 | BAT_GSE244451 | none | inner | N | build_references_from_config.py | author-deposited SCP labels (6 types); adipocytes under-called (differential-only) |
+| hypothalamus | HYPOTH | GSE248413 | HYPOTH_GSE248413_Y | none | inner | N | build_references_from_config.py | 13 types |
+| small_intestine | SMLINT | GSE272055 | SMLINT_GSE272055 | none | inner | N | build_references_from_config.py | proximal jejunum; 14 types |
+| testes | TESTES | OMIX767 | TESTES_OMIX767 | none | inner | N | build_references_from_config.py | first rat testis scRNA; 6 types |
 
 **Key distinctions:**
 - **built_by**: build_references_v2.sh (canonical pre-built 2026-06-01; includes cortex outer + brain merges) vs make_pseudobulk(holdout) (built at validation time; holdout tissues) vs build_all_references.sh (liver, earlier build)
@@ -1450,31 +1463,34 @@ The authoritative per-tissue reference registry, with one row per tissue. All pr
 
 ### Tissue-Split (Full)
 
-All 10 canonical tissues use a single richest-cell-type study per tissue; tissues do not share references. This design choice follows the "single-study, paper-faithful" principle and avoids batch/platform effects from pooling. Per-tissue sources:
+All 14 canonical tissues use a paper-faithful study per tissue (SKMGN and SKMVL now share the merged GSE137869 muscle reference); other tissues do not share references. This design choice follows the "paper-faithful" principle and avoids batch/platform effects from pooling. Per-tissue sources (cells / genes / cell types, 2026-07-16 rebuild):
 
-1. **cortex (GSE303115)** — 173,688 cells, outer-join 18,162 genes (fixed from 5,536 inner collapse)
-2. **hippocampus (GSE305314)** — 45,038 cells, 19,774 genes; WT-only subset (6 samples; drops Tau transgenic)
-3. **kidney (GSE240658)** — 28,626 cells, 17,867 genes; "No treatment" arm only
-4. **lung (GSE178405)** — 54,992 cells, 17,351 genes; all samples
-5. **gastrocnemius (GSE184413)** — 39,872 cells, 18,937 genes; "Normal ambulation" arm only (F344/BN strain, male only)
-6. **vastus lateralis SKMVL (GSE254371)** — 20,490 cells, 15,394 genes after muscle-parenchyma merge (outer + min-gene-cells)
-7. **liver (GSE220075)** — holdout-built (built during validation, not prebuilt); details in POSCTRL_PREREG
-8. **heart (GSE280111)** — holdout-built; left-ventricle subset; no cardiomyocytes in GSE155699 (snRNA dropout documented limitation)
-9. **white adipose (GSE137869)** — holdout-built; mixed M+F
-10. **PBMC (GSE285476)** — holdout-built; 14 immune labels, deliberately kept fine (omnideconv principle)
+1. **cortex (GSE303115)** — 12,933 cells, 21,003 genes, 11 types; organism-gated (drops ~85% non-rat), Excitatory-neuron merge
+2. **hippocampus (GSE295314)** — 278,549 cells, 17,895 genes, 18 types; WT brain, Excitatory-neuron merge
+3. **kidney (GSE240658)** — 28,626 cells, 17,867 genes, 17 types; "No treatment" arm only
+4. **lung (native pooled)** — 46,653 cells, 16,956 genes, 28 types; native multi-study pool
+5. **gastrocnemius SKMGN (GSE137869)** — 10,763 cells, 17,895 genes, 5 types; merged muscle 5-type reference
+6. **vastus lateralis SKMVL (GSE137869)** — 10,763 cells, 17,895 genes, 5 types; shares the SKMGN muscle reference
+7. **liver (GSE220075)** — 27,041 cells, 17,895 genes, 6 types; holdout-built (2 Visium samples dropped)
+8. **heart (GSE280111)** — 135,288 cells, 19,256 genes, 16 types; SCP2828 author-deposited labels; left-ventricle
+9. **white adipose (GSE137869)** — 12,223 cells, 17,895 genes, 13 types; mixed M+F
+10. **PBMC (GSE285476)** — 12,315 cells, 17,338 genes, 14 types; control arm; 14 immune labels, deliberately kept fine (omnideconv principle)
+11. **brown adipose BAT (GSE244451)** — 28,246 cells, 17,895 genes, 6 types; author-deposited SCP labels
+12. **hypothalamus (GSE248413)** — 8,471 cells, 17,351 genes, 13 types
+13. **small intestine (GSE272055)** — 18,950 cells, 17,895 genes, 14 types; proximal jejunum
+14. **testes (OMIX767)** — 5,836 cells, 16,826 genes, 6 types; first rat testis scRNA
 
 ### Sex-Split: GSE137869 (WAT) Only
 
 WAT is the only reference built with explicit sex stratification. GSE137869 contains both male and female samples (WAT-M-Y, WAT-F-O in inventory). The canonical reference uses both sexes combined (no `--sex` flag passed to build_reference.py), preserving within-reference sex variance as a physiological feature. This is intentional: WAT's exercise signal is predominantly theta (immune cell fraction recruitment), not within-cell Z changes, so the parenchyma DE is noisy and sex-anchoring the reference provides little benefit.
 
-Other tissues (cortex, hippocampus, kidney, lung, gastrocnemius) either:
+The muscle references (SKMGN + SKMVL) now also come from GSE137869 and likewise combine both sexes. Other tissues (cortex, hippocampus, kidney, lung) either:
 - Have unspecified/missing sex metadata (cortex GSE303115)
-- Are male-only (gastrocnemius GSE184413, all 12 F344/BN samples)
-- Do not stratify explicitly (kidney, lung)
+- Do not stratify explicitly (kidney, lung, hippocampus)
 
-### Strain-Split: Gastrocnemius (F344 Only)
+### Strain-Split (historical)
 
-Gastrocnemius GSE184413 is restricted to F344/BN strain (all 12 samples; column strain_resolved="F344/BN" in inventory). No other tissue is strain-split; most lack strain metadata.
+The prior gastrocnemius reference (GSE184413) was restricted to F344/BN strain. The 2026-07-16 rebuild replaced it with GSE137869 (shared with SKMVL), so no tissue is strain-split; most lack strain metadata.
 
 ### Metadata Sidecar Approach
 
@@ -1491,6 +1507,11 @@ This allows downstream tools (make_pseudobulk.py, BayesPrism deconvolution outpu
 
 ## The Cortex Over-Split Fix: Inner (5,536 genes) → Outer (18,162 genes)
 
+> **⚠ SUPERSEDED by the 2026-07-16 rebuild.** The v3 cortex reference (`CORTEX_GSE303115`) reverted to an **inner**
+> gene-join and added an **organism gate** (the old outer-join gene gain was a cross-species artifact — the pre-v3
+> reference was ~85% non-rat cells). Production cortex is now **12,933 cells × 21,003 genes × 11 types** (not 173,688
+> cells). The narrative below documents the earlier (pre-rebuild) cortex fix.
+
 **Problem (2026-06-01):** cortex reference had only 5,536 genes, ~20% training-regulated coverage, vs. other tissues ~80-94%. Not a data quality issue — GSE303115 per-sample depth ranges 9.5k–21k genes; the union is 21,248. The reference build used `join='inner'` (default), which took the intersection: collapsed 5,536.
 
 **Solution (build_references_v2.sh lines 32–35):** Added `--gene-join outer --min-gene-cells 10` for cortex.
@@ -1504,6 +1525,10 @@ This allows downstream tools (make_pseudobulk.py, BayesPrism deconvolution outpu
 ---
 
 ## SKMVL Muscle-Parenchyma Merge: 50% → 57% Bulk-Mover Recovery
+
+> **⚠ Updated by the 2026-07-16 rebuild.** The muscle merge now targets a single **"Skeletal myocytes"** label and both
+> **SKMGN + SKMVL** are deconvolved against the merged 5-type **GSE137869** reference (the earlier SKMVL-specific
+> GSE254371 build below documents the original diagnosis; the recovery percentages predate the rebuild).
 
 **Problem (2026-06-22):** vastus lateralis reference had two collinear labels for parenchyma:
 - "Skeletal muscle cells" — multinucleated muscle fibers (snRNA capture)
@@ -1530,8 +1555,8 @@ BayesPrism cannot separate collinear GEPs; the parenchymal mass scattered across
 ## Brain Excitatory-Neuron Merge: Cortex + Hippocampus
 
 **Problem (2026-06-22):** rat brain atlases fragment a single excitatory/pyramidal-neuron population across many near-synonym labels:
-- cortex GSE303115: 35 types including "Pyramidal neurons", "Cortical neurons", "Mature neurons", "Pyramidal cells", "CA3 pyramidal neurons", etc. — all one GEP
-- hippocampus GSE305314: 25 types, similar synonym splitting
+- cortex GSE303115: many types including "Pyramidal neurons", "Cortical neurons", "Mature neurons", "Pyramidal cells", "CA3 pyramidal neurons", etc. — all one GEP (post-rebuild: merged to 11 types)
+- hippocampus GSE295314: similar synonym splitting (post-rebuild: merged to 18 types)
 
 In cross-dataset deconvolution, the neuron mass scatters across all labels; every bucket collapses toward zero (reports/deconvolution/multitissue_validation.md V1 findings).
 
@@ -1547,30 +1572,36 @@ Merge logic:
 
 **Production adoption:** cortex and hippocampus references in build_references_v2.sh use `--label-scheme brain`.
 
-**Results (build_references_v2.sh outputs):**
-- cortex: 35 → 28 cell types
-- hippocampus: 25 → 15 cell types
+**Results (2026-07-16 rebuild):**
+- cortex: → 11 cell types (organism-gated + Excitatory-neuron merge)
+- hippocampus: → 18 cell types (Excitatory-neuron merge)
 
 ---
 
 ## Reference Statistics & Cell-Type Distributions
 
-**Per-reference summary** (data/deconvolution/references_v2/*/summary.txt):
+**Per-reference summary** (14 production references, 2026-07-16 rebuild):
 
 | Reference | Cells | Genes | Cell Types | Cell States | Notes |
 |-----------|-------|-------|------------|------------|-------|
-| cortex_GSE303115_union_merged | 173,688 | 18,162 | 28 | 512 | outer-join + brain-merge |
-| gastrocnemius_GSE184413 | 39,872 | 18,937 | 17 | 92 | single "Skeletal muscle cells" label (not over-split) |
-| hippocampus_GSE305314_WT_merged | 45,038 | (19,774) | 15 | 122 | WT-only + brain-merge |
-| kidney_GSE240658 | 28,626 | 17,867 | 17 | 74 | No-treatment arm |
-| lung_GSE178405 | 54,992 | 17,351 | 27 | 98 | weakest cross-dataset (0.30 Pearson) |
-| skeletal_muscle_GSE254371_muscle_merged | 20,490 | 15,394 | 14 | 48 | outer + muscle-merge |
-| (holdout refs: liver, heart, PBMC, WAT) | (made at validation) | (varies) | (varies) | (varies) | built dynamically |
+| CORTEX_GSE303115 | 12,933 | 21,003 | 11 | 44 | organism-gated + brain-merge |
+| HIPPOC_GSE295314 | 278,549 | 17,895 | 18 | 454 | WT brain + Excitatory-neuron merge |
+| KIDNEY_GSE240658 | 28,626 | 17,867 | 17 | 74 | No-treatment arm |
+| LIVER_GSE220075 | 27,041 | 17,895 | 6 | 44 | holdout-built (2 Visium dropped) |
+| LUNG_native_pooled | 46,653 | 16,956 | 28 | 87 | native multi-study pool; weakest cross-dataset |
+| HEART_GSE280111_LV | 135,288 | 19,256 | 16 | 249 | SCP2828 author labels; left-ventricle |
+| MUSCLE_GSE137869_Y (SKMGN+SKMVL) | 10,763 | 17,895 | 5 | 22 | merged muscle 5-type (Skeletal myocytes + stroma) |
+| WATSC_GSE137869_Y | 12,223 | 17,895 | 13 | 32 | M+F |
+| BLOOD_GSE285476 | 12,315 | 17,338 | 14 | 18 | control arm; 14 immune labels |
+| BAT_GSE244451 | 28,246 | 17,895 | 6 | 12 | author SCP labels; adipocytes under-called |
+| HYPOTH_GSE248413_Y | 8,471 | 17,351 | 13 | 21 | — |
+| SMLINT_GSE272055 | 18,950 | 17,895 | 14 | 41 | proximal jejunum |
+| TESTES_OMIX767 | 5,836 | 16,826 | 6 | 12 | first rat testis scRNA |
 
 Top cell type per reference (cells):
-- cortex: Excitatory neurons 69,068 (40%)
-- gastrocnemius: Fibroblasts 12,208 (31%), Skeletal muscle cells 11,686 (29%)
-- lung: Pulmonary fibroblasts 19,739 (36%), Lung epithelial cells 4,686 (8%)
+- muscle (SKMGN/SKMVL): Skeletal myocytes 8,021 (75%), then Fibroblasts 863, Endothelial 841
+- BAT: Brown adipocytes 24,832 (88%), then Endothelial 1,313, ASPC 762
+- heart: Cardiac fibroblasts 46,451 (34%), Endothelial 30,490 (23%), Cardiomyocytes 22,406 (17%)
 
 ---
 
@@ -1631,7 +1662,7 @@ Validation design: 50 Dirichlet pseudobulk mixtures (α=1, balanced, 1000 cells 
 ## Summary
 
 **Canonical references (production, data/deconvolution/references_v2/):**
-- 10 tissues, single-study per tissue, paper-faithful
+- 14 tissues, paper-faithful references (SKMGN + SKMVL share GSE137869)
 - Cortex + hippocampus: outer-join + brain-merge (Excitatory neurons consolidation)
 - Vastus lateralis: outer-join + muscle-merge (parenchyma consolidation, +7% bulk-mover recovery)
 - Remaining 7 tissues: inner-join, identity scheme
@@ -2154,7 +2185,7 @@ cls_output = outputs[0][:, 0, :]  # (batch, 768)
 
 **Embedded counts per tissue (status as of 2026-06-10, latest complete run):**
 
-All 10 tissues have completed embeddings:
+All 14 tissues have completed embeddings:
 - Liver, Lung, Heart, Cortex, Kidney, SKM-GN, SKM-VL, Blood, Hippocampus, WAT-SC
 - Embeddings stored under `/depot/reese18/apps/motrpac-genecompass/data/deconvolution/genecompass_input/<tissue>/embeddings/cell_embeddings.npy`
 - Total: 8,600 pseudo-cells embedded
@@ -2314,22 +2345,24 @@ where both trace operations sum over all 768 embedding dimensions, giving a **va
 - Bulk sample map: `/data/deconvolution/motrpac_bulk/{TISSUE}/bulk_samples.tsv` (one viallabel per line, row order = mix{i} index)
 - Phenotype: `/deconvolution/reference/motrpac_sample_pheno.tsv` (tab-separated, all columns as strings to preserve 11-digit viallabels)
 
-**Output:** `/data/deconvolution/genecompass_input/pheno_merge_test.tsv` (186 rows = all (tissue, cell-type) blocks)
+**Output:** `/data/deconvolution/genecompass_input/pheno_merge_test.tsv` (172 rows = all (tissue, cell-type) blocks across 14 deconvolved tissues; VENACV embedded but excluded)
 
 **Key findings:**
-- **Total blocks:** 186 across 10 tissues
-- **Significant exercise signal (p_group < 0.05 OR p_trained < 0.05):** 52/186 (27.9%)
-- **Of those, eta2_trained ≥ 0.10:** 5 blocks (blood hotspots predominantly)
-- **Sex signal (p_sex < 0.05):** 99/186 (53.2%)
+- **Total blocks:** 172 across 14 tissues
+- **Significant exercise signal (p_group < 0.05 OR p_trained < 0.05):** 47/172 (27.3%)
+- **Of those, eta2_trained ≥ 0.10:** 3 blocks (blood hotspots predominantly)
+- **Sex signal (p_sex < 0.05):** 84/172 (48.8%)
 
 Per-tissue breakdown (significant blocks; gate p-threshold 0.05):
-- **BLOOD:** 8/14 trained, 10/14 sex → exercise hotspot tissue
-- **SKMVL:** 7/15 trained, 6/15 sex → exercise hotspot (exercise ≳ sex)
-- **SKMGN:** 7/17 trained, 12/17 sex → moderate exercise
-- **LUNG, HIPPOC:** 2/27, 2/15 trained (dose-only/weak)
-- **HEART:** 1/23 trained, 16/23 sex → exercise-quiet, sex-present
-- **LIVER, WATSC, KIDNEY:** 0–1/6–17 trained → sex-dominated, minimal exercise
-- **CORTEX:** 3/35 trained, 7/35 sex → quiet overall
+- **BLOOD:** 7/14 trained, 11/14 sex → exercise hotspot tissue
+- **SKMVL:** 3/5 trained, 2/5 sex → exercise (exercise ≳ sex)
+- **SKMGN:** 1/5 trained, 3/5 sex → mild exercise
+- **LUNG:** 6/28 trained, 16/28 sex → immune/stromal exercise + sex
+- **HEART:** 3/16 trained, 12/16 sex → exercise-quiet, sex-present
+- **KIDNEY:** 2/17 trained, 11/17 sex → sex-dominated
+- **LIVER, WATSC:** 0 trained, 5/6 & 13/13 sex → sex-dominated
+- **CORTEX, HIPPOC:** 0 trained → quiet
+- **BAT, HYPOTH, SMLINT, TESTES:** ≤1 trained → quiet
 
 **Interpretation:** The gate confirms exercise signal is present in the embeddings, **concentrated in blood and skeletal muscle** (SKMVL/SKMGN), with a secondary immune/metabolic signature. Sex is the pervasive axis across all tissues. The signal is **real but small** (median trained η² ≈ 0.023) — concentrated in subsets of cell types, not a global effect.
 
@@ -2354,50 +2387,44 @@ Per-tissue breakdown (significant blocks; gate p-threshold 0.05):
 
 **Data sources:** Identical to gate (embeddings, cell metadata, phenotype join).
 
-**Output:** `/data/deconvolution/genecompass_input/subspace_probe.tsv` (186 rows)
+**Output:** `/data/deconvolution/genecompass_input/subspace_probe.tsv` (172 rows)
 
-**Key findings (18 FDR-significant hotspots):**
+**Key findings (13 FDR-significant hotspots; authoritative AUC + is_hotspot from `de_hotspots.tsv`):**
 
-| Tissue | Cell Type | n | sup_trained_auc | p_sup_trained | glob_trained | sup_dose_rho | Status |
-|---|---|---|---|---|---|---|---|
-| SKMVL | Skeletal muscle | 50 | 0.915 | 0.002 | 0.030 | — | Hotspot |
-| SKMVL | Myofibroblasts | 50 | 0.907 | 0.002 | 0.041 | — | Hotspot |
-| SKMGN | Skeletal muscle cells | 50 | 0.885 | 0.002 | 0.018 | — | Hotspot |
-| SKMVL | Endothelial cells | 50 | 0.88 | 0.002 | 0.015 | — | Hotspot |
-| BLOOD | Megakaryocytes | 50 | 0.87 | 0.002 | 0.098 | — | Hotspot |
-| SKMGN | Naive B cells | 50 | 0.863 | 0.002 | 0.011 | — | Hotspot |
-| BLOOD | Basophils | 50 | 0.85 | 0.002 | 0.098 | — | Hotspot |
-| BLOOD | ISG-expressing T cells | 50 | 0.835 | 0.004 | 0.045 | — | Hotspot |
-| SKMVL | B cells | 50 | 0.835 | 0.002 | 0.035 | — | Hotspot |
-| BLOOD | Naive B cells | 50 | 0.828 | 0.008 | 0.049 | — | Hotspot |
-| HEART | CD8+ T cells | 50 | 0.825 | 0.004 | 0.020 | — | Hotspot |
-| SKMGN | Satellite cells | 50 | 0.823 | 0.004 | 0.009 | — | Hotspot |
-| BLOOD | Classical monocytes | 50 | 0.812 | 0.003 | 0.091 | — | Hotspot |
-| SKMGN | Smooth muscle cells | 50 | 0.805 | 0.01 | 0.022 | — | Hotspot |
-| BLOOD | Memory T cells | 50 | 0.792 | 0.01 | 0.059 | — | Hotspot |
-| SKMGN | Myofibroblasts | 50 | 0.784 | 0.005 | 0.018 | — | Hotspot |
-| SKMVL | Macrophages | 50 | 0.782 | 0.002 | 0.004 | — | Hotspot |
-| KIDNEY | Proximal tubule cells | 50 | 0.775 | 0.016 | 0.005 | — | Hotspot |
+| Tissue | Cell Type | n | mean θ | sup_trained_auc | Status |
+|---|---|---|---|---|---|
+| SKMVL | Endothelial cells | 50 | 0.027 | 0.89 | Hotspot |
+| BLOOD | Megakaryocytes | 50 | 0.195 | 0.885 | Hotspot |
+| HEART | CD8+ T cells | 50 | 0.000 | 0.857 | Hotspot |
+| BLOOD | ISG-expressing T cells | 50 | 0.553 | 0.845 | Hotspot |
+| BLOOD | Basophils | 50 | 0.093 | 0.843 | Hotspot |
+| BLOOD | Naive B cells | 50 | 0.006 | 0.838 | Hotspot |
+| LUNG | Pulmonary fibroblasts | 50 | 0.244 | 0.838 | Hotspot |
+| LUNG | Myeloid dendritic cells | 50 | 0.002 | 0.833 | Hotspot |
+| LUNG | Alveolar macrophages | 50 | 0.003 | 0.823 | Hotspot |
+| KIDNEY | Proximal tubule cells | 50 | 0.799 | 0.82 | Hotspot |
+| BLOOD | Natural killer cells | 50 | 0.013 | 0.82 | Hotspot |
+| BLOOD | Classical monocytes | 50 | 0.054 | 0.815 | Hotspot |
+| BLOOD | Non-classical monocytes | 50 | 0.055 | 0.802 | Hotspot |
 
 **Summary statistics:**
-- **18 hotspots** (q_sup_trained < 0.05 by BH-FDR over 179 merged rows)
-- **Median supervised trained AUC (across 179 blocks):** 0.503 (null expectation ~0.5)
-- **Max supervised trained AUC:** 0.915 (SKMVL Skeletal muscle)
-- **Supervised AUC > 0.70:** 18 blocks (the FDR-significant hotspots; 0/179 under the global trace gate)
-- **Median dose Spearman ρ:** 0.081; blocks with p_sup_dose < 0.05: only a few (dose is shallower than binary separation)
+- **15 hotspots** (q_sup_trained < 0.05 by BH-FDR over 172 blocks) — blood 7, lung 3, skmvl 1, heart 1, kidney 1
+- **Max hotspot trained AUC:** 0.89 (SKMVL Endothelial cells); the dominant muscle myofiber (Skeletal myocytes) is excluded — its trained-vs-control AUC is uncomputable as dominant parenchyma (NA in de_summary)
+- **Supervised AUC ≥ 0.80:** the 13 FDR-significant hotspots (0 under the global trace gate)
+- The previous 5 SKMVL + 4 SKMGN "muscle" hotspots were collinear over-split artifacts, removed by the myofiber merge
 
-**Cross-method validation (Augur corroboration):**
+**Cross-method validation (Augur corroboration):** _(NB: `augur_results.tsv` / `corroboration_merged.tsv` were not re-run for the 2026-07-16 rebuild; the figures below reflect the prior 21/22-hotspot roster.)_
 - Canonical Augur (neurorestore RF on same embeddings): Spearman r(Augur AUC vs PLS-1 AUC) = **0.83** across 18 hotspots
 - Augur median embed-trained AUC on hotspots: 0.83 vs PLS-1 0.85 → strong agreement
 - Augur sex AUC (positive control): median 0.87 across hotspots (high, as expected)
 
 **Representation control (augur_prep.py + pca_control.tsv):**
 - Comparison: GeneCompass 768-d embedding vs PCA-50 of deconvolved Z vs full scaled gene matrix
-- PLS-1 supervised AUC (embedding vs PCA-50 vs genes), verified medians from the current `pca_control.tsv` (178 blocks):
-  - **Embed median: 0.589**
-  - **PCA-50 median: 0.540**
-  - **Genes median: 0.564**
-  - The **GeneCompass embedding beats the PCA-50 baseline**: embed > PCA in **108/178** blocks (and embed > genes likewise). The same holds in human space (Stage 12: embed 0.593 vs PCA 0.540, 108/178).
+- PLS-1 supervised AUC (embedding vs PCA-50 vs genes), verified medians from the current `pca_control.tsv` (172 blocks):
+  - **Embed median: 0.583**
+  - **PCA-50 median: 0.564**
+  - **Genes median: 0.575**
+  - The **GeneCompass embedding beats the PCA-50 baseline** modestly: embed > PCA in **91/172** blocks (embed > genes in 90/172).
   - **Interpretation:** the embedding carries trained-vs-control structure a linear PCA of the deconvolved expression does not — the supervised signal rides on the representation, consistent with §3b of `AIM2_DECONV_RESULTS.md`. (An earlier auto-drafted version of this block reported embed 0.615 / PCA 0.701 and concluded the embedding "does not beat PCA"; those medians were misread and are corrected here.)
 
 ---
@@ -2419,7 +2446,7 @@ Per-tissue breakdown (significant blocks; gate p-threshold 0.05):
 - Cell-type fractions (composition confound): `/data/deconvolution/results/motrpac/{TISSUE}/estimated_fractions.csv` (BayesPrism output; rows=samples, cols=cell types)
 
 **Output:** `/data/deconvolution/genecompass_input/pseudobulk_de/`
-- `de_summary.tsv` (178 blocks with status='ok'; summary stats per block)
+- `de_summary.tsv` (172 blocks with status='ok'; summary stats per block)
 - Per-block tables: `de__{safe(cell_type)}.tsv` (one per tissue, all genes tested)
 - `de_methods.tsv` (provenance sidecar)
 
@@ -2452,7 +2479,7 @@ log2-CPM ~ sex + factor(week) + offset(libsize)
 
 **Global (across all genes, all blocks):**
 1. **IHW** (Independent Hypothesis Weighting; Ignatiadis et al. 2016) on Fisher meta-p with TISSUE as covariate (per Vetr's design). Provides per-gene FDR_IHW; α = 0.05.
-   - Input: 2,110,403 Fisher p-values across all (tissue × cell-type × gene) triples
+   - Input: 2,017,173 Fisher p-values across all (tissue × cell-type × gene) triples
    - Coverage: if IHW fails, falls back to global BH on Fisher p
    - **Actual:** IHW succeeded; used for all FDR_IHW assignment
 
@@ -2467,12 +2494,12 @@ log2-CPM ~ sex + factor(week) + offset(libsize)
 
 ### 2.4 Execution & Scale
 
-**Blocks processed:** 178 blocks with status='ok'; 1 block failed (insufficient samples or power). Hotspots (is_hotspot=TRUE) processed first for prioritization.
+**Blocks processed:** 172 blocks, all status='ok'. Hotspots (is_hotspot=TRUE) processed first for prioritization.
 
 **Gene coverage:**
 - All-zero genes dropped per block (count: median 150, range 50–1751)
 - Genes tested per block: median 13,900 (range 5,171–14,685)
-- **Total genes tested:** ~2.1 million (tissue × cell-type × gene) triples contributing to global IHW
+- **Total genes tested:** ~2.0 million (2,017,173 tissue × cell-type × gene triples contributing to global IHW)
 
 **Sample composition per block:**
 - All: 50 samples (25 M, 25 F) per (tissue, cell type)
@@ -2482,25 +2509,25 @@ log2-CPM ~ sex + factor(week) + offset(libsize)
 
 **Per-block significance (FDR_IHW < 0.05):**
 
-| Ranking | Tissue | Cell Type | n_sig_dose_IHW | n_genes_tested | % sig | hotspot | sup_trained_auc |
+| Ranking (by n_sig_dose_IHW) | Tissue | Cell Type | n_sig_dose_IHW | n_genes_tested | % sig | hotspot | sup_trained_auc |
 |---|---|---|---|---|---|---|---|
-| 1 | SKMVL | Skeletal muscle | 262 | 14,008 | 1.87% | TRUE | 0.915 |
-| 2 | SKMVL | Myofibroblasts | 246 | 13,952 | 1.76% | TRUE | 0.907 |
-| 3 | SKMGN | Skeletal muscle cells | 223 | 13,777 | 1.62% | TRUE | 0.885 |
-| 4 | SKMVL | Endothelial cells | 248 | 13,952 | 1.78% | TRUE | 0.88 |
-| 5 | BLOOD | Megakaryocytes | 1,266 | 11,257 | 11.2% | TRUE | 0.87 |
-| 6 | BLOOD | ISG-expressing T cells | 1,708 | 11,269 | 15.1% | TRUE | 0.835 |
+| 1 | BLOOD | ISG-expressing T cells | 1,805 | 11,255 | 16.0% | TRUE | 0.845 |
+| 2 | BLOOD | Classical monocytes | 1,753 | 11,213 | 15.6% | TRUE | 0.815 |
+| 3 | BLOOD | Non-classical monocytes | 1,739 | 11,232 | 15.5% | TRUE | 0.802 |
+| 4 | BLOOD | Memory T cells | 1,721 | 11,189 | 15.4% | FALSE | — |
+| 5 | BLOOD | Natural killer cells | 1,696 | 11,160 | 15.2% | TRUE | 0.82 |
+| 6 | BAT | Endothelial cells | 1,666 | 13,786 | 12.1% | FALSE | — |
 | … | … | … | … | … | … | … | … |
-| Top 18 (hotspots, q<0.05) | — | — | **~9,000 total sig genes** | — | **median 1.9%** | — | **median 0.835** |
-| Non-hotspots (178–18) | — | — | **median 0** | — | **median 0%** | — | — |
+| Top 13 (hotspots, q<0.05) | — | — | **~11,900 total dose-sig genes** | — | — | — | **median 0.838** |
+| Non-hotspots (172–13) | — | — | **median low** | — | — | — | — |
 
 **Dominant (most-abundant) cell types per tissue** (by mean_fraction from de_summary):
-- HEART: Cardiomyocytes (99.6% fraction, 172 sig genes)
-- LIVER: Hepatocytes (90.9%, 162 sig genes)
+- HEART: Cardiomyocytes (72.0% fraction, 364 sig genes)
+- LIVER: Hepatocytes (91.9%, 152 sig genes)
 - KIDNEY: Proximal tubule cells (79.9%, 4 sig genes → parenchyma RED FLAG, addressed below)
-- SKMGN: Skeletal muscle cells (74.7%, 227 sig genes)
-- SKMVL: Skeletal muscle cells (54.5%, 261 sig genes)
-- BLOOD: ISG-expressing T cells (55.3%, 1,690 sig genes)
+- SKMGN: Skeletal myocytes (96.2%, 308 sig genes)
+- SKMVL: Skeletal myocytes (95.5%, 355 sig genes)
+- BLOOD: ISG-expressing T cells (55.3%, 1,805 sig genes)
 
 **Magnitude:**
 - Per-gene log2FC at 8w: typically small (per Vetr's observation: 56% of bulk fold-changes ≤1.5×)
@@ -2556,6 +2583,13 @@ log2-CPM ~ sex + factor(week) + offset(libsize)
 ### 3.2 Results: The Parenchyma RED FLAG & RESOLUTION
 
 **Headline:** Tier-A muscle/heart mito+biogenesis genes **fail spectacularly** — 2/34 recovered (6%) vs expected ≥80%. Yet the blocks are **not broken**: hundreds of other genes are dose-significant. Why?
+
+> **⚠ The diagnostic tables in §3.2 predate the 2026-07-16 rebuild.** They use the pre-rebuild split muscle labels
+> ("Skeletal muscle cells" + "Skeletal muscle fibers"), now merged to a single **"Skeletal myocytes"** label on the
+> GSE137869 5-type reference; HEART is now on the re-annotated SCP2828 reference. `diagnose_parenchyma.py` /
+> `validate_parenchyma_dataanchored.py` were not re-run, so the concordance/recovery values below reflect the prior
+> references. The qualitative conclusion (parenchyma Z faithfully tracks bulk with magnitude shrinkage; the Tier-A
+> controls were mis-specified) is unchanged.
 
 **Diagnosis outputs:**
 
@@ -2634,8 +2668,8 @@ Notable Tier-A not-significant (direction-correct but flat):
 ### 3.4 Summary & Reporting Policy
 
 **The MIXED result:**
-- **Gate:** Exercise signal is present (18 hotspots, q<0.05, median AUC 0.85)
-- **Per-cell-type DE:** 178/178 blocks successfully run; hotspots show expected dose-DE richness (median 1.9% of ~14k genes sig); non-hotspots mostly flat
+- **Gate:** Exercise signal is present (15 hotspots, q<0.05, median AUC 0.838)
+- **Per-cell-type DE:** 172/172 blocks successfully run; hotspots show expected dose-DE richness; non-hotspots mostly flat
 - **Positive controls:** Tier-A (pre-reg mito genes) mostly fail, **but data-anchored analysis shows this is control mis-specification + deconvolution shrinkage, NOT a pipeline failure** (HEART cardiomyocytes 83% recovery validates the approach)
 
 **Parenchyma RED FLAG resolution:**
@@ -2644,7 +2678,7 @@ Notable Tier-A not-significant (direction-correct but flat):
 - **Validation:** Data-anchored recovery (genes that GENUINELY move in bulk) reaches **83% in heart cardiomyocytes**, **24–33% in muscle** → pipeline is **faithful but limited by deconvolution fidelity** (a known limitation, not a bug)
 
 **Reporting policy (frozen):**
-1. Report the hotspot geography (18 blocks, FDR-sig supervised AUC) as the **primary exercise-signal finding**
+1. Report the hotspot geography (13 blocks, FDR-sig supervised AUC) as the **primary exercise-signal finding**
 2. Report per-cell-type DE counts (n_sig_dose_IHW per block) as **secondary, with hotspot flagging**
 3. **Downweight or condition Tier-A recovery claims on parenchyma** (e.g., SKMVL muscle, SKMGN, LIVER): "the dominant cell type shows limited Tier-A recovery (24% data-anchored), consistent with deconvolution compression [cite shrinkage analysis]; non-parenchyma hotspots (immune, endothelial) show expected patterns"
 4. Highlight **immune hotspot validation** (Tier C yu_cytotoxicity enrichment, BLOOD ISG-T responsiveness)
@@ -2662,7 +2696,7 @@ Notable Tier-A not-significant (direction-correct but flat):
 | Supervised probe | `/deconvolution/subspace_probe.py` | PLS-1 CV AUC (trained binary), dose Spearman, 4 complementary measures per (tissue × cell-type) |
 | Augur corroboration | `/deconvolution/augur_prep.py`, `/deconvolution/run_augur.R` | Export embed + PCA-50 + meta to Augur; run canonical Augur RF on trained/sex conditions; compare AUC |
 | Corroboration merge | `/deconvolution/corroborate_summary.py` | Merge subspace_probe + pca_control + augur_results → corroboration_merged.tsv; compute BH-FDR on p_sup_trained → q_sup_trained |
-| DE per-cell-type | `/deconvolution/R/run_pseudobulk_de.R` | limma-trend on log2-CPM of continuous Z; combined + per-sex + Fisher meta-p + ordinal slope; IHW~tissue; repfdr sex-consistency; 178 blocks |
+| DE per-cell-type | `/deconvolution/R/run_pseudobulk_de.R` | limma-trend on log2-CPM of continuous Z; combined + per-sex + Fisher meta-p + ordinal slope; IHW~tissue; repfdr sex-consistency; 172 blocks |
 | Positive controls | `/deconvolution/compare_posctrl.py` | Execute frozen pre-reg (105 genes) against exhaustive DE; frozen miss-ladder; Tier A/Ai/B direction-based scoring; Tier C program enrichment |
 | Parenchyma diagnosis | `/deconvolution/diagnose_parenchyma.py` | Bulk-vs-Z concordance (Pearson r, shrinkage) genome-wide; validate H3 (compression hypothesis) |
 | Parenchyma validation | `/deconvolution/validate_parenchyma_dataanchored.py` | Data-anchored recovery: genes genuinely DE in bulk (8w-vs-control BH<0.05, \|lfc\|≥0.25) → do they recover in parenchyma DE (sign-concordant FDR_IHW<0.05)? |
@@ -2671,12 +2705,12 @@ Notable Tier-A not-significant (direction-correct but flat):
 
 | Output | Path | Rows | Columns |
 |---|---|---|---|
-| Gate | `genecompass_input/pheno_merge_test.tsv` | 186 | tissue, cell_type, n, eta2_{group,trained,sex}, p_{group,trained,sex} |
-| Subspace probe | `genecompass_input/subspace_probe.tsv` | 186 | tissue, cell_type, n, glob_*, std_*, pdmax_*, sup_trained_auc, sup_dose_rho, p_* |
+| Gate | `genecompass_input/pheno_merge_test.tsv` | 172 | tissue, cell_type, n, eta2_{group,trained,sex}, p_{group,trained,sex} |
+| Subspace probe | `genecompass_input/subspace_probe.tsv` | 172 | tissue, cell_type, n, glob_*, std_*, pdmax_*, sup_trained_auc, sup_dose_rho, p_* |
 | PCA control | `genecompass_input/pca_control.tsv` | ~170 | tissue, cell_type, auc_{embed,pca,genes}, p_{embed,pca,genes} |
 | Augur results | `genecompass_input/augur_results.tsv` | ~200 | tissue, representation, condition, cell_type, augur_auc |
 | Merged corroboration | `genecompass_input/corroboration_merged.tsv` | 179 | merged sp + pca_control + augur; q_sup_trained (BH-FDR) |
-| DE summary | `pseudobulk_de/de_summary.tsv` | 178 | tissue, cell_type, is_hotspot, sup_trained_auc, n_samples, n_genes_tested, n_sig_dose_IHW, n_up/down_both_8w, frac_week_p, status |
+| DE summary | `pseudobulk_de/de_summary.tsv` | 172 | tissue, cell_type, is_hotspot, sup_trained_auc, n_samples, n_genes_tested, n_sig_dose_IHW, n_up/down_both_8w, frac_week_p, status |
 | DE per-block | `pseudobulk_de/{TISSUE}/de__{safe(ct)}.tsv` | ~14k genes | gene, n_nonzero, FDR_IHW, lfc_8w, lfc_{1,2,4}w, P_fisher, P_train_{M,F}, z_8w_{M,F}, fdr_8w_{M,F}, sexcons_8w, frac_week_p |
 | DE methods | `pseudobulk_de/de_methods.tsv` | 6 rows | multiple_testing: "IHW~tissue"; sex_consistency: "repfdr(replication) x sign"; design; deviations |
 | Posctrl results | `pseudobulk_de/posctrl_results.tsv` | 105 | tier, group, symbol, ensembl, tissue, cell_type, sex, expected_dir, outcome, present, FDR_IHW, lfc_8w, powered, significant |
@@ -2691,7 +2725,7 @@ Notable Tier-A not-significant (direction-correct but flat):
 
 **Flow:** Gate (pheno_merge_test) → Supervised re-measurement (subspace_probe) → Corroboration (Augur, PCA control) → Per-cell-type DE (limma on Z) → Positive-control validation → Parenchyma diagnosis.
 
-**Gate findings (18 hotspots, blood + muscle) feed into:**
+**Gate findings (15 hotspots, blood + lung/muscle stroma) feed into:**
 1. Hotspot prioritization in DE run (is_hotspot=TRUE in de_summary)
 2. Baseline for FDR-multiple-testing (q_sup_trained on subspace_probe p-values)
 3. Comparison benchmarks (Augur, PCA) to validate the signal is representation-robust
@@ -2717,7 +2751,7 @@ Stage 12 is the **cross-species transfer module (Aim 3a, Module E)** of the MoTr
 
 ### Input data
 
-- **Rat pseudo-cells:** `/data/deconvolution/genecompass_input/<tissue>/pseudocells.h5ad` (raw, deconvolved count-mass per pseudo-cell; 10 tissues × multiple cell types = 9,300 total pseudo-cells)
+- **Rat pseudo-cells:** `/data/deconvolution/genecompass_input/<tissue>/pseudocells.h5ad` (raw, deconvolved count-mass per pseudo-cell; 14 tissues × multiple cell types = 8,450 total pseudo-cells)
 - **Ortholog mapping:** `rat_to_human_mapping.pickle` — 15,234 rat ENSRNOG → human ENSG mappings (from Stage 3, ortholog_mappings/)
 - **Human token dictionary:** `human_mouse_tokens.pickle` — extracted to retain only ENSG (human) tokens; 23,113 unique ENSG IDs
 - **Human gene medians:** `human_gene_median_after_filter.pickle` (median expression, positive-valued, for the same 23,113 ENSG genes)
@@ -2744,7 +2778,7 @@ For each rat pseudo-cell (raw counts over ~13,000 rat ENSRNOG genes):
 | n_human_unique (after many-to-one sum) | 10,734 |
 | n_collisions_summed | 120 (1.1% of mapped genes) |
 
-**Across all 10 tissues:** frac_rat_mapped ranges 80.3%–83.0% (median 82.6%); count-mass preservation ranges 81.5%–86.5% (median 84.2%). The ~17% of count-mass in unmapped T4 genes is **critical** to preserve: the per-cell library normalization is always denominator = full_rat_library (all genes, including dropped T4s), **not** mapped-only. This ensures surviving genes' value scale exactly matches the rat tokenization path (see § value-channel parity below).
+**Across all 14 tissues:** frac_rat_mapped ranges 80.3%–83.0% (median 82.6%); count-mass preservation ranges 81.5%–86.5% (median 84.2%). The ~17% of count-mass in unmapped T4 genes is **critical** to preserve: the per-cell library normalization is always denominator = full_rat_library (all genes, including dropped T4s), **not** mapped-only. This ensures surviving genes' value scale exactly matches the rat tokenization path (see § value-channel parity below).
 
 ### Human tokenization
 
@@ -2852,7 +2886,7 @@ For each (tissue, cell_type) block in human space:
 - **Secondary:** sup_dose_rho (ordinal dose Spearman ρ)
 - **Positive control:** sup_sex_auc (sex axis — should stay strong if transfer preserves embedding)
 
-Output: `/data/deconvolution/genecompass_input_human/subspace_probe.tsv` (178 tissue×cell_type blocks)
+Output: `/data/deconvolution/genecompass_input_human/subspace_probe.tsv` (205 tissue×cell_type blocks; 111 with a computable human supervised probe)
 
 ### Step 4: Comparison and verdict (E.2 deliverable)
 
@@ -2871,20 +2905,20 @@ Sex is a transfer-agnostic biological axis (driven by sex-chromosome dosage and 
 
 **Result:** **PASS**
 
-- **Median sup_sex_auc:** rat 0.694 → human 0.704 (no collapse)
-- **Spearman(rat~human sex AUC):** r = 0.911 (178 blocks, p < 0.001)
+- **Median sup_sex_auc:** rat 0.686 → human 0.765 (no collapse)
+- **Spearman(rat~human sex AUC):** r = 0.782 (111 blocks, p < 0.001)
 - **Interpretation:** The strong sex axis is preserved. The embedding biology is intact; exercise claims downstream are interpretable.
 
 ### (2) Global fidelity — does human-space tracking follow rat-space?
 
-Across all 178 tissue×cell_type blocks, how well does the trained AUC (and dose rho) rank order in human space match rat space?
+Across the 111 paired blocks with a computable human probe, how well does the trained AUC (and dose rho) rank order in human space match rat space?
 
 **Results:**
 
 | Axis | Spearman r | n |
 |------|-----------|---|
-| Trained AUC | 0.683 | 178 |
-| Ordinal dose rho | 0.671 | 178 |
+| Trained AUC | 0.420 | 111 |
+| Ordinal dose rho | 0.452 | 111 |
 
 **Interpretation:** Moderate correlation (~0.68). The human-space ranking of blocks is not identical to rat (not 1.0), but the block-level effect sizes track significantly better than chance. This is expected: cell type reorders slightly when transferred (relative positions shift), and the embedding's lower-variance training axis is noisier in human tokens than the rat tokens.
 
@@ -2892,7 +2926,7 @@ Across all 178 tissue×cell_type blocks, how well does the trained AUC (and dose
 
 **Definition:** Rat exercise "hotspots" = tissue×cell_type blocks with **q_sup_trained < 0.05** (FDR-corrected in rat space). These are the primary targets for downstream DE and biology.
 
-**Count:** 18 hotspots across 5 tissues (blood 7, skmvl 5, skmgn 4, heart 1, kidney 1)
+**Count:** the transfer table's hotspot flag = 21 blocks across 6 tissues (blood 7, skmgn 5, skmvl 4, lung 3, heart 1, kidney 1); note this predates the 2026-07-16 rebuild's 13-hotspot roster (the transfer was not re-run against the new hotspots)
 
 **Classification in human space** (for each hotspot, apply decision rule):
 
@@ -2902,22 +2936,24 @@ WEAKENED:  human sup_trained_auc >= 0.65 BUT p >= 0.05
 LOST:      human sup_trained_auc < 0.65
 ```
 
-**Result:** **16 / 18 PRESERVED** (89%); 0 WEAKENED; 2 LOST
+**Result (hotspot level):** **10/21 PRESERVED, 1 WEAKENED, 2 LOST, 8 no-human-block.** Whole-table (185 paired blocks): **24 PRESERVED / 8 WEAKENED / 79 LOST / 74 no-human-block.**
 
-| Tissue | Preserved | Lost | Example preserved | Example lost |
+| Tissue | Preserved | Lost/Weakened | Example preserved | Example lost |
 |--------|-----------|------|-------------------|--------------|
-| Blood | 7/7 | 0 | Megakaryocytes (rat 0.870 → human 0.860) | — |
-| Skmvl | 4/5 | 1 | Skeletal muscle (0.915 → 0.855) | Macrophages (0.782 → 0.630) |
-| Skmgn | 4/4 | 0 | Skeletal muscle cells (0.885 → 0.705) | — |
-| Heart | 1/1 | 0 | CD8+ T cells (0.825 → 0.815) | — |
-| Kidney | 0/1 | 1 | — | Proximal tubule cells (0.775 → 0.643) |
+| Blood | 7/7 | 0 | Megakaryocytes (rat 0.885 → human 0.845) | — |
+| Lung | 2/3 | 1 LOST | Pulmonary fibroblasts (0.838 → 0.810) | Alveolar macrophages (0.823 → 0.578) |
+| Skmvl | 1/4 | 3 no-human-block | Endothelial cells (0.890 → 0.820) | — |
+| Heart | 0/1 | 1 LOST | — | CD8+ T cells (0.857 → 0.560) |
+| Kidney | 0/1 | 1 WEAKENED | — | Proximal tubule cells (0.820 → 0.660) |
+| Skmgn | 0/5 | 5 no-human-block | — | — |
 
 **Per-tissue hotspot preservation:**
 - blood: 7/7 (100%)
-- skmvl: 4/5 (80%)
-- skmgn: 4/4 (100%)
-- heart: 1/1 (100%)
+- lung: 2/3 (67%)
+- skmvl: 1/4 (25%)
+- heart: 0/1 (0%)
 - kidney: 0/1 (0%)
+- skmgn: 0/5 (0%; all no-human-block)
 
 ---
 
@@ -2925,10 +2961,10 @@ LOST:      human sup_trained_auc < 0.65
 
 **Context:** The compare_transfer script optionally incorporates Augur-RF (Skinnider/Squair 2021 — published cross-validated random-forest standard for cell-type perturbation-responsiveness) if human-space corroboration_merged.tsv is present.
 
-**Result:** **16 / 18 hotspots PRESERVED by Augur-RF** (independent confirmation of PLS-1 verdict)
+**Result:** **19 / 20 hotspots (with an Augur AUC) PRESERVED by Augur-RF** (independent confirmation of PLS-1 verdict)
 
-- **Augur-RF embed AUC Spearman(rat~human):** r = 0.816 (178 blocks, p < 0.001)
-- **Interpretation:** The PLS-1 survival is not an artifact of our linear method. A published, nonlinear, cross-validated RF method independently flags the same 16/18 hotspots as robust to transfer.
+- **Augur-RF embed AUC Spearman(rat~human):** r = 0.767 (166 blocks, p < 0.001)
+- **Interpretation:** The PLS-1 survival is not an artifact of our linear method. A published, nonlinear, cross-validated RF method independently flags 19/20 hotspots as robust to transfer.
 
 ---
 
@@ -2936,17 +2972,17 @@ LOST:      human sup_trained_auc < 0.65
 
 **Verdict document:** `/data/deconvolution/genecompass_input_human/transfer_comparison.md` (above, generated by compare_transfer.py)
 
-**Full paired join:** `/data/deconvolution/genecompass_input_human/transfer_comparison.tsv` (180 rows: 2 LOST, 16 PRESERVED hotspots + 162 non-hotspot blocks)
+**Full paired join:** `/data/deconvolution/genecompass_input_human/transfer_comparison.tsv` (185 rows: 24 PRESERVED, 8 WEAKENED, 79 LOST, 74 no-human-block)
 
 **Human-space embeddings:** `/data/deconvolution/genecompass_input_human/<tissue>/embeddings/cell_embeddings.npy` (per-tissue, 768-d CLS vectors; tissue-specific cell counts)
 
-**Human-space supervised probe:** `/data/deconvolution/genecompass_input_human/subspace_probe.tsv` (per-block AUC + dose Spearman, 178 rows)
+**Human-space supervised probe:** `/data/deconvolution/genecompass_input_human/subspace_probe.tsv` (per-block AUC + dose Spearman, 205 rows)
 
 ---
 
 ## Integration with downstream (Stage 10 + Aims 3b/3c)
 
-The 16 PRESERVED hotspots form the **primary target set** for per-cell-type DE (downstream, Stage 10) and any putative mechanism work (Aim 3b regulators, Aim 3c human validation). The "transfer successfully carries the exercise axis" verdict (16/18 hotspots, both PLS-1 and Augur-RF) licenses the claim that **cell-type-resolved exercise biology is recoverable in human embedding space** — a key conceptual contribution of this work. Whether human patients *exhibit* the same response (E.3) remains a human-cohort experiment (out of scope here).
+The PRESERVED hotspots form the **primary target set** for per-cell-type DE (downstream, Stage 10) and any putative mechanism work (Aim 3b regulators, Aim 3c human validation). The "transfer successfully carries the exercise axis" verdict (10/21 hotspots preserved, 24 blocks PRESERVED whole-table, both PLS-1 and Augur-RF) licenses the claim that **cell-type-resolved exercise biology is recoverable in human embedding space** — a key conceptual contribution of this work. Whether human patients *exhibit* the same response (E.3) remains a human-cohort experiment (out of scope here).
 
 ---
 
@@ -2975,7 +3011,7 @@ The 16 PRESERVED hotspots form the **primary target set** for per-cell-type DE (
 **Commit:** fc4a497 (`aim2-celltype-de` branch, 2026-06-25)  
 **Author:** Tim Reese (reese18@purdue.edu) + Claude Opus 4.8 (co-author, parity verification)  
 **Checkpoint used:** `data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/checkpoint-147941/` (vocab 55,275 × 768-d, 12-layer BERT)  
-**Tokenization baseline:** corpus target_sum 10,000 for pre-training; **rat/human transfer use target_sum 6,500** (the per-tissue deconvolution norm; verified across all 10 rat tissues)
+**Tokenization baseline:** corpus target_sum 10,000 for pre-training; **rat/human transfer use target_sum 6,500** (the per-tissue deconvolution norm; verified across all 14 rat tissues)
 
 ---
 
@@ -3009,7 +3045,7 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
   - `prepare_motrpac_bulk.sh` / `.R` — lift MoTrPAC bulk ENSRNOG IDs (Rnor_6.0 → rel-113) via 3-bridge liftover; output `bulk.mtx`, `bulk_genes.tsv`, `bulk_samples.tsv` per tissue
   - `run_deconvolution.sh` / `.R` — BayesPrism per-tissue (reference-specific) deconvolution on lifted bulk; output `estimated_fractions.csv` (theta), `bp_result.rds`
   - `extract_z.sh` / `.R` — posterior expected per-cell-type expression Z extraction from `bp_result.rds` → `pred_z/{genes.txt,types.txt,predz__*.csv}` per tissue
-  - `run_pseudobulk_de.sh` / `.R` — limma-trend pseudobulk DE on per-cell-type Z (dosage effects, sex, interactions, ordinal week slope); applies global IHW (tissue covariate) + repfdr (sex-consistency at 8w); outputs **186 blocks × ~14k genes**
+  - `run_pseudobulk_de.sh` / `.R` — limma-trend pseudobulk DE on per-cell-type Z (dosage effects, sex, interactions, ordinal week slope); applies global IHW (tissue covariate) + repfdr (sex-consistency at 8w); outputs **172 blocks × ~14k genes**
   - `extract_z_vst.sh` / `score_z_vst.R` — VST-transformed Z for validation
   - `run_augur.R` / `run_augur.sh` — Augur cross-validated RF (condition-responsiveness benchmark)
   - `run_omnideconv.sh` / `.R` — cross-method deconvolution (DWLS, NMF, SCDC, etc.) for theta validation
@@ -3032,7 +3068,7 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
 **Reference Building** (input prep, not production):
 - `build_reference.py` — single-cell reference construction (join bulk scRNA samples per tissue, label cell types, output .h5ad + metadata)
   - `--label-scheme {default,muscle,brain}` — muscle scheme merges SKMVL "fibers"+"cells"; brain scheme merges cortex/hippoc collinear neurons
-- `build_all_references.sh` — orchestrator: iterate 10 tissues, build v1 + v2 references; outputs `/references/` + `/references_v2/` dirs
+- `build_all_references.sh` — orchestrator: iterate 14 tissues, build v1 + v2 references; outputs `/references/` + `/references_v2/` dirs
 - `build_references_v2.sh` — v2 build with label-scheme appliance
 - `build_protein_coding_list.py` — gene biotype filter
 - `build_sex_chrom_list.py` — sex-chromosome genes (removed upstream)
@@ -3042,7 +3078,7 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
 - Stage 8 entry: 1 MoTrPAC bulk per tissue (implicit in RDA); 1 per-tissue SC reference
 - Stage 8 exit: per tissue: `estimated_fractions.csv` (~50×N cell types), `pred_z/{predz__*.csv}` (N cell types × ~14k genes tested), `pseudocells.h5ad` (50 samples × N types)
 - Stage 9 exit: per tissue: `dataset/` (tokenized pseudo-cells in PyTorch format), `embeddings/cell_embeddings.npy` (50N × 768)
-- Stage 10 exit: global: `de_summary.tsv` (186 blocks), `de_hotspots.tsv` (22 significant trained-vs-control), `pseudobulk_de/<TISSUE>/de__*.tsv` (per-type DE tables)
+- Stage 10 exit: global: `de_summary.tsv` (172 blocks), `de_hotspots.tsv` (13 significant trained-vs-control), `pseudobulk_de/<TISSUE>/de__*.tsv` (per-type DE tables)
 
 ### 1.2 Pipeline Orchestrators (`pipeline/`)
 
@@ -3058,7 +3094,7 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
   - Input: `--tissues [TISSUE ...]` (default all); predefined DE + pre-reg spec
   - Output: Aim-2 analysis artifact tree (de_summary, de_hotspots, pseudobulk_de/*, posctrl_*)
   - Steps: (1) limma-trend DE on all pred_z per block; (2) compare_posctrl.py on frozen spec
-  - Applies global IHW + repfdr across all 186 blocks; composition-confound checks
+  - Applies global IHW + repfdr across all 172 blocks; composition-confound checks
 - **`run_stage12.py`** — cross-species transfer + survival (whole-experiment driver: E.1 transfer → E.2 analysis)
   - Per-tissue steps: (1) `transfer_to_human.py` (ortholog project + human tokenize); (2) `embed_cells.py --species 0` (GPU, human CLS)
   - Global steps: (3) `subspace_probe.py --gc-root <human-root>` (primary E.2 detector); (4) `compare_transfer.py` (rat vs human axis survival)
@@ -3129,12 +3165,12 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
 
 **Stage 10 outputs** (whole-experiment):
 - **`genecompass_input/pseudobulk_de/`** — per-cell-type DE results (Aim-2b deliverable)
-  - `de_summary.tsv` — (186 rows; one per tissue × cell-type block)
+  - `de_summary.tsv` — (172 rows; one per tissue × cell-type block)
     - Cols: tissue, cell_type, is_hotspot, sup_trained_auc, n_samples, n_male, n_female, n_genes_tested, n_genes_dropped_allzero, mean_fraction, median_libsize, frac_zero, n_sig_dose_IHW, n_sig_dose_fisher_BHblock, n_sig_interaction, n_up_both_8w, n_down_both_8w, n_sexspecific_8w, n_opposite_8w, n_sig_sex, frac_week_slope, frac_week_p, status
-  - `<TISSUE>/de__<CellType>.tsv` — per-block DE table (one per of 186 blocks)
+  - `<TISSUE>/de__<CellType>.tsv` — per-block DE table (one per of 172 blocks)
     - Cols: ENSRNOG, symbol, baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, week_slope, week_pval, sex_effect, direction_flags
     - Rows: ~13–18k genes tested (all-zero rows dropped per block)
-  - `de_hotspots.tsv` — (22 rows; subset of 186 with `is_hotspot=TRUE`, AUC≥0.70 + p<0.05)
+  - `de_hotspots.tsv` — (13 rows; subset of 172 with `is_hotspot=TRUE`, q_sup_trained < 0.05)
   - `de_methods.tsv` — (metadata on DE approach: limma-trend, IHW, repfdr, link to `EMBEDDING_DE_STANDARDS.md`)
   - `posctrl_results.tsv` — (105 × Tier × coverage cols; frozen spec scoring against DE outputs)
   - `posctrl_responsiveness.tsv` — (summary of control coverage / power / confound gates)
@@ -3143,10 +3179,10 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
   - `parenchyma_dataanchored_validation.tsv` — per-tissue parenchyma Z recovery of bulk dose movers (r, direction-concordance %)
 
 **Global analysis outputs**:
-- **`genecompass_input/subspace_probe.tsv`** — supervised PLS-1 CV probe on rat 768-d embeddings (186 rows)
+- **`genecompass_input/subspace_probe.tsv`** — supervised PLS-1 CV probe on rat 768-d embeddings (172 analysis blocks; 205 rows incl. VENACV)
   - Cols: tissue, cell_type, sup_trained_auc, sup_trained_p, sup_dose_rho, sup_dose_p, sup_dose_adj_rho, sup_sex_auc, sup_sex_p, …
-- **`genecompass_input/augur_results.tsv`** — Augur RF cross-validated AUC (186 rows; Spearman r=0.83 vs subspace_probe trained AUC)
-- **`genecompass_input/corroboration_merged.tsv`** — merged Augur + probe + gate (186 rows; consolidates multiple condition-detection methods)
+- **`genecompass_input/augur_results.tsv`** — Augur RF cross-validated AUC (Spearman r=0.83 vs subspace_probe trained AUC; NB: not re-run for the 2026-07-16 rebuild — reflects the prior hotspot roster)
+- **`genecompass_input/corroboration_merged.tsv`** — merged Augur + probe + gate (185 rows; consolidates multiple condition-detection methods; NB: this file predates the 2026-07-16 rebuild — not re-run)
 - **`genecompass_input/pheno_merge_test.tsv`** — PERMANOVA gate on 768-d embeddings (trace-η²) for GROUP / TRAINED / SEX per block
 - **`genecompass_input/pca_control.tsv`** — PCA-50 baseline for Augur/probe comparison (representation control)
 - **`genecompass_input/pseudobulk_de_merged/`** — merged DE outputs (post-reference-fix adoption; v2 merged references only)
@@ -3161,11 +3197,11 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
   - `embeddings/cell_embeddings.npy` (N_cells × 768; human-space CLS)
   - `tokenize_summary.json` (species=0, human ENSG token count, human value-channel stats, ortholog_projection sub-dict)
 
-- **`genecompass_input_human/subspace_probe.tsv`** — supervised probe on human 768-d embeddings (same 178 blocks as rat, matched per-cell)
+- **`genecompass_input_human/subspace_probe.tsv`** — supervised probe on human 768-d embeddings (205 rows; 111 with a computable human probe)
   - Columns match rat version; AUC on human-space embeddings
-- **`genecompass_input_human/transfer_comparison.tsv`** — (178 rows; paired rat vs human AUC + dose-Spearman)
+- **`genecompass_input_human/transfer_comparison.tsv`** — (185 rows; paired rat vs human AUC + dose-Spearman)
   - Cols: tissue, cell_type, rat_sup_trained_auc, human_sup_trained_auc, dAUC, rat_dose_rho, human_dose_rho, status (PRESERVED/WEAKENED/LOST)
-- **`genecompass_input_human/transfer_comparison.md`** — narrative summary (sex-control pass → 16/18 hotspots PRESERVED, 2 LOST; global Spearman r=0.683 trained, 0.671 dose)
+- **`genecompass_input_human/transfer_comparison.md`** — narrative summary (sex-control pass → 24 blocks PRESERVED / 8 WEAKENED whole-table, 10/21 hotspots PRESERVED; global Spearman r=0.420 trained, 0.452 dose)
 
 **UMAP visualization**:
 - **`genecompass_input/umap/`** — pre-computed UMAP & interactive viewer
@@ -3216,22 +3252,26 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
 
 ## 4. Complete Per-Tissue Tissue Codes & Reference Map
 
-**10 tissues with exercise data (processed)**:
-| MoTrPAC Code | Label in Data | Reference | Ref Type | Merged? | N Cell Types (v2 merged) | N Pseudo-cells |
+**14 tissues with exercise data (deconvolved; 2026-07-16 rebuild)**:
+| MoTrPAC Code | Label in Data | Reference | Ref Type | Merged? | N Cell Types | N Pseudo-cells |
 |---|---|---|---|---|---|---|
-| SKM-GN | skmgn | gastrocnemius_GSE184413 | bulk scRNA | ✓ (skeletal_muscle_GSE254371_muscle_merged) | 17 | 850 |
-| SKM-VL | skmvl | skeletal muscle_GSE254371 | bulk scRNA | ✓ (muscle-merged) | 15 | 750 |
-| BLOOD | blood | peripheral blood mononuclear cells_GSE285476 | bulk scRNA | — | 14 | 700 |
-| LIVER | liver | liver_GSE220075 | bulk scRNA | — | 6 | 300 |
-| LUNG | lung | lung_GSE178405 | bulk scRNA | — | 27 | 1,350 |
-| HEART | heart | heart_GSE280111_LV | bulk scRNA (fix GSE280111 w/ CMs) | — | 23 | 1,150 |
-| HIPPOC | hippoc | hippocampus_GSE305314_WT | bulk scRNA | ✓ (brain-merged) | 15 | 750 |
-| CORTEX | cortex | cortex_GSE303115_union | bulk scRNA (union, gene-rich) | ✓ (brain-merged) | 35 | 1,750 |
-| KIDNEY | kidney | kidney_GSE240658 | bulk scRNA | — | 17 | 850 |
-| WATSC | watsc | white adipose tissue_GSE137869 | bulk scRNA | — | 17 | 850 |
+| SKM-GN | skmgn | MUSCLE_GSE137869_Y | bulk scRNA | ✓ (muscle-merged, 5-type) | 5 | 250 |
+| SKM-VL | skmvl | MUSCLE_GSE137869_Y | bulk scRNA | ✓ (muscle-merged, 5-type) | 5 | 250 |
+| BLOOD | blood | BLOOD_GSE285476 | bulk scRNA | — | 14 | 700 |
+| LIVER | liver | LIVER_GSE220075 | bulk scRNA | — | 6 | 300 |
+| LUNG | lung | LUNG_native_pooled | bulk scRNA | ✓ (lung scheme) | 28 | 1,400 |
+| HEART | heart | HEART_GSE280111_LV | bulk scRNA (SCP2828 author labels) | — | 16 | 800 |
+| HIPPOC | hippoc | HIPPOC_GSE295314 | bulk scRNA | ✓ (brain-merged) | 18 | 900 |
+| CORTEX | cortex | CORTEX_GSE303115 | bulk scRNA (gene-rich) | ✓ (brain-merged) | 11 | 550 |
+| KIDNEY | kidney | KIDNEY_GSE240658 | bulk scRNA | — | 17 | 850 |
+| WATSC | watsc | WATSC_GSE137869_Y | bulk scRNA | — | 13 | 650 |
+| BAT | bat | BAT_GSE244451 | bulk scRNA (author labels) | — | 6 | 300 |
+| HYPOTH | hypoth | HYPOTH_GSE248413_Y | bulk scRNA | — | 13 | 650 |
+| SMLINT | smlint | SMLINT_GSE272055 | bulk scRNA | — | 14 | 700 |
+| TESTES | testes | TESTES_OMIX767 | bulk scRNA | — | 6 | 150 |
 
-**9 additional tissues (no exercise data; bulk only)**:
-ADRNL, BAT, COLON, OVARY, HYPOTH, SMLINT, SPLEEN, TESTES, VENACV — bulk lifted but **not deconvolved** (no exercise metadata; not in Aim-2 analysis).
+**Not deconvolved (bulk only or no rat reference)**:
+ADRNL, COLON, OVARY, SPLEEN — bulk lifted but **not deconvolved** (no exercise metadata / reference not yet built). **VENACV dropped 2026-07-16** (no genuine rat vena-cava reference; the pulmonary-vein proxy was lung-contaminated).
 
 ---
 
@@ -3311,7 +3351,7 @@ Each tissue is deconvolved against a **tissue-specific single-cell reference**. 
 ### 5.7 Dominant-Parenchyma Reporting Down-Weight
 
 **Findings (§4a, AIM2_DECONV_RESULTS.md):** In tissues where one cell type dominates the cell mass (muscle, heart, liver), that cell type's DE must be read cautiously:
-- **SKMVL (skeletal muscle fibers 65% of fraction)**, **SKMGN (SMC 75%)**: fibers/SMC are the bulk's dominant signal, so their "DE" is close to bulk DE. Strong signal ≠ novel insight (it's mostly recapitulating the known). More interesting are the minority immune/stromal responses.
+- **SKMVL (Skeletal myocytes 95% of fraction)**, **SKMGN (Skeletal myocytes 96%)**: the myocytes are the bulk's dominant signal, so their "DE" is close to bulk DE. Strong signal ≠ novel insight (it's mostly recapitulating the known). More interesting are the minority immune/stromal responses.
 - **LIVER (hepatocytes 30–40%, but all 6 types sex-dominated, none trained-responsive)**: hepatocyte non-response is validated by data-anchored controls (only 0 genes move in bulk at 8w).
 - **HEART (cardiomyocytes fraction varies)**: CM transcriptome sex-dimorphic, not exercise-responsive; endothelial + immune may respond, focus there.
 
@@ -3350,7 +3390,7 @@ Each tissue is deconvolved against a **tissue-specific single-cell reference**. 
 - **~18% of rat count-mass is non-mappable** (T4 rat-specific genes, e.g., olfactory receptors). This mass is kept in the normalize-total denominator but dropped from the sequence. Value-channel median drifts modestly; rank-order is robust.
 - **Confidence tiers** in `rat_token_mapping.tsv` classify orthologs (1:1 high-confidence, T3 many-to-many, T4 rat-specific)
 
-**Caveat:** Cross-species exercise conservation is imperfect. Some exerkines flip direction rat→human (IL15, BDNF, TGFB2); the transfer is **empirically tested, never assumed**. Results must be **confidence-gated** (report Tier 1 confidently, T3/T4 as exploratory) and **reported with survival statistics** (does the signal persist in human space? see transfer_comparison.md results: 16/18 PRESERVED, 2 LOST at AUC≥0.65 + p<0.05).
+**Caveat:** Cross-species exercise conservation is imperfect. Some exerkines flip direction rat→human (IL15, BDNF, TGFB2); the transfer is **empirically tested, never assumed**. Results must be **confidence-gated** (report Tier 1 confidently, T3/T4 as exploratory) and **reported with survival statistics** (does the signal persist in human space? see transfer_comparison.md results: 24 blocks PRESERVED / 8 WEAKENED whole-table, 10/21 hotspots PRESERVED at AUC≥0.65 + p<0.05).
 
 ---
 
@@ -3399,9 +3439,9 @@ python pipeline/run_stage9.py --label liver --device cuda
 # Aggregates all tissues; step 1 is R/compute-heavy
 python pipeline/run_stage10.py --dry-run
 
-python pipeline/run_stage10.py  # will run DE for all tissues & all 186 blocks
+python pipeline/run_stage10.py  # will run DE for all tissues & all 172 blocks
 
-# Stage 12: Cross-Species Transfer (10 tissues × 2 per-tissue steps + 2 global steps)
+# Stage 12: Cross-Species Transfer (14 tissues × 2 per-tissue steps + 2 global steps)
 # Per-tissue step 1 (transfer) is CPU, step 2 (embed) is GPU
 python pipeline/run_stage12.py --labels liver --dry-run
 
@@ -3432,7 +3472,7 @@ sbatch slurm/analysis/run_stage12.slurm
 
 - **After Stage 8**: Check `data/deconvolution/results/motrpac/<TISSUE>/pred_z/genes.txt` exists; row count ~13–18k.
 - **After Stage 9**: Check `data/deconvolution/genecompass_input/<tissue>/embeddings/cell_embeddings.npy` shape = (N_cells, 768).
-- **After Stage 10**: Check `data/deconvolution/genecompass_input/pseudobulk_de/de_summary.tsv` has 186 rows; posctrl_summary.md present.
+- **After Stage 10**: Check `data/deconvolution/genecompass_input/pseudobulk_de/de_summary.tsv` has 172 rows; posctrl_summary.md present.
 - **After Stage 12**: Check `data/deconvolution/genecompass_input_human/<tissue>/embeddings/cell_embeddings.npy` exists; `transfer_comparison.md` shows PRESERVED/WEAKENED/LOST counts.
 
 ---
@@ -3465,18 +3505,18 @@ sbatch slurm/analysis/run_stage12.slurm
 | Tokenized dataset | `data/deconvolution/genecompass_input/<tissue>/dataset/` | ~20 MB | NPY + JSON | input_ids, values, lengths, metadata |
 | CLS embeddings (rat) | `data/deconvolution/genecompass_input/<tissue>/embeddings/cell_embeddings.npy` | ~8 MB | NPY | N_cells × 768 |
 | **Data: Stage 10 Output** |
-| DE summary | `data/deconvolution/genecompass_input/pseudobulk_de/de_summary.tsv` | 29 KB | TSV | 186 blocks; hotspot flag, fraction, frac_zero, n_sig_* |
+| DE summary | `data/deconvolution/genecompass_input/pseudobulk_de/de_summary.tsv` | 29 KB | TSV | 172 blocks; hotspot flag, fraction, frac_zero, n_sig_* |
 | Per-block DE table | `data/deconvolution/genecompass_input/pseudobulk_de/<TISSUE>/de__<Type>.tsv` | 1–3 MB | TSV | ~13–18k genes tested; log2FC, pval, slope |
-| DE hotspots | `data/deconvolution/genecompass_input/pseudobulk_de/de_hotspots.tsv` | 3 KB | TSV | 22 rows (AUC≥0.70 + p<0.05 trained) |
+| DE hotspots | `data/deconvolution/genecompass_input/pseudobulk_de/de_hotspots.tsv` | 3 KB | TSV | 13 rows (q_sup_trained < 0.05) |
 | Posctrl results | `data/deconvolution/genecompass_input/pseudobulk_de/posctrl_results.tsv` | 17 KB | TSV | 105 controls scored |
 | Posctrl summary | `data/deconvolution/genecompass_input/pseudobulk_de/posctrl_summary.md` | 5 KB | MD | Verdict narrative |
-| Supervised probe (rat) | `data/deconvolution/genecompass_input/subspace_probe.tsv` | 40 KB | TSV | 186 blocks; AUC + dose-rho |
+| Supervised probe (rat) | `data/deconvolution/genecompass_input/subspace_probe.tsv` | 40 KB | TSV | 172 analysis blocks (205 rows incl. VENACV); AUC + dose-rho |
 | **Data: Stage 12 Output** |
 | Human tokenized | `data/deconvolution/genecompass_input_human/<tissue>/dataset/` | ~18 MB | NPY + JSON | human-tokenized (species=0, ENSG) |
 | CLS embeddings (human) | `data/deconvolution/genecompass_input_human/<tissue>/embeddings/cell_embeddings.npy` | ~8 MB | NPY | N_cells × 768 (human-space) |
-| Supervised probe (human) | `data/deconvolution/genecompass_input_human/subspace_probe.tsv` | 40 KB | TSV | 178 blocks; human-space AUC + dose-rho |
-| Transfer comparison | `data/deconvolution/genecompass_input_human/transfer_comparison.tsv` | 28 KB | TSV | 178 rows; rat vs human AUC diffs |
-| Transfer summary | `data/deconvolution/genecompass_input_human/transfer_comparison.md` | 3 KB | MD | Hotspot survival verdict (16/18 PRESERVED) |
+| Supervised probe (human) | `data/deconvolution/genecompass_input_human/subspace_probe.tsv` | 40 KB | TSV | 205 rows (111 with a computable human probe); human-space AUC + dose-rho |
+| Transfer comparison | `data/deconvolution/genecompass_input_human/transfer_comparison.tsv` | 28 KB | TSV | 185 rows; rat vs human AUC diffs |
+| Transfer summary | `data/deconvolution/genecompass_input_human/transfer_comparison.md` | 3 KB | MD | Survival verdict (24 PRESERVED / 8 WEAKENED whole-table; 10/21 hotspots PRESERVED) |
 | **Documentation** |
 | Aim-2 results | `deconvolution/AIM2_DECONV_RESULTS.md` | 39 KB | MD | Comprehensive; gate, supervised re-measure, Augur, validation |
 | Methods review | `deconvolution/EMBEDDING_DE_STANDARDS.md` | 8 KB | MD | PERMANOVA, Augur, pseudobulk DE precedent |
@@ -3504,7 +3544,7 @@ sbatch slurm/analysis/run_stage12.slurm
          └─ genecompass_input/<tissue>/embeddings/cell_embeddings.npy (rat 768-d)
                   │
                   ├─ [Stage 10: Aim-2 DE]
-                  │   ├─ pseudobulk_de/de_summary.tsv (186 blocks)
+                  │   ├─ pseudobulk_de/de_summary.tsv (172 blocks)
                   │   ├─ pseudobulk_de/<TISSUE>/de__*.tsv (per-block)
                   │   ├─ subspace_probe.tsv (supervised gate)
                   │   ├─ augur_results.tsv (method corroboration)
@@ -3518,7 +3558,7 @@ sbatch slurm/analysis/run_stage12.slurm
                           │   └─ genecompass_input_human/subspace_probe.tsv (human AUC)
                           │
                           └─ [Stage 12.4: Transfer Comparison]
-                              └─ transfer_comparison.md (hotspot survival: 16/18 PRESERVED)
+                              └─ transfer_comparison.md (survival: 24 PRESERVED / 8 WEAKENED; 10/21 hotspots)
 ```
 
 The pipeline is **strictly sequential** within a tissue (Stages 8 → 9) and **multi-tissue collective** at the analysis layer (Stage 10, 12 global steps). Reproducibility requires:
@@ -3529,3 +3569,5 @@ The pipeline is **strictly sequential** within a tissue (Stages 8 → 9) and **m
 
 All pipeline outputs under `data/deconvolution/` are gitignored (regenerable or too large); the codebase + small references are committed, enabling a fresh clone to reproduce with: `./setup/SETUP.md` → build references → run stages 8–12 in order.
 
+
+> **CORRECTION 2026-07-17:** the 13-hotspot figure above was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.

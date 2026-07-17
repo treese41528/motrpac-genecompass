@@ -83,11 +83,11 @@ VeNx/C3 disease-model controls.
 | LIVER | GSE220075 | CONFIRMED | 4 | snRNA whole-liver healthy; scRNA/immune-enriched/Visium excluded |
 | BLOOD | GSE285476 | CONFIRMED | 1 | "healthy control 0d"; transplant rejection/syngeneic excluded |
 | CORTEX | GSE303115 | CONFIRMED | 2 | the 2 rat snRNA; 5 other species excluded |
-| HEART | GSE280111 | CONFIRMED | 19 | healthy Wistar left ventricle, 17wk |
-| VENACV | GSE280111 | CONFIRMED | 8 | healthy pulmonary veins (venous proxy) |
+| HEART | GSE280111 | CONFIRMED | 19 | healthy Wistar left ventricle, 17wk; **authors' SCP2828 labels → 16 clean cardiac types** |
+| VENACV | GSE280111 | **DROPPED** | 8 | pulmonary-vein proxy built but **irreducibly lung-contaminated** (Clara/airway-club/lung-fibroblast/alveolar-macrophage + "Cardiomyocyte contamination" clusters) → **not deconvolved** (BLOCKED) |
 | WATSC | GSE137869 | CONFIRMED | 2 | young ad-lib `-Y`; old/CR excluded |
-| SKMGN+SKMVL | GSE137869 | CONFIRMED | 2 | young ad-lib `-Y` (one shared muscle ref) |
-| BAT | GSE244451 | CONFIRMED | 2 | 2 naive BAT; taPVAT siblings excluded |
+| SKMGN+SKMVL | GSE137869 | CONFIRMED | 2 | young ad-lib `-Y` (one shared muscle ref); **myofiber over-split merged → 5 clean types** |
+| BAT | GSE244451 | CONFIRMED | 2 | 2 naive BAT; taPVAT siblings excluded; **authors' deposited SCP-annotated labels → 6 clean types** |
 | HYPOTH | GSE248413 | CONFIRMED | 1 | young "Y" (4mo); old + 17α-estradiol excluded |
 | SMLINT | GSE272055 | CONFIRMED | 2 | healthy jejunum epithelium |
 | LUNG | GSE273062+GSE252844 | CONFIRMED | 3 | disease-model CONTROLS; GSE242310 neonate dropped |
@@ -95,8 +95,9 @@ VeNx/C3 disease-model controls.
 
 **Caveats surfaced = pre-documented limitations, NOT selection errors** (all handled by differential-only framing):
 strain ≠ F344 (most refs); young-adult ages (LIVER 8–10wk, SMLINT 6–8wk, HEART 17wk, HYPOTH 4mo, Ma ~5mo);
-male-only (LIVER/HEART/VENACV/HYPOTH/HIPPOC); composition-incomplete (BLOOD PBMC-Ficoll, WATSC SVF-no-adipocytes,
-SMLINT epithelium-only, VENACV pulmonary-vein proxy). HIPPOC "Fed" = refed-after-24h-fast, not ad-lib baseline.
+male-only (LIVER/HEART/HYPOTH/HIPPOC); composition-incomplete (BLOOD PBMC-Ficoll, WATSC SVF-no-adipocytes,
+SMLINT epithelium-only). HIPPOC "Fed" = refed-after-24h-fast, not ad-lib baseline. (VENACV's pulmonary-vein
+proxy was dropped — irreducibly lung-contaminated — so it is not deconvolved.)
 
 ## 7. Execution log
 
@@ -106,12 +107,14 @@ SMLINT epithelium-only, VENACV pulmonary-vein proxy). HIPPOC "Fed" = refed-after
 
 ## 8. Status & what remains
 
-- **RUNNING/DONE:** deconvolution of the 13 validated tissues (KIDNEY, LIVER, BLOOD, CORTEX, HEART, VENACV, WATSC,
-  SKMGN, SKMVL, BAT, HYPOTH, SMLINT, LUNG).
-- **HELD — HIPPOC** (proposed): built + verified, but deconvolving it commits to the GSE305314→GSE295314 switch
-  (Geyu's call). Add with `run_deconv_all.py --submit --include-proposed --tissue HIPPOC`.
-- **NEEDS INGESTION:** TESTES (OMIX767 C+E7W staged), SPLEEN (GSE186158, 7-species → organism-gate), COLON
-  (GSE326856, verify Epcam+). Not deconvolvable until ingested.
-- **BLOCKED:** ADRNL, OVARY — no rat reference exists; reference-free CDSeq if a composition is required.
+- **DONE (2026-07-16 rebuild):** deconvolution of **14 tissues** — KIDNEY, LIVER, BLOOD, CORTEX, HEART, WATSC,
+  SKMGN, SKMVL, BAT, HYPOTH, SMLINT, LUNG, HIPPOC, TESTES. HEART/BAT now carry the authors' deposited labels
+  (16 / 6 clean types); muscle merged → 5 clean types.
+- **HIPPOC:** now deconvolved — the GSE305314→GSE295314 switch is committed (Geyu's call).
+- **TESTES:** OMIX767 (C+E7W) ingested and deconvolved. Still **NEEDS INGESTION:** SPLEEN (GSE186158, 7-species →
+  organism-gate), COLON (GSE326856, verify Epcam+) — not deconvolvable until ingested.
+- **BLOCKED:** ADRNL, OVARY — no rat reference exists; **VENACV** — the only proxy (GSE280111 pulmonary vein) is
+  irreducibly lung-contaminated, so the built reference was **dropped, not deconvolved**. Reference-free CDSeq if
+  a composition is required.
 - **Downstream:** any reference change perturbs the globally-pooled IHW/repfdr fit across all 185 pseudobulk-DE
   blocks → re-run Stage 10 → 12 (and re-execute the per-stage notebooks) **together** after the deconv wave.

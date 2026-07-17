@@ -39,7 +39,7 @@ M (1-3 days), L (1-2 weeks). Paths are relative to the repo root.
 | Tokenized pseudo-cells | `data/deconvolution/genecompass_input/<tissue>/dataset` (cols: input_ids, values, length, species=2, cell_id, sample, cell_type, tissue) |
 | CLS embeddings | `.../<tissue>/embeddings/cell_embeddings.npy` |
 | Rat vocab / token dicts | `data/training/ortholog_mappings/{rat_tokens.pickle, rat_human_mouse_tokens.pickle (4,717 ENSRNOG keys), rat_token_mapping.tsv (human_ortholog+confidence), rat_to_human_mapping.pickle (15,234 / 94.5%)}` |
-| Hotspots | `.../genecompass_input/corroboration_merged.tsv` (q_sup_trained<0.05 -> 22 blocks) |
+| Hotspots | `.../genecompass_input/corroboration_merged.tsv` (q_sup_trained<0.05 -> 13 blocks) |
 | DE outputs (target gate) | `.../pseudobulk_de/{de_summary.tsv, de__*.tsv}` |
 | Loader pattern to copy | `finetune/genecompass/embed_cells.py:87-128` |
 
@@ -169,7 +169,7 @@ Most tractable big deliverable; the hard hop (ortholog map) is DONE.
 **D.0 Sub-build (start NOW; no GPU, no DE dep; effort M):** `translation/stage_human_genetics.py`
 -> download + version + manifest the PUBLIC inputs: GTEx v8 eQTL; the ~114 GWAS set Vetr uses;
 S-PrediXcan models (MASHR/JTI) + covariances (PredictDB); an Open Targets release. Record which
-GTEx tissue maps to each of our 10 tissues. Add a `config/pipeline_config.yaml` block +
+GTEx tissue maps to each of our 14 tissues. Add a `config/pipeline_config.yaml` block +
 checksums (mirror the Stage-3 manifest).
 
 **D.1 New file:** `translation/validate_human.py`.
@@ -202,7 +202,7 @@ backdrop) -- NOT a binding gap. The output is a COUNTERFACTUAL human representat
 > **BUILT 2026-06-24** -- `translation/transfer_to_human.py` (E.1) + `pipeline/run_stage12.py`
 > (orchestrator) + `translation/compare_transfer.py` (E.2) + `slurm/analysis/run_stage12.slurm`.
 > Tokenization parity verified against the actual rat path before writing a line (5-agent map +
-> 4-lens adversarial review): target_sum **6500** (not the corpus 10000 -- all 10 rat runs use 6500),
+> 4-lens adversarial review): target_sum **6500** (not the corpus 10000 -- all 14 rat runs use 6500),
 > top-2048, log2(1+x/median), species=0. The "rat checkpoint can't embed human tokens" worry was
 > DISPROVEN: rat tokens reuse the GeneCompass ID space, so 13,883/15,234 ortholog-mapped rat genes
 > already carry their human ortholog's token ID; human ENSG token IDs are 2..23114, inside the 55,275

@@ -10,13 +10,21 @@ Manifest of record: `deconvolution/tissue_references.yaml`.
 
 ## 1. Production references (10 tissues, 12 accessions)
 
+> **UPDATE 2026-07-16 (rebuild):** the table below is the pre-rebuild deployed set. The current production is
+> **14 deconvolved tissues** (adds BAT · HYPOTH · SMLINT · TESTES, plus rat-only CORTEX and the GSE295314
+> HIPPOC switch); **SKMGN + SKMVL now share one GSE137869 muscle reference** (myofiber over-split merged → 5
+> clean types); **HEART** uses the authors' **SCP2828** deposited labels (16 types); **BAT** = GSE244451
+> deposited labels (6 types); and **VENACV was DROPPED** (its only proxy — the GSE280111 pulmonary vein — is
+> irreducibly lung-contaminated). The full new-state roster is in `REFERENCE_SELECTION_PLAN.md` §2 and
+> `DECONV_REBUILD_RUNBOOK.md`.
+
 | Tissue | Accession | Link | What the study actually is | Status |
 |---|---|---|---|---|
 | **LIVER** | GSE220075 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE220075) | Rat liver cell **atlas** (myeloid heterogeneity) | ✅ CLEAN — Visium samples excluded |
 | **KIDNEY** | GSE240658 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE240658) | Fasting-mimicking-diet study; we take the "No treatment" arm | CAUTION |
-| **HEART** | GSE280111 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE280111) | Rat cardiovascular **atlas** (left ventricle) | CAUTION — θ saturated (CM 99.6%) |
-| **SKMGN** | GSE184413 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE184413) | Mechanotherapy in **aged** rats recovering from **disuse**; "Normal ambulation" arm | CAUTION — 2 donors |
-| **SKMVL** | GSE254371 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE254371) | Muscle stem-cell **transplantation** engineering study | ⚠️ **52% of the reference is a `Rat-mouse chimera_muscle` sample.** GEO labels it *Rattus norvegicus* — an organism gate will NOT catch it. |
+| **HEART** | GSE280111 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE280111) | Rat cardiovascular **atlas** (left ventricle); **authors' SCP2828 deposited labels → 16 clean cardiac types** | CAUTION — θ ~72% CM (parenchyma-dominated, differential-only) |
+| **SKMGN** | GSE137869 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE137869) | Ma 2020 young `-Y` snRNA muscle (shared with SKMVL); **myofiber over-split merged → 5 clean types** | CAUTION — differential-only (replaced GSE184413; drops the only F344 ref) |
+| **SKMVL** | GSE137869 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE137869) | Ma 2020 young `-Y` snRNA muscle (shared with SKMGN); **same merged 5-type roster** | CAUTION — differential-only (replaced the GSE254371 rat-mouse chimera) |
 | **LUNG** (1/3) | GSE273062 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE273062) | **Pulmonary hypertension** model (SuHx / VeNx control) | CAUTION |
 | **LUNG** (2/3) | GSE252844 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE252844) | **Blast-exposure lung injury** | CAUTION |
 | **LUNG** (3/3) | GSE242310 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE242310) | **Hyperoxic NEONATAL** lung — even the control arm is developmentally immature | CAUTION |
@@ -30,15 +38,19 @@ GSE254371 chimera sample. Any species check must also read the free-text `geo_ti
 
 ---
 
-## 2. Candidate replacements / additions (identified, not adopted)
+## 2. Candidate replacements / additions (identified when written; several since ADOPTED)
+
+> **2026-07-16:** TESTES (OMIX767), HIPPOC (GSE295314) and BAT have since been **adopted and deconvolved** —
+> BAT via **GSE244451** (deposited labels → 6 types), not the Ma GSE137869 candidate listed below. The rows
+> are kept for provenance.
 
 | For | Accession | Link | Why it matters | Blocker |
 |---|---|---|---|---|
-| **TESTES** (never deconvolved) | **OMIX767** | [NGDC/CNCB](https://ngdc.cncb.ac.cn/omix/release/OMIX767) · [Sci Data 2022](https://www.nature.com/articles/s41597-022-01225-5) · [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC8956705/) | First rat testis scRNA-seq. **Has a true control arm** (normal testosterone) **and the full germ-cell series, spermatogonia → spermatozoa.** Open access, processed MTX. | Only **10,983 cells across 4 conditions** → control arm may be ~2–3k. EDS Leydig-ablation study. |
+| **TESTES** (since adopted + deconvolved) | **OMIX767** | [NGDC/CNCB](https://ngdc.cncb.ac.cn/omix/release/OMIX767) · [Sci Data 2022](https://www.nature.com/articles/s41597-022-01225-5) · [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC8956705/) | First rat testis scRNA-seq. **Has a true control arm** (normal testosterone) **and the full germ-cell series, spermatogonia → spermatozoa.** Open access, processed MTX. | Only **10,983 cells across 4 conditions** → control arm may be ~2–3k. EDS Leydig-ablation study. |
 | **LUNG** | GSE133747 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE133747) | *"Single-cell connectomic analysis of **adult mammalian lungs**"* — a genuine **healthy adult** lung atlas (mouse/rat/pig/human), n=20. The reference lung actually needs. | **No processed count matrix** — raw only. This is why it was skipped. ⚠️ Multi-species — must filter to rat. |
 | **LUNG** | GSE312833 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE312833) | Glenn vs **sham** surgery — the sham arm is adult healthy lung. Has a count matrix. | Surgical model |
 | **HIPPOC** | GSE295314 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE295314) | snRNA of ventral hippocampus from **healthy rats** (feeding/memory paradigm), n=12, count matrix. Far better provenance than a tauopathy model. | *Ventral* hippocampus specifically; fasted/fed state |
-| **BAT** (never deconvolved) | GSE137869 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE137869) | MoTrPAC **has BAT bulk**; Ma 2020 has an exact-match BAT scRNA factorial (Y/O/CR × M/F). | ⚠️ Same collagenase protocol → likely the **same missing-adipocyte hole** as WAT. Check before building. |
+| **BAT** (since adopted via GSE244451, not this) | GSE137869 | [GEO](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE137869) | MoTrPAC **has BAT bulk**; Ma 2020 has an exact-match BAT scRNA factorial (Y/O/CR × M/F). | ⚠️ Same collagenase protocol → likely the **same missing-adipocyte hole** as WAT. Check before building. |
 | **BLOOD** | — | — | **No adequate replacement exists.** No healthy whole-PBMC rat atlas in the 2,670-study catalog. What blood actually needs is a reference with **erythroid + granulocyte** compartments — that search has not been run. | — |
 | **WATSC** | — | — | **No adequate replacement exists.** GSE137869 is the only rat scRNA study containing subcutaneous WAT. A real fix needs an **snRNA** adipose reference (nuclei survive what whole adipocytes do not). | — |
 
@@ -58,10 +70,12 @@ GSE254371 chimera sample. Any species check must also read the free-text `geo_ti
 
 MoTrPAC PASS1B bulk RNA-seq: `data/deconvolution/motrpac_bulk/`. Design is 2 sex × 5 group × 5 replicates.
 
-**Deconvolved (10):** BLOOD · CORTEX · HEART · HIPPOC · KIDNEY · LIVER · LUNG · SKMGN · SKMVL · WATSC
+**Deconvolved (14, 2026-07-16 rebuild):** BLOOD · CORTEX · HEART · HIPPOC · KIDNEY · LIVER · LUNG · SKMGN ·
+SKMVL · WATSC · **BAT** · **HYPOTH** · **SMLINT** · **TESTES**
 
-**Not deconvolved (9):** ADRNL (adrenal) · **BAT** (brown adipose) · COLON · HYPOTH (hypothalamus) ·
-OVARY · SMLINT (small intestine) · SPLEEN · **TESTES** · VENACV (vena cava)
+**Not deconvolved (5):** ADRNL (adrenal) · COLON · OVARY · SPLEEN · **VENACV** (vena cava — proxy
+**dropped**, irreducibly lung-contaminated)
 
-The two with live reference candidates are **BAT** (Ma 2020, exact tissue match — but check the adipocyte
-hole first) and **TESTES** (OMIX767, §2).
+ADRNL, OVARY and VENACV are **BLOCKED** (no genuine rat reference exists anywhere); COLON and SPLEEN await
+online-data ingestion. BAT (GSE244451, deposited labels → 6 types) and TESTES (OMIX767) were **built and
+deconvolved** in the rebuild.

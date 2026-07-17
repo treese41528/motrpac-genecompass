@@ -5,6 +5,33 @@ provenance list). Supersedes the tissue/reference/proportion sections of
 `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md` and `deconvolution/AIM2_DECONV_RESULTS.md`, both of which
 are stale and contain errors corrected here (§6.11).
 
+> ⚠️ **SUPERSEDED IN PART — 2026-07-16 rebuild.** This document audits the **pre-rebuild deployed
+> references**. Four tissues were rebuilt on 2026-07-16; the per-tissue verdicts, rosters, cell counts and θ
+> tables **below** for these four now describe **retired references** and should be read against the new
+> facts (authority: `REFERENCE_SELECTION_PLAN.md` §2, `DECONV_REBUILD_RUNBOOK.md`, and the canonical results
+> in `data/deconvolution/references_v3/` + `results/motrpac/`):
+> - **HEART** — now uses the authors' **SCP2828 (GSE280111) deposited per-cell labels → 16 clean cardiac
+>   types**, **135,288 cells**, mean θ ≈ **72.0% cardiomyocytes** (Endothelial 10.3%, Cardiac fibroblasts
+>   6.3%, Monocytes 6.3%). The "99.58% saturation" narrative in §1/§3.2/§4.5/§6.7 no longer holds.
+> - **SKMGN + SKMVL** — now **one shared GSE137869 (Ma young `-Y`) snRNA reference**, myofiber over-split
+>   **merged → 5 clean types** (Skeletal myocytes / Fibroblasts / Endothelial cells / Vascular smooth muscle
+>   cells / Macrophages), **10,763 cells** each; θ ≈ 96% skeletal myocytes. The GSE184413 (§3.4) and
+>   GSE254371 rat-mouse-chimera (§3.5) analyses no longer describe production.
+> - **BAT** — now **deconvolved** from **GSE244451** (authors' deposited labels → **6 types**, 28,246 cells);
+>   the "buildable — never built" note (§2.3) is stale.
+> - **VENACV** — the GSE280111 pulmonary-vein proxy was built then **DROPPED (BLOCKED)** — irreducibly
+>   lung-contaminated — so it is **not deconvolved**.
+>
+> The broader rebuild wave also replaced several references that this 07-14 audit still describes as deployed
+> — **CORTEX** (now rat-only GSE303115, 12,933 cells / 11 types, no longer 85% non-rat), **HIPPOC** (now
+> GSE295314, not the GSE305314 tauopathy-WT with the debris cluster), **LUNG** (P10-neonate GSE242310 dropped
+> → 46,653 cells / 28 types) and **WATSC** (young-`-Y`-only → 12,223 cells / 13 types, not the 3-arm-pooled
+> 31,870). Their §3/§4/§6 analyses below therefore also describe retired references. Only **KIDNEY, LIVER and
+> BLOOD** are byte-for-byte the production references this audit was written against. Downstream also moved:
+> the rebuilt DE run yields **15 hotspots** (was 21), so the hotspot tables in §5.2, §5.4 and §8 are
+> superseded. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
+> canonical on-disk results.
+
 ---
 
 ## 0. Purpose and how to read this document
@@ -1302,3 +1329,5 @@ Paths are relative to the repository root, `/depot/reese18/apps/motrpac-genecomp
 **Documents corrected by this one**
 - `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md` (`:1023, :1173, :1188, :1847, :3225-3234, :3253`)
 - `deconvolution/AIM2_DECONV_RESULTS.md` (`:21`)
+
+> **CORRECTION 2026-07-17:** the 13-hotspot figure above was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.

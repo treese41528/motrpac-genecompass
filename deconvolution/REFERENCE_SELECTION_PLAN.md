@@ -12,6 +12,12 @@ Bulk source to match: **MoTrPAC PASS1B = Fischer 344 (F344), adult ~6 mo, sedent
 > 3 levels incl. an adversarial GEO-record check (**all 13 CONFIRMED**); full deconvolution SUBMITTED. The
 > reproducible rebuild system, the validation guarantees, and the full verification record are in
 > **`deconvolution/DECONV_REBUILD_RUNBOOK.md`**.
+>
+> **UPDATE 2026-07-16 (rebuild complete):** HEART adopted the authors' **SCP2828 (GSE280111)** deposited
+> per-cell labels → **16 clean cardiac types**; BAT adopted **GSE244451**'s deposited SCP-annotated labels →
+> **6 clean types**; the shared muscle (SKMGN+SKMVL) myofiber over-split was **merged → 5 clean types**;
+> **VENACV was DROPPED** (moved to BLOCKED) — the pulmonary-vein proxy build is irreducibly lung-contaminated,
+> so it was not deconvolved. **14 tissues deconvolved, VENACV excluded.**
 
 ---
 
@@ -56,13 +62,13 @@ Confidence and shared-source are folded into "Why chosen / replaced"; the full s
 | KIDNEY | [GSE240658] | `--conditions "No treatment"` (4,6,8,15) | snRNA · SD | **READY** | **Kept (deployed).** snRNA captures the ~80% proximal-tubule parenchyma (holdout 0.9991); chosen over Ma scRNA, which under-captures PT (§3). |
 | LIVER | [GSE220075] | sham snRNA (1,3,7,10); QC drops Visium | snRNA · Lewis+DA | **READY** | **Kept (deployed).** The only cross-validated tissue (DWLS ρ=0.943); snRNA captures hepatocytes. Chosen over Ma scRNA. |
 | CORTEX | [GSE303115] | rat-only default → 2 GSMs; `--label-scheme brain`, **inner** join | snRNA · n/s | NEEDS-BUILD | **Replaced the invalid deployed `union_merged`** (was ~85% non-rat — built with no organism filter). Rat-only inner-join rebuild; only native rat cortex snRNA. |
-| HEART | [GSE280111] | `--tissue "left ventricle"` → 19 dedup GSMs | snRNA · Wistar | NEEDS-BUILD | **Chosen** as the only clean rat LV atlas (CM r=0.995); dedup fixes the 38→19 double-count. Replaced [GSE155699] (SHR model, no cardiomyocytes). |
-| VENACV | [GSE280111] | `--tissue "pulmonary veins"` → 8 dedup (venous proxy) | snRNA · Wistar | NEEDS-BUILD | **Best venous proxy** — no rat vena cava scRNA exists anywhere; shares HEART's atlas (a vein, unlike aorta). Differential-only. |
+| HEART | [GSE280111] | `--tissue "left ventricle"` → 19 dedup GSMs; **authors' SCP2828 labels** | snRNA · Wistar | NEEDS-BUILD | **Chosen** as the only clean rat LV atlas (CM r=0.995); dedup fixes the 38→19 double-count. Replaced [GSE155699] (SHR model, no cardiomyocytes). **Now uses the authors' deposited SCP2828 (GSE280111) per-cell labels → 16 clean cardiac types.** |
+| VENACV | [GSE280111] | ~~pulmonary-vein proxy~~ **build DROPPED** | snRNA · Wistar | **BLOCKED (dropped)** | **DROPPED 2026-07-16.** No genuine rat vena-cava reference exists; the pulmonary-vein proxy build is irreducibly lung-contaminated (its roster carried Clara / airway-club / lung-fibroblast / alveolar-macrophage clusters plus a "Cardiomyocyte contamination" cluster), so VENACV was **not deconvolved**. Provenance retained; joins ADRNL/OVARY as blocked. |
 | WATSC | [GSE137869] | `--title-include '-Y…'` → 10,35 (young arm) | scRNA · SD | NEEDS-BUILD | Only rat WAT in corpus; **rebuilt young-arm-only** to stop the deployed build pooling 61% geriatric/CR tissue. Adipocyte hole → differential-only. |
-| SKMGN | [GSE137869] (muscle -Y) — **shared w/ SKMVL** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced deployed [GSE184413]** to unify muscle on one shared study (Geyu); snRNA captures myonuclei. Cost: drops the only F344 ref → head-to-head pending. |
-| SKMVL | [GSE137869] (muscle -Y) — **shared w/ SKMGN** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced the indefensible [GSE254371]** (52% rat-mouse chimera, iPSC study) under 4 top hotspots; unified with SKMGN on shared Ma -Y. |
+| SKMGN | [GSE137869] (muscle -Y) — **shared w/ SKMVL** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced deployed [GSE184413]** to unify muscle on one shared study (Geyu); snRNA captures myonuclei. Cost: drops the only F344 ref → head-to-head pending. **Myofiber over-split merged → 5 clean types (Skeletal myocytes / Fibroblasts / Endothelial cells / Vascular smooth muscle cells / Macrophages).** |
+| SKMVL | [GSE137869] (muscle -Y) — **shared w/ SKMGN** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced the indefensible [GSE254371]** (52% rat-mouse chimera, iPSC study) under 4 top hotspots; unified with SKMGN on shared Ma -Y. **Same merged 5-type roster as SKMGN.** |
 | BLOOD | [GSE285476] (PBMC) | deployed 1-donor PBMC; immune-composition/differential | scRNA · BN+Lewis | **READY** | **Kept** — Geyu: PBMC is the field-standard whole-blood deconvolution basis (immune composition). CDSeq = cross-check; erythroid/granulocyte omission is a documented absolute-fraction caveat. |
-| BAT | [GSE244451] | subscapular BAT snRNA (sample1,3) | snRNA · Dahl SS | NEEDS-BUILD | **Chosen over Ma** — subscapular-BAT snRNA recovers brown adipocytes; overrides the Ma-2020 shared source, whose scRNA has the adipocyte hole. |
+| BAT | [GSE244451] | subscapular BAT snRNA (sample1,3); **authors' deposited labels** | snRNA · Dahl SS | NEEDS-BUILD | **Chosen over Ma** — subscapular-BAT snRNA recovers brown adipocytes; overrides the Ma-2020 shared source, whose scRNA has the adipocyte hole. **Now uses the authors' deposited SCP-annotated labels (GSE244451 h5ad) → 6 clean types (Brown adipocytes / Endothelial cells / ASPC / Immune cells / SMCs & Pericytes / Neuronal-like cells).** |
 | HYPOTH | [GSE248413] | `--title-include 'Y'` → sample0 (young) | snRNA · Brown Norway | NEEDS-BUILD | **Chosen** as the only rat hypothalamus in corpus; young control arm (title 'Y'). Rejected Ma whole-brain (not region-specific). |
 | SMLINT | [GSE272055] | proximal jejunum (sample0,1) | scRNA · SD | NEEDS-BUILD | **Chosen** as the only clean rat small-intestine scRNA. Epithelium-only isolation (no immune/muscularis) → differential. |
 | LUNG | [GSE273062](vehicle+normoxia) + [GSE252844](Control); **drop [GSE242310]** | control arms only, pooled | scRNA · SD/outbred | NEEDS-BUILD | Native pooled disease-model **control** arms; **replaced the engineered in-vitro [GSE178405]** (root cause of weak lung). **Drop ALL of [GSE242310] — BOTH its arms are P10 neonates** (StudyDesc: NOX/HOX P1–P10). |
@@ -73,7 +79,8 @@ Confidence and shared-source are folded into "Why chosen / replaced"; the full s
 | ADRNL | none | reference-free CDSeq if needed | — | **BLOCKED** | **No rat adrenal scRNA/snRNA exists anywhere** (mouse/human/snATAC only); Ma-2020 has no adrenal. |
 | OVARY | none ([CRA008987] spatial-only) | reference-free CDSeq interim | — | **BLOCKED** | The one adult-rat ovary scRNA (Wu 2023) is **spatial-only** in public deposits; the scRNA library was never released. Ma-2020 has no ovary. |
 
-Roll-up: **READY 3** (KIDNEY, LIVER, BLOOD) **· NEEDS-BUILD 11 · NEEDS-ONLINE-DATA/ingest 3 · BLOCKED 2**.
+Roll-up: **READY 3** (KIDNEY, LIVER, BLOOD) **· NEEDS-BUILD 10 · NEEDS-ONLINE-DATA/ingest 3 · BLOCKED 3**
+(VENACV joined ADRNL + OVARY as blocked after the pulmonary-vein proxy was dropped 2026-07-16).
 Exact multi-ID sets were re-verified against the inventory. **SKMGN and SKMVL now build from the SAME
 2 Ma-2020 muscle -Y samples (16,30) with the same muscle merge → one identical reference serves both muscles**
 (Geyu's shared-source preference; see §3).
@@ -92,7 +99,7 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
   multiome) and SPLEEN GSE186158 (a **7-species** immune atlas). The default `--organism "Rattus norvegicus"`
   handles both.
 - **Age skew, accepted:** several refs are young-adult vs the ~6-mo PASS1B bulk — Ma young ≈5 mo, HYPOTH young
-  4 mo, HEART/VENACV 17 wk (~4 mo), LIVER 8–10 wk, SMLINT ~7–8 wk. These are the youngest healthy arms available;
+  4 mo, HEART 17 wk (~4 mo), LIVER 8–10 wk, SMLINT ~7–8 wk. These are the youngest healthy arms available;
   cell-type GEPs are stable across young adulthood, so age stays a tie-breaker, not a veto (no aging study offers
   a ~9-mo arm; the young arm is always the right pick).
 - **Not native-composition (differential/immune only):** LIVER excludes the 2 immune-enriched scRNA samples (uses
@@ -106,8 +113,9 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
   geo_title): **SKMGN + SKMVL** (ONE shared skeletal-muscle reference for both muscles, per Geyu — the two
   builds are identical, so they share one reference dir) and **WATSC** (differential-only, adipocyte hole).
   Comparator, not primary, for BAT/KIDNEY/LIVER/CORTEX/HIPPOC/HYPOTH.
-- **GSE280111 (Wistar cardiovascular snRNA atlas) — primary for 2:** **HEART** (LV, 19 GSMs) and **VENACV**
-  (pulmonary-vein subset, 8 GSMs — the best venous proxy).
+- **GSE280111 (Wistar cardiovascular snRNA atlas) — primary for HEART** (LV, 19 GSMs; now carrying the
+  authors' deposited SCP2828 labels → 16 clean cardiac types). The **VENACV** pulmonary-vein subset (8 GSMs)
+  was built as a venous proxy but **DROPPED 2026-07-16** — irreducibly lung-contaminated, not deconvolved.
 - **BLOOD keeps GSE285476 (PBMC), standalone** — per Geyu, PBMC is the field-standard whole-blood
   deconvolution basis (immune composition; the erythroid/granulocyte omission is a documented limitation on
   absolute fractions, with CDSeq as a cross-check). Ma-2020 bone marrow is NOT used.
@@ -147,7 +155,8 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
    ventral-HPC only, acute 24 h food-deprivation design, strain not stated, a suspicious "Mmul10" line in the
    GEO deposit (likely a copy-paste error). **Confirm the switch, or keep GSE305314-WT with the debris cluster dropped.**
 2. **Scope of BLOCKED tissues.** ADRNL and OVARY have **no rat reference anywhere** (OVARY's one adult scRNA study
-   is spatial-only in public deposits). Document-and-defer, or reference-free CDSeq this round?
+   is spatial-only in public deposits); **VENACV joined this class 2026-07-16** — its only proxy (the GSE280111
+   pulmonary vein) is irreducibly lung-contaminated. Document-and-defer, or reference-free CDSeq this round?
 3. **COLON.** The only online candidate (GSE326856) looks flow-sorted with epithelium excluded — verify `Epcam+`
    in the downloaded matrices; if absent, COLON joins the no-reference class.
 4. **WATSC depot.** Ma-2020 never states subcutaneous vs visceral. If visceral, WATSC is mapped to the wrong depot.
@@ -159,7 +168,7 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
 
 - **TESTES** — 2-phase: (1) ingest staged OMIX767 arms **C + E7W** (`data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/`, 2,157 + 3,693 = 5,850 cells): mtx→h5ad, ambient-correct (SoupX manual — filtered matrices only, no CellBender), QC/cluster/annotate, append 2 inventory rows; (2) `build_reference.py --study OMIX767 --sample-ids OMIX767_sampleC,OMIX767_sampleE7W`. Spermatids recovered (passes parenchyma bar); heavy ambient + thin somatics ⇒ differential-only. Evaluate **GSE268104** (rat snRNA multiome, unselected fraction) as a cleaner upgrade first.
 - **SPLEEN** — ingest online **GSE186158** (GSM5639495; verified rat spleen 10x, healthy, ~10k cells); confirm age/sex/strain (proposed 6-wk juvenile male SD, pooled). ACK RBC-lysis + live-sort removes red-pulp erythroid ⇒ cross-check CDSeq, frame differential. Ma-2020 bone-marrow `-Y` is the in-corpus fallback proxy.
-- **VENACV** — build the GSE280111 pulmonary-vein subset (8 dedup GSMs); drop the myocardial-sleeve cardiomyocyte cluster post-build. No rat vena cava exists anywhere (only IVC atlas GSE221978 is mouse). Differential-only.
+- **VENACV** — **DROPPED 2026-07-16 (BLOCKED).** The GSE280111 pulmonary-vein subset was built (8 dedup GSMs) but the roster is irreducibly lung-contaminated (Clara / airway-club / lung-fibroblast / alveolar-macrophage clusters plus a "Cardiomyocyte contamination" cluster surviving even after the myocardial-sleeve drop), so it was **not deconvolved**. No genuine rat vena cava exists anywhere (only IVC atlas GSE221978 is mouse). Provenance retained.
 - **ADRNL** — no rat adrenal scRNA/snRNA exists (only mouse GSE108097, human GSE134355; rat snATAC atlas excludes adrenal, wrong modality). Leave non-deconvolved; CDSeq on the 50 bulk samples if a composition is required.
 - **OVARY** — Wu 2023 (CRA008987/OMIX002408) has ONLY spatial runs public; the ~15k-cell scRNA library is not deposited. Document-and-defer; monitor/contact authors; CDSeq interim.
 
@@ -180,8 +189,9 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
    `reference_dir` to the rebuilt paths.
 
 **Untrustworthy for ABSOLUTE fractions even after rebuild** (differential/across-condition claims only; cross-check
-MuSiC/SCDC + self-consistency): BLOOD, WATSC, VENACV, HEART (θ saturated ~99.6% CM), TESTES, SPLEEN, HYPOTH, BAT,
-CORTEX/HIPPOC rebuilds, KIDNEY (dominant proximal tubule).
+MuSiC/SCDC + self-consistency): BLOOD, WATSC, HEART (θ ~72% CM after the SCP2828 relabel; still parenchyma-dominated),
+TESTES, SPLEEN, HYPOTH, BAT, CORTEX/HIPPOC rebuilds, KIDNEY (dominant proximal tubule). (VENACV **dropped** —
+not deconvolved.)
 
 ---
 
