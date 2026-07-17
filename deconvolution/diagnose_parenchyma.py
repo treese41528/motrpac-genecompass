@@ -27,8 +27,8 @@ WEEK = {'control': 0, '1w': 1, '2w': 2, '4w': 4, '8w': 8}
 CTRL = {'Sod2': 'ENSRNOG00000086727', 'Mef2c': 'ENSRNOG00000033134', 'Slc2a4': 'ENSRNOG00000017226',
         'Hspa1b': 'ENSRNOG00000045654', 'Hsp90aa1': 'ENSRNOG00000059714',
         'Opa1': 'ENSRNOG00000001717'}   # Opa1 = a control that DID recover (reference point)
-PAR = {'SKMGN': ['Skeletal muscle cells'],
-       'SKMVL': ['Skeletal muscle cells', 'Skeletal muscle fibers'],
+PAR = {'SKMGN': ['Skeletal myocytes'],
+       'SKMVL': ['Skeletal myocytes'],
        'HEART': ['Cardiomyocytes'],
        'LIVER': ['Hepatocytes']}
 
