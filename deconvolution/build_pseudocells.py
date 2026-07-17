@@ -40,9 +40,12 @@ import pandas as pd
 import scipy.sparse as sp
 
 
-def _safe(s):
-    """Mirror extract_z.R's safe(): gsub('[^A-Za-z0-9]+', '_', s) -- the predz filename key."""
-    return re.sub(r"[^A-Za-z0-9]+", "_", str(s))
+# Cell-type -> filename contract: use the SHARED, injective sanitizer (celltype_names.safe) -- the SAME
+# one extract_z.R uses to WRITE predz__*.csv. Do NOT re-implement it: a local non-injective copy
+# (gsub('[^A-Za-z0-9]+','_') maps 'α'->'_') is what broke KIDNEY -- it looked for
+# predz___intercalated_cells.csv while extract_z.R wrote predz__alpha_intercalated_cells.csv (α->'alpha').
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from celltype_names import safe as _safe  # noqa: E402
 
 
 def load_pred_z(pred_z_dir):

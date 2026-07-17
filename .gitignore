@@ -60,6 +60,9 @@ tmp/
 # Reading material / reference PDFs (local only)
 readings/
 
+# Manuscript draft (local only for now; un-ignore when ready to commit)
+manuscript/
+
 # R user library (locked decision: install BayesPrism here per onboarding §9.1)
 R_libs/
 

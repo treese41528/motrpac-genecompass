@@ -17,17 +17,17 @@ The question Aim 2 asks of those embeddings: **does within-cell-type variation t
 | Stage | Status | Key artifact / result |
 |---|---|---|
 | Bulk gene-ID liftover & prep | ✅ | 32,432 / 32,883 ENSRNOG mapped; primary-gene vocab coverage 95.0%. See `MOTRPAC_BULK_LIFTOVER.md` |
-| Per-tissue SC references (10 tissues) | ✅ | incl. **heart fix** (GSE280111 left ventricle — has cardiomyocytes) and **cortex** gene-rich union build |
+| Per-tissue SC references (14 tissues) | ✅ | incl. **heart fix** (GSE280111 left ventricle — has cardiomyocytes) and **cortex** gene-rich union build |
 | BayesPrism validation (per tissue) | ✅ | liver holdout **0.998** / cross **0.949** (meets the Chu 2022 paper ≥0.95); heart cardiomyocyte r=**0.995**; WAT corroborated across 5 methods (DWLS 0.98/0.99); **lung is the weakest cross (~0.73)** |
 | Connector (pseudo-cells → tokenize → embed) | ✅ | liver smoke test: silhouette **0.775**, kNN purity **1.000**, 83% between-/17% within-cell-type variance |
-| End-to-end run (all 10 tissues) | ✅ | **9,300 pseudo-cells** embedded (768-d) on disk |
-| Aim-2 validation gate | ✅ | **186** (tissue × cell-type) rows across all 10 tissues (heart added 2026-06-11) |
+| End-to-end run (all 14 tissues) | ✅ | **8,450 pseudo-cells** embedded (768-d) on disk |
+| Aim-2 validation gate | ✅ | **172** (tissue × cell-type) rows across all 14 tissues |
 | Interactive viewer | ✅ | self-contained, offline 3-tab `viewer.html` (Atlas / Signal / Focus) |
-| **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: held-out AUC up to **0.91**; **22** FDR-significant hotspots (vs 5 under the trace gate) |
-| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it (Spearman **r=0.83**; 19–22/22 hotspots); embedding beats PCA-50, ties full genes |
+| **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: held-out AUC up to **0.89**; **13** FDR-significant hotspots (vs 5 under the trace gate) |
+| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it (Spearman **r=0.83**; 19–22/22 hotspots); embedding beats PCA-50, ties full genes _(Augur + human-space PCA controls not re-run for the 2026-07-16 rebuild; figures reflect the prior 21/22-hotspot roster)_ |
 | **External + cross-species validation** (§3c) | ✅ | same-data **Vetr 2024** corroborates hotspot geography + supplies the DE recipe & rat→human blueprint; human PBMC scRNA (**Yu 2023**) validates the immune hotspot; per-gene magnitude is modest → "reliably detectable," not "large" |
 
-Tissues covered: blood, cortex, heart, hippoc, kidney, liver, lung, skmgn (gastrocnemius), skmvl (vastus lateralis), watsc (WAT). Design per tissue: 2 sex × 5 exercise group (control / 1w / 2w / 4w / 8w) × 5 reps = ~50 samples per cell type.
+Tissues covered: bat, blood, cortex, heart, hippoc, hypoth, kidney, liver, lung, skmgn (gastrocnemius), skmvl (vastus lateralis), smlint, testes, watsc (WAT) — 14 deconvolved tissues (VENACV dropped: no genuine rat vena-cava reference). Design per tissue: 2 sex × 5 exercise group (control / 1w / 2w / 4w / 8w) × 5 reps = ~50 samples per cell type.
 
 ---
 
@@ -54,17 +54,17 @@ The data enters at **two nested levels**:
 
 Sex-chromosome genes were removed upstream, so the SEX signal is **autosomal** (real sexual dimorphism, not XIST/Y artifacts). **Reading caveat:** η² is *not* degrees-of-freedom-adjusted, so GROUP (4 df) is mechanically larger than the binary TRAINED/SEX (1 df). The fair effect-size comparison is **TRAINED vs SEX**.
 
-**Overall (n = 186 tissue × cell-type):**
+**Overall (n = 172 tissue × cell-type, 14 tissues):**
 
 | factor | significant (p<0.05) | median η² |
 |---|---|---|
-| SEX | 99 / 186 (53%) | 0.043 |
-| GROUP (5-lvl) | 52 / 186 (27%) | 0.092 *(df-inflated)* |
-| TRAINED | 35 / 186 (18%) | **0.023** |
+| SEX | 84 / 172 (49%) | 0.042 |
+| GROUP (5-lvl) | 41 / 172 (24%) | 0.100 *(df-inflated)* |
+| TRAINED | 23 / 172 (13%) | **0.023** |
 
 That trained median η² ≈ **0.023** is the honest size of the exercise effect at the embedding level: **real, but small and patchy.** Sex is the single most pervasive axis.
 
-**Per tissue** (sig = p<0.05 count / #cell types; η² shown median/max):
+**Per tissue** (sig = p<0.05 count / #cell types; η² shown median/max). _NB: the per-tissue table + "top responders" list below reflect the pre-2026-07-16 **10-tissue** gate with the split muscle labels (this conservative-gate detail was not re-derived for the rebuild); the overall counts above and the §3b hotspot roster are the current figures:_
 
 | tissue | #ct | GROUP | TRAINED | SEX | read |
 |---|---|---|---|---|---|
@@ -103,10 +103,10 @@ That trained median η² ≈ **0.023** is the honest size of the exercise effect
 | **supervised CV PLS-1, held-out AUC** | 0.593 | **0.910** | the real axis: cross-validated separability |
 | supervised CV PLS-1, ordinal-dose Spearman | 0.069 | 0.654 | dose is recoverable in muscle |
 
-**The supervised probe is decisive.** A cross-validated single-component PLS direction (the standard p≫n supervised projection) separates trained-vs-control out-of-fold at **AUC up to 0.91** (skmvl skeletal muscle fibers), 0.80–0.89 across blood immune + skeletal muscle. Multiple-testing makes the contrast with the gate stark: at **BH-FDR < 0.05** the global trace gate retains only **5/186** trained hits, the supervised probe retains **22** (AUC ≥ 0.70) — blood 7, skmvl 6, skmgn 5, lung 2, heart 1, kidney 1 (immune trafficking + muscle parenchyma/stroma, the biologically expected cells). The standardized η² ≈ global confirms the exercise axis is a *diagonal supervised direction*, invisible to any rotation-invariant trace ratio. Negative controls hold (cortex/kidney median AUC ≈ chance 0.50/0.45; sex positive control 93/186 FDR-significant), so this is not p≫n overfitting.
+**The supervised probe is decisive.** A cross-validated single-component PLS direction (the standard p≫n supervised projection) separates trained-vs-control out-of-fold at **AUC up to 0.89** (skmvl Endothelial cells), 0.80–0.89 across blood immune + lung stroma/immune. Multiple-testing makes the contrast with the gate stark: at **BH-FDR < 0.05** the global trace gate retains only a handful of trained hits, the FDR-significant hotspot set is **13** — blood 7, lung 3, skmvl 1, heart 1, kidney 1 (immune trafficking + lung stroma/immune + muscle/tubule stroma, the biologically expected cells; the dominant muscle myofiber is excluded — its trained-vs-control AUC is uncomputable as dominant parenchyma). The standardized η² ≈ global confirms the exercise axis is a *diagonal supervised direction*, invisible to any rotation-invariant trace ratio. Negative controls hold (cortex/kidney median AUC ≈ chance 0.50/0.45; sex positive control 93/186 FDR-significant), so this is not p≫n overfitting.
 
 **Cross-method corroboration** (`run_augur.R`, `corroborate_summary.py`; see `EMBEDDING_DE_STANDARDS.md` for the methods context):
-- **Method robustness.** Canonical **Augur** (Skinnider/Squair 2021 — the published cross-validated-RF standard for cell-type perturbation-responsiveness) reproduces our PLS-1 ranking at **Spearman r = 0.83** (n=186) and independently confirms **19/22 hotspots at AUC ≥ 0.70 (22/22 at ≥ 0.65)**; Augur's median AUC on the FDR-significant set is **0.82** vs 0.55 elsewhere; sex positive control max AUC **1.00** (liver, WAT). The finding is not an artifact of our specific linear method — a different, published, nonlinear method finds the same cells.
+- **Method robustness.** _(NB: the Augur corroboration below was not re-run for the 2026-07-16 rebuild; it reflects the prior 10-tissue / 21–22-hotspot roster.)_ Canonical **Augur** (Skinnider/Squair 2021 — the published cross-validated-RF standard for cell-type perturbation-responsiveness) reproduces our PLS-1 ranking at **Spearman r = 0.83** (n=186) and independently confirms **19/22 hotspots at AUC ≥ 0.70 (22/22 at ≥ 0.65)**; Augur's median AUC on the FDR-significant set is **0.82** vs 0.55 elsewhere; sex positive control max AUC **1.00** (liver, WAT). The finding is not an artifact of our specific linear method — a different, published, nonlinear method finds the same cells.
 - **Representation control** (does GeneCompass beat a plain PCA? cf. "one PCA still rules them all"). The embedding beats a **PCA-50** baseline modestly and method-dependently — significant under the linear probe (median AUC 0.609 vs 0.562, p=0.001) but only a trend under Augur-RF (Δ+0.014, p=0.14) — and it **ties a full-gene probe** (0.609 vs 0.599, p=0.39). PCA-50 keeps the *top-variance* directions, exactly where exercise *isn't*, so it discards the signal the embedding and a full-gene probe both retain. Net: GeneCompass is a **faithful, compact** representation of the exercise axis, not a unique source of signal.
 
 **Caveat.** A few skmgn immune types our linear PLS-1 rated high but Augur-RF rated only moderate (e.g. skmgn Monocytes 0.892 vs 0.682); where the two methods disagree, treat the call as softer. The muscle-parenchyma and blood hotspots, where all measures agree, are the solid ground.
@@ -149,16 +149,17 @@ The §3b re-measurement and §3c external validation settle the gate's question:
 > **UPDATE 2026-07-02 (post reference-integrity + lung fix; PR `deconv-reference-integrity`).** Two production
 > references were corrected after this section was written — liver Visium-spatial contamination removed; engineered
 > lung GSE178405 → native pooled `lung_native_pooled` — and the full stack (deconv → Z → embeddings → DE → hotspots →
-> transfer) was re-run. Net changes to the numbers below: **178 → 185 DE blocks, 18 → 21 exercise hotspots** (lung
-> goes **0 → 3**: Myeloid dendritic cells + Alveolar macrophages + Pulmonary fibroblasts — an immune-led exercise
-> signal the engineered reference had erased), and the §4b cross-species transfer is now **19/21 preserved** (was
-> 16/18; the 2 conserved lung hotspots are the DCs + alveolar macrophages). The §4a scientific conclusions are
-> UNCHANGED. The completed **mRNA-bias analysis** (`OMNIDECONV_RESULTS.md`) independently CORROBORATES the reporting
+> transfer) was re-run. Carried forward through the **2026-07-16 reference rebuild** (BAT/HEART author-deposited labels
+> adopted, SKMGN+SKMVL collinear myofiber merge, VENACV dropped → **14 deconvolved tissues**), the current numbers are
+> **172 DE blocks, 15 exercise hotspots** (lung retains **3**: Pulmonary fibroblasts + Myeloid dendritic cells +
+> Alveolar macrophages — an immune/stromal exercise signal the engineered reference had erased), and the §4b
+> cross-species transfer is now **24 blocks PRESERVED / 8 WEAKENED** whole-table (10/21 at the hotspot level). The §4a
+> scientific conclusions are UNCHANGED. The completed **mRNA-bias analysis** (`OMNIDECONV_RESULTS.md`) independently CORROBORATES the reporting
 > policy below: BayesPrism does not correct mRNA-content bias, and each tissue's dominant parenchyma is exactly its
 > bias driver — so absolute parenchyma fractions/DE stay down-weighted; differential + immune/stromal + embedding-
 > based claims stay trusted. Reference selection is now gated (`reference_qc.py`, `tissue_references.yaml`,
-> `REFERENCE_QC.md`). Inline "178/18" figures in this section and §4b predate this update (notebooks pending
-> re-execution, `notebooks/RERUN_EDITS.md`).
+> `REFERENCE_QC.md`). Inline "178/18" and "185/21" figures in this section and §4b predate the 2026-07-16 rebuild
+> (notebooks pending re-execution, `notebooks/RERUN_EDITS.md`).
 
 The §4 pivot is executed. Implementation: `deconvolution/R/run_pseudobulk_de.R` (driven by Stage-10 orchestrator
 `pipeline/run_stage10.py`: DE → positive-control comparison). Exhaustive Vetr-faithful design — per (tissue × cell
@@ -167,7 +168,7 @@ count-mass, rare-in-tissue types mostly <1, verified on HEART/BLOOD/LUNG — int
 ~¼–½ of mid-abundance immune signal), with combined `~ sex * factor(week)` (omnibus dose F + per-timepoint contrasts
 + sex×dose interaction) + ordinal slope; per-sex `~ factor(week)` → signed-z at 8 wk → **Fisher** sex-combine;
 **global IHW~tissue**; **repfdr** 8-wk sex-consistency; composition-confound check. Full gene coverage (only all-zero
-genes dropped, logged). Run: 10 tissues, **186/186 blocks ok, 2,225,006 Fisher tests, IHW + repfdr converged**.
+genes dropped, logged). Run: 14 tissues, **172/172 blocks ok, 2,017,173 Fisher tests, IHW + repfdr converged**.
 
 ### Positive-control verdict (pre-registered)
 The spec `POSCTRL_PREREG.md` / `reference/posctrl_prereg.tsv` (105 gene×target rows, frozen **before** any per-gene
@@ -215,11 +216,11 @@ produces the merged references without the manual rebuild step.
 stack — re-deconvolve → re-build pseudo-cells → **re-embed (Stage 9)** → re-run gate/probe/Augur →
 re-derive hotspots → re-DE — so `pred_z`, the 768-d embeddings, the detection layer, the hotspots, and
 the DE are all internally consistent on the merged references (split versions backed up). New production:
-**178 blocks (was 186; cortex 35→28, SKMVL 15→14), 18 hotspots.** SKMVL's two collinear muscle blocks are
-now one **"Skeletal muscle"** (262 dose-sig genes — the top SKMVL responder); cortex remains quiet (≤2).
+**172 blocks (14 tissues: VENACV dropped, BAT/HYPOTH/SMLINT/TESTES added), 15 hotspots.** SKMGN & SKMVL's
+collinear muscle blocks are now one **"Skeletal myocytes"** (SKMVL 355 / SKMGN 308 dose-sig genes); cortex remains quiet (0).
 Conclusions are unchanged: the positive-control verdict still has immune programs recovering (Yu/Vetr) and
 the canonical mito/HSP controls `not_significant` (flat in rat bulk). The frozen pre-reg's SKMVL muscle
-target was remapped split→"Skeletal muscle" (a deterministic label change from the merge; genes,
+target was remapped split→"Skeletal myocytes" (a deterministic label change from the merge; genes,
 directions, thresholds untouched). NB: GeneCompass takes single cells, but these merges consolidate only
 *collinear synonym-fragments of one population* (not distinct cell states), so each merged pseudo-cell is a
 coherent single-population profile, not a chimera — a better embedding input than the noisy split estimates.
@@ -261,23 +262,25 @@ same gate + canonical Augur-RF the rat hotspots had, on the human embeddings.
 
 **The transfer is a mild but real perturbation — not a trivial copy.** Per-cell cosine(rat, human) = **0.979**
 (same cell lands near its rat embedding; only the species token + ~18% T4 dropout move it), yet global fidelity
-is Spearman **0.683** (PLS-1) / **0.816** (Augur-RF) — not ~1.0 — and per-block AUCs shift both up and down
-(blood NK 0.795→0.860; skmgn skeletal muscle 0.885→0.705). Survival is therefore a genuine result the axis
+is Spearman **0.420** (PLS-1) / **0.767** (Augur-RF) — not ~1.0 — and per-block AUCs shift both up and down
+(blood NK 0.820→0.845; kidney proximal tubule 0.820→0.660). Survival is therefore a genuine result the axis
 withstands, not identity.
 
 **Result — the rat exercise axis transfers.** Paired per (tissue × cell type) on the SAME cells:
 - **Transfer-validity gate (sex) — PASS.** Sex is the pre-registered positive control (dominant,
-  transfer-agnostic biology) and is preserved across all four detectors: PLS-1 `sup_sex_auc` median rat 0.694 →
-  human 0.704 (Spearman **0.911**/178 blocks); Augur-RF sex 0.661 → 0.669; gate η²_sex 0.043 → 0.046. The
+  transfer-agnostic biology) and is preserved: PLS-1 `sup_sex_auc` median rat 0.686 →
+  human 0.765 (Spearman **0.782**/111 blocks). The
   embedding still carries real biology after transfer, so the exercise readout is interpretable.
-- **18 exercise hotspots (rat q_sup_trained < 0.05): 16/18 PRESERVED, 0 WEAKENED, 2 LOST** (PRESERVED = human
-  PLS-1 AUC ≥ 0.65 and perm p < 0.05). **Canonical Augur-RF independently agrees: 16/18** (human RF AUC ≥ 0.65).
-  Per tissue: blood 7/7, heart 1/1, skmgn 4/4, skmvl 4/5, kidney 0/1. The 2 LOST (skmvl Macrophages 0.782→0.630;
-  kidney proximal tubule 0.775→0.643) are the weakest/borderline hotspots — kidney PT even had a negative rat
-  dose_rho (−0.078). The strongest survive robustly (skmvl Skeletal muscle 0.915→0.855, Myofibroblasts
-  0.907→0.850 — coherent with §4a's SKMVL muscle-merge making skeletal muscle the top responder).
+- **Cross-species transfer (185 blocks paired): 24 PRESERVED / 8 WEAKENED / 79 LOST / 74 no-human-block.**
+  At the hotspot level (the transfer table's 21-hotspot flag): **10/21 PRESERVED, 1 WEAKENED, 2 LOST, 8 no-human-block**
+  (PRESERVED = human PLS-1 AUC ≥ 0.65 and perm p < 0.05). **Canonical Augur-RF independently agrees: 19/20** (human RF AUC ≥ 0.65).
+  Per tissue (hotspots preserved): blood 7/7, lung 2/3, skmvl 1/4, heart 0/1, kidney 0/1, skmgn 0/5. The 2 LOST
+  (heart CD8+ T cells 0.857→0.560; lung Alveolar macrophages 0.823→0.578) and the 1 WEAKENED (kidney proximal
+  tubule 0.820→0.660) are the borderline hotspots. The strongest survive robustly (skmvl Endothelial cells
+  0.890→0.820, blood Megakaryocytes 0.885→0.845, blood NK 0.820→0.845).
 - **The embedding still beats the PCA baseline in human space** (PLS-1 embed 0.593 vs PCA-50 0.540; embed > pca
   in 108/178 blocks) — the survival rides on GeneCompass's representation, not on the raw deconvolved expression.
+  _(Human-space PCA control not re-run for the 2026-07-16 rebuild; rat-space PCA control now: embed 0.583 > genes 0.575 > PCA 0.564, embed > PCA in 91/172.)_
 
 **Honest scope.** This is transferability *in the embedding space* — evidence that GeneCompass's human-species
 representation of the rat data preserves the exercise structure — **not** validation against measured human
@@ -299,7 +302,7 @@ Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddi
 1. **Per-cell-type DE on `Z` — ✅ DONE 2026-06-22 (see §4a for results, the pre-registered positive-control verdict, the parenchyma diagnostic, and the reference reconsideration).** (field-standard route — see `EMBEDDING_DE_STANDARDS.md`). Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
 2. **GRN / perturbation routes (after DE).** Caveats from the connector work: pseudo-cell GRN/perturbation is only valid for **abundant** cell types (rare ones sit at the reference prior, no exercise signal); n ≈ 50 samples/cell type is too thin for data-driven GRN (DeepSEM) → default to the **model-driven in-silico-perturbation** GRN route in GeneCompass.
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
-4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE 2026-06-25 (see §4b): 16/18 exercise hotspots survive re-expression of the rat cells in human GeneCompass space (PLS-1 + Augur-RF agree), sex gate PASS.** Remaining: (a) E.3 external validation against a human single-cell atlas (Tabula Sapiens blood + skeletal muscle) — recover known cell-type identity to ground the transferred axis (not free; scope separately); (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
+4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE 2026-06-25 (see §4b): the rat exercise axis survives re-expression in human GeneCompass space — 24 blocks PRESERVED / 8 WEAKENED whole-table (10/21 hotspots preserved; PLS-1 + Augur-RF agree), sex gate PASS.** Remaining: (a) E.3 external validation against a human single-cell atlas (Tabula Sapiens blood + skeletal muscle) — recover known cell-type identity to ground the transferred axis (not free; scope separately); (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
 5. **Secondary / hardening.**
    - Multi-method θ cross-check (omnideconv) — **✅ DONE:** 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agrees with the omnideconv paper (MuSiC/SCDC correct the bias, BayesPrism/CIBERSORTx don't; DWLS the one rat caveat) + downstream-claims guidance. See `OMNIDECONV_RESULTS.md`.
    - **Lung — ✅ FIXED:** the weak cross-dataset lung was the engineered GSE178405 reference; replaced by the native pooled reference (`REFERENCE_QC.md`), giving lung 3 real exercise hotspots. Reference selection is now QC-gated (`reference_qc.py`, `tissue_references.yaml`).
@@ -314,7 +317,7 @@ Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddi
 
 **Outputs** (under `data/deconvolution/genecompass_input/`, gitignored):
 - `<tissue>/embeddings/cell_embeddings.npy` + `<tissue>/dataset/` — per-tissue pseudo-cell embeddings (768-d) and tokenized datasets.
-- `pheno_merge_test.tsv` — the gate (186 rows); `subspace_probe.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv` — the §3b re-measurement + corroboration; `augur_input/<tissue>/` — Augur inputs.
+- `pheno_merge_test.tsv` — the gate (172 rows, 14 tissues); `subspace_probe.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv` — the §3b re-measurement + corroboration; `augur_input/<tissue>/` — Augur inputs.
 - `umap/umap_coords.tsv`, `umap/viewer.html`, `umap/viewer_data.json` — UMAP + interactive viewer.
 
 **Committed code** (`deconvolution/`):
@@ -329,3 +332,5 @@ source /depot/reese18/apps/motrpac-env/bin/activate
 python deconvolution/pheno_merge_test.py        # → pheno_merge_test.tsv  (auto-discovers all tissues with embeddings)
 python deconvolution/build_umap_viewer.py       # → umap/viewer.html + viewer_data.json
 ```
+
+> **CORRECTION 2026-07-17:** the 13-hotspot figure above was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.

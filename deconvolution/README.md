@@ -30,7 +30,7 @@ Both are per-tissue; each prints its plan with `--dry-run` and supports `--from 
 # one tissue, end to end (step 2 of stage 8 is CPU-heavy -> compute node;
 # stage 9 embed -> GPU node):
 python pipeline/run_stage8.py --tissue SKM-GN \
-    --ref-dir "data/deconvolution/references/skeletal muscle_GSE254371"
+    --ref-dir "data/deconvolution/references_v3/MUSCLE_GSE137869_Y"
 python pipeline/run_stage9.py --label skmgn
 ```
 
@@ -42,7 +42,7 @@ study + build command). The bulk code differs from the reference dir name (e.g. 
 
 **Recommended — from-scratch, correct-by-construction:** `pipeline/run_deconv_all.py` reads that
 manifest, runs the QC gate (`reference_qc.py --fail`) on every reference — refusing a missing or
-contaminated one, so a fresh run cannot silently use the wrong study — and submits Stage-8+9 for all 10
+contaminated one, so a fresh run cannot silently use the wrong study — and submits Stage-8+9 for all 14
 tissues with the right `--ref-dir`:
 
 ```bash

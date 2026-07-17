@@ -23,8 +23,8 @@ BULK = os.path.join(ROOT, 'data/deconvolution/motrpac_bulk')
 DE   = os.path.join(ROOT, 'data/deconvolution/genecompass_input/pseudobulk_de')
 PH   = os.path.join(ROOT, 'deconvolution/reference/motrpac_sample_pheno.tsv')
 THR_LFC, ALPHA, MINNZ = 0.25, 0.05, 25
-PAR = {'SKMGN': ['Skeletal muscle cells'],
-       'SKMVL': ['Skeletal muscle cells', 'Skeletal muscle fibers'],
+PAR = {'SKMGN': ['Skeletal myocytes'],
+       'SKMVL': ['Skeletal myocytes'],
        'HEART': ['Cardiomyocytes'], 'LIVER': ['Hepatocytes']}
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 ph = pd.read_csv(PH, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')

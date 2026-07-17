@@ -1,91 +1,181 @@
-# Notebook rerun edit map — pipeline8–12 after the liver+lung reference fix (2026-07-01/02)
+# Notebook rerun edit map — pipeline8–12 after the 2026-07-16 reference rebuild
 
-**Context.** Two production references were wrong and have been fixed + re-run through Stage 8→12 and
-adopted into production (old data backed up in `data/deconvolution/_liverlung_adoption_backup_20260701`):
-- **liver** `references/liver_GSE220075` — the 2 Visium spatial samples removed (still study GSE220075).
-  *Impact: negligible* (liver ~91% hepatocyte; Z 0.998-correlated to old) — liver numbers barely move.
-- **lung** — engineered/in-vitro `GSE178405` **replaced** by native pooled `references/lung_native_pooled`
-  (GSE273062 VeNx + GSE252844 C3 + GSE242310 NOX). *Impact: substantial* — different cell-type roster,
-  fractions, and lung now shows exercise signal.
+**Context.** Four production references changed this session and were re-run through Stage 8→14
+(pre-deploy state backed up in `data/deconvolution/*_backup_predeploy_20260715/`):
 
-**How to use this.** The notebooks read outputs by tissue NAME, so **most cells refresh on plain
-re-execution**; only the hand-copied display constants and a few stale prose conclusions need editing.
-Do them in order: **(1) apply the edits below, (2) re-execute each notebook top-to-bottom.** Values I
-could read from the rerun are given as OLD → NEW; a few must be pulled from the new logs (noted inline).
+- **BAT** — adopted the authors' deposited labels (GEO **GSE244451**, SCP-annotated h5ad) →
+  `references_v3/BAT_GSE244451`, **6 clean types**.
+- **MUSCLE (SKMGN + SKMVL)** — the collinear over-split myofiber labels were **merged**; both muscle
+  tissues now share **one** build `references_v3/MUSCLE_GSE137869_Y` (study **GSE137869**, replacing the
+  deployed GSE184413/GSE254371) → **5 clean types**.
+- **HEART** — adopted the authors' **SCP2828** (GSE280111) per-cell labels → `references_v3/HEART_GSE280111_LV`,
+  **16 clean cardiac types** (was a 23-type de-novo clustering).
+- **VENACV** — **DROPPED** (`tissue_references.yaml` → `status: blocked`): no genuine rat vena-cava
+  reference exists and the only proxy (GSE280111 pulmonary-vein) is irreducibly lung/heart-contaminated.
+- **LIVER / LUNG / BLOOD / CORTEX / HIPPOC / KIDNEY / WATSC / HYPOTH / SMLINT / TESTES: UNCHANGED this session.**
+
+New tools: `deconvolution/adopt_authors_labels.py`, `deconvolution/merge_consensus_labels.py`.
+
+**How to use this.** The notebooks read outputs by tissue NAME, so most cells refresh on plain re-execution;
+only hand-copied display constants and a few stale prose conclusions need editing. Do them in order:
+**(1) re-run Stages 8→14, (2) apply the edits below, (3) re-execute each notebook top-to-bottom.**
+Values are given as OLD → NEW; where a value must come from the new SLURM logs it is flagged inline.
+
+> ### ⚠️ READ FIRST — three structural facts that affect every notebook
+> 1. **The notebooks are authored for the original 10-tissue panel** (`blood, cortex, heart, hippoc, kidney,
+>    liver, lung, skmgn, skmvl, watsc`). Production is now **14 tissues** — VENACV dropped; **BAT, HYPOTH,
+>    SMLINT, TESTES** added (the latter three in a prior session). The merged tables (`de_summary.tsv`,
+>    `corroboration_merged.tsv`, `transfer_comparison.tsv`) already contain the 4 extra tissues, so
+>    `groupby("tissue")` cells surface them automatically; the **hardcoded 10-tissue inventory lists**
+>    (e.g. `pipeline8` CELL 1/3/4/9/11/13, `pipeline10` CELL 1/13, `pipeline12` CELL 1) miss BAT/HYPOTH/
+>    SMLINT/TESTES — extend them to the full panel for complete coverage. **Never add VENACV.**
+> 2. **`pipeline8`'s hardcoded CELL 0 table + CELL 3 `timing_data` also carry PRE-EXISTING stale values that
+>    predate this rebuild** — notably **CORTEX** (shows `173,688 / 35`; production basis GSE303115 = `12,933 / 11`)
+>    and **HIPPOC** (shows `GSE305314 / 45,038 / 15`; production = `GSE295314 / 278,549 / 18`). These are **not**
+>    part of the 07-16 change but will be wrong after re-execution. Safest fix: re-derive CELL 3's arrays from
+>    the live `pred_z/types.txt` + `references_v3/*/summary.txt` rather than hand-patching only the heart/muscle rows.
+> 3. **`transfer_comparison.tsv` still carries the OLD `is_hotspot` flags** (marks the *previous* 21 hotspots;
+>    8 of them are retired muscle cell types now `no_human_block`). Stage 12 was **not** re-hotspotted against the
+>    new 13-hotspot roster, so the `pipeline12` hotspot-preservation narrative cannot be cleanly refreshed from
+>    this file — re-run the Stage-12 hotspot join first. The **overall** status counts below are current.
+
+---
 
 ## Global new facts (reuse across notebooks)
+
 | quantity | OLD | NEW | source |
 |---|---|---|---|
-| liver reference cells / types | 31,820 / 6 | **27,041 / 6** | `references/liver_GSE220075/summary.txt` |
-| lung reference study / cells / types | GSE178405 / 54,992 / 27 | **lung_native_pooled (GSE273062+GSE252844+GSE242310) / 50,643 / 34** | `references/lung_native_pooled/summary.txt` |
-| liver pseudo-cells / genes / BayesPrism min / job | 300 / 13,134 / 12.37 / 11002467 | **300 / 12,759 / 24.50 / 11170761** | `genecompass_input/liver/summary.txt`, `logs/liver_novis_casc_11170761.out` |
-| lung pseudo-cells / genes / BayesPrism min / job | 1,350 / 14,929 / 17.69 / 11002632 | **1,700 / 15,348 / 14.00 / 11171098** | `genecompass_input/lung/summary.txt`, `logs/lung_native_casc_11171098.out` |
-| testable blocks | 178 | **185** | `corroboration_merged.tsv` |
-| exercise hotspots | 18 {blood7,heart1,kidney1,skmgn4,skmvl5} | **21 {blood7,heart1,kidney1,lung3,skmgn5,skmvl4}** | `corroboration_merged.tsv` |
-| transfer preservation | PRESERVED 16 / WEAKENED 0 / LOST 2 (of 18) | **PRESERVED 19 / WEAKENED 1 / LOST 1 (of 21)** | `genecompass_input_human/transfer_comparison.tsv` |
-| rerun job IDs | — | liver 11170761 · lung 11171098 · redetect 11173958 · transfer 11174632 | — |
+| testable DE blocks | 185 | **172** | `pseudobulk_de/de_summary.tsv` (172 rows) |
+| exercise hotspots | 21 {blood7, skmgn5, skmvl4, lung3, heart1, kidney1} | **13 {blood7, lung3, skmvl1, heart1, kidney1}** | `pseudobulk_de/de_hotspots.tsv` |
+| deconvolved tissues | incl. VENACV | **14 (VENACV dropped; SPLEEN/COLON not built)** | `tissue_references.yaml` (VENACV `status: blocked`) |
+| conservation: cell types / median Spearman | 14 / 0.451 | **9 / 0.451** (skmvl_endothelial **0.602** strongest, kidney_proximal_tubule **0.302** weakest) | `grn_human/conservation/conservation_per_celltype.tsv` |
+| transfer status (185 rows) | (of 21 hotspots: 19 pres / 1 weak / 1 lost) | **PRESERVED 24 / WEAKENED 8 / LOST 79 / no_human_block 74** (overall) | `genecompass_input_human/transfer_comparison.tsv` |
+| heart holdout purity sweep | 0.996 @50% / 0.998 @85% | **VST Pearson = 1.0 across purity 0.1–0.95** | `validation/SWEEP_heart_holdout/scores/purity_sweep_summary.tsv` |
+| composition-confound (all blocks) | 145 QUIET / 30 PASS / 10 FLAG (of 185) | **114 QUIET / 46 PASS_EXPRESSION / 12 FLAG_COMPOSITION (of 172)** | `pseudobulk_de/composition_confound_table.tsv` |
+| composition-confound (hotspots) | 12 PASS / 6 FLAG / 3 QUIET (of 21) | **7 PASS_EXPRESSION / 3 FLAG_COMPOSITION / 3 QUIET (of 13)** | `composition_confound_table.tsv` (`is_hotspot`) |
+| RIN/globin-robust hotspots | 18/21 | **12/13** (1 CHECK = kidney proximal tubule) | `pseudobulk_de/rin_globin_robustness.tsv` |
+| enrichment significant hits | (prior) | **4,627** | `pseudobulk_de/enrichment/enrichment_summary.tsv` |
+| Tier-A direction-concordant recoveries | 3/45 | **2/45** | `pseudobulk_de/posctrl_summary.md` |
+| IHW-significant genes within hotspots | 5–1,807 | **1–1,805** | `de_hotspots.tsv` (`n_sig_dose_IHW`) |
+
+### The 15 hotspots (roster + θ + supervised AUC)
+`BLOOD/Megakaryocytes` (θ0.195, auc0.885) · `BLOOD/ISG-expressing T cells` (θ0.553, auc0.845) ·
+`BLOOD/Basophils` (θ0.093, auc0.843) · `BLOOD/Naive B cells` (θ0.006, auc0.838) ·
+`BLOOD/Natural killer cells` (θ0.013, auc0.82) · `BLOOD/Classical monocytes` (θ0.054, auc0.815) ·
+`BLOOD/Non-classical monocytes` (θ0.055, auc0.802) · `HEART/CD8+ T cells` (θ0.000, auc0.857) ·
+`KIDNEY/Proximal tubule cells` (θ0.799, auc0.82) · `LUNG/Pulmonary fibroblasts` (θ0.244, auc0.838) ·
+`LUNG/Myeloid dendritic cells` (θ0.002, auc0.833) · `LUNG/Alveolar macrophages` (θ0.003, auc0.823) ·
+`SKMVL/Endothelial cells` (θ0.027, auc0.89).
+**Net change vs OLD: skmgn 5→0 and skmvl 4→1** — the muscle anti-over-split merge collapses the
+previously spurious over-split-myofiber hotspots; blood 7, lung 3, heart 1, kidney 1 unchanged; liver still 0.
+
+### Reference changes (Stage 8) — OLD (notebook) → NEW (production `references_v3/`)
+
+| tissue | OLD | NEW | source |
+|---|---|---|---|
+| BAT | *absent from pipeline8's list* | **GSE244451 · 28,246 cells · 6 types** | `references_v3/BAT_GSE244451/summary.txt` |
+| HEART | GSE280111 (LV) · 332,688 · 23 | **GSE280111 (LV), SCP2828 deposited labels · 135,288 · 16** | `references_v3/HEART_GSE280111_LV/summary.txt` |
+| SKMGN | GSE184413 · 39,872 · 17 | **GSE137869 (shared `MUSCLE_GSE137869_Y`) · 10,763 · 5** | `references_v3/MUSCLE_GSE137869_Y/summary.txt` |
+| SKMVL | GSE254371 · 20,490 · 15 | **GSE137869 (shared `MUSCLE_GSE137869_Y`) · 10,763 · 5** | `references_v3/MUSCLE_GSE137869_Y/summary.txt` |
+| VENACV | (in panel) | **DROPPED** (`status: blocked`) | `tissue_references.yaml` |
+
+**New reference rosters** (from `pred_z/types.txt` / `summary.txt`):
+- **BAT (6):** Brown adipocytes · Endothelial cells · ASPC · Immune cells · SMCs & Pericytes · Neuronal-like cells.
+- **MUSCLE (5; SKMGN = SKMVL):** Skeletal myocytes · Fibroblasts · Endothelial cells · Vascular smooth muscle cells · Macrophages.
+- **HEART (16):** Cardiac fibroblasts · Endothelial cells · Cardiomyocytes · Pericytes · Macrophages · T cells ·
+  Lymphatic endothelial cells · Monocytes · B cells · NK cells · CD8+ T cells · Vascular smooth muscle cells ·
+  Cardiac neurons · Dendritic cells · Mesothelial cells · Mast cells.
+
+**New mean θ (dominant types), changed tissues** (from CANONICAL / `estimated_fractions.csv`):
+- **BAT:** Endothelial 27.0% · Immune 22.4% · Brown adipocytes 19.1% · ASPC 17.7% · SMCs & Pericytes 12.4% · Neuronal-like 1.4%.
+- **SKMGN:** Skeletal myocytes 96.2% · Endothelial 1.8% · Fibroblasts 1.6% · Macrophages 0.3% · VSMC 0.1%.
+- **SKMVL:** Skeletal myocytes 95.5% · Endothelial 2.7% · Fibroblasts 1.2% · Macrophages 0.4% · VSMC 0.1%.
+- **HEART:** Cardiomyocytes 72.0% · Endothelial 10.3% · Cardiac fibroblasts 6.3% · Monocytes 6.3% · T cells 1.7% · VSMC 1.3%.
 
 ---
 
 ## pipeline8_analysis.ipynb (Stage 8 — deconvolution)
-- **CELL 0** (markdown table): LIVER row `GSE220075 | 31,820 | 6` → `GSE220075 | 27,041 | 6`; LUNG row
-  `GSE178405 | 54,992 | 27` → `lung_native_pooled (GSE273062+GSE252844+GSE242310) | 50,643 | 34`. Update
-  the `SLURM jobs:` header + `Executed:` date.
-- **CELL 3** `timing_data` (liver=idx5, lung=idx6): liver ref_gse GSE220075 (unchanged), sc_cells
-  31820→27041, prism_min 12.37→24.50, slurm_job 11002467→11170761, n_genes 13134→12759, n_pseudocells 300
-  (unchanged), n_types 6 (unchanged). lung ref_gse GSE178405→`lung_native_pooled`, sc_cells 54992→50643,
-  n_types 27→34, prism_min 17.69→14.00, slurm_job 11002632→11171098, n_pseudocells 1350→1700, n_genes
-  14929→15348.
-- **CELL 4** arrays: `sc_cells[5]` 31820→27041, `[6]` 54992→50643; `prism_min[5]` 12.37→24.50, `[6]`
-  17.69→14.00.
-- **CELL 7 & CELL 11** `n_pseudocells`: `[5]` 300 (unchanged), `[6]` 1350→**1700**.
-- **CELL 12** (markdown): the `--ref-dir data/deconvolution/references/liver_GSE220075` path (×3) is
-  STILL CORRECT (the clean ref was adopted in place). Add a lung example → `references/lung_native_pooled`.
-  In the SLURM Job History table add the new production rows (LIVER 11170761 24.5 min, LUNG 11171098 14.0
-  min) and mark the GSE178405-lung / Visium-liver rows superseded.
-- **Re-execute only:** cells 1, 6, 9, 10, 13 (inventory/roster/fraction-histogram/checksum — refresh from
-  the new outputs; lung's 34-type roster + new fractions appear automatically).
+- **CELL 0** (markdown table): HEART `GSE280111 (LV) | 332,688 | 23` → `GSE280111 (LV), SCP2828 labels | 135,288 | 16`;
+  SKMGN `GSE184413 | 39,872 | 17` → `GSE137869 (shared MUSCLE_GSE137869_Y) | 10,763 | 5`; SKMVL
+  `GSE254371 | 20,490 | 15` → `GSE137869 (shared MUSCLE_GSE137869_Y) | 10,763 | 5`. Add BAT `GSE244451 | 28,246 | 6`
+  (and HYPOTH/SMLINT/TESTES) if extending to the 14-tissue panel; **never add VENACV**. Update the intro
+  "ten MoTrPAC tissues" to the current panel size and refresh the `Production runs:` / `Adopted … reruns:` header.
+- **CELL 3** `timing_data` (heart=idx2, skmgn=idx7, skmvl=idx8): `ref_gse` skmgn `GSE184413→GSE137869`,
+  skmvl `GSE254371→GSE137869` (heart GSE280111 unchanged); `sc_cells` heart `332688→135288`, skmgn
+  `39872→10763`, skmvl `20490→10763`; `n_types` heart `23→16`, skmgn `17→5`, skmvl `15→5`; `n_genes` heart
+  `→19256`, skmgn/skmvl `→17895`; `n_pseudocells` heart `1150→800`, skmgn `850→250`, skmvl `750→250`
+  (= 50 × n_types). `prism_min` + `slurm_job` for heart/muscle/BAT → **pull from the 07-16 rerun logs**.
+  ⚠️ **Also re-derive CORTEX (`173688/35 → 12933/11`) and HIPPOC (`GSE305314/45038/15 → GSE295314/278549/18`)** —
+  pre-existing staleness (READ-FIRST note 2).
+- **CELL 4** arrays `sc_cells` / `prism_min`: heart/skmgn/skmvl entries as above.
+- **CELL 7 & CELL 11** `n_pseudocells`: `[2]` heart `1150→800`, `[7]` skmgn `850→250`, `[8]` skmvl `750→250`
+  (CELL 7 derives 50×n_types from `types.txt` and self-refreshes; CELL 11's hardcoded list must be edited).
+- **CELL 12** (markdown) SLURM Job History: add the 07-16 heart (SCP2828) / muscle (shared GSE137869) / BAT
+  production rows; mark the GSE184413/GSE254371 muscle and 23-type heart rows superseded.
+- **Re-execute only:** cells 1, 6, 9, 10, 13 (inventory / roster / fraction-histogram / checksum — the 16-type
+  heart, 5-type muscle and 6-type BAT rosters + new θ appear automatically for tissues in the list).
 
 ## pipeline9_analysis.ipynb (Stage 9 — tokenize + embed)
-- **CELL 3** `min_len` dict: `"lung":277` → the new lung min token length from
-  `logs/lung_native_casc_11171098.out` (tokenize_pseudocells.py stdout); `"liver":"?"` unchanged (or fill
-  from `logs/liver_novis_casc_11170761.out`). Simplest robust option: set both to `"?"`.
-- **CELL 12** (markdown) SLURM Job History: update LIVER (11170761) + LUNG (11171098) rows + a note that
-  liver = Visium-excluded and lung = native pooled (replacing GSE178405).
-- **Re-execute only:** cells 1,4,6,7,9,10,13 (tokenization/embedding/Augur/checksum figures).
+- Reads outputs by tissue name; most cells refresh on re-execution. Update any hardcoded per-tissue token-length
+  (`min_len`) entries for **heart / skmgn / skmvl** (and add **bat**) from the 07-16 `tokenize_pseudocells.py`
+  logs, or set to `"?"`. SLURM Job History (markdown): add the 07-16 jobs; note heart = SCP2828 16-type,
+  muscle = shared GSE137869 5-type, BAT added, VENACV dropped.
+- **Re-execute** the tokenization / embedding / Augur / checksum cells.
+  *(pipeline9 was not deep-inspected here; treat the constant list as the changed-tissue set above.)*
 
 ## pipeline10_analysis.ipynb (Stage 10 — DE + positive controls)  ← biggest conceptual change
-- **CELL 5** (markdown) — **now FALSE, must rewrite:** "18 of 178 blocks are hotspots. All are in BLOOD,
-  SKMGN, SKMVL, HEART, and KIDNEY." → "**21 of 185 blocks are hotspots: blood 7, skmgn 5, skmvl 4, LUNG 3,
-  heart 1, kidney 1. LUNG now shows exercise hotspots (native reference); liver still 0.**"
-- **CELL 2** (markdown): "all 178 blocks" → "all 185 blocks".
-- **CELL 6** (code): hardcoded `/178` in the suptitle f-string → use `{len(de)}` (or 185); ADD
-  `"LIVER"` and `"LUNG"` keys to the `tissue_colors` dict (else a newly-hotspot lung block plots gray).
-- **CELL 12** (markdown): refresh SLURM job rows (redetect 11173958) and re-derive the Tier-A recovery
-  numbers + IHW-significant-gene ranges from the regenerated `pseudobulk_de/posctrl_summary.md`.
-- **Re-execute only:** cells 1,3,4,8,9,10,13 (DE-count/posctrl figures + checksums).
+- **CELL 5** (markdown) — **now FALSE, rewrite:** "The adopted rerun identifies **21 hotspots among 185 blocks**:
+  blood 7, skmgn 5, skmvl 4, lung 3, heart 1, and kidney 1." → "**15 hotspots among 172 blocks**: blood 7,
+  lung 3, skmvl 1, heart 1, kidney 1. The muscle anti-over-split merge collapses the previously spurious
+  skmgn/skmvl over-split-myofiber hotspots (skmgn 5→0, skmvl 4→1); lung retains 3; liver still 0."
+- **CELL 6** (code): the suptitle uses `{len(hot)}/{len(de)}` → auto-updates to 13/172. Add `"BAT"` (and
+  HYPOTH/SMLINT/TESTES) keys to `tissue_colors` so any non-core block is not plotted gray (none is a hotspot today).
+- **CELL 12** (markdown) reproducibility: **Testable blocks 185→172**; **Exercise hotspots 21→15**;
+  **IHW-significant genes within hotspots 5–1,807 → 1–1,805**; **Tier-A 3/45 → 2/45**; refresh the SLURM
+  redetect job to the 07-16 run.
+- **CELL 1 / CELL 13** hardcoded 10-tissue lists: extend to the 14-tissue panel (add BAT/HYPOTH/SMLINT/TESTES);
+  never add VENACV.
+- **Re-execute only:** cells 1, 3, 4, 6, 8, 9, 10, 13 (DE-count / posctrl figures + checksums; `groupby` cells
+  now surface BAT/HYPOTH/SMLINT/TESTES automatically and drop VENACV).
 
 ## pipeline11_analysis.ipynb (Stage 11 — subspace probe)
-- No study IDs / paths hardcoded. Update the global counts in **CELLS 0, 2, 12, 13**: "178 blocks" →
-  "**185**"; "18"/"Eighteen" hotspots → "**21**"; the "(1 singleton block excluded)" note if the singleton
-  count changed. **CELL 13** Reproducibility table → redetect job 11173958.
-- **Re-execute only:** every code cell (all read the TSVs by tissue name; liver/lung rows + global counts
-  refresh automatically).
+- No study IDs / paths hardcoded. Update the global counts in **CELLS 2, 4, 10, 12, 13**: "185" → "**172**";
+  "21"/"Twenty-one" hotspots → "**13**"/"**Thirteen**"; the CELL 12 roster "blood 7, heart 1, kidney 1, lung 3,
+  skmgn 5, skmvl 4" → "**blood 7, heart 1, kidney 1, lung 3, skmvl 1**". Verify the CELL 2 "(1 singleton block
+  excluded)" note against the new build; leave it if you cannot confirm. **CELL 13** Reproducibility → 07-16 redetect job.
+- **Re-execute** every code cell (all read the TSVs by tissue name; counts refresh automatically).
 
 ## pipeline12_analysis.ipynb (Stage 12 — cross-species transfer)
-- **CELL 3** `TRANSFER` dict + **CELL 2** markdown table: update the liver row (rat_genes 13134→12759,
-  n_cells 300 unchanged) and lung row (rat_genes 14929→15348, n_cells 1350→1700) — pull the new
-  `pct_ortho` / `eligible` / `count_mass` per tissue from `genecompass_input_human/transfer_comparison.md`.
-  The CELL 3 plot title "total 8 950 across 10 tissues" → recompute (don't retype). **NB: lung's cell-type
-  roster changed wholesale (native 34-type set), so every lung row changes identity, not just value.**
-- **CELLS 0, 4, 6, 10** (markdown/prints): "16/18 PRESERVED … LOST 2/18" → "**PRESERVED 19 / WEAKENED 1 /
-  LOST 1 of 21**"; re-derive the sex-axis medians + rat~human Spearman.
-- **CELL 11**: SLURM history → transfer job 11174632; re-derive the ΔAUC range; the LOST/WEAKENED list now
-  includes **lung / Pulmonary fibroblasts (WEAKENED, ΔAUC −0.15)**. Lung's other 2 hotspots are PRESERVED
-  (Myeloid DC 0.833→0.85, Alveolar macrophages 0.823→0.83) — a new, reportable conserved-signal result.
-- **Re-execute only:** cells 1,5,7,8,12 (read `transfer_comparison.tsv` dynamically).
+- **CELL 3** `TRANSFER` dict + **CELL 2** table: the heart / skmgn / skmvl rows change **identity and value**
+  (heart 16-type, muscle 5-type shared). Pull `rat_genes / pct_ortho / eligible / count_mass / n_cells` from the
+  07-16 transfer log (`n_cells` = 50 × n_types → heart 800, skmgn 250, skmvl 250). The CELL 3 plot title
+  "total … across 10 tissues" → recompute, don't retype. Verify the CELL 11 "15,234-pair" ortholog-map size.
+- **CELL 4** (markdown) sex-axis gate — OLD "rat median 0.686, human median 0.685, Spearman 0.921 … gate **fails**."
+  The current `transfer_comparison.tsv` reads **rat ≈0.686 / human ≈0.765**, which would *pass* — **but do NOT
+  restate the gate outcome from this file**: its `is_hotspot` is stale (READ-FIRST note 3). Recompute the gate
+  from a clean Stage-12 re-run first.
+- **CELLS 6, 8, 10** hotspot-preservation "**19 preserved, 1 weakened, 1 lost** among the 21 hotspots" — **cannot
+  be cleanly refreshed** from the current file (its 21 `is_hotspot` rows are the OLD roster; 8 retired muscle types
+  are now `no_human_block`). Report the **overall** status instead — **PRESERVED 24 / WEAKENED 8 / LOST 79 /
+  no_human_block 74 of 185** — and re-derive the per-hotspot story against the new 13 after a Stage-12 re-hotspot join.
+- **CELL 11** reproducibility: 07-16 transfer job; the ΔAUC range and the specific weakened/lost cell types will
+  change once re-hotspotted — recompute, do not carry over "-0.205 to +0.038" or the old lung/kidney examples.
+- **Re-execute:** cells 1, 5, 7, 8, 9, 12 (read `transfer_comparison.tsv` dynamically — but they inherit the
+  stale `is_hotspot`; the sex-axis and all-block scatters are unaffected).
+
+## Stages 13 & 14 — no dedicated notebooks
+The GRN/conservation (Stage 13) and hardening (Stage 14) stages have no `pipelineN` notebook. Their new facts —
+**conservation median Spearman 0.451 over 9 cell types (skmvl_endothelial 0.602 strongest); heart purity sweep
+VST = 1.0; composition-confound 114/46/12 over 172 blocks; RIN/globin 12/13 robust; enrichment 4,627 hits** —
+are recorded in the wip specs (`manuscript/wip/wip_aim3_capstone_conserved_regulators.md`,
+`manuscript/wip/wip_hardening_atlas_and_heart_reference.md`) and the manuscript, updated separately.
 
 ---
-**One-line summary for the reader of each notebook:** liver numbers barely move (Visium fix negligible);
-lung changes throughout (native reference — new 34-type roster, new fractions, and **lung goes 0→3
-exercise hotspots, 2 of which are conserved rat→human**); global counts 178→185 blocks, 18→21 hotspots.
+**One-line summary.** Heart/muscle references were relabeled (SCP2828 16-type heart; merged 5-type shared
+muscle) and BAT adopted deposited 6-type labels; VENACV was dropped. Downstream: **185→172 blocks, 21→15
+hotspots** (skmgn 5→0, skmvl 4→1 from the muscle merge), conservation now **0.451 over 9 cell types**, heart
+purity sweep **VST=1.0**, overall transfer **24 preserved / 8 weakened**. Two carry-over hazards: the notebooks
+are still 10-tissue while production is 14, and `transfer_comparison.tsv` still marks the OLD 21 hotspots —
+re-hotspot Stage 12 before restating any hotspot-preservation number.
+
+> **CORRECTION 2026-07-17:** the 13-hotspot figure above was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.

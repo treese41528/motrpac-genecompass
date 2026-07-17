@@ -22,6 +22,7 @@ Usage (project venv):
 """
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -120,36 +121,75 @@ def canonicalize_labels(series, scheme):
     return series.map(fn)
 
 
-def select_samples(study, tissue, conditions=None, sex=None, sample_ids=None):
-    """In-corpus sample IDs for study+tissue, optionally filtered by
-    condition_resolved and/or sex_resolved.
+def select_samples(study, tissue, conditions=None, sex=None, sample_ids=None,
+                   organism="Rattus norvegicus", title_include=None, title_exclude=None,
+                   dedup_gsm=True):
+    """In-corpus sample IDs for study+tissue, filtered (in precedence order) by:
+    organism gate -> condition_resolved -> sex_resolved -> geo_title include/exclude regex ->
+    explicit sample_ids -> GSM de-duplication -> (caller-side) reference-QC gate.
 
-    sample_ids (explicit list) restricts to exactly those IDs -- needed when the
-    healthy/disease (or genotype) split lives only in geo_title, not in
-    condition_resolved (which is unreliable; e.g. GSE305314 WT-vs-Tau). The IDs
-    are still validated against the study/tissue/in_corpus selection."""
+    Two arm filters exist because the healthy/young/genotype arm lives in DIFFERENT columns
+    across studies. Use `conditions` (condition_resolved) when it is populated (e.g. GSE240658
+    "No treatment"); use `title_include`/`title_exclude` (regex over geo_title|geo_source_name|
+    geo_cell_type) when the arm lives ONLY in the title -- condition_resolved is unreliable and
+    is BLANK for the aging arms (GSE137869 Ma-2020 -Y/-O/-CR; GSE305314 WT-vs-Tau; GSE248413
+    Y-vs-O, whose condition_resolved reads "no treatment" for BOTH young and old).
+
+    `organism` defaults to rat-only -- the keystone guard against a multi-species study (cortex
+    GSE303115 spans 6 species) silently seeding a cross-species reference. Pass organism="any"
+    to disable.
+
+    `sample_ids` restricts to exactly those IDs but is validated against what SURVIVED the
+    organism/arm filters, so a stale ID list can never re-introduce a wrong-species/wrong-arm cell.
+
+    `dedup_gsm` collapses duplicate GSMs (the same physical library ingested under >1 sample_id --
+    the _RAW double-ingest: GSE280111 LV 38->19, GSE303115 cortex 4->2) to one sample_id per GSM."""
     inv = pd.read_csv(INVENTORY, sep="\t", dtype=str)
     sel = inv[
         (inv["accession"] == study)
         & (inv["tissue_normalized"].str.lower() == tissue.lower())
         & (inv["in_corpus"].str.lower() == "true")
     ]
+    # --- organism gate (default rat-only): the keystone fix. select_samples used to filter on
+    # accession+tissue only, which let cortex GSE303115 (6 species) seed an ~85%-non-rat reference. ---
+    if organism and str(organism).lower() != "any":
+        sel = sel[sel["geo_organism"].fillna("").str.strip().str.lower() == str(organism).lower()]
     if conditions:
         sel = sel[sel["condition_resolved"].isin(conditions)]
     if sex:
         sel = sel[sel["sex_resolved"].str.lower() == sex.lower()]
+    # --- geo_title include/exclude: expresses arms that live only in the title (Ma-2020 young -Y
+    # arm; GSE248413 young "Y"; explicit Visium drop) over geo_title|geo_source_name|geo_cell_type. ---
+    def _title_blob(row):
+        return " | ".join(str(row.get(c, "")) for c in ("geo_title", "geo_source_name", "geo_cell_type"))
+    if title_include:
+        rx = re.compile(title_include, re.I)
+        sel = sel[sel.apply(lambda r: bool(rx.search(_title_blob(r))), axis=1)]
+    if title_exclude:
+        rx = re.compile(title_exclude, re.I)
+        sel = sel[~sel.apply(lambda r: bool(rx.search(_title_blob(r))), axis=1)]
     if sample_ids:
         want = set(sample_ids)
         sel = sel[sel["sample_id"].isin(want)]
         got = set(sel["sample_id"])
         missing = want - got
         if missing:
-            sys.exit(f"ERROR: --sample-ids not in corpus for {study}/{tissue}: "
-                     f"{sorted(missing)}")
+            sys.exit(f"ERROR: --sample-ids not in the organism/arm-filtered {study}/{tissue} "
+                     f"selection (organism={organism}, conditions={conditions}, sex={sex}, "
+                     f"title_include={title_include}, title_exclude={title_exclude}): {sorted(missing)}")
+    # --- GSM de-dup (default on): one sample_id per physical library, collapsing the _RAW
+    # double-ingest (GSE280111 LV 38->19, GSE303115 cortex 4->2) without hand-listing dedup sets. ---
+    if dedup_gsm and "gsm" in sel.columns:
+        n_before = len(sel)
+        sel = sel.sort_values("sample_id").drop_duplicates(subset=["gsm"], keep="first")
+        if len(sel) < n_before:
+            print(f"  [dedup-gsm] {n_before} -> {len(sel)} samples (one sample_id per unique GSM)")
     samples = sorted(sel["sample_id"].tolist())
     if not samples:
         sys.exit(f"ERROR: no in-corpus {tissue} samples for {study} "
-                 f"(conditions={conditions}, sex={sex}, sample_ids={sample_ids}) in {INVENTORY}")
+                 f"(organism={organism}, conditions={conditions}, sex={sex}, "
+                 f"title_include={title_include}, title_exclude={title_exclude}, "
+                 f"sample_ids={sample_ids}) in {INVENTORY}")
     # --- reference-QC gate: drop categorically non-native samples (spatial/Visium, engineered/
     # cultured/sorted, bulk) so a contaminated study can't silently seed a reference. Structural guard
     # against the liver-Visium / engineered-lung class of bug (see reference_qc.py). Developmental
@@ -218,13 +258,18 @@ def load_sample(sample):
 
 
 def load_study(study, tissue, conditions=None, sex=None, sample_ids=None,
-               gene_join="inner", min_gene_cells=0):
+               gene_join="inner", min_gene_cells=0,
+               organism="Rattus norvegicus", title_include=None, title_exclude=None,
+               dedup_gsm=True):
     """Concatenate all (loadable) samples of a study/tissue. gene_join='inner' keeps the
     shared (intersection) gene set -- the default, but it COLLAPSES studies with uneven
     per-sample gene depth (cortex GSE303115: per-sample 9.5k-21k -> 5.5k shared). Use
     gene_join='outer' to take the UNION (0-filled), optionally pruned by min_gene_cells
-    (drop genes expressed in < that many pooled cells) to trim the union's long tail."""
-    samples = select_samples(study, tissue, conditions, sex, sample_ids)
+    (drop genes expressed in < that many pooled cells) to trim the union's long tail.
+    organism/title_include/title_exclude/dedup_gsm are forwarded to select_samples()."""
+    samples = select_samples(study, tissue, conditions, sex, sample_ids,
+                             organism=organism, title_include=title_include,
+                             title_exclude=title_exclude, dedup_gsm=dedup_gsm)
     print(f"{study} / {tissue}: {len(samples)} samples -> {samples}")
     parts = [s for s in (load_sample(x) for x in samples) if s is not None]
     if not parts:
@@ -281,6 +326,18 @@ def main():
     ap.add_argument("--sex", help="sex_resolved filter (e.g. male/female)")
     ap.add_argument("--sample-ids", help="comma-sep explicit sample_id list (use when the "
                     "healthy/genotype split is only in geo_title, not condition_resolved)")
+    ap.add_argument("--organism", default="Rattus norvegicus",
+                    help="geo_organism gate (default rat-only); pass 'any' to disable. Keystone "
+                    "guard: prevents a multi-species study (e.g. cortex GSE303115) from seeding a "
+                    "cross-species reference")
+    ap.add_argument("--title-include", help="keep only samples whose geo_title|geo_source_name|"
+                    "geo_cell_type matches this regex (case-insensitive) -- for arms that live only "
+                    r"in the title, e.g. Ma-2020 young arm '-Y($|\b|_)', GSE248413 young '(^|[^A-Za-z])Y([^A-Za-z]|$)'")
+    ap.add_argument("--title-exclude", help="drop samples whose geo_title blob matches this regex "
+                    "(case-insensitive), e.g. 'visium|spatial|_vis'")
+    ap.add_argument("--no-dedup-gsm", action="store_true",
+                    help="disable GSM de-dup (default ON: collapse duplicate GSMs -- the _RAW "
+                    "double-ingest, e.g. GSE280111 LV 38->19 -- to one sample_id per library)")
     ap.add_argument("--min-state-cells", type=int, default=20)
     ap.add_argument("--label-scheme", default="none", choices=["none"] + sorted(LABEL_SCHEMES),
                     help="merge collinear consensus-label fragments before building the GEP "
@@ -298,7 +355,9 @@ def main():
     conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
     sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
     adata = load_study(args.study, args.tissue, conds, args.sex, sids,
-                       gene_join=args.gene_join, min_gene_cells=args.min_gene_cells)
+                       gene_join=args.gene_join, min_gene_cells=args.min_gene_cells,
+                       organism=args.organism, title_include=args.title_include,
+                       title_exclude=args.title_exclude, dedup_gsm=not args.no_dedup_gsm)
     adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
     out = Path(args.out) if args.out else Path(resolve_path(_CFG, _DC["built_reference_dir"])) / f"{args.tissue}_{args.study}"

@@ -226,7 +226,11 @@ def main() -> None:
     label = args.label or slug(args.tissue)
     bulk_root = Path(args.bulk_root).resolve() if args.bulk_root else resolve_path(config, d['motrpac_bulk_out'])
     res_root = Path(args.results_dir).resolve() if args.results_dir else resolve_path(config, d['results_dir'])
-    res_dir = res_root / tissue
+    # MoTrPAC real-bulk deconv lives under the 'motrpac' subdir -- the canonical layout EVERY reader uses
+    # (run_stage10 reads results_dir/'motrpac'; run_pseudobulk_de.R; notebooks/pipeline8; diagnose_parenchyma.py;
+    # run_cdseq_*.R). Writing to res_root/<tissue> (no 'motrpac') was the inconsistency that forced a manual
+    # relocation of the v3 outputs; keep the subdir so Stage 8's output matches where Stage 10/12 read.
+    res_dir = res_root / 'motrpac' / tissue
 
     ctx = {
         'tissue':       tissue,
