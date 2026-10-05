@@ -1,0 +1,22 @@
+# CPA (Aim 2c / Module C) — ISOLATED environment requirements.
+# Canonical maintained CPA: https://github.com/theislab/cpa  (import name: cpa)
+#
+# ⚠️  NEVER install these into the shared `motrpac-env`. cpa (git) pulls
+#     scvi-tools + pytorch-lightning + torch and would risk the pinned pipeline env.
+#     Use `deconvolution/cpa/setup_cpa_env.sh`, which builds a SEPARATE `cpa-env`.
+#
+# NOTE: install from GIT, not PyPI. The PyPI package `cpa-tools` is a stale release
+#     that pins ancient scvi-tools 0.14.x -> pytorch-lightning 1.3.x (fails to build
+#     on Python 3.12: old PyYAML 5.4.1 + Cython 3). The current `cpa.CPA` API used by
+#     the plan (setup_anndata / recon_loss='nb' / doser_type / explicit save_path)
+#     lives on git main, which resolves modern scvi-tools compatible with Python 3.12.
+#
+# After a successful build, exact transitive pins are frozen to
+# `requirements-cpa.lock.txt` (the reproducible artifact).
+
+# Pin pyarrow<16: cpa-tools -> scvi-tools 0.20.3 -> ray 2.9.3 calls
+# `pyarrow.PyExtensionType`, which pyarrow>=16 removed. pyarrow 15.x still provides it.
+pyarrow<16
+
+# (package name is `cpa-tools`; import name is `cpa`)
+cpa-tools @ git+https://github.com/theislab/cpa.git
