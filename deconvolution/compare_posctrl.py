@@ -157,6 +157,30 @@ def resolve_targets(store, tissue, target):
     return [t for t in wanted if t in avail]
 
 
+def check_targets(store, prereg):
+    """Fail if an explicit target matches no DE block; warn if it matches only some.
+
+    resolve_targets() drops names it cannot find, so a stale label used to be scored silently
+    as 'not_testable' -- all 28 muscle controls after the muscle relabel to 'Skeletal myocytes'.
+    """
+    none, partial = [], []
+    for (tissue, target), g in prereg.groupby(['tissue', 'cell_type_target']):
+        if str(target).strip().upper() == 'ANY':
+            continue
+        wanted = [t.strip() for t in str(target).split('|')]
+        avail = set(store.celltypes(tissue))
+        hit = [t for t in wanted if t in avail]
+        if not hit:
+            none.append(f"{tissue}: {target!r} ({len(g)} rows)")
+        elif len(hit) < len(wanted):
+            partial.append(f"{tissue}: {sorted(set(wanted) - avail)} absent")
+    for p in partial:
+        print(f"WARNING: pre-registered target partly absent -- {p}", file=sys.stderr)
+    if none:
+        sys.exit("ERROR: pre-registered targets match no DE block (relabelled cell type? regenerate "
+                 "posctrl_prereg.tsv with build_posctrl_prereg.py):\n  " + "\n  ".join(none))
+
+
 def classify_identity(evals, tier, expected_dir):
     """Aggregate per-cell-type evals for a single gene into one frozen-ladder outcome.
     evals: list of gene_eval dicts (present blocks only considered for the ladder)."""
@@ -200,6 +224,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     prereg = pd.read_csv(args.prereg, sep='\t')
     store = DEStore(de_dir, args.alpha)
+    check_targets(store, prereg)
 
     rows = []            # per-gene (tiers A/Ai/B) result rows
     cprog = []           # Tier C program-enrichment rows
