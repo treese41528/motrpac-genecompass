@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from sklearn.decomposition import PCA
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from subspace_probe import make_folds, supervised                         # reuse the CV probe
+from subspace_probe import block_seed, make_folds, supervised             # reuse the CV probe
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
@@ -128,7 +128,7 @@ def main():
                 continue
             items.append(dict(tissue=tis, cell_type=c, n=int(m.sum()),
                               embed=ek[m], pca=pcs[m], genes=Xz[m],
-                              trained=tk[m], week=wk[m], seed=1000 * (hash(tis) % 9973) + ci))
+                              trained=tk[m], week=wk[m], seed=block_seed(tis, ci)))
         print(f"[{tis}] exported {int(keep.sum())} cells x {len(genes)} genes; "
               f"{len(set(ck))} cell types; PCA={ncomp}")
 

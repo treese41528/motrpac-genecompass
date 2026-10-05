@@ -38,7 +38,8 @@ import pandas as pd
 import numpy as np
 
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve().parents[1])
-
+sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
+from provenance import write_provenance  # noqa: E402
 
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 
@@ -324,6 +325,8 @@ def main():
         counts, n = tally(res, [tier])
         rec = counts.get('recovered', 0) + counts.get('recovered_confounded', 0)
         print(f"  Tier {tier}: {rec}/{n} recovered | " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    write_provenance(out_dir, params=vars(args),
+                     inputs=[args.prereg, de_dir / 'de_summary.tsv', de_dir / 'de_methods.tsv'])
 
 
 if __name__ == '__main__':

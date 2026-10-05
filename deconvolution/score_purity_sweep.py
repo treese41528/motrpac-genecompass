@@ -13,10 +13,14 @@ Usage: python deconvolution/score_purity_sweep.py \
     --stage-dir data/deconvolution/validation/SWEEP_hepato_cross
 """
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from provenance import write_provenance  # noqa: E402
 
 
 def main():
@@ -42,6 +46,7 @@ def main():
 
     out = sd / "scores"
     per_point.to_csv(out / "purity_sweep_summary.tsv", sep="\t", index=False)
+    write_provenance(out, inputs=[sd / "scores" / "z_vst_focal.tsv"], params=vars(args))
 
     # the paper-comparable number: samples at >=50% focal fraction
     hi = df[df[args.purity_col] >= 0.5]

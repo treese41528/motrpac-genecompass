@@ -43,6 +43,7 @@ import glob
 import os
 import re
 import sys
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -56,8 +57,15 @@ from sklearn.model_selection import StratifiedKFold
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
+from provenance import write_provenance                                   # noqa: E402
 
 WEEK = {"control": 0, "1w": 1, "2w": 2, "4w": 4, "8w": 8}                  # ordinal dose (weeks)
+
+
+def block_seed(tissue, ci):
+    """Per-(tissue, cell-type) RNG seed. zlib.crc32 is stable across runs; the builtin hash() of a
+    str is salted per interpreter (PYTHONHASHSEED), so folds and permutation nulls changed run to run."""
+    return 1000 * (zlib.crc32(tissue.encode()) % 9973) + ci
 
 
 # ----------------------------------------------------------------------------- eta^2 helpers
@@ -256,7 +264,7 @@ def main():
             items.append(dict(
                 tissue=tis, cell_type=c, E=emb[m], group=g, trained=trained[m], sex=sex[m],
                 week=np.array([WEEK.get(str(x), np.nan) for x in g], float),
-                seed=1000 * (hash(tis) % 9973) + ci))
+                seed=block_seed(tis, ci)))
 
     print(f"{len(items)} (tissue x cell-type) blocks; perms={args.perms} folds={args.folds} "
           f"jobs={args.jobs}")
@@ -264,6 +272,9 @@ def main():
         delayed(process)(it, args.perms, args.folds) for it in items)
     res = pd.DataFrame(rows)
     res.to_csv(args.out, sep="\t", index=False)
+    write_provenance(Path(args.out).parent, params=vars(args),
+                     inputs=[args.pheno] + sorted(glob.glob(f"{args.gc_root}/*/embeddings/cell_embeddings.npy"))
+                     + sorted(glob.glob(f"{args.bulk_root}/*/bulk_samples.tsv")))
 
     # ----------------------------------------------------------------- summary (the science)
     pd.set_option("display.width", 240, "display.max_rows", 300, "display.max_columns", 60)

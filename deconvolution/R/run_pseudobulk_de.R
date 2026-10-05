@@ -60,6 +60,7 @@ suppressWarnings(suppressPackageStartupMessages({
   if (length(f)) dirname(normalizePath(f[1])) else "."
 })
 source(file.path(.script_dir, "celltype_names.R"))
+source(file.path(.script_dir, "provenance.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 5)
@@ -409,6 +410,12 @@ writeLines(c(
   sprintf("design\tlimma-trend(robust) on log2CPM of continuous Z; combined ~sex*factor(week) + ordinal ~sex+week_num; per-sex ~factor(week); Fisher sex-combine; IHW~tissue; repfdr 8w sex-consistency"),
   sprintf("deviations\tcontinuous-Z not DESeq2-NB; no RIN/globin/PCRdup covariates (absent + post-deconvolution)")
 ), file.path(out_dir, "de_methods.tsv"))
+write_provenance(out_dir,
+  inputs = c(pheno_tsv, hotspots_tsv, file.path(bulk_root, tissues, "bulk_samples.tsv"),
+             file.path(results_root, tissues, "pred_z", "genes.txt")),
+  params = list(results_root = results_root, bulk_root = bulk_root, tissues = tissues,
+                alpha = ALPHA, multiple_testing = ihw_used, sex_consistency = sexcons_method,
+                n_blocks_ok = sum(summ$status == "ok")))
 
 cat("\n=== DE summary (hotspots first) ===\n")
 print(utils::head(summ[, c("tissue","cell_type","is_hotspot","n_sig_dose_IHW",

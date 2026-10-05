@@ -30,11 +30,13 @@ sd <- args[1]; focal <- args[2]
 # Shared cell-type -> filename contract. resolve_ct_file() prefers the current name but
 # falls back to the legacy one, so sweep artifacts written before the 2026-07-12 sanitizer
 # fix still load without a rebuild.
-source(file.path(local({
+.script_dir <- local({
   a <- commandArgs(trailingOnly = FALSE)
   f <- sub("^--file=", "", a[grep("^--file=", a)])
   if (length(f)) dirname(normalizePath(f[1])) else "."
-}), "celltype_names.R"))
+})
+source(file.path(.script_dir, "celltype_names.R"))
+source(file.path(.script_dir, "provenance.R"))
 
 true <- as.matrix(read.csv(file.path(sd, "mixtures", "true_z_focal.csv"),
                            row.names = 1, check.names = FALSE))
@@ -82,6 +84,9 @@ res <- res[order(res$target_purity, res$mixture), ]
 out <- file.path(sd, "scores"); dir.create(out, recursive = TRUE, showWarnings = FALSE)
 write.table(res, file.path(out, "z_vst_focal.tsv"), sep = "\t",
             quote = FALSE, row.names = FALSE)
+write_provenance(out, inputs = c(file.path(sd, "mixtures", "true_z_focal.csv"), predf,
+                                 file.path(sd, "mixtures", "sweep_design.tsv")),
+                 params = list(stage_dir = sd, focal = focal))
 cat("\n=== per-sample focal-expression accuracy (head) ===\n")
 print(utils::head(res, 12))
 cat(sprintf("\nWrote %s/z_vst_focal.tsv\n", out))

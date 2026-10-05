@@ -39,6 +39,7 @@ import scanpy as sc
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))
 from gene_utils import load_config, resolve_path  # noqa: E402
+from provenance import write_provenance  # noqa: E402
 
 _CFG = load_config()
 _DC = _CFG["deconvolution"]
@@ -362,6 +363,11 @@ def main():
     adata = clean_cells(adata, args.min_state_cells)
     out = Path(args.out) if args.out else Path(resolve_path(_CFG, _DC["built_reference_dir"])) / f"{args.tissue}_{args.study}"
     export_reference(adata, out)
+    obs = adata.obs
+    write_provenance(out, inputs=[INVENTORY], params={
+        **vars(args), "n_cells": int(adata.n_obs), "n_genes": int(adata.n_vars),
+        "samples": sorted(obs["sample"].astype(str).unique()) if "sample" in obs else None,
+        "cell_types": sorted(obs["cell_type"].astype(str).unique())})
 
 
 if __name__ == "__main__":
