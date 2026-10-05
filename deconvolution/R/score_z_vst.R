@@ -48,12 +48,16 @@ design <- read.delim(file.path(sd, "mixtures", "sweep_design.tsv"),
 # align genes (pred may drop genes via BayesPrism filtering) and samples
 common <- intersect(colnames(true), colnames(pred))
 true <- true[, common, drop = FALSE]; pred <- pred[, common, drop = FALSE]
-stopifnot(nrow(true) == nrow(pred))
+stopifnot(identical(rownames(true), rownames(pred)))   # same mixtures, same order
 cat(sprintf("focal=%s | %d samples x %d common genes\n",
             focal, nrow(true), length(common)))
 
 # round to integer counts for DESeq2; fit VST once on [true|pred] together
 mat <- t(rbind(true, pred))                  # genes x (2*samples)
+# Column names must be unique: DESeq2's local-fit VST rebuilds its output column by NAME, so
+# with each mixture name appearing twice the "pred" half came back as a copy of the "true"
+# half and every Pearson-VST was exactly 1 (HEART, HYPOTH). The parametric fit was unaffected.
+colnames(mat) <- c(paste0("true_", rownames(true)), paste0("pred_", rownames(pred)))
 mode(mat) <- "integer"; mat[is.na(mat)] <- 0L
 storage.mode(mat) <- "integer"
 mat[mat < 0L] <- 0L
