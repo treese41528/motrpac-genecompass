@@ -68,6 +68,11 @@ PURITY = [
     dict(sweep='SWEEP_skmvl_holdout',     study='GSE254371', tissue='skeletal muscle',   focal='Skeletal muscle',         label_scheme='muscle', gene_join='outer', min_gene_cells=10, cpm=800),
     dict(sweep='SWEEP_lung_club_holdout', tissue='lung',     focal='Club cells',            pooled_lung=True, cpm=1000),
     dict(sweep='SWEEP_lung_at2_holdout',  tissue='lung',     focal='Alveolar type II cells', pooled_lung=True, cpm=300),
+    # ---- 2026-07 reference-rebuild additions (were added after the original Stage-14 run) ----
+    dict(sweep='SWEEP_bat_holdout',       study='GSE244451', tissue='subscapular brown adipose tissue', focal='Brown adipocytes',       label_scheme='none', gene_join='inner', sample_ids='GSE244451_sample1,GSE244451_sample3', cpm=1000),
+    dict(sweep='SWEEP_hypoth_holdout',    study='GSE248413', tissue='hypothalamus',                     focal='Glutamatergic neurons',  label_scheme='none', gene_join='inner', sample_ids='GSE248413_sample0', cpm=1000),
+    dict(sweep='SWEEP_smlint_holdout',    study='GSE272055', tissue='proximal jejunum',                 focal='Enterocytes',            label_scheme='none', gene_join='inner', sample_ids='GSE272055_sample0,GSE272055_sample1', cpm=1000),
+    dict(sweep='SWEEP_testes_holdout',    study='OMIX767',   tissue='testis',                           focal='Round spermatids',       label_scheme='none', gene_join='inner', sample_ids='OMIX767_sampleC,OMIX767_sampleE7W', cpm=1000),
 ]
 GRID = '0.1,0.3,0.5,0.7,0.85,0.95'
 
