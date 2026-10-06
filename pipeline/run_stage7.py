@@ -152,6 +152,8 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
     t4_std = ft.get('t4_word_emb_std', 0.02)
     species_std = ft.get('species_noise_std', 0.02)
     coexp_rescale = ft.get('coexp_rescale_factor', 3.9)
+    t3_priors = ft.get('t3_prior_source', 'ortholog')
+    t4_zero_priors = ft.get('t4_zero_priors', ['promoter']) or []
 
     # Check if already done
     if (output_dir / 'pytorch_model.bin').exists():
@@ -175,6 +177,8 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
         '--t4-std', str(t4_std),
         '--species-noise-std', str(species_std),
         '--coexp-rescale', str(coexp_rescale),
+        '--t3-priors', t3_priors,
+        '--t4-zero-priors', ','.join(t4_zero_priors),
     ]
 
     logger.info("Step 1: Extending checkpoint for rat vocabulary...")

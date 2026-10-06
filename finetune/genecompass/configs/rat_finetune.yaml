@@ -68,7 +68,9 @@ initialization:
   t3_noise_std: 0.001          # NEW: symmetry-breaking noise
   species_init: mouse_plus_noise
   species_noise_std: 0.02
-  coexp_rescale_factor: 3.9
+  coexp_rescale_factor: 3.9    # applied only to prior rows filled from Stage 6
+  t3_prior_source: ortholog    # T3 prior rows = ortholog's pre-trained rows (T3a human, T3b mouse); 2026-10-05
+  t4_zero_priors: [promoter]   # T4 promoter prior left zero: Stage 6 promoter vectors are not in GC's space
 
 logging:
   logging_steps: 50
