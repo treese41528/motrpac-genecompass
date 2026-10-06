@@ -17,14 +17,15 @@ Purpose:
     pre-training:
 
       1. Load raw counts (no normalization on disk — raw-count contract preserved).
-      2. normalize_total(target_sum=10,000) — in memory only, ephemeral.
-      3. Divide raw counts by per-gene hybrid median (hybrid_gene_medians.pickle).
-         Hybrid median = human median for T1-T3 ortholog-mapped genes,
-         rat median for T4 rat-specific genes. No normalize_total.
-      4. log2(1+x) transform.
-      5. Rank non-zero genes descending by transformed expression.
-      6. Take top 2,048 (or all non-zero genes if fewer than 2,048 expressed).
-      7. Map to token IDs via rat_tokens.pickle.
+      2. Divide raw counts by the per-gene hybrid median (hybrid_gene_medians.pickle).
+         NO normalize_total: GeneCompass's own corpora are raw counts / per-gene median
+         (checked on its human and mouse corpora). Hybrid median = GeneCompass's human
+         median where the rat gene has one; otherwise the rat median rescaled onto the
+         human-median scale (see build_hybrid_medians.py).
+      3. log2(1+x) transform.
+      4. Rank non-zero genes descending by transformed expression.
+      5. Take top 2,048 (or all non-zero genes if fewer than 2,048 expressed).
+      6. Map to token IDs via rat_tokens.pickle.
 
     Studies in reference_assembly.exclude_studies are silently skipped
     (MoTrPAC data-leakage prevention).
