@@ -1,0 +1,14 @@
+# Retrain v2 profile (2026-10-06).
+#   export PIPELINE_PROFILE=config/profiles/retrain_v2.yaml
+# Deep-merged over config/pipeline_config.yaml (and any pipeline_config.local.yaml) by
+# lib/gene_utils.load_config. Outputs of the retrain go to *_v2 folders so the current model's
+# inputs stay untouched, and corpus stages read only the files config/corpus_v2_plan.tsv keeps:
+# 48 non-rat samples and 234 duplicate files are dropped, the 2 OMIX767 testis files are
+# undecided (not read), and 27 Feb-18 files are read from their raw-count .raw slot.
+#
+# Supported so far: Stage 4 (compute/gather gene medians) and build_hybrid_medians.py.
+# Stage 5 tokenization and the Stage 6 co-expression builder refuse to run under this profile
+# until they read paths.qc_file_list. Do not run Stage 9+ for the CURRENT model under it.
+paths:
+  qc_file_list: config/corpus_v2_plan.tsv
+  median_dir: data/training/gene_medians_v2

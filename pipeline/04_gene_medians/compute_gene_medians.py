@@ -91,7 +91,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, resolve_path, qc_corpus_files, raw_counts_adata
 
 logging.basicConfig(
     level=logging.INFO,
@@ -254,6 +254,15 @@ def process_file(
         logger.error(f"  Failed to load {h5ad_path.name}: {e}")
         return {'file': h5ad_path.name, 'status': 'load_error', 'error': str(e)}
 
+    # Raw counts only: the Feb-18 files hold log-normalized X and their counts in .raw;
+    # a file with neither is refused (raises) rather than silently treated as counts.
+    try:
+        adata, used_raw_slot = raw_counts_adata(adata)
+    except ValueError as e:
+        raise ValueError(f"{h5ad_path.name}: {e}") from None
+    if used_raw_slot:
+        logger.info(f"  {h5ad_path.name}: X is not raw counts; using the raw-count .raw slot")
+
     n_cells_orig = adata.n_obs
     n_genes_orig = adata.n_vars
 
@@ -336,6 +345,7 @@ def process_file(
     file_meta = {
         'file': h5ad_path.name,
         'status': 'ok',
+        'used_raw_slot': bool(used_raw_slot),
         'n_cells': int(n_cells),
         'n_genes_orig': int(n_genes_orig),
         'n_mapped': int(n_mapped),
@@ -490,6 +500,9 @@ def write_scatter_outputs(
         'total_nz_norm': total_nz_norm,
         'total_nz_raw': total_nz_raw,
         'target_sum': args_ns.target_sum,
+        'profile': getattr(args_ns, 'profile', None),
+        'file_list': getattr(args_ns, 'file_list', None),
+        'n_files_raw_slot': sum(1 for m in file_metas if m.get('used_raw_slot')),
         'outputs': {
             'stats': str(stats_path.name),
             'nonzero': str(nonzero_path.name),
@@ -544,7 +557,12 @@ def compute_gene_medians_scatter(config: dict, task_id: int, n_tasks: int,
     # ── Discover and split h5ad files ────────────────────────────────────────
     logger.info("")
     logger.info("Discovering QC'd h5ad files...")
-    all_files = discover_h5ad_files(qc_h5ad_dir)
+    if paths.get('qc_file_list'):
+        all_files = qc_corpus_files(config)        # only files the corpus plan keeps
+        fl = config['_qc_file_list_summary']
+        logger.info(f"  File list: {fl['plan']} | kept {fl['kept']:,} | dropped by the plan: {fl['dropped']}")
+    else:
+        all_files = discover_h5ad_files(qc_h5ad_dir)
     task_files = get_task_files(all_files, task_id, n_tasks)
     logger.info(f"  Total files in corpus: {len(all_files):,}")
     logger.info(f"  Files for this task:   {len(task_files):,}")
@@ -636,7 +654,9 @@ def compute_gene_medians_scatter(config: dict, task_id: int, n_tasks: int,
         nonzero_raw_bufs=nonzero_raw_bufs,
         file_metas=file_metas,
         task_start_time=t_start,
-        args_ns=type('A', (), {'n_tasks': n_tasks, 'target_sum': target_sum})(),
+        args_ns=type('A', (), {'n_tasks': n_tasks, 'target_sum': target_sum,
+                               'profile': config.get('_profile'),
+                               'file_list': config.get('_qc_file_list_summary')})(),
     )
 
     # ── Summary ───────────────────────────────────────────────────────────────

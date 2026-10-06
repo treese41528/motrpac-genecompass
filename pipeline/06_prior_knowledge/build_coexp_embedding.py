@@ -700,6 +700,11 @@ def main() -> None:
         sys.exit(1)
 
     try:
+        if config.get('paths', {}).get('qc_file_list'):
+            # The retrain profile restricts the corpus to a file list and needs raw counts from .raw;
+            # this builder does neither yet. Refuse rather than silently read every QC file.
+            raise SystemExit('Stage 6 co-expression does not support paths.qc_file_list yet: adapt it '
+                             'before running with the retrain profile (PIPELINE_PROFILE).')
         h5ad_files = discover_h5ad_files(qc_h5ad_dir)
     except FileNotFoundError as exc:
         logger.error(str(exc))

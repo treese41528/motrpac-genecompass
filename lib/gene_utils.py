@@ -99,6 +99,20 @@ def load_config(config_path: Optional[str] = None) -> dict:
             override = yaml.safe_load(f) or {}
         _deep_merge(config, override)
 
+    # Optional profile overlay, merged last, e.g. the retrain:
+    #   export PIPELINE_PROFILE=config/profiles/retrain_v2.yaml
+    # A relative path is taken from the repository root (the parent of config/).
+    profile = os.environ.get("PIPELINE_PROFILE")
+    if profile:
+        p = Path(profile)
+        if not p.is_absolute():
+            p = Path(config_path).resolve().parent.parent / p
+        if not p.is_file():
+            raise FileNotFoundError(f"PIPELINE_PROFILE points to a missing file: {p}")
+        with open(p) as f:
+            _deep_merge(config, yaml.safe_load(f) or {})
+        config["_profile"] = str(p)
+
     # Resolve project root
     config["_project_root"] = Path(
         os.environ.get("PIPELINE_ROOT", config.get("project_root", "."))
@@ -110,6 +124,57 @@ def load_config(config_path: Optional[str] = None) -> dict:
 def resolve_path(config: dict, relative_path: str) -> Path:
     """Resolve a config-relative path to absolute using project_root."""
     return config["_project_root"] / relative_path
+
+
+def qc_corpus_files(config: dict) -> list:
+    """The QC h5ad files a corpus stage should read.
+
+    With paths.qc_file_list set (a corpus plan TSV with sample_id and action columns),
+    only rows whose action starts with 'keep' are used, every one must exist, and files
+    in qc_h5ad_dir that the plan drops or does not list are never read. Without it, every
+    *.h5ad under qc_h5ad_dir (the original behaviour).
+    """
+    import csv
+    from collections import Counter
+    qc_dir = resolve_path(config, config["paths"]["qc_h5ad_dir"])
+    plan = config["paths"].get("qc_file_list")
+    if not plan:
+        return sorted(qc_dir.glob("**/*.h5ad"))
+    with open(resolve_path(config, plan)) as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    keep = [r["sample_id"] for r in rows if r["action"].startswith("keep")]
+    files = sorted(qc_dir / f"{s}.h5ad" for s in keep)
+    missing = [f.name for f in files if not f.is_file()]
+    if missing:
+        raise FileNotFoundError(f"{len(missing)} files kept by {plan} are missing from {qc_dir}, "
+                                f"e.g. {missing[:3]}")
+    config.setdefault("_qc_file_list_summary", {
+        "plan": str(resolve_path(config, plan)), "kept": len(files),
+        "dropped": dict(Counter(r["action"] for r in rows if not r["action"].startswith("keep")))})
+    return files
+
+
+def raw_counts_adata(adata):
+    """Return (adata holding raw counts, used_raw_slot).
+
+    QC h5ads hold raw counts in X, except the files left by the cancelled 2026-02-18 Stage 2
+    run, which hold log-normalized values in X and the counts in .raw. A file with non-integer
+    X and no .raw is refused rather than silently treated as counts.
+    """
+    import numpy as np
+    import scipy.sparse as sp
+
+    def non_integer(X):
+        vals = X.data[:20000] if sp.issparse(X) else np.asarray(X[:20]).ravel()
+        vals = np.asarray(vals, dtype=np.float64)
+        return bool(np.any(np.abs(vals - np.round(vals)) > 1e-6))
+
+    if not non_integer(adata.X):
+        return adata, False
+    if adata.raw is None or non_integer(adata.raw.X):
+        raise ValueError("X is not raw counts and there is no raw-count .raw slot")
+    import anndata as ad
+    return ad.AnnData(X=adata.raw.X, obs=adata.obs, var=adata.raw.var), True
 
 
 # ============================================================

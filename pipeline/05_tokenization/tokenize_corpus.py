@@ -747,6 +747,12 @@ Examples:
     median_dir  = resolve_path(config, paths['median_dir'])
     qc_h5ad_dir = resolve_path(config, paths['qc_h5ad_dir'])
     corpus_dir  = resolve_path(config, paths['tokenized_corpus_dir'])
+    if paths.get('qc_file_list'):
+        # The retrain profile restricts the corpus to a file list and needs raw counts from .raw for
+        # the Feb-18 files; this stage does neither yet (see lib/gene_utils.qc_corpus_files and
+        # raw_counts_adata). Refuse rather than silently read every QC file.
+        raise SystemExit("Stage 5 tokenization does not support paths.qc_file_list yet: adapt it before running "
+                         "with the retrain profile (PIPELINE_PROFILE).")
 
     shard_dir    = corpus_dir / 'shards'
     manifest_dir = corpus_dir / 'manifests'
