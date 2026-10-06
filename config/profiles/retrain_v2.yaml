@@ -6,9 +6,11 @@
 # 48 non-rat samples and 234 duplicate files are dropped, the 2 OMIX767 testis files are
 # undecided (not read), and 27 Feb-18 files are read from their raw-count .raw slot.
 #
-# Supported so far: Stage 4 (compute/gather gene medians) and build_hybrid_medians.py.
-# Stage 5 tokenization and the Stage 6 co-expression builder refuse to run under this profile
-# until they read paths.qc_file_list. Do not run Stage 9+ for the CURRENT model under it.
+# Supported: Stage 4 (gene medians), build_hybrid_medians.py and Stage 5 (tokenization), which
+# also writes sample_id, gsm and cell_index on every row so each cell traces to its QC file.
+# The Stage 6 co-expression builder refuses to run under this profile (and is not needed:
+# T4 co-expression priors are zero). Do not run Stage 9+ for the CURRENT model under it.
 paths:
   qc_file_list: config/corpus_v2_plan.tsv
   median_dir: data/training/gene_medians_v2
+  tokenized_corpus_dir: data/training/tokenized_corpus_v2

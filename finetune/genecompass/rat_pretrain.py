@@ -475,6 +475,11 @@ def main(args):
 
     # ── Load training dataset ────────────────────────────────────────────
     train_dataset = load_from_disk(dataset_dir)
+    # Source-reference columns (source, source_row, study_id, sample_id, gsm, cell_id, cell_index)
+    # trace each row back to its origin; they are not model inputs, so drop them here.
+    extra = [c for c in train_dataset.column_names if c not in ('input_ids', 'values', 'length', 'species')]
+    if extra:
+        train_dataset = train_dataset.remove_columns(extra)
     example_lengths_file = os.path.join(dataset_dir, 'sorted_length.pickle')
 
     if args.world_rank == 0:
