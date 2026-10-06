@@ -70,7 +70,7 @@ initialization:
   species_noise_std: 0.02
   coexp_rescale_factor: 3.9    # applied only to prior rows filled from Stage 6
   t3_prior_source: ortholog    # T3 prior rows = ortholog's pre-trained rows (T3a human, T3b mouse); 2026-10-05
-  t4_zero_priors: [promoter]   # T4 promoter prior left zero: Stage 6 promoter vectors are not in GC's space
+  t4_zero_priors: [promoter, coexp]   # T4 rows left zero: no Stage 6 promoter/co-exp vector is in GC's space (2026-10-05/06)
 
 logging:
   logging_steps: 50

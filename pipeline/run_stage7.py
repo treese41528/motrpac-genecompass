@@ -153,7 +153,7 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
     species_std = ft.get('species_noise_std', 0.02)
     coexp_rescale = ft.get('coexp_rescale_factor', 3.9)
     t3_priors = ft.get('t3_prior_source', 'ortholog')
-    t4_zero_priors = ft.get('t4_zero_priors', ['promoter']) or []
+    t4_zero_priors = ft.get('t4_zero_priors', ['promoter', 'coexp']) or []
 
     # Check if already done
     if (output_dir / 'pytorch_model.bin').exists():

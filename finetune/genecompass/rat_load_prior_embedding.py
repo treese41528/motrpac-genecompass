@@ -33,8 +33,9 @@ vectors carry no gene-specific match, even after a fitted rotation.
 History: the April 2026 T3 reclassification gave T3 genes their own tokens, but
 Stage 6 stores T3 vectors under the human ID while this loader looked rows up by
 rat ID, so all 1,351 T3a rows were zero in every prior. Fixed 2026-10-05 by
-copying ortholog rows (T3a from the human ortholog, T3b from the mouse ortholog);
-the T4 promoter prior is zero by decision.
+copying ortholog rows (T3a from the human ortholog, T3b from the mouse ortholog).
+T4 promoter and co-expression priors are zero by decision: an anchored co-expression
+rebuild on the cleaned corpus failed its pre-registered held-out test (2026-10-06).
 
 Author: Tim Reese Lab
 Date: March 2026 (updated April 2026 for T3 reclassification; October 2026 for T3 priors)

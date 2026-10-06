@@ -237,7 +237,7 @@ def extend_checkpoint(
     coexp_rescale_factor: float = 3.9,
     family_dict_path: str | Path | None = None,
     t3_prior_source: str = 'ortholog',
-    t4_zero_priors: tuple = ('promoter',),
+    t4_zero_priors: tuple = ('promoter', 'coexp'),
     overwrite: bool = False,
 ) -> Path:
     """
@@ -246,8 +246,10 @@ def extend_checkpoint(
     t3_prior_source: 'ortholog' copies each T3 token's prior rows from its ortholog's
         pre-trained rows (human for T3a, mouse for T3b); 'stage6' is the pre-October
         behaviour (rat-ID lookup in Stage 6, which leaves T3a rows zero).
-    t4_zero_priors: knowledge types left at zero for T4 tokens (decision 2026-10-05:
-        promoter, because the Stage 6 promoter vectors are not in GeneCompass's space).
+    t4_zero_priors: knowledge types left at zero for T4 tokens. Promoter (2026-10-05): the Stage 6
+        vectors are not in GeneCompass's space. Co-expression (2026-10-06): neither the Stage 6 gene2vec
+        nor an anchored rebuild on the clean corpus recovered held-out genes' GeneCompass rows
+        (pre-registered test: cosine 0.034 vs 0.035 shuffled, top-10 0.1%).
     overwrite: an existing checkpoint in output_dir is never replaced unless this is set,
         so a rebuild cannot silently overwrite the starting checkpoint of a trained model.
 
@@ -498,9 +500,9 @@ def main():
              "pre-October Stage 6 lookup"
     )
     parser.add_argument(
-        '--t4-zero-priors', default='promoter',
+        '--t4-zero-priors', default='promoter,coexp',
         help="Comma-separated knowledge types left zero for T4 tokens "
-             "(promoter, coexp, family, grn); '' for none. Default: promoter"
+             "(promoter, coexp, family, grn); '' for none. Default: promoter,coexp"
     )
     parser.add_argument(
         '--overwrite', action='store_true',
