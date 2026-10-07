@@ -16,12 +16,12 @@ rat_pretrain.py drops them before training. sorted_length.pickle holds each row'
 dataset order, which is what GeneCompass's LengthGroupedSampler expects (the April build
 wrote [0] for every row, so length grouping never happened).
 
-Usage:
+Usage (the October 2026 build; the output folder must not hold a dataset yet):
   python finetune/genecompass/build_mixed_species_dataset.py \
-    --rat-dataset data/training/tokenized_corpus/dataset \
+    --rat-dataset data/training/tokenized_corpus_v2/dataset \
     --human-dataset vendor/GeneCompass/data/randsel_500w_human \
     --mouse-dataset vendor/GeneCompass/data/randsel_500w_mouse \
-    --output data/training/mixed_species_dataset \
+    --output data/training/mixed_species_dataset_v2 \
     --rat-prob 0.40 --human-prob 0.45 --mouse-prob 0.15
 
 Author: Tim Reese Lab
@@ -36,6 +36,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pyarrow as pa
+import pyarrow.compute as pc
 from datasets import load_from_disk, interleave_datasets, disable_caching, Value
 
 disable_caching()
@@ -44,6 +46,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
+
+
+def _column_np(table, name):
+    """One column of an arrow table as a flat numpy array; one-element list cells are unwrapped."""
+    col = table.column(name)
+    if pa.types.is_list(col.type) or pa.types.is_large_list(col.type):
+        col = pc.list_flatten(col)
+    arr = np.concatenate([c.to_numpy(zero_copy_only=False) for c in col.chunks]) if col.num_chunks else np.array([])
+    if len(arr) != table.num_rows:
+        raise ValueError(f"column {name}: {len(arr)} values for {table.num_rows} rows")
+    return arr
 
 
 def build_mixed_dataset(
@@ -152,19 +165,22 @@ def build_mixed_dataset(
     mixed.save_to_disk(str(output_path))
     logger.info(f"Saved: {output_path}")
 
+    # Per-row columns are read from the saved copy, which is contiguous; `mixed` still reads
+    # through the interleave's index map (on the October build, about 1 hour per column).
+    logger.info("Reading length, species and source_row from the saved copy...")
+    saved = load_from_disk(str(output_path)).data
+    lens, sp, src_row = (_column_np(saved, c) for c in ('length', 'species', 'source_row'))
+    if len(lens) != len(mixed):
+        raise ValueError(f"saved copy has {len(lens)} rows, the mix {len(mixed)}")
+
     # sorted_length.pickle: each row's length, in dataset order (GeneCompass's
     # LengthGroupedSampler reads it as lengths[i] for row i).
-    logger.info("Building sorted_length.pickle (per-row lengths)...")
-    lens = np.asarray(mixed.with_format('numpy', columns=['length'])['length']).reshape(-1)
-    assert len(lens) == len(mixed), f"{len(lens)} lengths for {len(mixed)} rows"
     length_path = output_path / 'sorted_length.pickle'
     with open(length_path, 'wb') as f:
         pickle.dump(lens.astype(int).tolist(), f)
     logger.info(f"Saved: {length_path} (min {lens.min()}, median {int(np.median(lens))}, max {lens.max()})")
 
     # Summary over the whole mix: rows per species, distinct source cells per species
-    num = mixed.with_format('numpy', columns=['species', 'source_row'])
-    sp = np.asarray(num['species']).reshape(-1); src_row = np.asarray(num['source_row']).reshape(-1)
     counts = {}
     for sid, name in ((0, 'human'), (1, 'mouse'), (2, 'rat')):
         m = sp == sid
