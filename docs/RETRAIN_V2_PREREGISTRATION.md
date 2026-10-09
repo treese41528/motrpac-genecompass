@@ -102,3 +102,9 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   5.318 / 4.7e-4. April would pass C2 (+0.2% to +3.3%). v2 init's ~2.5% higher human/mouse ID loss comes
   from the 4,717 extra softmax classes. Values are small because GeneCompass orders genes by value, so a
   masked value is bracketed by its neighbours'. No criterion was changed after seeing these.
+- 2026-10-09 — registered probe built (job 11916410) from the rebuilt v2 mix (OMIX767 included; corpus
+  6,803,206 cells / 584 samples, mix 33,138,703 rows, verify_mix 21/21 PASS): `data/training/eval_probe_v2`,
+  2,000 cells per species, seed 20261008. md5 (also in `data/training/eval_probe_v2.md5`):
+  `90aa2d9030f4b769a3388a0b1ea808f9  data-00000-of-00001.arrow`,
+  `c6b1b65c0b5e667f07333ff624d2e3ff  dataset_info.json`,
+  `76fbde1fbb8cf2d289ec81efeaedf628  state.json`. Fixed before phase 1 starts.
