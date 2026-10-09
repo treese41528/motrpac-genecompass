@@ -863,5 +863,7 @@ GSE314229_sample5	GSE314229	GSM9386494	keep		12185	4335610b890761128200b5a2cdcf1
 GSE314229_sample6	GSE314229	GSM9386489	keep		12669	2bb397b8a9cd771e1f812fba8abc2461
 GSE314229_sample7	GSE314229	GSM9386492	keep		14593	843e6c9abfc68789d40d5a31cb7a0911
 GSE314229_sample8	GSE314229	GSM9386493	keep		13686	a891803631d81c4c425ca0158e72e122
-OMIX767_sampleC	OMIX767	OMIX767_C	undecided	OMIX767 testis, added 2026-07-15 after the corpus was built; inclusion not decided	2155	749e560c543d73b9588546fcfa6c3db1
-OMIX767_sampleE7W	OMIX767	OMIX767_E7W	undecided	OMIX767 testis, added 2026-07-15 after the corpus was built; inclusion not decided	3693	bede6191bc41e2a799ef8fb86c36eb57
+OMIX767_sampleC	OMIX767	OMIX767_C	drop_superseded	gene IDs from an older Ensembl release, never resolved to the corpus universe; superseded by OMIX767_grcr8_sampleC (2026-10-08)	2155	749e560c543d73b9588546fcfa6c3db1
+OMIX767_sampleE7W	OMIX767	OMIX767_E7W	drop_superseded	gene IDs from an older Ensembl release, never resolved to the corpus universe; superseded by OMIX767_grcr8_sampleE7W (2026-10-08)	3693	bede6191bc41e2a799ef8fb86c36eb57
+OMIX767_grcr8_sampleC	OMIX767	OMIX767_C	keep	OMIX767 testis (TESTES deconvolution reference arm); Stage 2 QC + Ensembl 115 gene resolution by qc_external_mtx.py (2026-10-08)	2081	c5d2bce6585e2707e71112918f8a5871
+OMIX767_grcr8_sampleE7W	OMIX767	OMIX767_E7W	keep	OMIX767 testis (TESTES deconvolution reference arm); Stage 2 QC + Ensembl 115 gene resolution by qc_external_mtx.py (2026-10-08)	3574	56bb0cc17383191949923a29fc5fa6da

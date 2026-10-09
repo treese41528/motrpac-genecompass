@@ -278,7 +278,7 @@ def _infer_study_id(h5ad_path: Path) -> str:
         idx = stem.find(sep)
         if idx > 0:
             candidate = stem[:idx]
-            if candidate.startswith(('GSE', 'GSM', 'E-')):
+            if candidate.startswith(('GSE', 'GSM', 'E-', 'OMIX')):
                 return candidate
     return stem
 

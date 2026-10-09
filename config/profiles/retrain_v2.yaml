@@ -3,8 +3,10 @@
 # Deep-merged over config/pipeline_config.yaml (and any pipeline_config.local.yaml) by
 # lib/gene_utils.load_config. Outputs of the retrain go to *_v2 folders so the current model's
 # inputs stay untouched, and corpus stages read only the files config/corpus_v2_plan.tsv keeps:
-# 48 non-rat samples and 234 duplicate files are dropped, the 2 OMIX767 testis files are
-# undecided (not read), and 27 Feb-18 files are read from their raw-count .raw slot.
+# 48 non-rat samples and 234 duplicate files are dropped, 27 Feb-18 files are read from their raw-count
+# .raw slot, and OMIX767 testis (TESTES deconvolution reference, arms C + E7W) is read from the
+# OMIX767_grcr8_* files that qc_external_mtx.py resolved to Ensembl 115 (2026-10-08); the July files
+# with unresolved older-release gene IDs are dropped as superseded.
 #
 # Supported: Stage 4 (gene medians), build_hybrid_medians.py and Stage 5 (tokenization), which
 # also writes sample_id, gsm and cell_index on every row so each cell traces to its QC file.
