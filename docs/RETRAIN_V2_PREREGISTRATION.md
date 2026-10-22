@@ -108,3 +108,15 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   `90aa2d9030f4b769a3388a0b1ea808f9  data-00000-of-00001.arrow`,
   `c6b1b65c0b5e667f07333ff624d2e3ff  dataset_info.json`,
   `76fbde1fbb8cf2d289ec81efeaedf628  state.json`. Fixed before phase 1 starts.
+- 2026-10-22 — TESTES inputs corrected; logged before any C3–C5 result exists (phase 2 still training,
+  no v2 model evaluated). The TESTES deconvolution reference kept OMIX767's Rnor_6.0 gene IDs while the
+  MoTrPAC bulk was lifted to Ensembl 115, so 587 bulk genes (2.3% of TESTES bulk counts) had no reference
+  partner. The reference is rebuilt through the bulk's own liftover map
+  (`deconvolution/reference/motrpac_bulk_liftover.tsv`) from the same cells and labels, and TESTES is
+  deconvolved again. So that C5 compares April and v2 on the same inputs, April's TESTES rows are
+  recomputed on the fixed pseudo-cells with the April checkpoint and April's Stage 9 settings (target sum
+  6500, April medians and token dictionary) before C5 is scored: the Stage 9 embedding; the Aim-2 gate rows
+  (`pheno_merge_test`, `subspace_probe`, `pca_control`), with hotspots re-derived by `corroborate_summary`
+  over all blocks; the Stage 12 human embedding, `subspace_probe` and `transfer_comparison`. Recomputed rows
+  use the current code (crc32 block seeds). Other tissues keep their on-disk April rows. Superseded TESTES
+  outputs are kept in `data/deconvolution/_testes_rawid_backup_20260716/`. TESTES is not in Stage 13.
