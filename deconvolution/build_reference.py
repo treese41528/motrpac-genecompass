@@ -21,6 +21,7 @@ Usage (project venv):
   python deconvolution/build_reference.py --study GSE220075 --tissue liver
 """
 import argparse
+import hashlib
 import os
 import re
 import sys
@@ -258,16 +259,47 @@ def load_sample(sample):
     return sub
 
 
+def lift_genes(adata, gene_map):
+    """Put the reference in the bulk's gene-ID space. gene_map is a liftover TSV with old_id and
+    lifted_id columns (deconvolution/reference/motrpac_bulk_liftover.tsv, the map the MoTrPAC
+    bulk was lifted with). Genes are renamed through it; genes the map leaves unlifted (lifted_id
+    NA) or does not list are dropped, and genes that land on the same lifted ID are summed --
+    the same rowsum rule prepare_motrpac_bulk.R applies to the bulk, so both sides of BayesPrism
+    carry the same loci under each ID. Runs on the concatenated matrix: lifting each sample
+    before an inner join could sum a locus into one sample's column and not the other's."""
+    m = pd.read_csv(gene_map, sep="\t", dtype=str)
+    lift = dict(zip(m["old_id"], m["lifted_id"]))
+    genes = np.asarray(adata.var_names)
+    lifted = np.array([lift.get(g, np.nan) for g in genes], dtype=object)
+    keep = np.flatnonzero(pd.notna(lifted))
+    ids, col = np.unique(lifted[keep].astype(str), return_inverse=True)
+    agg = sp.csr_matrix((np.ones(keep.size), (keep, col)), shape=(genes.size, ids.size))
+    stats = {"genes_in": int(genes.size), "lifted": int(keep.size), "genes_out": int(ids.size),
+             "summed_into_shared_id": int(keep.size - ids.size),
+             "dropped_unmapped": int(sum(g in lift for g in genes[pd.isna(lifted)])),
+             "dropped_not_in_map": int(sum(g not in lift for g in genes))}
+    print(f"gene-map {gene_map}: {stats['genes_in']} genes -> {stats['genes_out']} lifted IDs "
+          f"({stats['summed_into_shared_id']} summed into a shared ID; dropped "
+          f"{stats['dropped_unmapped']} unmapped + {stats['dropped_not_in_map']} not in the map)")
+    out = ad.AnnData(X=sp.csr_matrix(adata.X) @ agg, obs=adata.obs.copy(),
+                     var=pd.DataFrame(index=pd.Index(ids)))
+    out.uns["gene_map"] = {"path": str(gene_map),
+                           "md5": hashlib.md5(Path(gene_map).read_bytes()).hexdigest(), **stats}
+    return out
+
+
 def load_study(study, tissue, conditions=None, sex=None, sample_ids=None,
                gene_join="inner", min_gene_cells=0,
                organism="Rattus norvegicus", title_include=None, title_exclude=None,
-               dedup_gsm=True):
+               dedup_gsm=True, gene_map=None):
     """Concatenate all (loadable) samples of a study/tissue. gene_join='inner' keeps the
     shared (intersection) gene set -- the default, but it COLLAPSES studies with uneven
     per-sample gene depth (cortex GSE303115: per-sample 9.5k-21k -> 5.5k shared). Use
     gene_join='outer' to take the UNION (0-filled), optionally pruned by min_gene_cells
     (drop genes expressed in < that many pooled cells) to trim the union's long tail.
-    organism/title_include/title_exclude/dedup_gsm are forwarded to select_samples()."""
+    gene_map (a liftover TSV) renames the genes into the bulk's ID space (lift_genes) before
+    the min_gene_cells filter. organism/title_include/title_exclude/dedup_gsm are forwarded
+    to select_samples()."""
     samples = select_samples(study, tissue, conditions, sex, sample_ids,
                              organism=organism, title_include=title_include,
                              title_exclude=title_exclude, dedup_gsm=dedup_gsm)
@@ -277,6 +309,8 @@ def load_study(study, tissue, conditions=None, sex=None, sample_ids=None,
         sys.exit("ERROR: no samples loaded.")
     adata = ad.concat(parts, join=gene_join, merge="same", fill_value=0)
     print(f"concatenated ({gene_join}): {adata.n_obs} cells x {adata.n_vars} genes")
+    if gene_map:
+        adata = lift_genes(adata, gene_map)
     if min_gene_cells > 0:
         before = adata.n_vars
         sc.pp.filter_genes(adata, min_cells=min_gene_cells)
@@ -310,7 +344,10 @@ def export_reference(adata, out_dir):
     ct = adata.obs["cell_type"].value_counts()
     with open(out / "summary.txt", "w") as fh:
         fh.write(f"cells={adata.n_obs} genes={adata.n_vars} "
-                 f"cell_types={ct.size} cell_states={adata.obs['cell_state'].nunique()}\n\n")
+                 f"cell_types={ct.size} cell_states={adata.obs['cell_state'].nunique()}\n")
+        if "gene_map" in adata.uns:
+            fh.write("gene_map: " + " ".join(f"{k}={v}" for k, v in adata.uns["gene_map"].items()) + "\n")
+        fh.write("\n")
         fh.write(ct.to_string())
     print(f"\n=== reference cell types ({ct.size}) ===")
     print(ct.to_string())
@@ -352,19 +389,24 @@ def main():
     ap.add_argument("--min-gene-cells", type=int, default=0,
                     help="after concat, drop genes expressed in < this many pooled cells "
                     "(prunes a 'outer'-join union's long tail; e.g. 10)")
+    ap.add_argument("--gene-map", help="liftover TSV (old_id, lifted_id): rename the reference's "
+                    "genes into the bulk's ID space and sum genes that share a lifted ID, e.g. "
+                    "deconvolution/reference/motrpac_bulk_liftover.tsv for a reference whose source "
+                    "kept Rnor_6.0 IDs (TESTES OMIX767)")
     args = ap.parse_args()
     conds = [c.strip() for c in args.conditions.split(",")] if args.conditions else None
     sids = [s.strip() for s in args.sample_ids.split(",")] if args.sample_ids else None
     adata = load_study(args.study, args.tissue, conds, args.sex, sids,
                        gene_join=args.gene_join, min_gene_cells=args.min_gene_cells,
                        organism=args.organism, title_include=args.title_include,
-                       title_exclude=args.title_exclude, dedup_gsm=not args.no_dedup_gsm)
+                       title_exclude=args.title_exclude, dedup_gsm=not args.no_dedup_gsm,
+                       gene_map=args.gene_map)
     adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
     out = Path(args.out) if args.out else Path(resolve_path(_CFG, _DC["built_reference_dir"])) / f"{args.tissue}_{args.study}"
     export_reference(adata, out)
     obs = adata.obs
-    write_provenance(out, inputs=[INVENTORY], params={
+    write_provenance(out, inputs=[INVENTORY] + ([args.gene_map] if args.gene_map else []), params={
         **vars(args), "n_cells": int(adata.n_obs), "n_genes": int(adata.n_vars),
         "samples": sorted(obs["sample"].astype(str).unique()) if "sample" in obs else None,
         "cell_types": sorted(obs["cell_type"].astype(str).unique())})

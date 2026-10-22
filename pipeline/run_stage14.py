@@ -72,7 +72,7 @@ PURITY = [
     dict(sweep='SWEEP_bat_holdout',       study='GSE244451', tissue='subscapular brown adipose tissue', focal='Brown adipocytes',       label_scheme='none', gene_join='inner', sample_ids='GSE244451_sample1,GSE244451_sample3', cpm=1000),
     dict(sweep='SWEEP_hypoth_holdout',    study='GSE248413', tissue='hypothalamus',                     focal='Glutamatergic neurons',  label_scheme='none', gene_join='inner', sample_ids='GSE248413_sample0', cpm=1000),
     dict(sweep='SWEEP_smlint_holdout',    study='GSE272055', tissue='proximal jejunum',                 focal='Enterocytes',            label_scheme='none', gene_join='inner', sample_ids='GSE272055_sample0,GSE272055_sample1', cpm=1000),
-    dict(sweep='SWEEP_testes_holdout',    study='OMIX767',   tissue='testis',                           focal='Round spermatids',       label_scheme='none', gene_join='inner', sample_ids='OMIX767_sampleC,OMIX767_sampleE7W', cpm=1000),
+    dict(sweep='SWEEP_testes_holdout',    study='OMIX767',   tissue='testis',                           focal='Round spermatids',       label_scheme='none', gene_join='inner', sample_ids='OMIX767_sampleC,OMIX767_sampleE7W', gene_map='deconvolution/reference/motrpac_bulk_liftover.tsv', cpm=1000),
 ]
 GRID = '0.1,0.3,0.5,0.7,0.85,0.95'
 
@@ -115,6 +115,8 @@ def build_steps(ctx: dict, subset: list) -> list:
             build += ['--conditions', cfg['conditions']]
         if cfg.get('sample_ids'):
             build += ['--sample-ids', cfg['sample_ids']]
+        if cfg.get('gene_map'):
+            build += ['--gene-map', cfg['gene_map']]
         items.append({
             'label': tag, 'out': S / 'scores' / 'purity_sweep_summary.tsv',
             'cmds': [

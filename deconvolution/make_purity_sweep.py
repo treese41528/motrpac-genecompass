@@ -160,6 +160,9 @@ def main():
     ap.add_argument("--pooled-lung", action="store_true",
                     help="holdout: build the 3-study pooled native-lung reference instead of a single "
                          "--study (reproduces build_lung_pooled.py); ignores --study/--label-scheme/--gene-join")
+    ap.add_argument("--gene-map", help="liftover TSV: put the cells in the bulk's gene-ID space, as the "
+                         "production reference build does (TESTES: deconvolution/reference/motrpac_bulk_liftover.tsv); "
+                         "in cross mode the source study is lifted to match --ref-dir")
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
@@ -178,7 +181,8 @@ def main():
             # reproduce the production reference build: same arm/sample filter + gene-join +
             # min-gene-cells + label-scheme merge, so the focal parenchyma carries its production label
             adata = load_study(args.study, args.tissue, conds, args.sex, sids,
-                               gene_join=args.gene_join, min_gene_cells=args.min_gene_cells)
+                               gene_join=args.gene_join, min_gene_cells=args.min_gene_cells,
+                               gene_map=args.gene_map)
             adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
             adata = clean_cells(adata)
         is_mix = np.zeros(adata.n_obs, dtype=bool)
@@ -195,7 +199,8 @@ def main():
         assert args.source_study and args.ref_dir, "--source-study and --ref-dir required for cross"
         ref_meta = pd.read_csv(Path(args.ref_dir) / "cells_meta.tsv", sep="\t")
         ref_types = sorted(ref_meta["cell_type"].unique())
-        pool = clean_cells(load_study(args.source_study, args.tissue, conds, args.sex))
+        pool = clean_cells(load_study(args.source_study, args.tissue, conds, args.sex,
+                                      gene_map=args.gene_map))
         hmap = build_harmonization(sorted(pool.obs["cell_type"].unique()), ref_types)
         pool.obs["ref_type"] = pool.obs["cell_type"].map(hmap)
         (pool.obs.groupby("cell_type")
