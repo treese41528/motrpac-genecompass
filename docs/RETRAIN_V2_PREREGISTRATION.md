@@ -120,3 +120,11 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   over all blocks; the Stage 12 human embedding, `subspace_probe` and `transfer_comparison`. Recomputed rows
   use the current code (crc32 block seeds). Other tissues keep their on-disk April rows. Superseded TESTES
   outputs are kept in `data/deconvolution/_testes_rawid_backup_20260716/`. TESTES is not in Stage 13.
+- 2026-10-22 — that recompute is done (jobs 12007286, 12007401, 12007434), still before any v2 C3–C5
+  result. Controls on April's own inputs: the April embedding of the old TESTES pseudo-cells is reproduced
+  exactly; `pheno_merge_test` reproduces every non-TESTES row; `corroborate_summary` and `compare_transfer`
+  reproduce every value of the 172 current blocks. April's `transfer_comparison.tsv` also held 33 VENACV
+  rows left from before VENACV was dropped (2026-07-16), all `no_human_block` with no values. The
+  regenerated table has the 172 current blocks only, so April's "blocks compared" goes from 205 to 172 and no
+  hotspot or status count changes. April after the recompute: 15 exercise hotspots, as before, with no block
+  changing hotspot status; TESTES has none.
