@@ -153,3 +153,21 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   are mouse tokens, so "rank among all human tokens" cannot apply to them: T3a orthologs are ranked among
   the human tokens as registered, T3b orthologs among the 27,443 mouse tokens, and the two are reported
   separately.
+- 2026-10-24 — C3 implementation (`finetune/genecompass/eval_cell_embeddings.py`), fixed before any C3
+  number is computed. References: the 13 built references with a `cells_meta.tsv` among the active entries
+  of `tissue_references.yaml` (MUSCLE_GSE137869_Y once, for SKMGN and SKMVL; VENACV, dropped 2026-07-16 and
+  from the same study as HEART, is excluded); labels = its `cell_type` column. v2 rows are joined by
+  `sample_id` + `cell_id`; a reference sample that the clean corpus dropped as a byte-identical copy
+  (`config/corpus_v2_plan.tsv`) is looked up under the copy it kept (18 of HEART's 19 samples, both of
+  CORTEX's). April's v1 corpus has no sample column, so each row's sample is rebuilt from the Stage 5 task
+  manifests (tasks in order, files in order, cells written each) and checked barcode-for-barcode against v2.
+  TESTES is not in April's corpus (OMIX767 was added for v2), so it drops out under "only cells present in
+  both", leaving 12 references. Embeddings: final-layer CLS from `embed_cells.py` (species 2, fp32), each
+  model on its own corpus's rows of the same cells, all joined cells (no subsampling). Metrics per
+  reference on L2-normalised embeddings: cell type by 5-fold stratified CV (seed 20261008), 10 nearest
+  training cells by cosine, majority vote (ties to the first label in sorted order), macro-F1 and
+  accuracy over all held-out cells; silhouette by cell type with cosine distance over all cells; sample
+  mixing as the same 5-fold kNN predicting `sample_id` within each cell type that has at least two
+  samples of 5 or more cells (smaller samples left out), pooled accuracy, undefined for the single-sample
+  references (BLOOD, HYPOTH). Summary: median over references and v2 − April with a two-sided paired
+  Wilcoxon over the references where both are defined.
