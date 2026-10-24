@@ -202,3 +202,13 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   samples of 5 or more cells (smaller samples left out), pooled accuracy, undefined for the single-sample
   references (BLOOD, HYPOTH). Summary: median over references and v2 − April with a two-sided paired
   Wilcoxon over the references where both are defined.
+- 2026-10-24 — C5 Stage 9 silhouette and Stage 12 cosine implementation, fixed before either is computed
+  for v2. Stage 9: `deconvolution/embed_qc.py` on each model's root, silhouette by cell type with cosine
+  distance over all pseudo-cells of a tissue, for all 14 tissues; reported per tissue with v2 − April and
+  the median over tissues. Stage 12 cosine (`translation/transfer_cosine.py`): for each pseudo-cell, the
+  cosine between its rat-space (Stage 9) and human-space (Stage 12) CLS embeddings from the same model,
+  paired by `cell_id`; per tissue the mean, median and 5th percentile over all paired cells; summary = the
+  median over tissues of the per-tissue mean. July's 0.979 (liver, smoke job 11103493) is not on disk, so
+  April's values are computed from its on-disk embeddings (human side built 2026-07-17 from the current
+  pseudo-cells; TESTES 2026-10-22). The transfer status (PRESERVED / WEAKENED / LOST) is scored with the
+  gate, after its permutation setting is fixed.
