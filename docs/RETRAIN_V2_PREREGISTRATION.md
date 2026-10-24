@@ -152,6 +152,28 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   so membership at the edge is decided by permutation noise and the fold split. Transfer: 6 of the 7
   hotspots PRESERVED and 1 WEAKENED (before: 13 of 15 PRESERVED, 2 LOST); all blocks 33 PRESERVED /
   19 WEAKENED / 120 LOST (before: 34 / 21 / 117).
+- 2026-10-24 — Stage 9 target sum for v2: 6,400, by April's rule, fixed before any v2 downstream output
+  (job 12013898). April used one target sum for every tissue, 6,500, at which liver's pseudo-cells have
+  the corpus's median token value. Token selection does not depend on the target sum T and a token's value
+  is log2(1 + T·r), so T* = 6,500 · (2^m_corpus − 1) / (2^m_liver(6,500) − 1), rounded to the nearest 100.
+  Corpus medians over the real tokens of every 211th row: April's corpus 0.8690, v2's 0.9145. The rule
+  gives back April's 6,500 (liver 0.8703 with April's medians, T* 6,488) and gives 6,400 for v2 (liver
+  0.9302 with v2's medians, T* 6,352). Control: April's liver tokenization was reproduced exactly. v2's
+  Stage 12 uses the same 6,400 (it must equal the rat side). v2 outputs go to
+  `data/deconvolution/genecompass_input_v2/` (and `_human`) under `config/profiles/retrain_v2_downstream.yaml`;
+  pseudo-cells are model-independent and shared with April.
+- 2026-10-24 — Module A (C5, Stage 13) is scored for both models on the current inputs, logged before any
+  v2 C5 result. April's on-disk Module A result (2026-07-03) was computed on the SKMVL pseudo-cells from
+  before the July reference rebuild, whose muscle type was "Skeletal muscle"; the current SKMVL pseudo-cells
+  call it "Skeletal myocytes". Both models are therefore run on the current SKMVL pseudo-cells (April: its
+  checkpoint and on-disk tokenization; v2: its model and tokenization at 6,400) with
+  `perturb_cells.py --mode delete --targets`, cell type "Skeletal myocytes", the frozen 80-gene panel
+  (`data/deconvolution/perturb_prereg/prereg_genes.txt`) plus the frozen negatives Alb and Snap25
+  (`deconvolution/reference/perturb_prereg_genes.tsv`), and scored by `score_perturb_prereg.py`.
+  Criterion #3, which the July report printed as PASS from an earlier smoke run, is scored from the same
+  run (af96ebb): each negative in 0 cells, or its shift below the matched-null median. #1's matched null
+  is re-derived from each tokenization as before (panel genes within ±15% of Mef2c's mean value); its size
+  is reported.
 - 2026-10-24 — C4 implementation (`finetune/genecompass/eval_gene_embeddings.py`), fixed before any C4
   number is computed. C4a: the 255 genes are the T4 tokens whose rat symbol, upper-cased, is the symbol of
   a human (ENSG) token in GeneCompass's `Gene_id_name_dict_human_mouse.pickle`; each matches exactly one
