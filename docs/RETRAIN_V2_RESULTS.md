@@ -81,7 +81,49 @@ can also be paralog separation. Pre-registered as drift, not success.
 
 Outputs: `data/results/retrain_v2/c4/` (`c4_summary.json`, per-gene `c4a_genes.tsv`, `c4b_genes.tsv`).
 
-## C3 — pending
+## C3 — cell embeddings of the reference cells (comparison; 2026-10-24, jobs 12013932–12013934)
+
+Do the models place real rat cells with their labelled cell type? The cells of 12 deconvolution
+references (TESTES drops out: not in April's corpus), 620,058 cells present in both corpora; each model
+embeds its own corpus's tokenization of the same cells. Implementation as logged in pre-registration §6
+(2026-10-24). Join control: the 582 samples in both corpora have the same barcode sequence in April's
+rebuilt rows as in v2, and every cell of the 12 references was found in both corpora, so none dropped out.
+
+| Metric | References | April median | v2 median | Median v2 − April | v2 higher | Wilcoxon p |
+|---|---|---|---|---|---|---|
+| Cell type, kNN macro-F1 | 12 | 0.771 | 0.804 | +0.021 | 12 of 12 | 0.0005 |
+| Cell type, kNN accuracy | 12 | 0.936 | 0.943 | +0.009 | 12 of 12 | 0.0005 |
+| Cell type, silhouette | 12 | 0.045 | 0.062 | +0.040 | 12 of 12 | 0.0005 |
+| Sample kNN accuracy within cell type (lower = less batch-driven) | 10 | 0.873 | 0.889 | +0.012 | 10 of 10 | 0.002 |
+
+p = 0.0005 and 0.002 are the smallest two-sided values possible with 12 and 10 pairs.
+
+v2 places the reference cells with their cell type better than April in every reference, on all three
+cell-type metrics. It also tells samples apart better within a cell type, in all 10 references where that
+is defined, so by the registered reading v2 is the more batch-driven of the two. The metric cannot
+separate batch effects from real differences between samples, such as donor or condition, and v2
+separates cells more finely on both of the axes measured here.
+
+| Reference | Cells | Cell types | Macro-F1 April → v2 | Accuracy April → v2 | Silhouette April → v2 | Sample kNN accuracy April → v2 |
+|---|---|---|---|---|---|---|
+| BAT_GSE244451 | 28,246 | 6 | 0.710 → 0.789 | 0.950 → 0.958 | 0.080 → 0.091 | 0.990 → 0.994 |
+| BLOOD_GSE285476 | 12,315 | 14 | 0.737 → 0.773 | 0.893 → 0.905 | 0.095 → 0.133 | — (1 sample) |
+| CORTEX_GSE303115 | 12,933 | 11 | 0.814 → 0.819 | 0.960 → 0.962 | 0.248 → 0.313 | 0.897 → 0.901 |
+| HEART_GSE280111_LV | 135,288 | 16 | 0.861 → 0.893 | 0.963 → 0.968 | 0.232 → 0.351 | 0.270 → 0.297 |
+| HIPPOC_GSE295314 | 278,549 | 18 | 0.255 → 0.273 | 0.832 → 0.862 | −0.414 → −0.393 | 0.810 → 0.857 |
+| HYPOTH_GSE248413_Y | 8,471 | 13 | 0.695 → 0.712 | 0.686 → 0.702 | 0.010 → 0.032 | — (1 sample) |
+| KIDNEY_GSE240658 | 28,626 | 17 | 0.644 → 0.695 | 0.896 → 0.909 | −0.319 → −0.238 | 0.826 → 0.842 |
+| LIVER_GSE220075 | 27,041 | 6 | 0.565 → 0.571 | 0.948 → 0.952 | −0.063 → −0.044 | 0.656 → 0.682 |
+| LUNG_native_pooled | 46,653 | 28 | 0.811 → 0.830 | 0.927 → 0.933 | −0.152 → −0.061 | 0.958 → 0.961 |
+| MUSCLE_GSE137869_Y | 10,763 | 5 | 0.920 → 0.933 | 0.945 → 0.955 | 0.303 → 0.383 | 0.849 → 0.877 |
+| SMLINT_GSE272055 | 18,950 | 14 | 0.810 → 0.834 | 0.887 → 0.898 | −0.238 → −0.196 | 0.959 → 0.966 |
+| WATSC_GSE137869_Y | 12,223 | 13 | 0.805 → 0.832 | 0.971 → 0.974 | 0.245 → 0.280 | 0.930 → 0.933 |
+
+Silhouettes are negative in five references for both models: at the authors' label granularity those
+cell types are not compact clusters in either embedding, while kNN still recovers them.
+
+Outputs: `data/results/retrain_v2/c3/` (`c3_per_reference.tsv`, `c3_summary.json`, the joined cells in
+`cells.tsv`, each model's embeddings in `emb/`).
 
 ## C5 — downstream analyses (comparison)
 
