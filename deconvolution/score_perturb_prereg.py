@@ -3,18 +3,22 @@
 r"""
 score_perturb_prereg.py -- close Module A's pre-registration (PERTURB_PREREG.md) from the null-run output.
 
-Scores three criteria on the skmvl "Skeletal muscle" perturbation panel (Mef2c + expression-matched null +
-value-spanning genes):
+Scores the four criteria on the skmvl skeletal-muscle perturbation panel (Mef2c + expression-matched
+null + value-spanning genes, + the Alb/Snap25 negatives):
   #1  Mef2c CLS-shift percentile vs the expression-matched null (one-sided; pass > 90th pctile).
   #4  self-consistency: Spearman(cell shift, mean expression value) across the panel (pass rho > 0).
   #2  target enrichment (re-spec): hypergeometric test of Mef2c's top-25 targets against a curated
       muscle-contractile + oxidative-metabolism gene set, using the cells' expressed genes as background
       (fixes the original mis-specification where Myog/Ckm weren't even in the input).
-Writes deconvolution/PERTURB_PREREG_RESULTS.md.
+  #3  not-expressed negatives Alb, Snap25: each in 0 cells, or its shift below the matched-null median.
+      Scored only when both are in --results (the July panel lacked them; its PASS came from the smoke
+      run); otherwise reported NOT RUN. Both are kept out of #1 and #4.
+Writes --out (markdown) and the same numbers as <out>.json.
 """
 import argparse
 import collections
 import csv
+import json
 import os
 import pickle
 from pathlib import Path
@@ -33,6 +37,7 @@ Sdha Sdhb Cox5a Cox6a2 Cox7a1 Cox8b Ndufa6 Ndufb5 Atp5f1a Atp5mc1 Cycs Mccc2 Nmn
 Pdk4 Stbd1 Nr4a3 Angptl4""".split()
 
 MEF2C = "ENSRNOG00000033134"
+NEGATIVES = {"ENSRNOG00000002911": "Alb", "ENSRNOG00000006037": "Snap25"}   # reference/perturb_prereg_genes.tsv
 
 
 def mean_values(dataset_path, cell_type):
@@ -65,7 +70,9 @@ def main():
 
     meanval, present, ncells = mean_values(args.dataset, args.cell_type)
     rows = list(csv.DictReader(open(args.results), delimiter="\t"))
-    shift = {r["gene"]: float(r["mean_cell_shift"]) for r in rows if r.get("mean_cell_shift")}
+    neg = {r["gene"]: r for r in rows if r["gene"] in NEGATIVES}       # #3 controls, kept out of #1/#4
+    shift = {r["gene"]: float(r["mean_cell_shift"]) for r in rows
+             if r.get("mean_cell_shift") and r["gene"] not in NEGATIVES}
     mv = {g: meanval.get(tok.get(g), np.nan) for g in shift}
 
     # #1 matched null: genes within +-15% of Mef2c's value
@@ -94,6 +101,23 @@ def main():
     c2 = p2 < 0.05
     hits = [g for g in top if g in tok and tok[g] in muscle_present]
 
+    # #3 not-expressed negatives: each found in 0 cells, or its shift below the matched-null median
+    null_med = float(np.median(null_shifts)) if len(null_shifts) else np.nan
+    c3_detail = {}
+    for g, name in NEGATIVES.items():
+        r = neg.get(g)
+        if r is None:
+            c3_detail[name] = None
+            continue
+        n_g = int(float(r["n_cells"] or 0))
+        s_g = float(r["mean_cell_shift"]) if r.get("mean_cell_shift") else None
+        c3_detail[name] = {"n_cells": n_g, "shift": s_g, "pass": n_g == 0 or (s_g is not None and s_g < null_med)}
+    run3 = all(v is not None for v in c3_detail.values())
+    c3 = run3 and all(v["pass"] for v in c3_detail.values())
+    res3 = ("; ".join(f"{k} n_cells={v['n_cells']}" + (f", shift {v['shift']:.2e}" if v["shift"] is not None else "")
+                      for k, v in c3_detail.items()) + f" (matched-null median {null_med:.2e})"
+            if run3 else "not in the perturbed panel")
+
     lines = [
         "# Module A pre-registration -- RESULTS", "",
         f"Scored on {args.cell_type} pseudo-cells ({ncells} cells; background = {N} expressed genes). "
@@ -107,18 +131,24 @@ def main():
         f"{'PASS' if c4 else 'FAIL'} |",
         f"| #2 Mef2c top-25 targets in curated muscle/mito set | **{k}/{n}** hits "
         f"(background K={K}/{N}); hypergeom p=**{p2:.1e}** | {'PASS' if c2 else 'FAIL'} |",
-        f"| #3 not-expressed negatives (Alb/Snap25) | n_cells=0 (from the smoke run) | PASS |",
+        f"| #3 not-expressed negatives (Alb/Snap25) | {res3} | {('PASS' if c3 else 'FAIL') if run3 else 'NOT RUN'} |",
         "",
         f"**Mef2c target hits in the muscle/mito set:** {', '.join(hits) if hits else '(none)'}.",
         "",
-        f"**Overall:** {'ALL PASS' if (c1 and c4 and c2) else 'MIXED -- see below'}. "
+        f"**Overall:** {'ALL PASS' if (c1 and c4 and c2 and c3) else 'MIXED -- see below'}. "
         "Note (from the smoke findings): the single-deletion CLS shift is near-noise in absolute terms, so "
         "#1 tests the *ranking* (is Mef2c above matched genes?), and the GRN (Module B) uses the per-gene "
         "TARGET shift, not the cell shift.",
     ]
     Path(args.out).write_text("\n".join(lines) + "\n")
+    summary = {"cell_type": args.cell_type, "n_cells": ncells, "panel": len(shift),
+               "c1": {"mef2c_pctile": pct, "n_matched": len(matched), "mef2c_shift": shift[MEF2C], "pass": bool(c1)},
+               "c2": {"hits": k, "n_top": n, "K": K, "N": N, "p": p2, "pass": bool(c2)},
+               "c3": {"detail": c3_detail, "null_median": null_med, "pass": bool(c3), "run": run3},
+               "c4": {"rho": float(rho), "p": float(p4), "pass": bool(c4)}}
+    Path(args.out).with_suffix(".json").write_text(json.dumps(summary, indent=2))
     print("\n".join(lines))
-    print(f"\nwrote {args.out}")
+    print(f"\nwrote {args.out} (+ .json)")
 
 
 if __name__ == "__main__":
