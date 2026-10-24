@@ -49,4 +49,36 @@ seeded 20261008. Every model scored the same cells and the same masked tokens (h
 Outputs: `data/results/retrain_v2/mlm/` (one `eval_mlm.py` JSON per model, `score_c1c2.txt`), scored by
 `finetune/genecompass/score_prereg_c1c2.py`.
 
-## C3–C5 — pending
+## C4 — gene embeddings (comparison; 2026-10-24, job 12013887)
+
+Input word embeddings, cosine; implementation as logged in pre-registration §6 (2026-10-24).
+
+**C4a — the 255 T4 (rat-only) genes whose symbol matches a human token.** Rank of the human namesake among
+all 23,113 human tokens (1 = nearest). Null: 1,000 re-pairings of the 255 counterparts (mean and 95%
+interval); p = 0.001 is the smallest possible.
+
+| Model | Median rank (null) | Top-10 (null) | Top-100 (null) | p (median rank) |
+|---|---|---|---|---|
+| v2 init | 10,976 (11,504; 10,015–13,019) | 0.0% (0.05%) | 0.0% (0.5%) | 0.24 |
+| April | 3,298 (12,466; 11,374–13,618) | 5.5% (0.1%) | 12.2% (0.6%) | 0.001 |
+| v2 | 6,593 (13,030; 12,054–13,974) | 2.7% (0.06%) | 4.7% (0.5%) | 0.001 |
+
+v2 init sits at the null, as expected for random rows. Both trained models place these genes far nearer
+their human namesakes than chance; April more so than v2 (v2 ranks the namesake better for 90 of 255 genes).
+
+**C4b — T3 ortholog retention (drift from init).** Cosine to the ortholog token each T3 row was cloned
+from, and whether that ortholog is still the nearest token of its species.
+
+| Model | T3a (1,351; human ortholog): median cosine / nearest / top-10 | T3b (892; mouse ortholog): median cosine / nearest / top-10 |
+|---|---|---|
+| v2 init | 1.000 / 100% / 100% | 1.000 / 100% / 100% |
+| April | 0.810 / 100% / 100% | 0.801 / 96.9% / 99.8% |
+| v2 | 0.705 / 75.1% / 82.6% | 0.673 / 55.3% / 71.6% |
+
+v2's T3 rows moved further from their copied ortholog than April's. v2 trained on every row of each phase,
+April on a quarter. The 2,243 T3 tokens share 1,094 ortholog tokens, so drift away from a shared ortholog
+can also be paralog separation. Pre-registered as drift, not success.
+
+Outputs: `data/results/retrain_v2/c4/` (`c4_summary.json`, per-gene `c4a_genes.tsv`, `c4b_genes.tsv`).
+
+## C3, C5 — pending
