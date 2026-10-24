@@ -143,6 +143,15 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   April's human-space Augur and corroboration tables date from 2026-06-25, before the July reference
   rebuild; no C5 metric uses them and they are left as they are. Superseded tables are kept in
   `data/deconvolution/_april_hashseed_backup_20261024/`.
+- 2026-10-24 — that recompute is done (job 12013854), still before any v2 C3–C5 result. Controls: every
+  seed-independent column equals April's on-disk value on all 172 blocks, rat and human-space; TESTES's rows
+  are reproduced in every column; `augur_prep`'s exports equal the on-disk Augur inputs for all 14 tissues.
+  With the crc32 seeds April has 7 exercise hotspots, not 15. The 8 lost blocks all sat just under
+  q = 0.05 (0.025–0.046) and now sit just over it (0.052–0.118), with AUCs within 0.042 of before. At 1,000
+  permutations and 172 tests a block needs at most 3 of 1,000 permuted AUCs above its own to be a hotspot,
+  so membership at the edge is decided by permutation noise and the fold split. Transfer: 6 of the 7
+  hotspots PRESERVED and 1 WEAKENED (before: 13 of 15 PRESERVED, 2 LOST); all blocks 33 PRESERVED /
+  19 WEAKENED / 120 LOST (before: 34 / 21 / 117).
 - 2026-10-24 — C4 implementation (`finetune/genecompass/eval_gene_embeddings.py`), fixed before any C4
   number is computed. C4a: the 255 genes are the T4 tokens whose rat symbol, upper-cased, is the symbol of
   a human (ENSG) token in GeneCompass's `Gene_id_name_dict_human_mouse.pickle`; each matches exactly one
