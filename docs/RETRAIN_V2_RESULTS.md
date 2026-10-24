@@ -117,3 +117,71 @@ April (its corpus 0.869) and 0.920 for v2 (its corpus 0.9145; 6,400 is the rule'
 
 Outputs: `data/results/retrain_v2/c5/stage9_embed_qc.txt`; v2 embeddings in
 `data/deconvolution/genecompass_input_v2/<tissue>/`.
+
+### Stage 12 — how far does re-expression as human move each cell? (2026-10-24, job 12014308)
+
+v2's pseudo-cells were re-expressed as human at 6,400 and embedded with species 0. Control
+(`stage12_input_control.txt`): the same cells and the same tokens as April's human side in every tissue,
+and every token's value equal to April's after rescaling 6,400 → 6,500 (|Δ| ≤ 2e-15), with no token order
+contradicting April's values. 930 of 8,450 cells list exactly tied tokens in another order, and one
+HYPOTH cell keeps the other of two tied genes at the 2,048 cut. The tokenizer's sort does not fix the
+order of ties, and float rounding at another target sum moves where ties land.
+
+Cosine between each pseudo-cell's rat-space and human-space embedding, same model, paired by `cell_id`
+(`transfer_cosine.py`; all cells paired in every tissue):
+
+| Tissue | April mean (p05) | v2 mean (p05) | v2 − April |
+|---|---|---|---|
+| BAT | 0.968 (0.960) | 0.960 (0.953) | −0.008 |
+| BLOOD | 0.980 (0.970) | 0.984 (0.968) | +0.004 |
+| CORTEX | 0.967 (0.942) | 0.954 (0.908) | −0.013 |
+| HEART | 0.968 (0.933) | 0.961 (0.936) | −0.008 |
+| HIPPOC | 0.965 (0.949) | 0.952 (0.924) | −0.013 |
+| HYPOTH | 0.973 (0.964) | 0.963 (0.937) | −0.010 |
+| KIDNEY | 0.976 (0.963) | 0.981 (0.965) | +0.005 |
+| LIVER | 0.976 (0.965) | 0.977 (0.966) | +0.000 |
+| LUNG | 0.980 (0.968) | 0.983 (0.972) | +0.003 |
+| SKMGN | 0.969 (0.947) | 0.954 (0.919) | −0.015 |
+| SKMVL | 0.968 (0.947) | 0.956 (0.923) | −0.012 |
+| SMLINT | 0.975 (0.957) | 0.975 (0.962) | +0.000 |
+| TESTES | 0.972 (0.958) | 0.975 (0.967) | +0.003 |
+| WATSC | 0.978 (0.968) | 0.982 (0.971) | +0.004 |
+| **Median** | **0.973** | **0.969** | **−0.004** |
+
+v2 moves cells a little more in 7 tissues (most in SKMGN, SKMVL, CORTEX, HIPPOC) and a little less in 7.
+Context, not a registered metric: in rat space, two different pseudo-cells of the same tissue have a
+median cosine of 0.993 (April) and 0.994 (v2), and two of the same cell type 0.9995 and 0.9996. In every
+tissue and for both models, a cell's median cosine to its own human-space embedding is lower than the
+median cosine between two different cells of that tissue. So the cosine mostly measures how far apart
+the species' regions of the embedding sit, not whether a cell keeps its identity.
+The July reading of 0.979 as "the same cell lands near its rat embedding"
+(`deconvolution/AIM2_DECONV_RESULTS.md` §4b) does not hold. Whether the exercise signal survives the move
+is the transfer comparison, scored with the gate.
+
+Outputs: `data/results/retrain_v2/c5/stage12_cosine_{april,v2}.tsv`, `stage12_input_control.txt`; v2
+human-space embeddings in `data/deconvolution/genecompass_input_v2_human/<tissue>/`.
+
+### Stage 13, Module A — four perturbation checks (2026-10-24, jobs 12013970, 12014307)
+
+Both models on the current SKMVL pseudo-cells (cell type "Skeletal myocytes", 50 cells), the frozen
+80-gene panel plus Alb and Snap25, `perturb_cells.py --mode delete --targets`, scored by
+`score_perturb_prereg.py` (pre-registration §6). 77 of the 80 panel genes are expressed in these cells
+under both tokenizations; the other 3 are in 0 cells and drop out.
+
+| Criterion | April | v2 |
+|---|---|---|
+| #1 Mef2c's cell shift vs expression-matched genes (> 90th percentile) | 96th of 27 — PASS | 100th of 26 — PASS |
+| #4 shift vs mean expression value, Spearman (> 0) | ρ = 0.74, p = 1.3e-14 — PASS | ρ = 0.76, p = 1.3e-15 — PASS |
+| #2 Mef2c's top-25 targets in the curated muscle/mitochondrial set (p < 0.05) | 4/25 (set 46 of 2,612 expressed genes), p = 8.1e-4 — PASS | 0/25 (48 of 2,597), p = 1.0 — **FAIL** |
+| #3 Alb, Snap25: in 0 cells or below the matched-null median | both in 0 cells — PASS | both in 0 cells — PASS |
+
+April passes all four. v2 passes #1, #3 and #4 and fails #2.
+
+The curated set is not neutral between the two models. It was written on 2026-07-03 (ffbebff), after
+April's smoke run, and includes "the muscle/mito genes the smoke surfaced" (`score_perturb_prereg.py`):
+that run's top Mef2c targets were Perm1, Mlip, Prr33, Ndufa6, Mccc2 and Stbd1. Three of April's four hits
+(Perm1, Ndufa6, Stbd1) are among them; the fourth is Nmnat1. v2's top 5 are Afg3l1, Cep131, Tns2, Ppfia1
+and Actr8 (full list in `results.tsv`). The registered verdict stands as scored. April's July result on
+the pre-rebuild cells ("Skeletal muscle") was 98th of 52, ρ = 0.70, 7/25 (p = 2e-7).
+
+Outputs: `data/results/retrain_v2/c5/module_a/{april,v2}/` (`results.tsv`, `report.md`, `report.json`).
