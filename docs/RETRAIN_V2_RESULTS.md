@@ -81,4 +81,39 @@ can also be paralog separation. Pre-registered as drift, not success.
 
 Outputs: `data/results/retrain_v2/c4/` (`c4_summary.json`, per-gene `c4a_genes.tsv`, `c4b_genes.tsv`).
 
-## C3, C5 — pending
+## C3 — pending
+
+## C5 — downstream analyses (comparison)
+
+Each stage that consumes the model is rerun with v2 on April's inputs (the same pseudo-cells), at v2's
+Stage 9 target sum of 6,400 (pre-registration §6). April's values are read from its on-disk outputs.
+
+### Stage 9 — do the pseudo-cell embeddings still separate cell types? (2026-10-24, jobs 12013967, 12014306)
+
+Silhouette by cell type, cosine distance, all pseudo-cells of each tissue (`embed_qc.py`). Control: v2's
+rows are April's cells in April's order in all 14 tissues (`cell_id`, `sample`, `cell_type`).
+
+| Tissue | Pseudo-cells | Cell types | April | v2 | v2 − April |
+|---|---|---|---|---|---|
+| BAT | 300 | 6 | 0.347 | 0.382 | +0.035 |
+| BLOOD | 700 | 14 | 0.500 | 0.490 | −0.010 |
+| CORTEX | 550 | 11 | 0.893 | 0.901 | +0.008 |
+| HEART | 800 | 16 | 0.873 | 0.876 | +0.003 |
+| HIPPOC | 900 | 18 | 0.569 | 0.573 | +0.004 |
+| HYPOTH | 650 | 13 | 0.729 | 0.765 | +0.036 |
+| KIDNEY | 850 | 17 | 0.617 | 0.661 | +0.044 |
+| LIVER | 300 | 6 | 0.758 | 0.768 | +0.010 |
+| LUNG | 1,400 | 28 | 0.576 | 0.600 | +0.024 |
+| SKMGN | 250 | 5 | 0.936 | 0.930 | −0.006 |
+| SKMVL | 250 | 5 | 0.882 | 0.879 | −0.003 |
+| SMLINT | 700 | 14 | 0.661 | 0.660 | −0.001 |
+| TESTES | 150 | 6 | 0.982 | 0.988 | +0.006 |
+| WATSC | 650 | 13 | 0.694 | 0.697 | +0.003 |
+| **Median** | | | **0.712** | **0.731** | **+0.005** |
+
+v2 separates cell types at least as well as April: higher in 10 tissues (most in KIDNEY, HYPOTH and BAT),
+lower in 4 by at most 0.010. The token-value medians follow each corpus as calibrated: liver 0.870 for
+April (its corpus 0.869) and 0.920 for v2 (its corpus 0.9145; 6,400 is the rule's 6,352 rounded).
+
+Outputs: `data/results/retrain_v2/c5/stage9_embed_qc.txt`; v2 embeddings in
+`data/deconvolution/genecompass_input_v2/<tissue>/`.
