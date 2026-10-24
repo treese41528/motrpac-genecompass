@@ -128,3 +128,18 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   regenerated table has the 172 current blocks only, so April's "blocks compared" goes from 205 to 172 and no
   hotspot or status count changes. April after the recompute: 15 exercise hotspots, as before, with no block
   changing hotspot status; TESTES has none.
+- 2026-10-24 — April's seed-dependent Aim-2 gate and Stage 12 rows are recomputed with the current code,
+  logged before any v2 C3–C5 result exists (C1/C2 scored 2026-10-23, see `docs/RETRAIN_V2_RESULTS.md`; no
+  v2 downstream output exists). April's on-disk `subspace_probe` and `pca_control` rows were computed in
+  July with per-block seeds from Python's salted `hash()`, so they cannot be reproduced; since 2026-10-05
+  (3a0165f) the code uses stable crc32 seeds, and v2's rows will too. On TESTES the seed change alone moved
+  the exercise AUCs by 0.048 per block on average. Recomputed on April's on-disk embeddings with July's
+  settings (`subspace_probe` 1,000 permutations, 5 folds; `augur_prep` 500 permutations, PCA-50): rat
+  `subspace_probe` and `pca_control` for all 172 blocks, with hotspots re-derived by `corroborate_summary`;
+  the human-space `subspace_probe`; `transfer_comparison`. Controls: every seed-independent column (n and
+  the eta² values) must equal April's on-disk value, and TESTES's rows, already crc32-seeded on 2026-10-22,
+  must be reproduced exactly. `pheno_merge_test` and canonical Augur are deterministically seeded and are
+  kept (TESTES has no Augur rows: 5 control pseudo-cells per cell type, below Augur's 10-cell minimum).
+  April's human-space Augur and corroboration tables date from 2026-06-25, before the July reference
+  rebuild; no C5 metric uses them and they are left as they are. Superseded tables are kept in
+  `data/deconvolution/_april_hashseed_backup_20261024/`.
