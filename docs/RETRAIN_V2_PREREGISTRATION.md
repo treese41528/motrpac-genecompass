@@ -143,3 +143,13 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   April's human-space Augur and corroboration tables date from 2026-06-25, before the July reference
   rebuild; no C5 metric uses them and they are left as they are. Superseded tables are kept in
   `data/deconvolution/_april_hashseed_backup_20261024/`.
+- 2026-10-24 — C4 implementation (`finetune/genecompass/eval_gene_embeddings.py`), fixed before any C4
+  number is computed. C4a: the 255 genes are the T4 tokens whose rat symbol, upper-cased, is the symbol of
+  a human (ENSG) token in GeneCompass's `Gene_id_name_dict_human_mouse.pickle`; each matches exactly one
+  human token. Ranks are among all 23,113 human tokens. The null re-pairs by permuting the 255 human
+  counterparts across the 255 rat tokens (1,000 permutations, seed 20261008), so it keeps the counterparts'
+  own neighbourhoods; p = (1 + null permutations at least as good) / 1,001. C4b: each T3 token's ortholog is
+  the token its init row was cloned from (`rat_model_init.t3_ortholog_token_ids`). The 892 T3b orthologs
+  are mouse tokens, so "rank among all human tokens" cannot apply to them: T3a orthologs are ranked among
+  the human tokens as registered, T3b orthologs among the 27,443 mouse tokens, and the two are reported
+  separately.
