@@ -120,7 +120,8 @@ def join(a):
             p = Path(a.chunk_root) / tag / f"chunk_{c:02d}"
             if p.exists():
                 sys.exit(f"{p} exists")
-            ds.select(cells.loc[cells.chunk == c, col].tolist()).save_to_disk(str(p))
+            # keep_in_memory: no indices cache file written into the corpus's own folder
+            ds.select(cells.loc[cells.chunk == c, col].tolist(), keep_in_memory=True).save_to_disk(str(p))
         print(f"wrote {a.n_chunks} {tag} chunks under {a.chunk_root}/{tag}")
     out.mkdir(parents=True)
     cells.to_csv(out / "cells.tsv", sep="\t", index=False)
