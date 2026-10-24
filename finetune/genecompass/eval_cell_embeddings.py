@@ -93,10 +93,10 @@ def join(a):
     plan = list(csv.DictReader(open(PLAN), delimiter="\t"))
     act = {r["sample_id"]: r["action"] for r in plan}
     twin = {}
-    for r in plan:
-        if r["action"] == "drop_duplicate":
-            t = re.match(r"byte-identical copy of (\S+)", r["reason"]).group(1)
-            twin[r["sample_id"]] = t
+    for r in plan:                         # byte-identical copies only (not "same cells, other file format")
+        t = re.match(r"byte-identical copy of (\S+)", r["reason"]) if r["action"] == "drop_duplicate" else None
+        if t:
+            twin[r["sample_id"]] = t.group(1)
     cells = []
     for ref in REFS:
         m = pd.read_csv(ROOT / f"data/deconvolution/references_v3/{ref}/cells_meta.tsv", sep="\t", dtype=str)
