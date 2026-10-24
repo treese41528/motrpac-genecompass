@@ -133,7 +133,7 @@ def build_steps(ctx: dict, subset: list) -> list:
          'items': items, 'key': valdir},
         {'num': 2, 'name': 'Composition-confound table (py)',
          'desc': 'build_composition_confound_table.py -> pseudobulk_de/composition_confound_table.tsv',
-         'cmd': [PY, str(DECONV / 'build_composition_confound_table.py')],
+         'cmd': [PY, str(DECONV / 'build_composition_confound_table.py'), '--de-dir', str(de_dir)],
          'key': de_dir / 'composition_confound_table.tsv'},
         {'num': 3, 'name': 'RIN / %-globin technical-covariate robustness (R)',
          'desc': 'de_technical_covariate_robustness.sh -> pseudobulk_de/rin_globin_robustness.tsv',
@@ -202,6 +202,7 @@ def main() -> None:
     logger.info("STAGE 14: HARDENING (purity sweeps -> composition-confound -> RIN/globin robustness)")
     logger.info("=" * 70)
     logger.info(f"  validation dir = {ctx['valdir']}")
+    logger.info(f"  DE dir = {ctx['de_dir']}")
 
     errors = []
     if (args.only in (2, 3) or (args.only is None and args.from_step >= 2)) \
@@ -213,7 +214,8 @@ def main() -> None:
         if not args.dry_run:
             sys.exit(1)
 
-    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT))
+    # DE_DIR: the RIN/globin R script's DE folder, passed explicitly (see de_technical_covariate_robustness.R).
+    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), DE_DIR=str(ctx['de_dir']))
     steps = build_steps(ctx, args.tissues)
     steps = [s for s in steps if (s['num'] == args.only if args.only else s['num'] >= args.from_step)]
     t_total = time.time()

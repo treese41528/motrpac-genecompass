@@ -16,17 +16,20 @@ and emit a verdict:
                      response is not attributable to a fraction shift.
   QUIET            : no meaningful dose-expression response to adjudicate.
 
-Reads:  data/deconvolution/genecompass_input/pseudobulk_de/de_summary.tsv
+Reads:  <genecompass_input_dir>/pseudobulk_de/de_summary.tsv  (config; or --de-dir)
 Writes: .../pseudobulk_de/composition_confound_table.tsv  (all blocks, hotspots first)
-Usage:  python deconvolution/build_composition_confound_table.py
+Usage:  python deconvolution/build_composition_confound_table.py [--de-dir DIR]
 """
+import argparse
 import os
+import sys
 from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(os.environ.get("PIPELINE_ROOT", ".")).resolve()
-DE = ROOT / "data/deconvolution/genecompass_input/pseudobulk_de"
+sys.path.insert(0, str(Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
+from gene_utils import load_config, resolve_path  # noqa: E402
+
 ALPHA = 0.05
 MIN_EXPR_SIG = 25  # >= this many dose-IHW-significant genes counts as a real response
 
@@ -40,6 +43,10 @@ def verdict(row):
 
 
 def main():
+    cfg = load_config()
+    ap = argparse.ArgumentParser(description="Composition-confound verdict per DE block")
+    ap.add_argument("--de-dir", default=str(resolve_path(cfg, cfg["deconvolution"]["genecompass_input_dir"]) / "pseudobulk_de"))
+    DE = Path(ap.parse_args().de_dir)
     df = pd.read_csv(DE / "de_summary.tsv", sep="\t")
     keep = ["tissue", "cell_type", "is_hotspot", "sup_trained_auc", "mean_fraction",
             "n_sig_dose_IHW", "n_sig_interaction", "frac_week_slope", "frac_week_p"]

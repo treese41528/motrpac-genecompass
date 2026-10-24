@@ -342,6 +342,12 @@ deconvolution:
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
+  # Other model-dependent outputs, one set per model (config/profiles/retrain_v2_downstream.yaml
+  # points all of these at v2's folders): canonical-Augur exports (augur_prep.py) and the Stage 13
+  # differential GRNs in rat and human space.
+  augur_input_dir: data/deconvolution/augur_input
+  grn_dir: data/deconvolution/grn
+  grn_human_dir: data/deconvolution/grn_human
   reference_v2_dir: data/deconvolution/references_v2     # V2 re-audited SC references
   validation_v2_dir: data/deconvolution/validation_v2    # V2 validation pseudobulk/results
   # Runtime (R / BayesPrism)

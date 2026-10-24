@@ -3,7 +3,7 @@
 
 Two outputs:
   (A) Per-tissue inputs for CANONICAL Augur (R / neurorestore) under
-      data/deconvolution/augur_input/<tissue>/:
+      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input/ by default):
         embed.tsv   768-d GeneCompass CLS embedding, cells x dims
         pca.tsv     PCA-50 of the log-normalized deconvolved Z, cells x PCs
         meta.tsv    cell_id, cell_type, sample, label(trained/control), sex, week
@@ -60,7 +60,7 @@ def main():
     bulk = str(resolve_path(cfg, dc["motrpac_bulk_out"]))
     ap = argparse.ArgumentParser()
     ap.add_argument("--gc-root", default=gc)
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(gc), "augur_input"))
+    ap.add_argument("--out", default=str(resolve_path(cfg, dc["augur_input_dir"])))
     ap.add_argument("--pca", type=int, default=50)
     ap.add_argument("--perms", type=int, default=500)
     ap.add_argument("--folds", type=int, default=5)

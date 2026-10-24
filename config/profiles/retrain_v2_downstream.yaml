@@ -1,14 +1,17 @@
-# Retrain v2 downstream profile (2026-10-24): the pipeline stages that consume the model (Stage 9, the
-# Aim-2 gate, Stage 12, Module A) rerun with the v2 model for pre-registration C5
-# (docs/RETRAIN_V2_PREREGISTRATION.md).
+# Retrain v2 downstream profile (2026-10-24): every pipeline stage that consumes the model, its
+# embeddings or its Aim-2 hotspots reruns with the v2 model -- Stage 9, the Aim-2 gate, Stages 10, 12,
+# 13 and 14 steps 2-3, Module A and the UMAP viewer (docs/RETRAIN_V2_PREREGISTRATION.md).
 #   export PIPELINE_PROFILE=config/profiles/retrain_v2_downstream.yaml
 # Tokenizes with the v2 corpus medians (scheme B) and writes every model-dependent output under
-# genecompass_input_v2/ (+ genecompass_input_v2_human/ for Stage 12), so April's genecompass_input/ stays
-# untouched. Pseudo-cells are model-independent: genecompass_input_v2/<tissue>/pseudocells.h5ad links to
-# April's. augur_prep.py defaults its --out to <dirname of gc>/augur_input, April's folder: pass --out.
+# genecompass_input_v2/ (+ genecompass_input_v2_human/ for Stage 12), augur_input_v2/, grn_v2/ and
+# grn_v2_human/, so April's folders stay untouched. Pseudo-cells are model-independent:
+# genecompass_input_v2/<tissue>/pseudocells.h5ad links to April's.
 paths:
   median_dir: data/training/gene_medians_v2
   tokenized_corpus_dir: data/training/tokenized_corpus_v2
 deconvolution:
   genecompass_input_dir: data/deconvolution/genecompass_input_v2
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
+  augur_input_dir: data/deconvolution/augur_input_v2
+  grn_dir: data/deconvolution/grn_v2
+  grn_human_dir: data/deconvolution/grn_v2_human
