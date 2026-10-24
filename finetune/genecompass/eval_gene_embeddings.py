@@ -62,7 +62,7 @@ def token_sets():
     if missing:
         sys.exit(f"{len(missing)} T3 tokens have no usable ortholog")
     tier = {rat[r["rat_gene"]]: r["tier"] for r in rows if r["tier"].startswith("T3")}
-    sym = {rat[r["rat_gene"]]: r["rat_symbol"] for r in rows}
+    sym = {rat[r["rat_gene"]]: r["rat_symbol"] for r in rows if r["tier"].startswith("T3")}
     c4b = pd.DataFrame({"token": sorted(found)})
     c4b["tier"] = [tier[t] for t in c4b.token]
     c4b["symbol"] = [sym[t] for t in c4b.token]
