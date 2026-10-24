@@ -249,3 +249,28 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   difference, blocks where v2 is higher) and the overlap of the two hotspot sets. Transfer: status counts
   among each model's own hotspots and over all blocks, the sex control's human-space median, and the rat ~
   human Spearman of `sup_trained_auc`.
+- 2026-10-24 — Downstream reruns with v2 (§4: v2 is the working model), logged before any v2 rat-space
+  gate output is read. The only v2 gate output seen so far is the last four per-tissue rows of the
+  human-space probe's log (skmvl, smlint, testes, watsc), shown while checking that the job had ended.
+  Everything that uses the model, its embeddings or its hotspots is rerun with v2's phase-2 final save
+  (as in v2's Stages 9 and 12), with the settings of April's production runs, into v2's own folders
+  (`config/profiles/retrain_v2_downstream.yaml`: `genecompass_input_v2/` and `_human/`,
+  `augur_input_v2/`, `grn_v2/`, `grn_v2_human/`; a8145d8 moved the folders that Stages 13–14 had
+  hardcoded to April's into the config):
+  Stage 10, the per-cell-type DE on the BayesPrism Z and the pre-registered positive-control comparison,
+  plus `validate_parenchyma_dataanchored.py`'s two tables (the DE does not use the model; it is rerun
+  because the hotspot flags change, TESTES was deconvolved again on 2026-10-22, and IHW pools all
+  tissues); Stage 13, the rat- and human-space differential GRNs for every hotspot with mean fraction
+  ≥ 0.01 (30 bootstraps, seed 0), their conservation, and the enrichment; Stage 14 steps 2–3, the
+  composition-confound and RIN/globin tables; the pseudo-cell UMAP and viewer; and the Aim-1
+  representation checks (`analysis/aim1_validation`, V1–V3) with the v2 model, v2 init and the v2 corpus
+  (labelled subset rebuilt by the same procedure and seed; the same human and mouse reference cells).
+  v2's hotspots are the C5 gate method's (`genecompass_input_v2/gate_rcv10/corroboration_merged.tsv`,
+  10 splits × 10,000 permutations), not the registered single split's, whose hotspot set is decided by
+  the seed (entry above). Not rerun: model-independent work (Stage 8, the Stage 14 purity sweeps); the
+  id-loss trajectory, which the C1/C2 probe already gives for base, v2 init and both v2 phases; and
+  model-dependent outputs that no reported result reads: human-space Augur, corroboration and
+  `pheno_merge_test` (April's date from 2026-06-25), and the GRN permutation nulls and uncapped
+  variants (2026-07-13). These reruns are not C5 criteria; their results are reported in
+  `docs/RETRAIN_V2_RESULTS.md` under their own heading, with April's alongside where April has the same
+  output.
