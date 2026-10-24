@@ -26,6 +26,8 @@ exercise effect. This script adds three complementary, less-conservative measure
         out-of-fold-projection eta^2. The permutation null re-runs the WHOLE CV under permuted
         labels (Ojala & Garriga 2010), so the metric is immune to the p>>n in-sample
         overfitting trap that makes an unregularized in-sample LDA/logistic separate perfectly.
+        With --repeats R the metric and eta^2 are means over R independent fold splits and each
+        permutation is scored on the same R splits; one split moves a block's AUC by ~0.04.
 
 Dose is modelled ORDINALLY (control=0, 1w=1, 2w=2, 4w=4, 8w=8 weeks) -- per the Aim-2 pivot --
 in addition to the binary trained-vs-control. Sex is reported as a positive control: it should
@@ -35,7 +37,7 @@ Join logic is identical to pheno_merge_test.py (mix{i} -> i-th viallabel in bulk
 -> pheno[viallabel]). Sex-chromosome genes were removed upstream, so SEX is autosomal.
 
 Usage:
-  python deconvolution/subspace_probe.py [--perms 1000] [--folds 5] [--jobs 8]
+  python deconvolution/subspace_probe.py [--perms 1000] [--folds 5] [--repeats 1] [--jobs 8]
          [--gc-root ...] [--pheno ...] [--bulk-root ...] [--out ...]
 """
 import argparse
@@ -113,6 +115,13 @@ def make_folds(strat_labels, k, rng):
     return list(skf.split(np.zeros(len(strat_labels)), strat_labels))
 
 
+def make_fold_sets(strat_labels, k, seed, repeats):
+    """`repeats` stratified k-fold splits; split r is seeded seed + 7919 r, so r = 0 is the single split.
+    None if a label has fewer than 2 members (the same for every split)."""
+    sets = [make_folds(strat_labels, k, np.random.default_rng(seed + 7919 * r)) for r in range(repeats)]
+    return sets if sets[0] else None
+
+
 def oof_scores(E, y, folds):
     """Out-of-fold PLS-1 (max-covariance direction) projection scores."""
     oof = np.full(E.shape[0], np.nan)
@@ -126,10 +135,12 @@ def oof_scores(E, y, folds):
     return oof
 
 
-def supervised(E, folds, y_num, metric, strat_for_eta2, perms, rng):
-    """CV supervised probe. metric: 'auc' (binary y_num in {0,1}) or 'spearman' (ordinal y_num).
-    Returns (obs_metric, oof_eta2, p_perm). Permutation re-runs the full CV under permuted y."""
-    def score(y):
+def supervised(E, fold_sets, y_num, metric, strat_for_eta2, perms, rng):
+    """CV supervised probe over one or more splits (make_fold_sets). metric: 'auc' (binary y_num in
+    {0,1}) or 'spearman' (ordinal y_num). The statistic and the OOF eta^2 are means over the splits.
+    Returns (obs_metric, oof_eta2, p_perm). Permutation re-runs the full CV on the same splits under
+    permuted y."""
+    def score_one(y, folds):
         s = oof_scores(E, y, folds)
         ok = ~np.isnan(s)
         if metric == "auc":
@@ -139,21 +150,26 @@ def supervised(E, folds, y_num, metric, strat_for_eta2, perms, rng):
         r = spearmanr(s[ok], y[ok]).correlation
         return r if r == r else np.nan                                    # nan-safe
 
+    def score(y):
+        return float(np.mean([score_one(y, f) for f in fold_sets]))      # nan if any split is nan
+
     obs = score(y_num)
     if obs != obs:
         return np.nan, np.nan, np.nan
-    oof = oof_scores(E, y_num, folds)
-    ok = ~np.isnan(oof)
-    e2 = cat_eta2_1d(oof[ok], np.asarray(strat_for_eta2)[ok])
+    e2 = []
+    for folds in fold_sets:
+        oof = oof_scores(E, y_num, folds)
+        ok = ~np.isnan(oof)
+        e2.append(cat_eta2_1d(oof[ok], np.asarray(strat_for_eta2)[ok]))
     ge = 0
     for _ in range(perms):
         p = score(y_num[rng.permutation(len(y_num))])
         ge += (p >= obs) if p == p else 0
-    return float(obs), float(e2), (ge + 1) / (perms + 1)
+    return obs, float(np.mean(e2)), (ge + 1) / (perms + 1)
 
 
 # --------------------------------------------------------------------------- per work-item
-def process(item, perms, folds_k):
+def process(item, perms, folds_k, repeats=1):
     E = item["E"]; seed = item["seed"]
     rng = np.random.default_rng(seed)
     grp, trn, sex, wk = item["group"], item["trained"], item["sex"], item["week"]
@@ -191,7 +207,7 @@ def process(item, perms, folds_k):
     # (3) supervised CV probes -- exercise (trained binary + dose ordinal) and sex control
     # trained binary
     if len(np.unique(trn)) == 2:
-        f = make_folds(trn, folds_k, np.random.default_rng(seed + 1))
+        f = make_fold_sets(trn, folds_k, seed + 1, repeats)
         if f:
             y = (np.asarray(trn) == "trained").astype(float)
             auc, e2, p = supervised(E, f, y, "auc", trn, perms, np.random.default_rng(seed + 2))
@@ -199,14 +215,14 @@ def process(item, perms, folds_k):
                 _r(auc), _r(e2), _r(p, 4)
     # dose ordinal (only meaningful if >1 distinct week incl control)
     if len(set(wk)) > 2:
-        f = make_folds(grp, folds_k, np.random.default_rng(seed + 3))     # stratify on 5-level group
+        f = make_fold_sets(grp, folds_k, seed + 3, repeats)               # stratify on 5-level group
         if f:
             y = np.asarray(wk, float)
             rho, e2, p = supervised(E, f, y, "spearman", grp, perms, np.random.default_rng(seed + 4))
             r["sup_dose_rho"], r["sup_dose_eta2"], r["p_sup_dose"] = _r(rho), _r(e2), _r(p, 4)
     # sex control
     if len(np.unique(sex)) == 2:
-        f = make_folds(sex, folds_k, np.random.default_rng(seed + 5))
+        f = make_fold_sets(sex, folds_k, seed + 5, repeats)
         if f:
             y = (np.asarray(sex) == "male").astype(float)
             auc, e2, p = supervised(E, f, y, "auc", sex, perms, np.random.default_rng(seed + 6))
@@ -228,6 +244,9 @@ def main():
     ap.add_argument("--bulk-root", default=str(resolve_path(cfg, dc["motrpac_bulk_out"])))
     ap.add_argument("--perms", type=int, default=1000)
     ap.add_argument("--folds", type=int, default=5)
+    ap.add_argument("--repeats", type=int, default=1,
+                    help="fold splits per supervised probe; statistic = mean over splits, and each "
+                         "permutation is scored on the same splits (1 = a single split)")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--out", default=os.path.join(gc, "subspace_probe.tsv"))
     args = ap.parse_args()
@@ -267,9 +286,9 @@ def main():
                 seed=block_seed(tis, ci)))
 
     print(f"{len(items)} (tissue x cell-type) blocks; perms={args.perms} folds={args.folds} "
-          f"jobs={args.jobs}")
+          f"repeats={args.repeats} jobs={args.jobs}")
     rows = Parallel(n_jobs=args.jobs, verbose=5)(
-        delayed(process)(it, args.perms, args.folds) for it in items)
+        delayed(process)(it, args.perms, args.folds, args.repeats) for it in items)
     res = pd.DataFrame(rows)
     res.to_csv(args.out, sep="\t", index=False)
     write_provenance(Path(args.out).parent, params=vars(args),

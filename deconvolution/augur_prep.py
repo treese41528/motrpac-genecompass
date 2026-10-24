@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from sklearn.decomposition import PCA
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from subspace_probe import block_seed, make_folds, supervised             # reuse the CV probe
+from subspace_probe import block_seed, make_fold_sets, supervised         # reuse the CV probe
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
@@ -64,6 +64,8 @@ def main():
     ap.add_argument("--pca", type=int, default=50)
     ap.add_argument("--perms", type=int, default=500)
     ap.add_argument("--folds", type=int, default=5)
+    ap.add_argument("--repeats", type=int, default=1,
+                    help="fold splits per probe, as in subspace_probe.py (1 = a single split)")
     ap.add_argument("--jobs", type=int, default=16)
     ap.add_argument("--ctl-out", default=os.path.join(gc, "pca_control.tsv"))
     args = ap.parse_args()
@@ -137,7 +139,7 @@ def main():
         rng_seed = it["seed"]
         out = {"tissue": it["tissue"], "cell_type": it["cell_type"], "n": it["n"]}
         y = (np.asarray(it["trained"]) == "trained").astype(float)
-        f = make_folds(it["trained"], args.folds, np.random.default_rng(rng_seed + 1))
+        f = make_fold_sets(it["trained"], args.folds, rng_seed + 1, args.repeats)
         if not f:
             return out
         for space in ["embed", "pca", "genes"]:

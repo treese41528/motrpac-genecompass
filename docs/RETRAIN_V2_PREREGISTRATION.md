@@ -212,7 +212,40 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   pseudo-cell, the cosine between its rat-space (Stage 9) and human-space (Stage 12) CLS embeddings from
   the same model, paired by `cell_id`; per tissue the mean, median and 5th percentile over all paired
   cells; summary = the median over tissues of the per-tissue mean. July's 0.979 (liver, smoke job
-  11103493) is not on disk, so
-  April's values are computed from its on-disk embeddings (human side built 2026-07-17 from the current
-  pseudo-cells; TESTES 2026-10-22). The transfer status (PRESERVED / WEAKENED / LOST) is scored with the
-  gate, after its permutation setting is fixed.
+  11103493) is not on disk, so April's values are computed from its on-disk embeddings (human side built
+  2026-07-17 from the current pseudo-cells; TESTES 2026-10-22). The transfer status (PRESERVED /
+  WEAKENED / LOST) is scored with the gate, after its permutation setting is fixed.
+- 2026-10-24 — Aim-2 gate method for C5, chosen by the user and logged before any v2 gate number exists:
+  the supervised probes are scored with repeated cross-validation, 10 stratified 5-fold splits and
+  10,000 permutations, for both models in rat and human space. Reason: with the registered single split
+  and 1,000 permutations the seed decides April's hotspot set. Over 10 seed sets (each block's crc32 seed
+  + o·1,000,003; April's on-disk rat embeddings; trained probe only) April has 7–16 hotspots, 3 in every
+  set and 20 in any. One fold split moves a block's AUC by about 0.04, and at 1,000 permutations a
+  hotspot has at most 3 permuted AUCs above its own. With 10 splits and 10,000 permutations over 5 seed
+  sets: 16–17 hotspots, 15 in every set and 18 in any (mean pairwise Jaccard 0.91, against 0.56); the 3
+  that differ have q between 0.04 and 0.07 under every seed set. One split with 10,000 permutations gives
+  10 in every set and 22 in any; 10 splits with 1,000 give 12 and 18. Evidence and scripts:
+  `data/results/retrain_v2/gate_stability/`.
+  Implementation: `subspace_probe.py --repeats 10 --perms 10000`, and for the PCA control
+  `augur_prep.py --repeats 10 --perms 10000`. Split r of each probe (trained, dose, sex, and each space of
+  the PCA control) is seeded like the single split plus 7919·r, so r = 0 is the registered split. The
+  statistic (AUC; Spearman ρ for dose) and the out-of-fold η² are means over the 10 splits, and each
+  permutation is scored on the same 10 splits. The η² permutation tests run at the same 10,000
+  permutations. Hotspots: BH q_sup_trained < 0.05 over all blocks (`corroborate_summary.py`), as before.
+  Controls before any result is used: with `--repeats 1` the new code reproduces April's on-disk rat and
+  human `subspace_probe` and `pca_control` in every column, and April's trained-probe AUC and p at
+  10 × 10,000 equal the stability run's seed set 0.
+  Outputs: a `gate_rcv10/` folder in each model's rat and human root (`subspace_probe.tsv`,
+  `pca_control.tsv`, `corroboration_merged.tsv`, `transfer_comparison.{tsv,md}`); April's registered tables
+  are left as they are. The registered method (1 split, 1,000 permutations; PCA control 500) is also run
+  for v2 and reported alongside; April's registered rows are its on-disk tables (2026-10-24). Run once for
+  v2, since the method does not change them: `pheno_merge_test` and canonical Augur (inputs exported by
+  `augur_prep` to `data/deconvolution/augur_input_v2`). Human-space Augur is run for neither model, so
+  `compare_transfer` has no human Augur column for either (April's registered table carries one from
+  2026-06-25; no status uses it).
+  Gate summary for C5, per model and method: exercise = number of hotspots, median and maximum
+  `sup_trained_auc`, median `sup_dose_rho` over blocks; sex = median `sup_sex_auc`; cell type = the Stage 9
+  silhouette above (the gate tables have no cell-type AUC); April vs v2 paired by block (median
+  difference, blocks where v2 is higher) and the overlap of the two hotspot sets. Transfer: status counts
+  among each model's own hotspots and over all blocks, the sex control's human-space median, and the rat ~
+  human Spearman of `sup_trained_auc`.
