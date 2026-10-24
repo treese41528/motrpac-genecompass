@@ -101,8 +101,8 @@ def join(a):
     for ref in REFS:
         m = pd.read_csv(ROOT / f"data/deconvolution/references_v3/{ref}/cells_meta.tsv", sep="\t", dtype=str)
         s2name = m["sample"].map(lambda s: twin.get(s, s))
-        if not all(act.get(s) in ("keep", "keep_raw_slot") for s in set(s2name) if s in act):
-            sys.exit(f"{ref}: a twin is not kept")
+        if any(act.get(twin[s]) not in ("keep", "keep_raw_slot") for s in set(m["sample"]) if s in twin):
+            sys.exit(f"{ref}: a sample's kept copy is not kept")
         r1 = (m["sample"] + "\t" + m["barcode"]).map(i1)
         r2 = (s2name + "\t" + m["barcode"]).map(i2)
         ok = r1.notna() & r2.notna()
