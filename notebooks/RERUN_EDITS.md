@@ -1,3 +1,7 @@
+> **Superseded 2026-10-25.** Notebooks 4–7 and 9–12 now show the retrained v2 model and were re-executed on
+> v2's outputs (e833c15, cef2394); the edit map below is the July April-model refresh, kept for the record.
+> v2 figures: `docs/RETRAIN_V2_RESULTS.md`.
+
 # Notebook rerun edit map — pipeline8–12 after the 2026-07-16 reference rebuild
 
 **Context.** Four production references changed this session and were re-run through Stage 8→14
