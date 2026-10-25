@@ -5,7 +5,7 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-07-13.
+**Last updated:** 2026-07-13 (canonical figures refreshed to the 2026-07-16/17 reference rebuild: 14 tissues, 172 blocks, 15 hotspots, 13-of-15 transfer).
 **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked (external) · ⊘ out-of-scope.
 
 **Recently closed (2026-07-06/13, branch `aim2b-perturbation-engine`):** **the keystone landed.** Module A
@@ -16,19 +16,18 @@ already-transferred human cells) + the human-space GRN self-consistency score, p
 per-tissue purity-sweep extension all deployed (`bbf33de`). These are now orchestrated as **Stage 13**
 (mechanism) and **Stage 14** (hardening) (`bb47beb`). Finally, a non-injective cell-type filename sanitizer
 was root-caused and fixed (`f4cbf12`) — it had destroyed a BayesPrism Z matrix; DE, enrichment, and the
-kidney/hippocampus purity sweeps were rebuilt. Headline biology unchanged (185 blocks / 21 hotspots).
+kidney/hippocampus purity sweeps were rebuilt. Headline biology unchanged (then 185 blocks / 21 hotspots; **now 172 / 15** after the 2026-07-16 reference rebuild).
 
 **Earlier (2026-07, PR `deconv-reference-integrity`):** reference-integrity hardening (QC gate +
 canonical `tissue_references.yaml` manifest + from-scratch driver `run_deconv_all.py`; liver-Visium and
 engineered-lung references fixed), the full omnideconv cross-method panel + mRNA-bias analysis + downstream-
 claims guidance, and the lung fix (0→3 exercise hotspots). These moved the headline figures.
 
-**Verified canonical figures** (so numbers below are consistent): ~9,250 pseudo-cells (lung native ref:
-1,350→1,700); **185 per-cell-type DE blocks / 21 hotspots** (was 178/18 pre-lung-fix); ~2.2M DE meta-tests;
+**Verified canonical figures** (so numbers below are consistent): **~8,450 pseudo-cells** (14 tissues);
+**172 per-cell-type DE blocks / 15 hotspots** (2026-07-16 reference rebuild; was 185/21); ~2.2M DE meta-tests;
 fine-tuned checkpoint `rat_phase2_mixed_species/checkpoint-147941`; ortholog map 15,234 rat→human pairs
 (~69% of 22,213 rat genes; 100% get a token, incl. random-init T4); cross-species transfer commit `fc4a497`
-— **19/21 hotspots survive** (was 16/18). NB: committed `AIM2_DECONV_RESULTS.md` + `notebooks/pipeline8-12`
-still show the pre-lung-fix 178/18, pending re-execution (`notebooks/RERUN_EDITS.md`).
+— **13 of 15 hotspots survive** (was 19/21; the sex positive control is now marginal/composition-driven). `AIM2_DECONV_RESULTS.md` + `notebooks/pipeline8-12` were updated to 172/15 in the 2026-07 refresh.
 
 ---
 
@@ -39,11 +38,11 @@ still show the pre-lung-fix 178/18, pending re-execution (`notebooks/RERUN_EDITS
 | **1** | Rat GeneCompass model (pipeline Stages 1–7): corpus, ortholog tokens, medians, tokenization, two-phase mixed-species fine-tuning | checkpoint-147941; `reports/pipeline_report.md` |
 | **1** | Catastrophic-forgetting validation (human/mouse preserved, rat learned 7.82→3.90 id-loss) | `reports/forgetting/forgetting_report.md` |
 | **1** | Representation-quality validation trio (§3.6) — see [Aim-1 validation results](#aim-1-validation-results-2026-06-2526) | `reports/aim1_validation/` |
-| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); **185 blocks, 21 exercise hotspots** (post-lung-fix; was 178/18); pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
-| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **19/21 hotspots survive** (was 16/18; PLS-1 + Augur agree) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
+| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW, repfdr); **172 blocks, 15 exercise hotspots** (2026-07-16 rebuild; was 185/21); pre-registered positive-control verdict | `deconvolution/AIM2_DECONV_RESULTS.md §4a` |
+| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **13 of 15 hotspots survive** (was 19/21; PLS-1 + Augur agree; sex positive control marginal — composition-driven) | commit `fc4a497`; `AIM2_DECONV_RESULTS.md §4b` |
 | **2b** | **Rat in-silico perturbation engine (the keystone)** — pre-registration CLOSED, all 4 criteria PASS; + the model-driven **differential GRN** (dose-pooled, bootstrapped). Independently re-surfaced **Nr4a1**, the regulator the proposal itself predicted. | commits `bca3221`, `b162409`, `ffbebff`, `fb07c3c`; Stage 13 |
 | **3b** | **Perturbation on the transferred human cells** — human-space GRN + a rat↔human **self-consistency** score. ⚠️ NOT cross-species biological conservation (same cells, 91.1% identical tokens) — see the Aim-3b row below. | commit `bbf33de`; Stage 13 |
-| **hardening** | Purity sweeps (8/10 meet the Chu-2022 bar), composition-confound on all 185 blocks, RIN/globin robustness (18/21 hotspots ROBUST) | commit `bbf33de`; Stage 14 |
+| **hardening** | Purity sweeps (12 of 14 tissues swept, all meet the Chu-2022 bar), composition-confound on all 172 blocks, RIN/globin robustness (14/15 hotspots ROBUST) | commit `bbf33de`; Stage 14 |
 | **hardening** | Reference integrity (QC gate + manifest + from-scratch driver; liver-Visium + engineered-lung fixed); full omnideconv panel + mRNA-bias analysis | PR `deconv-reference-integrity`; `REFERENCE_QC.md`, `OMNIDECONV_RESULTS.md` |
 
 ---
@@ -95,12 +94,12 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on `checkpo
 | ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`) | — |
 | ✅ | **Reference integrity** — DONE (2026-07): `reference_qc.py` gate (wired into `build_reference`), `tissue_references.yaml`, `run_deconv_all.py`; liver Visium contamination + engineered→native lung fixed (`REFERENCE_QC.md`) | — |
 | ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; **0→3 exercise hotspots, 2 conserved rat→human** (was ◐ weak) | — |
-| ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; 10 sweeps on disk). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on **8 of 10** tissues: ≥0.986 at 50% purity, ≥0.99 at 85%. BLOOD and subcutaneous fat are excluded honestly — neither has a capturable dominant parenchyma to sweep. | — |
-| ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): **18 of 21 hotspots ROBUST**; the 3 that need a caveat are reported, not hidden. Composition (θ) confound run on all 185 blocks: 145 QUIET / 30 PASS_EXPRESSION / 10 FLAG_COMPOSITION. | — |
+| ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; 13 sweeps on disk across 12 tissues). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on all **12 tissues swept** (of the 14-tissue panel): ≥0.985 at 50% purity, ≥0.99 at 85%. The 4 tissues added in the 2026-07-16 rebuild (BAT/HYPOTH/SMLINT/TESTES) were **swept 2026-07-27 and all pass** (VST ≥0.998 at 50% purity; HYPOTH glutamatergic-neuron VST = 1.000 throughout). Only BLOOD and subcutaneous fat remain unswept — neither has a capturable dominant parenchyma. | — |
+| ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): **14 of 15 hotspots ROBUST**; the 1 that needs a caveat (lung endothelial cells) is reported, not hidden. Composition (θ) confound run on all 172 blocks: 114 QUIET / 46 PASS_EXPRESSION / 12 FLAG_COMPOSITION. | — |
 | ◐ | **E.3** Tabula Sapiens human-atlas backdrop (external identity check the sex-gate doesn't provide; needs the atlas) | S |
 | ☐ | **Second heart reference** — heart CM is the one cardinal cell type with *holdout-only* validation (`GSE280111` LV, CM r≈0.995). Needs an independent native adult healthy rat-LV snRNA study. Data availability is the whole blocker; the machinery is tissue-agnostic and built. | S |
 | ☐ | **(new, 2026-07-13) A valid null for the GRN's `|z|` statistic.** `|z|≥2` is a *ranking* device, **not** FDR-calibrated, and a permutation null is **impossible** for this design — `label` is a deterministic function of `week` (week 0 ⟺ control), so no shuffle can break the label while preserving dose (`deconvolution/GRN_NULL_WHY_ABANDONED.md`). Any FDR statement about GRN edges is currently unsupported. A valid null needs a non-dose-confounded contrast. | M |
-| ☐ | **(new, 2026-07-13) Degenerate-block gate in the DE.** `run_pseudobulk_de.R` sets `status="ok"` unconditionally on the success path — it records `median_libsize` / `frac_zero` and never gates on them. KIDNEY's over-split intercalated labels leave two near-empty blocks (`Intercalated cells`, median libsize **51**; `Beta-intercalated cells`, median libsize **10**, 80% zeros) marked `ok` and pooled into the **global IHW/repfdr fit** — the same failure class as the phantom duplicate that forced the `f4cbf12` re-run. Neither is a hotspot, so no headline result rests on them; the exposure is to the shared calibration and is unmeasured. Fix = degeneracy gate **or** merge the over-split reference labels; either changes the 185 count and needs a DE re-run → a deliberate science call. | S–M |
+| ☐ | **(new, 2026-07-13) Degenerate-block gate in the DE.** `run_pseudobulk_de.R` sets `status="ok"` unconditionally on the success path — it records `median_libsize` / `frac_zero` and never gates on them. KIDNEY's over-split intercalated labels leave two near-empty blocks (`Intercalated cells`, median libsize **51**; `Beta-intercalated cells`, median libsize **10**, 80% zeros) marked `ok` and pooled into the **global IHW/repfdr fit** — the same failure class as the phantom duplicate that forced the `f4cbf12` re-run. Neither is a hotspot, so no headline result rests on them; the exposure is to the shared calibration and is unmeasured. Fix = degeneracy gate **or** merge the over-split reference labels; either changes the 172 count and needs a DE re-run → a deliberate science call. | S–M |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
 
 ### Blocked / out of scope

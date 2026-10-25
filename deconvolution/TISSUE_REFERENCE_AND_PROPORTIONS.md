@@ -28,7 +28,8 @@ are stale and contain errors corrected here (§6.11).
 > → 46,653 cells / 28 types) and **WATSC** (young-`-Y`-only → 12,223 cells / 13 types, not the 3-arm-pooled
 > 31,870). Their §3/§4/§6 analyses below therefore also describe retired references. Only **KIDNEY, LIVER and
 > BLOOD** are byte-for-byte the production references this audit was written against. Downstream also moved:
-> the rebuilt DE run yields **15 hotspots** (was 21), so the hotspot tables in §5.2, §5.4 and §8 are
+> the rebuilt DE run yields **172 DE blocks / 15 hotspots** (was 185 blocks / 21 hotspots), so the block and
+> hotspot counts and tables throughout the body (e.g. §2.1-canonical-trees, §5.2, §5.4 and §8) are
 > superseded. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
 > canonical on-disk results.
 
@@ -116,24 +117,26 @@ md5 `76f400d4…`, 22,050 genes).
 | Code | Full anatomical name | Genes | Samples | Deconvolved? |
 |---|---|---:|---:|:---:|
 | ADRNL | Adrenal gland | 22,050 | 50 | ✗ |
-| BAT | Brown adipose tissue (interscapular) | 22,050 | 50 | ✗ |
+| BAT | Brown adipose tissue (interscapular) | 22,050 | 50 | ✓ |
 | BLOOD | Whole blood (PAXgene) | 22,050 | 50 | ✓ |
 | COLON | Colon (large intestine) | 22,050 | 50 | ✗ |
 | CORTEX | Cerebral cortex | 22,050 | 50 | ✓ |
 | HEART | Heart (left ventricle) | 22,050 | 50 | ✓ |
 | HIPPOC | Hippocampus | 22,050 | 50 | ✓ |
-| HYPOTH | Hypothalamus | 22,050 | 50 | ✗ |
+| HYPOTH | Hypothalamus | 22,050 | 50 | ✓ |
 | KIDNEY | Kidney | 22,050 | 50 | ✓ |
 | LIVER | Liver | 22,050 | 50 | ✓ |
 | LUNG | Lung | 22,050 | 50 | ✓ |
 | OVARY | Ovary | 22,050 | **24** | ✗ |
 | SKMGN | Skeletal muscle — **gastrocnemius** | 22,050 | 50 | ✓ |
 | SKMVL | Skeletal muscle — **vastus lateralis** | 22,050 | 50 | ✓ |
-| SMLINT | Small intestine | 22,050 | 50 | ✗ |
+| SMLINT | Small intestine | 22,050 | 50 | ✓ |
 | SPLEEN | Spleen | 22,050 | 50 | ✗ |
-| TESTES | Testes | 22,050 | **25** | ✗ |
+| TESTES | Testes | 22,050 | **25** | ✓ |
 | VENACV | Vena cava | 22,050 | 50 | ✗ |
 | WATSC | White adipose tissue — **subcutaneous** | 22,050 | 50 | ✓ |
+
+**14 of the 19 are deconvolved** (2026-07-16/17 rebuild); the five *not* deconvolved are **ADRNL, COLON, OVARY, SPLEEN, VENACV** (see §2.3 for why).
 
 **899 bulk samples total.** Codes-to-names cross-checked against
 `deconvolution/reference/canonical_references.tsv` and `deconvolution/tissue_references.yaml`.
@@ -160,6 +163,13 @@ plus a per-sex `~ factor(week)` omnibus F-test.
 
 ### 2.3 Why nine tissues were not deconvolved — and why the recorded reason is wrong
 
+> **STATUS (2026-07-16/17 rebuild).** This section is the 2026-07-14 pre-rebuild analysis of the *then*-nine
+> un-deconvolved tissues. Four have since been **built & deconvolved** — **BAT** (GSE244451), **HYPOTH**
+> (GSE248413), **SMLINT** (GSE272055), and **TESTES** (OMIX767 arms C+E7W, commit d015399) — so the current
+> production panel is **14 tissues** (§2.1). The tissues that remain **not deconvolved** are **ADRNL, COLON,
+> OVARY, SPLEEN, VENACV** (VENACV's GSE280111 pulmonary-vein proxy was built then dropped as lung-contaminated).
+> The reference-availability analysis below still explains *why* each was originally hard to build.
+
 `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md:3234` states that ADRNL, BAT, COLON, OVARY, HYPOTH, SMLINT,
 SPLEEN, TESTES and VENACV were "bulk lifted but not deconvolved (**no exercise metadata**)."
 
@@ -176,7 +186,7 @@ reference directory for these tissues in either `references/` or `references_v2/
 |---|---:|---|
 | ADRNL | 0 | **True zero** — no rat adrenal single-cell data anywhere in the corpus. |
 | OVARY | 0 | **True zero.** |
-| TESTES | 0 | **True zero.** |
+| TESTES | 0 | **True zero** *(superseded — now BUILT & deconvolved: OMIX767, arms C+E7W, 5,836 cells, commit d015399; not in the `annotation_inventory` corpus because OMIX767 was ingested externally from NGDC).* |
 | VENACV | 0 | **True zero** (aorta and pulmonary vein exist — wrong vessel). |
 | SPLEEN | 2 → effectively 0 | **Mis-mapped.** Both rows have `geo_title = Rnorvegicus_thymus_MAIT` — thymus, MAIT-**sorted**, and the two are duplicates. A free-text search for `spleen` returns 0 rows. The `motrpac_tissue_match=spleen` label is an inventory bug. *(Flagged by one agent, not independently re-verified — treat as **UNVERIFIED**.)* |
 | BAT | 8 | **Buildable — never built.** GSE137869 (the same Ma 2020 aging/CR study that supplies WATSC) contributes 6 BAT samples; GSE244451 adds 2 (hypertension model). |
@@ -184,9 +194,9 @@ reference directory for these tissues in either `references/` or `references_v2/
 | SMLINT | 5 | **Thin.** GSE272055 gives 2 healthy proximal-jejunum samples; the other 3 are colorectal-cancer and diabetes models. |
 | HYPOTH | 3 | **Thin.** GSE248413 only — an aging study with exactly one young healthy sample. |
 
-Five tissues (ADRNL, OVARY, TESTES, VENACV, and effectively SPLEEN) have **literally no rat single-cell
+Four tissues (ADRNL, OVARY, VENACV, and effectively SPLEEN) have **literally no rat single-cell
 data** in the corpus; for these, "no adequate reference exists" is exact. Four (BAT, COLON, SMLINT, HYPOTH)
-**do** have candidate data that was simply never built. **BAT is the cheapest gap to close** — it is the
+**do** have candidate data — three (BAT, SMLINT, HYPOTH) have since been built & deconvolved (2026-07-16 rebuild); only COLON remains never built. **BAT is the cheapest gap to close** — it is the
 same study and the same build recipe as WATSC. It would, however, inherit WATSC's exact defects: pooled
 young/old/calorie-restricted arms, and droplet scRNA that almost certainly captures no adipocytes (§6.2).
 
@@ -1304,7 +1314,7 @@ Paths are relative to the repository root, `/depot/reese18/apps/motrpac-genecomp
 - `data/deconvolution/references_v2/{cortex_GSE303115_union_merged, hippocampus_GSE305314_WT_merged, kidney_GSE240658, gastrocnemius_GSE184413, skeletal_muscle_GSE254371_muscle_merged}/{summary.txt, cells_meta.tsv}`
 
 **Proportions**
-- `data/deconvolution/results/motrpac/<TIS>/estimated_fractions.csv` — all 10 tissues
+- `data/deconvolution/results/motrpac/<TIS>/estimated_fractions.csv` — all 14 deconvolved tissues
 - `data/deconvolution/results/motrpac/<TIS>/pred_z/` — per-cell-type expression, gene lists
 - `data/deconvolution/results/motrpac/{LIVER,BLOOD}/omnideconv/fractions_{dwls,music,scdc}.csv` — the only real-bulk cross-method runs
 - `tmp/proportions_dump.md` — the working dump with full by-sex / by-intervention / by-dose tables for every cell type in every tissue *(scratch; not committed)*
