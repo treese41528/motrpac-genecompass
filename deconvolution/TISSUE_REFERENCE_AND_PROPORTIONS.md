@@ -28,9 +28,10 @@ are stale and contain errors corrected here (§6.11).
 > → 46,653 cells / 28 types) and **WATSC** (young-`-Y`-only → 12,223 cells / 13 types, not the 3-arm-pooled
 > 31,870). Their §3/§4/§6 analyses below therefore also describe retired references. Only **KIDNEY, LIVER and
 > BLOOD** are byte-for-byte the production references this audit was written against. Downstream also moved:
-> the rebuilt DE run yields **172 DE blocks / 15 hotspots** (was 185 blocks / 21 hotspots), so the block and
+> the rebuilt DE run yields **172 DE blocks / 15 hotspots** (was 185 blocks / 21 hotspots), and with the
+> retrained **v2** model (2026-10-25) **13 hotspots** (`docs/RETRAIN_V2_RESULTS.md`), so the block and
 > hotspot counts and tables throughout the body (e.g. §2.1-canonical-trees, §5.2, §5.4 and §8) are
-> superseded. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
+> superseded. The reference, θ and basis findings do not depend on the model. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
 > canonical on-disk results.
 
 ---

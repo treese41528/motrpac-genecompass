@@ -1,5 +1,11 @@
 # MoTrPAC → GeneCompass Deconvolution Pipeline — Technical Reference Report
 
+> **Model: retrain v2 (2026-10-25).** The canonical-figures box below gives v2's numbers. The body was written
+> with the April model (`checkpoint-147941`) and its model-dependent figures (hotspots, transfer, GRN,
+> checkpoint paths, target sum 6500) are April's; where the body and the box disagree, the box is
+> authoritative. v2 is the default config; April's model is `config/profiles/april.yaml`. Full comparison:
+> `docs/RETRAIN_V2_RESULTS.md`. Deconvolution (Stage 8), θ, Z and the DE statistics do not use the model.
+
 > ⚠️ **Headline figures updated to the 2026-07-16 reference rebuild; some deep-body build/validation detail predates it.**
 > Current production = **14 deconvolved tissues** (VENACV dropped — no genuine rat vena-cava reference; BAT/HYPOTH/SMLINT/TESTES
 > added), **172 DE blocks / 15 exercise hotspots**, and **8,450 pseudo-cells**. The rebuild adopted author-deposited labels for
@@ -51,32 +57,37 @@ external data (Yu 2023, Vetr 2024) and survive the cross-species transfer.
 | Bulk → rel-113 liftover | 24,003 / 32,883 mapped (**73.0%**); 8,880 dropped; primary-gene vocab coverage 89.5% → 94.8% | `MOTRPAC_BULK_LIFTOVER.md` |
 | Bulk design | 2 sex × 5 group {control,1w,2w,4w,8w} × 5 rep = 50 samples/tissue | — |
 | Pseudo-cells embedded (rat space) | **8,450** total across 14 tissues (1 per sample × cell type; merged refs) | sum of `embeddings/*.npy` |
-| Fine-tuned checkpoint | `rat_phase2_mixed_species/checkpoint-147941` (12-layer BERT, hidden 768, vocab 55,275) | config resolve |
-| Tokenization | target-sum **6500**, top-**2048**, log2(1+x/hybrid-median), species=2 (rat) | `tokenize_pseudocells.py` |
-| DE blocks (merged-reference production) | **172** blocks (status ok), **15** hotspots (q_sup_trained < 0.05) | `de_summary.tsv`, `de_hotspots.tsv` |
-| DE meta-tests | **2,017,173** Fisher tests; IHW~tissue; repfdr 8w sex-consistency | `de_methods.tsv` |
-| Embedding vs PCA-50 (rat space) | embed median **0.583** > genes 0.575 > PCA **0.564**; embed > PCA in **91/172** | `pca_control.tsv` |
+| Fine-tuned model | v2: `rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` (= `checkpoint-591763`; 12-layer BERT, hidden 768, vocab 55,275) | `deconvolution.genecompass_model_dir` |
+| Tokenization | target-sum **6400** (v2; April 6500), top-**2048**, log2(1+x/hybrid-median), species=2 (rat) | `deconvolution.pseudocell_target_sum` |
+| Cell-type separation (Stage 9 silhouette, median of 14 tissues) | **0.731** (April 0.712) | `RETRAIN_V2_RESULTS.md` |
+| DE blocks / exercise hotspots | **172** blocks (status ok), **13** hotspots (BH q_sup_trained < 0.05; gate with 10 splits × 10,000 permutations; April by the same method 16) | `genecompass_input_v2/gate_rcv10/corroboration_merged.tsv`, `pseudobulk_de/de_hotspots.tsv` |
+| DE meta-tests | **2,017,173** Fisher tests; IHW~tissue; repfdr's fit degenerate (Fdr = 1 everywhere) → 8w sex-consistency calls are concordance-only | `de_methods.tsv` |
+| Embedding vs PCA-50 (rat space, C5 method) | embedding higher in **95/172** blocks; median Δ +0.019, Wilcoxon p 0.073 (not significant) | `gate_rcv10/pca_control.tsv` |
 | Holdout / cross deconvolution (liver) | r = 0.998 / 0.949 (paper bar > 0.95) | `AIM2_DECONV_RESULTS.md` |
-| Cross-species transfer | **34 PRESERVED / 20 WEAKENED / 118 LOST** whole-table (172 paired; **13/15** hotspots PRESERVED, PLS-1 **and** Augur-RF); sex control marginal (median 0.692, composition-driven); fidelity Spearman 0.665 (PLS-1)/0.538 (Augur); cosine(rat,human) 0.979 | `transfer_comparison.md` |
+| Cross-species transfer | hotspots **13 / 0 / 0** preserved / weakened / lost (April 14 / 0 / 2 of 16); all 172 blocks 34 / 12 / 126; trained-AUC Spearman rat~human 0.616 (April 0.762); pooled sex check prints FAIL for both models (v2 0.682 → 0.671), block-level sex Spearman 0.90; cosine(rat, human) median 0.969 — measures how far apart the species' regions sit, not whether a cell keeps its identity | `genecompass_input_v2_human/gate_rcv10/transfer_comparison.md` |
+| GRN rat↔human self-consistency (Stage 13) | 9 networks; per-TF median ρ **0.292** (April 0.451); same cells through the same model, not cross-species biology | `grn_v2_human/conservation/` |
 
 ### Reconciliation notes (auto-generated body vs. verified ground truth)
 
 This report's body sections were drafted by parallel readers; a few numbers were reconciled here. **Where the
 body and this box disagree, this box is authoritative:**
 
-- **172 blocks / 15 hotspots / 2,017,173 Fisher tests** is the **current** production (the **2026-07-16 reference
+- **172 blocks / 13 hotspots (v2) / 2,017,173 Fisher tests** is the **current** production (the **2026-07-16 reference
   rebuild**: 14 deconvolved tissues, VENACV dropped, BAT + HEART author-deposited labels adopted, SKMGN+SKMVL
-  collinear myofiber merge). Earlier body figures — **178 blocks / 18 hotspots** (post-liver/lung fix) and
+  collinear myofiber merge; v2 model since 2026-10-25). Body mentions of **15 hotspots** / **13/15 transferred**
+  are April's July run. Earlier body figures — **178 blocks / 18 hotspots** (post-liver/lung fix) and
   **186 blocks / 22 hotspots** (pre-merge) — are superseded pre-rebuild runs; both appear because the agents read
   different artifacts.
 - **Pseudo-cells = 8,450** (per-tissue: bat 300, blood 700, cortex 550, heart 800, hippoc 900, hypoth 650,
   kidney 850, liver 300, lung 1400, skmgn 250, skmvl 250, smlint 700, testes 150, watsc 650). Body mentions of
   8,600 / 8,900 / 9,300 are pre-rebuild.
-- **The GeneCompass embedding DOES beat the PCA-50 baseline** in rat space (embed 0.583 vs PCA 0.564, 91/172;
-  human-space PCA control not re-run for the 2026-07-16 rebuild). The Detection/DE section's statement that "embedding does NOT beat PCA"
-  (citing embed 0.615 / PCA 0.701) is **incorrect** — those medians were misread; the verified `pca_control.tsv`
-  medians are embed 0.589 / PCA 0.540 / genes 0.564, consistent with §3b of `AIM2_DECONV_RESULTS.md`.
-- The checkpoint is **checkpoint-147941** (latest); intermediate dirs (110000–140000) also exist on disk.
+- **Embedding vs PCA-50.** Under the 10-split gate the embedding is higher than PCA-50 in 95 of 172 blocks for
+  both models, but not significantly (v2 p 0.073, April p 0.17), and Augur scores PCA-50 at least as high. So
+  the embedding is a faithful, compact representation of the exercise signal, not a better detector than PCA.
+  (The July box's "embedding DOES beat PCA", embed 0.583 vs PCA 0.564 in 91/172, came from the
+  single-split run.)
+- The model is **v2** (`checkpoint-591763`, the phase-2 final save); April's `checkpoint-147941` remains on disk
+  and under `config/profiles/april.yaml`.
 - Ortholog map: 15,234 rat→human pairs = ~69% of 22,213 rat genes (≈82% of the genes in a given tissue's
   pseudo-cells); **not** 94.5%. Of the mapped genes, 13,883 (91%) already share their human ortholog's token ID.
 

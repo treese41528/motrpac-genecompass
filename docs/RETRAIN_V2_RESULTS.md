@@ -353,7 +353,8 @@ Outputs: `data/results/retrain_v2/c5/module_a/{april,v2}/` (`results.tsv`, `repo
 
 v2 is the working model (§4), so every output that reads the model, its embeddings or its exercise
 hotspots is rerun with v2, into v2's own folders (`config/profiles/retrain_v2_downstream.yaml`;
-pre-registration §6, 2026-10-24). The question is what changes in the Aim-2 and Aim-3 results when v2
+pre-registration §6, 2026-10-24). Since 2026-10-25 these settings are the default config (703eec3, 311f036);
+April's are `config/profiles/april.yaml`. The question is what changes in the Aim-2 and Aim-3 results when v2
 replaces April.
 
 v2's hotspots are the C5 gate's 13. April's outputs come from its July production runs. Those used the

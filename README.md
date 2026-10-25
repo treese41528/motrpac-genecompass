@@ -143,6 +143,14 @@ cat config/pipeline_config.yaml
 
 See `config/pipeline_config.yaml` for full documentation of each parameter.
 
+**Which model.** The default config uses the retrained **v2** model, its corpus, medians and output folders
+(`docs/RETRAIN_V2_RESULTS.md`). To run with the April model and its folders instead, set a profile, which
+`lib/gene_utils.load_config` merges over the config (after any `pipeline_config.local.yaml`):
+
+```bash
+export PIPELINE_PROFILE=config/profiles/april.yaml
+```
+
 ---
 
 ## Project structure
