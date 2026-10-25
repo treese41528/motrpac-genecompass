@@ -19,6 +19,7 @@ import json
 import os
 import pickle
 import sys
+from datetime import date
 from pathlib import Path
 
 import numpy as np
@@ -299,11 +300,16 @@ def v3(final_dir, fig_dir):
     return out
 
 
-def md(v1r, v2r, v3r, inp):
+def _rel(p):
+    p = Path(os.path.abspath(p))
+    return p.relative_to(_ROOT) if p.is_relative_to(_ROOT) else p
+
+
+def md(v1r, v2r, v3r, inp, final, init):
     L = []
     L.append("# Aim-1 GeneCompass representation-quality validation\n")
     L.append("The three checks promised in `reports/pipeline_report.md §3.6`, run on the fine-tuned rat "
-             "checkpoint `rat_phase2_mixed_species/checkpoint-147941`. Built/ran 2026-06-25.\n")
+             f"model `{_rel(final)}` (init `{_rel(init)}`, inputs `{_rel(inp)}`), {date.today().isoformat()}.\n")
 
     L.append("\n## V1 — held-out cell-type clustering (biology vs batch)\n")
     L.append("Global silhouette is confounded here (each study ≈ one tissue, so 'study' and coarse biology "
@@ -378,7 +384,7 @@ def main():
     print("[analyze] V2 ...", flush=True); v2r = v2(inp, args.final, args.init, fig)
     print("[analyze] V3 ...", flush=True); v3r = v3(args.final, fig)
     json.dump({"v1": v1r, "v2": v2r, "v3": v3r}, open(out / "metrics.json", "w"), indent=2)
-    (out / "AIM1_VALIDATION_REPORT.md").write_text(md(v1r, v2r, v3r, inp))
+    (out / "AIM1_VALIDATION_REPORT.md").write_text(md(v1r, v2r, v3r, inp, args.final, args.init))
     print(f"[analyze] wrote {out/'AIM1_VALIDATION_REPORT.md'} + metrics.json + figures/", flush=True)
     print("\n=== VERDICTS ===")
     print(f"  V1 clustering: {v1r['verdict']} (kNN cell-type purity {v1r['knn_purity_celltype']:.3f} vs chance "
