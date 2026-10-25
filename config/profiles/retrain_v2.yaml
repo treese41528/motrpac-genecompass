@@ -1,3 +1,7 @@
+# Since 2026-10-25 v2 is the default (config/pipeline_config.yaml holds these values), so this profile
+# changes nothing; it is kept because the jobs that built v2 and its downstream reruns set it.
+# April's model: config/profiles/april.yaml.
+#
 # Retrain v2 profile (2026-10-06).
 #   export PIPELINE_PROFILE=config/profiles/retrain_v2.yaml
 # Deep-merged over config/pipeline_config.yaml (and any pipeline_config.local.yaml) by

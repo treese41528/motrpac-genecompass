@@ -50,6 +50,7 @@ try:
                      ("validation_v2_dir", "CFG_VALIDATION_V2_DIR"),
                      ("motrpac_bulk_out", "CFG_MOTRPAC_BULK_OUT"),
                      ("genecompass_input_dir", "CFG_GENECOMPASS_INPUT_DIR"),
+                     ("hotspots_table", "CFG_HOTSPOTS_TABLE"),
                      ("idspace_audit_dir", "CFG_IDSPACE_AUDIT_DIR")]:
         if d.get(key):
             print(f'{env}={resolve_path(c, d[key])}')

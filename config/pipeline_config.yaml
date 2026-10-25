@@ -64,10 +64,14 @@ paths:
 
   gene_universe_dir: data/training/gene_universe
   ortholog_dir: data/training/ortholog_mappings
-  median_dir: data/training/gene_medians
-  hybrid_medians: data/training/gene_medians/hybrid_gene_medians.pickle
+  # The working model is retrain v2 (docs/RETRAIN_V2_RESULTS.md): the corpus stages read only the files
+  # config/corpus_v2_plan.tsv keeps, and the medians and tokenized corpus are v2's. April's model and its
+  # inputs: export PIPELINE_PROFILE=config/profiles/april.yaml
+  qc_file_list: config/corpus_v2_plan.tsv
+  median_dir: data/training/gene_medians_v2
+  hybrid_medians: data/training/gene_medians_v2/hybrid_gene_medians.pickle
   reference_dir: data/training/reference_files
-  tokenized_corpus_dir: data/training/tokenized_corpus
+  tokenized_corpus_dir: data/training/tokenized_corpus_v2
 
   motrpac_data_dir: data/motrpac/rat_training_6mo
   motrpac_processed_dir: data/motrpac/processed
@@ -338,16 +342,19 @@ deconvolution:
   idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
   validation_dir: data/deconvolution/validation
   results_dir: data/deconvolution/results
-  genecompass_input_dir: data/deconvolution/genecompass_input  # pseudo-cells/tokenized/embeddings/umap
+  # Model-dependent outputs, one set per model: v2's here, April's in config/profiles/april.yaml.
+  # genecompass_input_v2/<tissue>/pseudocells.h5ad links to April's (pseudo-cells do not depend on the model).
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2  # pseudo-cells/tokenized/embeddings/umap
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
-  genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
-  # Other model-dependent outputs, one set per model (config/profiles/retrain_v2_downstream.yaml
-  # points all of these at v2's folders): canonical-Augur exports (augur_prep.py) and the Stage 13
-  # differential GRNs in rat and human space.
-  augur_input_dir: data/deconvolution/augur_input
-  grn_dir: data/deconvolution/grn
-  grn_human_dir: data/deconvolution/grn_human
+  genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
+  # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
+  # DE wrapper). v2's is the 10 splits x 10,000 permutations gate (pre-registration §6).
+  hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
+  # Canonical-Augur exports (augur_prep.py) and the Stage 13 differential GRNs in rat and human space.
+  augur_input_dir: data/deconvolution/augur_input_v2
+  grn_dir: data/deconvolution/grn_v2
+  grn_human_dir: data/deconvolution/grn_v2_human
   reference_v2_dir: data/deconvolution/references_v2     # V2 re-audited SC references
   validation_v2_dir: data/deconvolution/validation_v2    # V2 validation pseudobulk/results
   # Runtime (R / BayesPrism)

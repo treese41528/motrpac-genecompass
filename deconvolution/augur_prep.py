@@ -3,7 +3,7 @@
 
 Two outputs:
   (A) Per-tissue inputs for CANONICAL Augur (R / neurorestore) under
-      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input/ by default):
+      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2/ by default):
         embed.tsv   768-d GeneCompass CLS embedding, cells x dims
         pca.tsv     PCA-50 of the log-normalized deconvolved Z, cells x PCs
         meta.tsv    cell_id, cell_type, sample, label(trained/control), sex, week

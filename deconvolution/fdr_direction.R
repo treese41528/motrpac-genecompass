@@ -1,6 +1,6 @@
 suppressPackageStartupMessages({ library(IHW) })
 ALPHA <- 0.05
-BASE  <- "data/deconvolution/genecompass_input/pseudobulk_de"
+BASE  <- "data/deconvolution/genecompass_input_v2/pseudobulk_de"
 summ <- read.delim(file.path(BASE,"de_summary.tsv"), check.names=FALSE)
 man  <- read.delim(file.path(BASE,"celltype_files.tsv"), check.names=FALSE)
 k <- function(t,c) paste(t,c,sep="||"); summ$key <- k(summ$tissue, summ$cell_type)

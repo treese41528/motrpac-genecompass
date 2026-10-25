@@ -35,9 +35,9 @@ def _base(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--rat-dir", default=str(_ROOT / "data/deconvolution/grn"))
-    ap.add_argument("--human-dir", default=str(_ROOT / "data/deconvolution/grn_human"))
-    ap.add_argument("--out-dir", default=str(_ROOT / "data/deconvolution/grn_human/conservation"))
+    ap.add_argument("--rat-dir", default=str(_ROOT / "data/deconvolution/grn_v2"))
+    ap.add_argument("--human-dir", default=str(_ROOT / "data/deconvolution/grn_v2_human"))
+    ap.add_argument("--out-dir", default=str(_ROOT / "data/deconvolution/grn_v2_human/conservation"))
     ap.add_argument("--ortholog-map", default=str(_ROOT / "data/training/ortholog_mappings/rat_to_human_mapping.pickle"))
     ap.add_argument("--min-shared", type=int, default=8, help="min shared targets to score a TF")
     ap.add_argument("--top-k", type=int, default=0,

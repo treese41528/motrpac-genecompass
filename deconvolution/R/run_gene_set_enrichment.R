@@ -26,7 +26,7 @@ source(file.path(.script_dir, "provenance.R"))
 ROOT   <- Sys.getenv("PIPELINE_ROOT", unset = normalizePath("."))
 # DE folder: $DE_DIR (pipeline/run_stage13.py sets it), else <genecompass_input_dir>/pseudobulk_de from
 # the config (CFG_GENECOMPASS_INPUT_DIR, exported by the .sh wrapper), else the repo default.
-GC_DIR <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input"))
+GC_DIR <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2"))
 DE_DIR <- Sys.getenv("DE_DIR", unset = file.path(GC_DIR, "pseudobulk_de"))
 cat(sprintf("DE folder: %s\n", DE_DIR))
 OUT    <- file.path(DE_DIR, "enrichment"); dir.create(OUT, showWarnings = FALSE)

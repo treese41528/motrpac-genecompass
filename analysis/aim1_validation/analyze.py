@@ -372,10 +372,10 @@ def md(v1r, v2r, v3r, inp, final, init):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--inp", default=str(_ROOT / "data/validation/aim1"))
-    ap.add_argument("--final", default=str(_ROOT / "data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/checkpoint-147941"))
-    ap.add_argument("--init", default=str(_ROOT / "data/models/rat_genecompass_init"))
-    ap.add_argument("--out", default=str(_ROOT / "reports/aim1_validation"))
+    ap.add_argument("--inp", default=str(_ROOT / "data/validation/aim1_v2"))
+    ap.add_argument("--final", default=str(_ROOT / "data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/models"))
+    ap.add_argument("--init", default=str(_ROOT / "data/models/rat_genecompass_init_v2"))
+    ap.add_argument("--out", default=str(_ROOT / "reports/aim1_validation_v2"))
     args = ap.parse_args()
     inp = Path(args.inp); out = Path(args.out); fig = out / "figures"
     fig.mkdir(parents=True, exist_ok=True)

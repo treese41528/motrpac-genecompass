@@ -134,7 +134,7 @@ def main() -> None:
                    help='optional tissue subset for the DE step (debug only; comparison stays global)')
     p.add_argument('--hotspots', default=None,
                    help='Aim-2 gate table whose q_sup_trained < 0.05 blocks are the hotspots '
-                        '(default: <genecompass_input_dir>/corroboration_merged.tsv)')
+                        '(default: deconvolution.hotspots_table, else <genecompass_input_dir>/corroboration_merged.tsv)')
     p.add_argument('--alpha', type=float, default=0.05)
     p.add_argument('--min-fraction', type=float, default=0.01, help='power floor for the comparison')
     p.add_argument('--min-nonzero', type=int, default=25, help='power floor for the comparison')
@@ -151,7 +151,9 @@ def main() -> None:
     de_dir = gc_input / 'pseudobulk_de'
     results_root = resolve_path(config, d['results_dir']) / 'motrpac'
     prereg = resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv'
-    hotspots = Path(args.hotspots).resolve() if args.hotspots else gc_input / 'corroboration_merged.tsv'
+    hotspots = (Path(args.hotspots).resolve() if args.hotspots
+                else resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
+                else gc_input / 'corroboration_merged.tsv')
 
     ctx = {
         'de_dir': de_dir,

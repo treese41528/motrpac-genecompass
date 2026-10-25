@@ -1,3 +1,7 @@
+# Since 2026-10-25 v2 is the default (config/pipeline_config.yaml holds these values), so this profile
+# changes nothing; it is kept because the jobs that built v2 and its downstream reruns set it.
+# April's model: config/profiles/april.yaml.
+#
 # Retrain v2 downstream profile (2026-10-24): every pipeline stage that consumes the model, its
 # embeddings or its Aim-2 hotspots reruns with the v2 model -- Stage 9, the Aim-2 gate, Stages 10, 12,
 # 13 and 14 steps 2-3, Module A and the UMAP viewer (docs/RETRAIN_V2_PREREGISTRATION.md).
