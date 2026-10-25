@@ -348,6 +348,9 @@ deconvolution:
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
+  # Stage 9/12 tokenizer normalize_total target, calibrated so the pseudo-cells' token-value median matches
+  # the model's corpus (v2 6,400; April 6,500). Stage 12 must use the rat run's value.
+  pseudocell_target_sum: 6400
   # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
   # DE wrapper). v2's is the 10 splits x 10,000 permutations gate (pre-registration §6).
   hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv

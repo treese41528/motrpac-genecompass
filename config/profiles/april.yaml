@@ -14,6 +14,7 @@ paths:
 deconvolution:
   genecompass_input_dir: data/deconvolution/genecompass_input
   genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
+  pseudocell_target_sum: 6500
   hotspots_table: data/deconvolution/genecompass_input/gate_rcv10/corroboration_merged.tsv
   augur_input_dir: data/deconvolution/augur_input
   grn_dir: data/deconvolution/grn
