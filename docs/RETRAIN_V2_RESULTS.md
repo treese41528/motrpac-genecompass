@@ -160,6 +160,86 @@ April (its corpus 0.869) and 0.920 for v2 (its corpus 0.9145; 6,400 is the rule'
 Outputs: `data/results/retrain_v2/c5/stage9_embed_qc.txt`; v2 embeddings in
 `data/deconvolution/genecompass_input_v2/<tissue>/`.
 
+### Aim-2 gate — which cell types carry a detectable exercise signal? (2026-10-24, jobs 12014932–12014935)
+
+For each tissue × cell-type block of pseudo-cells (172 blocks in 14 tissues), a supervised PLS-1 probe on
+the embedding gives three numbers. Exercise: the held-out AUC for trained vs control. Dose: Spearman ρ
+with the training dose. Sex, the positive control: an AUC over 166 blocks, since TESTES is male-only.
+Exercise hotspots are the blocks with BH q_sup_trained < 0.05 over all 172. Cell-type separation is the
+Stage 9 silhouette above; the gate tables have no cell-type AUC. The C5 method uses 10 stratified 5-fold
+splits and 10,000 permutations. It was chosen because with the registered single split and 1,000
+permutations the seed decides the hotspot set (pre-registration §6, 2026-10-24). The registered method is
+shown alongside.
+
+Controls:
+- April's 10-split trained probe equals the stability run's seed set 0 (job 12014932).
+- For both models, the Augur exports from the 10-split runs equal the registered runs' in all 14 tissues.
+- The PCA-50 and full-gene probes do not use the model. They give the same AUC and p for v2 as for April
+  in all 172 blocks, under both methods.
+
+| | Registered: April | Registered: v2 | C5 method: April | C5 method: v2 |
+|---|---|---|---|---|
+| Exercise hotspots (of 172) | 7 | 11 | 16 | **13** |
+| Trained AUC, median / max | 0.5765 / 0.885 | 0.5690 / 0.890 | 0.5575 / 0.870 | 0.5610 / 0.887 |
+| Dose ρ, median | 0.0405 | 0.0645 | 0.0290 | 0.0560 |
+| Sex AUC, median | 0.7030 | 0.6840 | 0.6885 | 0.6820 |
+
+Paired by block, v2 − April:
+
+| | Registered: median difference / v2 higher | C5 method: median difference / v2 higher |
+|---|---|---|
+| Trained AUC (172 blocks) | −0.0040 / 82 (3 equal) | −0.0015 / 84 (1 equal) |
+| Dose ρ (172) | −0.0105 / 83 | −0.0095 / 79 |
+| Sex AUC (166) | 0.0000 / 75 (13 equal) | −0.0010 / 72 (10 equal) |
+
+Under the C5 method the two models share 11 hotspots:
+- BLOOD: basophils, classical and non-classical monocytes, ISG-expressing T cells, megakaryocytes, naive
+  B cells, NK cells.
+- KIDNEY: renal interstitial fibroblasts.
+- LUNG: endothelial cells, macrophages.
+- SKMGN: skeletal myocytes.
+
+The blocks in only one set:
+
+| Block | Hotspot for | April AUC (q) | v2 AUC (q) |
+|---|---|---|---|
+| SKMVL Endothelial cells | April | 0.870 (0.011) | 0.787 (0.056) |
+| HEART Cardiac neurons | April | 0.831 (0.019) | 0.748 (0.089) |
+| SKMVL Skeletal myocytes | April | 0.822 (0.027) | 0.779 (0.059) |
+| LUNG Myeloid dendritic cells | April | 0.794 (0.039) | 0.774 (0.065) |
+| HEART Monocytes | April | 0.791 (0.039) | 0.685 (0.296) |
+| SKMGN Endothelial cells | v2 | 0.706 (0.234) | 0.887 (0.015) |
+| HYPOTH Oligodendrocyte precursor cells | v2 | 0.729 (0.122) | 0.798 (0.038) |
+
+What this shows:
+- **Exercise.** Across blocks, v2 detects exercise about as well as April: the paired median difference
+  is −0.0015, and v2 is higher in 84 of 172 blocks. v2 has 13 hotspots to April's 16.
+- **April's five extra hotspots.** Four stay just above the threshold under v2 (q 0.056–0.089). They
+  fall out at the cut rather than losing their signal. HEART Monocytes drops to an AUC of 0.685.
+- **Where the sets differ.** v2 loses both SKMVL hotspots and both HEART hotspots. It gains SKMGN
+  Endothelial cells and HYPOTH OPCs, which April ranks well outside its set.
+- **Dose and sex.** v2's median dose ρ is higher (0.056 vs 0.029), but v2 is higher in only 79 of 172
+  blocks, so there is no consistent dose gain. Sex is about the same (paired median −0.0010).
+- **The registered method** gives the opposite count: v2 11, April 7. Each model's registered hotspots
+  lie within its own C5 set, except v2's HEART Dendritic cells (registered q 0.034, C5 q 0.089). The
+  registered count is the seed-dependent one that the C5 method replaces.
+
+Context, not registered (C5 method):
+- **Embedding vs PCA-50 of the same pseudo-cells.** The embedding's AUC is higher in 95 of 172 blocks for
+  both models. The median paired difference is +0.0175 for April (Wilcoxon p 0.17) and +0.0185 for v2
+  (p 0.073). Against the full scaled gene space it is +0.0040 (p 0.63) and +0.0180 (p 0.22). Neither
+  model's embedding separates exercise significantly better than a plain PCA across blocks.
+- **Canonical Augur** (random forest, run once per model on the same exports) gives an AUC of at least
+  0.65 in every hotspot: April 16 of 16, v2 13 of 13. Its block AUCs follow the PLS-1 probe's (Spearman
+  0.844 for April, 0.822 for v2, over 166 blocks; TESTES has too few control cells for Augur). Augur scores
+  PCA-50 at least as high as the embedding: median 0.593 vs 0.556 for April (Wilcoxon p 0.022), 0.593 vs
+  0.581 for v2 (p 0.11).
+
+Outputs: `data/results/retrain_v2/c5/gate_summary.json`, from `gate_summary.py` beside it (written before
+any gate output existed). The C5-method tables are in `gate_rcv10/` in each model's rat and human root. v2's
+registered tables are in `data/deconvolution/genecompass_input_v2/` and `_human/`. April's registered
+tables are its on-disk ones (2026-10-24).
+
 ### Stage 12 — how far does re-expression as human move each cell? (2026-10-24, job 12014308)
 
 v2's pseudo-cells were re-expressed as human at 6,400 and embedded with species 0. Control
@@ -198,10 +278,49 @@ median cosine between two different cells of that tissue. So the cosine mostly m
 the species' regions of the embedding sit, not whether a cell keeps its identity.
 The July reading of 0.979 as "the same cell lands near its rat embedding"
 (`deconvolution/AIM2_DECONV_RESULTS.md` §4b) does not hold. Whether the exercise signal survives the move
-is the transfer comparison, scored with the gate.
+is the transfer comparison below.
 
 Outputs: `data/results/retrain_v2/c5/stage12_cosine_{april,v2}.tsv`, `stage12_input_control.txt`; v2
 human-space embeddings in `data/deconvolution/genecompass_input_v2_human/<tissue>/`.
+
+### Stage 12 — does the exercise signal survive re-expression as human? (2026-10-24, jobs 12014932, 12014934, 12014935)
+
+The gate's probe is run on each model's human-space embedding of the same cells, by the same method as
+its rat side (`compare_transfer.py`). Each block gets one status:
+- PRESERVED: human-space trained AUC ≥ 0.65 with p < 0.05.
+- WEAKENED: AUC ≥ 0.65 with p ≥ 0.05.
+- LOST: AUC below 0.65.
+
+| | Registered: April | Registered: v2 | C5 method: April | C5 method: v2 |
+|---|---|---|---|---|
+| Own hotspots: preserved / weakened / lost | 6 / 1 / 0 of 7 | 10 / 0 / 1 of 11 | 14 / 0 / 2 of 16 | **13 / 0 / 0 of 13** |
+| All 172 blocks: preserved / weakened / lost | 33 / 19 / 120 | 33 / 18 / 121 | 33 / 13 / 126 | 34 / 12 / 126 |
+| Sex AUC median, rat → human | 0.7030 → 0.6970 | 0.6840 → 0.6790 | 0.6885 → 0.6875 | 0.6820 → 0.6710 |
+| Trained AUC, Spearman rat ~ human (172) | 0.759 | 0.644 | 0.762 | 0.616 |
+| Context: sex AUC, Spearman rat ~ human (166) | 0.913 | 0.893 | 0.936 | 0.904 |
+| Context: dose ρ, Spearman rat ~ human (172) | 0.742 | 0.572 | 0.733 | 0.638 |
+
+The lost hotspots, rat → human AUC:
+- April, C5 method: HEART Cardiac neurons (0.831 → 0.630) and HEART Monocytes (0.791 → 0.590).
+- v2, registered: HEART Dendritic cells (0.843 → 0.602).
+
+What this shows:
+- **v2's hotspots all transfer.** Under the C5 method every v2 hotspot keeps its exercise signal in human
+  space. April keeps 14 of 16; it loses its two HEART hotspots, which v2 does not call.
+- **All blocks.** The preserved counts are about the same for the two models (33 and 34).
+- **Block ordering.** v2's human-space AUCs follow its rat-space AUCs less closely than April's (Spearman
+  0.616 vs 0.762; registered 0.644 vs 0.759). The same holds for dose, and slightly for sex. v2's hotspots
+  carry over, but the other blocks change order more.
+- **The script's sex check.** `compare_transfer.py` prints "transfer-validity: FAIL" for both models under
+  both methods. The check requires a human-space median sex AUC of at least 0.70. It also failed on April's
+  tables from before the 2026-10-24 seed recompute (rat 0.694 → human 0.692). The rat-space median is
+  already 0.682–0.703, so the check fails whenever that median is just under 0.70 or drops slightly in
+  transfer. Block by block, the sex AUC carries over closely (Spearman 0.89–0.94). The check is not a
+  registered C5 criterion and is reported as printed.
+
+Outputs: `transfer_comparison.{tsv,md}` in each model's `genecompass_input*_human/gate_rcv10/` (C5
+method), in `genecompass_input_v2_human/` (v2 registered) and in `genecompass_input_human/` (April
+registered). Summary values are in `data/results/retrain_v2/c5/gate_summary.json`.
 
 ### Stage 13, Module A — four perturbation checks (2026-10-24, jobs 12013970, 12014307)
 
