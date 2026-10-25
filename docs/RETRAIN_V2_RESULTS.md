@@ -346,3 +346,131 @@ and Actr8 (full list in `results.tsv`). The registered verdict stands as scored.
 the pre-rebuild cells ("Skeletal muscle") was 98th of 52, ρ = 0.70, 7/25 (p = 2e-7).
 
 Outputs: `data/results/retrain_v2/c5/module_a/{april,v2}/` (`results.tsv`, `report.md`, `report.json`).
+
+## Downstream reruns with v2 (not C5 criteria)
+
+v2 is the working model (§4), so every output that reads the model, its embeddings or its exercise
+hotspots is rerun with v2, into v2's own folders (`config/profiles/retrain_v2_downstream.yaml`;
+pre-registration §6, 2026-10-24). The question is what changes in the Aim-2 and Aim-3 results when v2
+replaces April.
+
+v2's hotspots are the C5 gate's 13. April's outputs come from its July production runs. Those used the
+July hotspot set: 15 blocks from the hash-seeded gate tables. The same gate recomputed with the current
+seeds gives 7 hotspots, and 16 under the C5 method (§6). April's July 15 and v2's 13 share 9 blocks.
+
+### Stage 10 — per-cell-type DE and the pre-registered positive controls (jobs 12015440, 12016561)
+
+The DE on the BayesPrism Z does not use the model. It is rerun because the hotspot flags change, TESTES
+was deconvolved again on 2026-10-22, and IHW pools all tissues. All 172 blocks have status ok. The 13
+flagged hotspots are exactly the gate's 13.
+
+Control (`stage10_control.txt`): outside TESTES, every per-block statistic equals April's.
+- All 166 blocks have the same genes and columns. Non-pooled columns are exact in 156 blocks and within
+  1e-9 relative in all 166.
+- Only the columns pooled across blocks moved. FDR_IHW moved in 163 blocks, and with it each file's row
+  order, which sorts by FDR_IHW.
+- No 8-week sex-consistency call changed.
+- `repfdr_localfdr` is now empty. repfdr's fit was degenerate in both runs (Fdr = 1 for all 2,017,173
+  gene-blocks). Since 2026-10-05 (fb27b46) the code records a degenerate fit as missing and labels the
+  calls concordance-only; April's `de_methods.tsv` labelled them repfdr.
+- TESTES now tests 13,701–13,703 genes per cell type (April 13,115–13,117).
+
+Positive controls (`compare_posctrl.py`, the frozen pre-registration): all 81 outcomes equal April's.
+- Tier A: 4 of 45 recovered (2 wrong direction, 28 not significant, 11 not testable).
+- Tier Ai: 2 of 14 recovered.
+- Tier B: 7 of 22 recovered (1 of them confounded).
+
+FDR_IHW in these rows moved by at most 0.003. Two Tier A rows, Gabpa and Ets1 in BLOOD, are wrong
+direction in both runs. They are now reported in Basophils rather than Megakaryocytes: for a
+wrong-direction gene the script reports the first significant block in DE-table order, which puts
+hotspots first.
+
+Parenchyma check (`validate_parenchyma_dataanchored.py`): do the DE blocks of each tissue's dominant
+cell type recover the genes that move in the matched bulk (8 weeks vs control, BH < 0.05, |log2FC| ≥
+0.25)?
+- SKMGN skeletal myocytes: 82 of 216 testable (0.380).
+- SKMVL skeletal myocytes: 90 of 170 (0.529).
+- HEART cardiomyocytes: 22 of 24 (0.917).
+- LIVER has no bulk movers.
+
+April's on-disk table (2026-07-12) predates the July reference rebuild: it scores "Skeletal muscle cells"
+and has no SKMVL row. So April has no value on the current inputs. The check does not use the model.
+
+### Stage 13 step 4 — pathway enrichment of each block's dose response (job 12016562)
+
+fgsea runs on each block's signed dose statistic, against Hallmark and Reactome (1,889 sets).
+- v2: 4,724 significant pathway hits (padj < 0.05) in 98 blocks. April: 4,687 in 97.
+- Outside TESTES, every pathway's enrichment score equals April's in all 166 blocks, since the ranks do
+  not use the model.
+- fgsea's sampled p-values and NES do move. Each block is now seeded on its own (3a0165f, 2026-10-05),
+  whereas April's July run was seeded once.
+- Outside TESTES, 4,381 hits are significant in both runs, 306 only in April's and 342 only in v2's.
+- Where both runs give a p-value, the flipped calls sit at the cut: their padj in the other run has a
+  median of 0.058 and a maximum of 0.15.
+- About 100 of the 210,354 pathway tests get no p-value in each run, 92 of them the same in both.
+- Missing p-values include some very strong hits. Hallmark heme metabolism has none in v2's run for
+  BLOOD classical and non-classical monocytes and NK cells, where April's gives p ≈ 1e-22. It has none in
+  April's run for BLOOD memory T cells and naive B cells, where v2's gives 9e-23 and 2e-20.
+- TESTES: 1 hit in v2 (Sertoli cells), none in April.
+
+### Stage 14 steps 2–3 — composition confound and RIN/globin (job 12016562)
+
+Both tables are per block and do not use the model. Outside TESTES every value and verdict equals April's;
+what changes is which blocks are hotspots.
+
+Composition confound: does the cell type's own fraction trend with training?
+- v2's 13 hotspots: 9 PASS_EXPRESSION; 2 FLAG_COMPOSITION (BLOOD NK cells, fraction trend p 0.0055;
+  BLOOD naive B cells, p 0.047); 2 QUIET (KIDNEY renal interstitial fibroblasts and HYPOTH OPCs, with no
+  dose-significant genes).
+- April's 15: 12 PASS_EXPRESSION; 2 FLAG_COMPOSITION (BLOOD naive B cells, SKMVL endothelial cells); 1
+  QUIET.
+
+RIN/globin: does each hotspot's dose response survive RIN and globin as covariates?
+- v2: 11 ROBUST and 2 CHECK. The CHECKs are LUNG endothelial cells, which keeps 0.77 of its dose genes,
+  and LUNG macrophages, 0.78. The median Spearman of the dose t is 0.997.
+- April: 14 ROBUST and 1 CHECK (LUNG endothelial cells).
+
+### Pseudo-cell UMAP and viewer (job 12015438)
+
+Regenerated from v2's embeddings: 8,450 pseudo-cells, 14 tissues, 110 cell types. The viewer's gate panel
+reads `pheno_merge_test.tsv`, which the gate method does not change, and has all 172 blocks
+(`data/deconvolution/genecompass_input_v2/umap/viewer.html`).
+
+### Aim-1 representation checks V1–V3 (jobs 12015439, 12016595)
+
+The same procedure as April's (`analysis/aim1_validation`), run with the v2 model, v2 init and the v2
+corpus. Control: the homolog pairs and the rat, human and mouse target tokens equal April's (the token
+mapping is shared).
+
+V1 is a rerun of the procedure, not a paired comparison. The labelled subset is drawn from each model's own
+corpus by the same procedure and seed, and the two subsets share only 1,935 cells and 6 of 17 studies. C3
+compares the models on the same cells. For V2 and V3, the human and mouse context cells are the same
+50,000 each, and the rat contexts come from each model's own subset.
+
+| Check | April | v2 |
+|---|---|---|
+| V1 labelled subset: cells / cell types / studies | 39,779 / 50 / 17 | 40,332 / 44 / 17 |
+| V1 kNN cell-type purity, k = 15 (chance) | 0.813 (0.047) | 0.849 (0.065) |
+| V1 kNN study purity (chance) | 0.975 (0.060) | 0.966 (0.060) |
+| V1 cross-study mixing within cell type | 0.020 | 0.036 |
+| V1 ARI, k-means vs cell type | 0.309 | 0.405 |
+| V1 verdict | PARTIAL | PARTIAL |
+| V2 contextual homolog AUC: T1 / T3a / T3b (pairs) | 1.000 / 0.973 / 0.908 (938 / 597 / 232) | 1.000 / 0.948 / 0.851 (915 / 591 / 243) |
+| V2 input-embedding homolog AUC: T3a / T3b | 0.998 / 0.991 | 0.962 / 0.875 |
+| V3 T4 family rank-AUC, pooled mean (share > 0.65) | 0.527 (24.5%) | 0.471 (16.0%) |
+| V3 CYP rank-AUC | 0.601 | 0.569 |
+| V3 verdict | WEAK | WEAK |
+
+What this shows:
+- **V1.** On its own cells, v2 scores higher on cell-type purity and ARI, and mixes studies more within a
+  cell type.
+- **V2.** v2's T3 genes sit less close to their orthologs, in context and as input embeddings, as C4b's
+  drift showed.
+- **V3.** Neither model's T4 tokens sit nearer their human and mouse family peers than chance.
+
+`analyze.py` used to write April's checkpoint and run date into every report's header. It now writes the
+model, init and inputs it was given (30b69f2). The v2 report was regenerated from the same inputs
+(job 12016595); its `metrics.json` and figures are byte-identical to the first run's.
+
+Outputs: `reports/aim1_validation_v2/` (`AIM1_VALIDATION_REPORT.md`, `metrics.json`, `figures/`); inputs
+and embeddings in `data/validation/aim1_v2/`.
