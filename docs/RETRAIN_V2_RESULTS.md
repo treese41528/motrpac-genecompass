@@ -158,7 +158,9 @@ lower in 4 by at most 0.010. The token-value medians follow each corpus as calib
 April (its corpus 0.869) and 0.920 for v2 (its corpus 0.9145; 6,400 is the rule's 6,352 rounded).
 
 Outputs: `data/results/retrain_v2/c5/stage9_embed_qc.txt`; v2 embeddings in
-`data/deconvolution/genecompass_input_v2/<tissue>/`.
+`data/deconvolution/genecompass_input_v2/<tissue>/`. The target-sum calibration (pre-registration §6, job
+12013898): `data/results/retrain_v2/c5/stage9_calibration/` (`calibrate.py`, `calibration.json`, and each
+tissue's tokenization summary and log at 6,500 under both models' medians).
 
 ### Aim-2 gate — which cell types carry a detectable exercise signal? (2026-10-24, jobs 12014932–12014935)
 
@@ -396,6 +398,143 @@ cell type recover the genes that move in the matched bulk (8 weeks vs control, B
 April's on-disk table (2026-07-12) predates the July reference rebuild: it scores "Skeletal muscle cells"
 and has no SKMVL row. So April has no value on the current inputs. The check does not use the model.
 
+Outputs: `data/deconvolution/genecompass_input_v2/pseudobulk_de/` (`de_summary.tsv`, `de_hotspots.tsv`,
+`de_methods.tsv`, `<TISSUE>/de__*.tsv`, `posctrl_{results,responsiveness}.tsv`, `posctrl_summary.md`,
+`parenchyma_dataanchored_validation.tsv`, `dominant_celltype_flags.tsv`). Control:
+`data/results/retrain_v2/downstream/stage10_control.{py,txt}`.
+
+### Stage 13 steps 1–3 — which regulators does the model name, and do they hold in human space? (jobs 12016563–12016565)
+
+Method as in April's production run. Each hotspot that makes up at least 1% of its tissue (mean fraction
+≥ 0.01) gets a differential GRN (`build_grn_pooled.py`, 30 bootstraps, seed 0):
+- The model is given one pseudobulk profile per arm, control and trained, and each expressed TF's token is
+  deleted in turn.
+- An edge's Δ is how much more the deletion shifts the target gene's embedding in the trained arm than in
+  the control arm. A TF's hub strength is the sum of |Δ| over its edges.
+- The human-space network repeats this on the same cells re-expressed as human (`build_grn_human.py`).
+- Conservation (`compare_grn_conservation.py`) is, per TF, the Spearman between its rat and human Δ over
+  its confident rat targets (|z| ≥ 2). Both networks are the same cells through the same model. So
+  conservation measures how consistent the model is across the two token sets of the same cells. It is
+  not evidence about human biology.
+
+Controls:
+- The cell labels the GRNs read (`augur_input*/<tissue>/meta.tsv`) are April's in all 14 tissues.
+- In human space the two models get the same tokens (Stage 12 control). Their networks there have the
+  same TFs and the same edges.
+- April's conservation, recomputed with today's script, reproduces its 2026-07-17 tables. The only
+  difference is the last digit of one p-value.
+
+Networks: v2 has 9 and April 11; 7 are in both.
+- v2's 9 are its 13 hotspots minus the 4 that make up under 1% of their tissue: BLOOD naive B cells
+  (0.006), LUNG macrophages (0.003), HYPOTH OPCs (0.0005) and KIDNEY renal interstitial fibroblasts
+  (0.0002).
+- April's 11 come from its July 15 hotspots.
+- April only: BLOOD memory T cells, HEART monocytes, and SKMVL endothelial cells and skeletal myocytes.
+- v2 only: BLOOD NK cells and SKMGN endothelial cells.
+
+Top 5 hubs in rat space:
+
+| Network | April | v2 |
+|---|---|---|
+| BLOOD basophils | Tmf1, Usf3, Mxi1, Cux1, Zbed6 | Jund, Max, Mxi1, Tmf1, Tfdp2 |
+| BLOOD classical monocytes | Lin54, Tmf1, Mxi1, Maz, Dr1 | Lin54, Usf3, Maz, Foxp4, Ets2 |
+| BLOOD ISG-expressing T cells | Tmf1, Usf3, Zbtb7a, Lyl1, Hmg20b | Tmf1, Kmt2a, Zbed6, Usf3, Stat6 |
+| BLOOD megakaryocytes | Nfe2, Zfpm1, Sp3, Patz1, Tsc22d1 | Mxi1, Patz1, Tsc22d1, Zfpm1, Nfe2 |
+| BLOOD non-classical monocytes | Lin54, Tmf1, Dpf3, Zbtb7a, Zbtb4 | Lin54, Dpf3, Hinfp, Tmf1, Zbtb7a |
+| LUNG endothelial cells | Dbp, Nr1d2, Klf9, Spen, Foxf1 | Dbp, Nr1d2, Mxd4, Epas1, Foxf1 |
+| SKMGN skeletal myocytes | Zbtb16, Ybx3, Nfe2l1, Barx2, Usf3 | Nr1d1, Barx2, Ybx3, Nfe2l1, Usf3 |
+| BLOOD NK cells | — | Cenpt, Irf6, Mybl2, Zbtb7a, Arnt |
+| SKMGN endothelial cells | — | Bhlhe40, Mbd3, Hoxd4, Ybx1, Rara |
+
+April vs v2 in the 7 shared networks, range over networks. In human space the inputs are identical, so
+the differences there come from the weights alone:
+
+| | Rat space | Human space |
+|---|---|---|
+| TFs: April / v2 / both | 102–141 / 96–153 / 91–138 | 110–143, the same for both |
+| Hub strength, Spearman | 0.783–0.950 | 0.991–0.997 |
+| Top-10 hubs shared | 4–9 | 8–10 |
+| Edge Δ, Spearman over the edges both have | 0.075–0.207 | 0.414–0.565 |
+| Confident edges (\|z\| ≥ 2), Jaccard | 0.075–0.145 | 0.265–0.452 |
+
+Hub strength mostly follows the TF's own value in the profile, its expression relative to the gene's
+corpus median. The Spearman between the two has a median of 0.83 over April's networks in both spaces,
+and 0.79 (rat) and 0.84 (human) over v2's (range 0.63–0.95; `hub_expr.py`).
+
+Conservation, per network:
+
+| Network | April: median ρ (share ≥ 0.3) | v2: median ρ (share ≥ 0.3) | TFs both score: v2 lower |
+|---|---|---|---|
+| BLOOD basophils | 0.3384 (0.573) | 0.3521 (0.557) | 49 of 97 |
+| BLOOD classical monocytes | 0.4591 (0.865) | 0.1713 (0.218) | 101 of 101 |
+| BLOOD ISG-expressing T cells | 0.4885 (0.866) | 0.1956 (0.374) | 106 of 107 |
+| BLOOD megakaryocytes | 0.4509 (0.695) | 0.4420 (0.821) | 31 of 84 |
+| BLOOD non-classical monocytes | 0.4337 (0.803) | 0.2674 (0.444) | 105 of 108 |
+| LUNG endothelial cells | 0.2701 (0.428) | 0.2179 (0.348) | 82 of 135 |
+| SKMGN skeletal myocytes | 0.5317 (0.862) | 0.4010 (0.670) | 92 of 97 |
+| BLOOD memory T cells | 0.5861 (0.986) | — | |
+| HEART monocytes | 0.3393 (0.640) | — | |
+| SKMVL endothelial cells | 0.6021 (0.948) | — | |
+| SKMVL skeletal myocytes | 0.4602 (0.736) | — | |
+| BLOOD NK cells | — | 0.2764 (0.439) | |
+| SKMGN endothelial cells | — | 0.3911 (0.644) | |
+| **Median over networks** | **0.4591** | **0.2764** | |
+| **All TF scores: median ρ (share ≥ 0.3)** | **0.451 (0.764), 1,275 scores** | **0.292 (0.487), 944 scores** | **566 of 729** |
+
+Over the 7 shared networks, the median of the per-network medians is 0.4509 for April and 0.2674 for v2.
+
+The script's anchors (Spi1 and Cebpa for myeloid, Mef2c and Myf6 for myogenic), ρ (p):
+
+| Network | Anchor | April | v2 |
+|---|---|---|---|
+| BLOOD basophils | Cebpa | 0.1499 (0.058) | 0.1629 (0.053) |
+| BLOOD basophils | Spi1 | 0.3648 (2.5e-7) | 0.3753 (4.5e-6) |
+| BLOOD classical monocytes | Cebpa | 0.4210 (3.0e-8) | 0.1089 (0.080) |
+| BLOOD classical monocytes | Spi1 | 0.2872 (6.7e-5) | −0.0071 (0.92) |
+| BLOOD megakaryocytes | Spi1 | 0.4426 (6.1e-8) | 0.4207 (1.9e-7) |
+| BLOOD non-classical monocytes | Cebpa | 0.5019 (1.1e-23) | 0.2668 (0.0032) |
+| BLOOD non-classical monocytes | Spi1 | 0.2754 (5.9e-5) | −0.0460 (0.55) |
+| SKMGN skeletal myocytes | Mef2c | 0.0735 (0.37) | 0.0218 (0.80) |
+| SKMGN skeletal myocytes | Myf6 | 0.3675 (5.6e-7) | 0.3345 (3.5e-6) |
+| SKMGN endothelial cells | Mef2c | — | 0.2206 (0.016) |
+| SKMVL endothelial cells | Mef2c | 0.5198 (1.6e-15) | — |
+| SKMVL skeletal myocytes | Mef2c | 0.2303 (0.0027) | — |
+| SKMVL skeletal myocytes | Myf6 | 0.2768 (2.9e-4) | — |
+
+At p < 0.05, April has 10 of 12 and v2 5 of 10. In the 7 shared networks, April has 7 of 9 and v2 4 of 9.
+
+What this shows:
+- **Regulators named.** In the shared networks, v2's top hubs overlap April's (4–9 of the top 10 in rat
+  space). Most of that agreement comes from the inputs. Hub strength largely follows each TF's value
+  in the profile, and on the same tokens the two models rank hubs almost identically.
+- **Edges.** The two models disagree on most individual edges. Even on the same tokens, only 27–45% of
+  the edges confident in either model are confident in both, and Δ agrees at Spearman 0.41–0.57.
+- **Self-consistency.** v2's networks agree less between the rat and the human tokens. Per TF the median
+  ρ is 0.292 against April's 0.451, and 49% of TF scores reach ρ ≥ 0.3 against 76%.
+  - The drop is largest in BLOOD classical and non-classical monocytes and ISG-expressing T cells, to
+    0.17–0.27. It is smaller in SKMGN skeletal myocytes and LUNG endothelial cells.
+  - Basophils and megakaryocytes are unchanged.
+  - Among the anchors, v2 loses Spi1 in both monocyte networks and Cebpa in classical monocytes.
+- **Other rat–human comparisons.** The drop goes the same way as v2's orthologs sitting less close in
+  C4b and Aim-1 V2, and its weaker rat ~ human ordering in the Stage 12 transfer (0.616 vs 0.762). It does
+  not match the Stage 12 cosine, where BLOOD cells move slightly less under v2.
+
+These runs cannot split the drop between v2's weights and v2's tokenization. v2's rat inputs sit further
+from the human inputs than April's (`inputs.py`):
+- Of the 2,048 tokens in each arm's rat profile, the share that the human profile of the same cells
+  also holds has a median of 0.810 under v2's tokenization and 0.893 under April's. v2's share is lower
+  in every network, by 0.055–0.092.
+- The shared tokens' values agree almost exactly under both (Spearman ≥ 0.997 in every arm).
+- Basophils and megakaryocytes, the two shared networks whose conservation held, have the two smallest
+  input changes (0.055 and 0.056).
+- Among the other five, the size of the drop does not follow the input change. Classical monocytes
+  change by 0.072 and drop 0.29; LUNG endothelial cells change by 0.077 and drop 0.05.
+
+Outputs: `data/deconvolution/grn_v2/` and `grn_v2_human/` (one `<network>_pooled.tsv` per network;
+`grn_v2_human/conservation/conservation_{per_tf,per_celltype,anchors}.tsv`). Comparison with April (jobs
+12016965, 12016980): `data/results/retrain_v2/downstream/grn_compare/` (`compare.py`, `inputs.py` and
+`hub_expr.py` with their outputs, and April's conservation recomputed).
+
 ### Stage 13 step 4 — pathway enrichment of each block's dose response (job 12016562)
 
 fgsea runs on each block's signed dose statistic, against Hallmark and Reactome (1,889 sets).
@@ -413,10 +552,15 @@ fgsea runs on each block's signed dose statistic, against Hallmark and Reactome 
   April's run for BLOOD memory T cells and naive B cells, where v2's gives 9e-23 and 2e-20.
 - TESTES: 1 hit in v2 (Sertoli cells), none in April.
 
+Outputs: `enrichment/` in v2's `pseudobulk_de/` (`enrichment_summary.tsv` and one
+`gsea__<TISSUE>__<cell type>.tsv` per block). Comparison with April:
+`data/results/retrain_v2/downstream/stage13_14_compare.{py,txt}`.
+
 ### Stage 14 steps 2–3 — composition confound and RIN/globin (job 12016562)
 
-Both tables are per block and do not use the model. Outside TESTES every value and verdict equals April's;
-what changes is which blocks are hotspots.
+Both tables are per block and do not use the model. Outside TESTES every value they compute, and every
+verdict, equals April's. What changes is which blocks are hotspots, and with it the gate AUC that the
+composition table carries for each hotspot.
 
 Composition confound: does the cell type's own fraction trend with training?
 - v2's 13 hotspots: 9 PASS_EXPRESSION; 2 FLAG_COMPOSITION (BLOOD NK cells, fraction trend p 0.0055;
@@ -429,6 +573,9 @@ RIN/globin: does each hotspot's dose response survive RIN and globin as covariat
 - v2: 11 ROBUST and 2 CHECK. The CHECKs are LUNG endothelial cells, which keeps 0.77 of its dose genes,
   and LUNG macrophages, 0.78. The median Spearman of the dose t is 0.997.
 - April: 14 ROBUST and 1 CHECK (LUNG endothelial cells).
+
+Outputs: `composition_confound_table.tsv` and `rin_globin_robustness.tsv` in v2's `pseudobulk_de/`.
+Comparison with April: `data/results/retrain_v2/downstream/stage13_14_compare.{py,txt}`.
 
 ### Pseudo-cell UMAP and viewer (job 12015438)
 
