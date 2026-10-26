@@ -324,6 +324,10 @@ Outputs: `transfer_comparison.{tsv,md}` in each model's `genecompass_input*_huma
 method), in `genecompass_input_v2_human/` (v2 registered) and in `genecompass_input_human/` (April
 registered). Summary values are in `data/results/retrain_v2/c5/gate_summary.json`.
 
+`pipeline/run_stage12.py` now runs steps 3-4 by the C5 method and writes into `gate_rcv10/` (2026-10-25); on
+the v2 default config its rerun (job 12021284) reproduced v2's C5 `subspace_probe.tsv`, `transfer_comparison.tsv`
+and `transfer_comparison.md` byte for byte.
+
 ### Stage 13, Module A — four perturbation checks (2026-10-24, jobs 12013970, 12014307)
 
 Both models on the current SKMVL pseudo-cells (cell type "Skeletal myocytes", 50 cells), the frozen

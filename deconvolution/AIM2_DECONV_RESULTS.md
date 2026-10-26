@@ -65,7 +65,7 @@ The data enters at **two nested levels**:
 
 **⚠ Cross-tissue comparability caveat.** Because each tissue uses a different reference, the *same* cell-type label across tissues (e.g. "Macrophages" in WAT vs lung) is deconvolved against different references from different mixtures and is **not strictly the same population** in the embedding. The gate and the planned per-cell-type DE operate **strictly within a single (tissue × cell type)**, so they are insulated. What is **not** licensed: comparing the same cell type across tissues, or reading the Atlas's between-tissue layout as biology. To compare a shared cell type across tissues (e.g. a common immune exercise response), use a shared pan-tissue reference for those types, or scope claims within-tissue.
 
-**Value-channel QC (per-tissue normalization drift).** Tokenization library-normalizes each pseudo-cell to a single global `target-sum = 6500`. The token *ranking* (`input_ids`, the primary signal) is normalization-invariant, but the `values` channel's median drifts by tissue vs the corpus reference (0.869): liver +0.3%, blood +1.4%, watsc +4.4%, skmgn +5.9%, hippoc +8.0%, heart +8.4%, cortex +9.1%, skmvl +12.4%, lung +17.0%, **kidney +23.3%**. The drift is ~constant within a tissue, so **within-tissue contrasts are unaffected**; it adds a small extra term to the cross-tissue confound above. If cross-tissue value comparisons become important, calibrate `target-sum` per tissue so each value-median lands near 0.869.
+**Value-channel QC (per-tissue normalization drift).** Tokenization library-normalizes each pseudo-cell to a single global target sum (`deconvolution.pseudocell_target_sum`: April 6,500, the figures here; v2 6,400). The token *ranking* (`input_ids`, the primary signal) is normalization-invariant, but the `values` channel's median drifts by tissue vs the corpus reference (0.869): liver +0.3%, blood +1.4%, watsc +4.4%, skmgn +5.9%, hippoc +8.0%, heart +8.4%, cortex +9.1%, skmvl +12.4%, lung +17.0%, **kidney +23.3%**. The drift is ~constant within a tissue, so **within-tissue contrasts are unaffected**; it adds a small extra term to the cross-tissue confound above. If cross-tissue value comparisons become important, calibrate `target-sum` per tissue so each value-median lands near 0.869.
 
 **Viewer note.** The Atlas UMAP is a cosine UMAP of the **768-d GeneCompass CLS embeddings** (not the raw input). The Focus tab projects those same embeddings onto a **pooled within-cell-type PCA**: each (tissue × cell-type) centroid is removed (stripping the dominant between-type variance), the residuals are scaled per group, then pooled, standardized, and reduced by a **single** PCA — one stable, drift-free, common frame across cell types, rather than 186 independent per-group PCAs on ~50 points. This surfaces the within-type (exercise/sex) structure the global UMAP compresses.
 
@@ -274,7 +274,8 @@ parenchyma DE is faithful-to-bulk, but its canonical transcript controls are gen
 
 **Artifacts:** `run_pseudobulk_de.{R,sh}`, `pipeline/run_stage10.py`, `POSCTRL_PREREG.md` + `build_posctrl_prereg.py`
 + `reference/posctrl_prereg.tsv`, `compare_posctrl.py`, `diagnose_parenchyma.py`, `validate_parenchyma_dataanchored.py`,
-`build_reference.py` (muscle scheme); outputs under `genecompass_input/pseudobulk_de/` (+ `_merged/` for the
+`build_reference.py` (muscle scheme); outputs under `genecompass_input/pseudobulk_de/` (April; v2's rerun in
+`genecompass_input_v2/pseudobulk_de/`) (+ `_merged/` for the
 SKMVL/cortex re-deconvolutions). `DOWNSTREAM_BUILD_PLAN.md` = the GRN/perturbation/cross-species build map.
 
 ---
@@ -299,7 +300,7 @@ human atlas (E.3) is an optional interpretive backdrop, not a gate.
 **Method.** `translation/transfer_to_human.py` (E.1): rat ENSRNOG pseudo-cell → human ENSG profile via
 `rat_to_human_mapping.pickle` (many rat orthologs of one human gene are **summed**; ~82% of genes / ~81% of
 count-mass map; rat-specific T4 genes dropped) → tokenize with **human ENSG tokens + human gene medians, the
-SAME target-sum 6500 + top-2048** as the rat path → embed with the **same** fine-tuned checkpoint but
+SAME target sum + top-2048** as the rat path (April 6,500; v2 6,400) → embed with the **same** fine-tuned checkpoint but
 `species=0`. Tokenization parity was verified before building (5-agent code map + 4-lens adversarial review):
 the rat tokens reuse the GeneCompass ID space, so 13,883/15,234 ortholog-mapped rat genes already carry their
 human ortholog's token (IDs 2–23114, in-vocab for the 55,275-row checkpoint), and only species==1 (mouse)
@@ -346,7 +347,9 @@ skeletal muscle — and recover known cell-type identity before trusting the tra
 **Artifacts:** `translation/transfer_to_human.py` (E.1), `translation/compare_transfer.py` (E.2 verdict),
 `pipeline/run_stage12.py` (driver), `corroborate_summary.py` (+`--gc-root`), `slurm/analysis/run_stage12{,_corroborate}.slurm`
 (local); fix to the shared `finetune/genecompass/embed_cells.py` (order-preserving cap; also hardens rat Stage 9).
-Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddings/`+`dataset/`,
+Outputs under `data/deconvolution/genecompass_input_human/` (April; v2's under `genecompass_input_v2_human/`, and
+the canonical 10-split probe + comparison, which `run_stage12.py` now writes, under `<root>/gate_rcv10/`)
+(per-tissue `embeddings/`+`dataset/`,
 `subspace_probe.tsv`, `pheno_merge_test.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv`,
 `transfer_comparison.{tsv,md}`). The reframe + build map: `DOWNSTREAM_BUILD_PLAN.md` Module E.
 
@@ -377,14 +380,24 @@ Outputs under `data/deconvolution/genecompass_input_human/` (per-tissue `embeddi
 
 **Committed code** (`deconvolution/`):
 - `pheno_merge_test.py` — the Aim-2 gate (global trace-η²).
-- `subspace_probe.py` — the §3b re-measurement (standardized η², per-dim max-stat scan, supervised PLS-1 CV probe; 1000-perm null).
+- `subspace_probe.py` — the §3b re-measurement (standardized η², per-dim max-stat scan, supervised PLS-1 CV probe; canonical gate = `--repeats 10 --perms 10000`).
 - `augur_prep.py` + `run_augur.R` + `corroborate_summary.py` — canonical Augur (R, neurorestore 1.0.3) + PCA-vs-embedding control + the merge/verdict.
 - `build_umap_viewer.py` + `umap_viewer_template.html` — extract data → self-contained viewer.
 
 **Regenerate:**
 ```bash
 source /depot/reese18/apps/motrpac-env/bin/activate
+G=data/deconvolution/genecompass_input_v2; R=$G/gate_rcv10      # v2 = the default config
 python deconvolution/pheno_merge_test.py        # → pheno_merge_test.tsv  (auto-discovers all tissues with embeddings)
+# canonical gate (pre-registration §6): 10 splits x 10,000 permutations -> the hotspot table in gate_rcv10/
+python deconvolution/subspace_probe.py --gc-root $G --perms 10000 --folds 5 --repeats 10 --out $R/subspace_probe.tsv
+python deconvolution/augur_prep.py --gc-root $G --pca 50 --perms 10000 --folds 5 --repeats 10 \
+    --out data/deconvolution/augur_input_v2 --ctl-out $R/pca_control.tsv
+Rscript deconvolution/run_augur.R data/deconvolution/augur_input_v2 $G/augur_results.tsv
+ln -s ../augur_results.tsv $R/augur_results.tsv
+python deconvolution/corroborate_summary.py --gc-root $R   # → $R/corroboration_merged.tsv (13 hotspots)
+python pipeline/run_stage10.py                  # DE etc. on deconvolution.hotspots_table
+python pipeline/run_stage12.py --from 3         # human-space probe + comparison, same method → <human>/gate_rcv10/
 python deconvolution/build_umap_viewer.py       # → umap/viewer.html + viewer_data.json
 ```
 

@@ -258,7 +258,7 @@ data/deconvolution/
 - `motrpac_bulk_dir: data/motrpac/rat_training_6mo/data` — Source `TRNSCRPT_*.rda` files.
 - `motrpac_bulk_out: data/deconvolution/motrpac_bulk` — Lifted bulk output.
 - `results_dir: data/deconvolution/results` — BayesPrism + Z extraction output.
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Pseudo-cells (Stage 9 input).
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Pseudo-cells (Stage 9 input).
 - `n_cores: 4` — Parallel cores for BayesPrism step 2.
 - `r_module: r/4.4.1` — R module name (cluster-specific; overridable in `site.env`).
 
@@ -271,16 +271,16 @@ data/deconvolution/
 **Invocation:**
 ```bash
 python pipeline/run_stage9.py --label skmgn \
-    [--model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species] \
-    [--target-sum 6500.0] [--n-cells 1000000] [--from 1] [--dry-run] [--device cuda]
+    [--model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species] \
+    [--target-sum 6400] [--n-cells 1000000] [--from 1] [--dry-run] [--device cuda]
 ```
 
 **Parameters:**
-- `--label` (REQUIRED or `--tissue`): Tissue label matching Stage 8 `--label`; folder name in `genecompass_input/<label>/`.
+- `--label` (REQUIRED or `--tissue`): Tissue label matching Stage 8 `--label`; folder name in `<genecompass_input_dir>/<label>/` (v2: `genecompass_input_v2/`).
 - `--tissue` (alternative to `--label`): MoTrPAC tissue code; label is derived as lowercase slug.
-- `--model-dir`: Path to fine-tuned rat GeneCompass checkpoint directory or parent with `checkpoint-*` subdirs (orchestrator picks highest-numbered checkpoint). Defaults to config `deconvolution.genecompass_model_dir` (e.g., `data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species`).
+- `--model-dir`: Path to fine-tuned rat GeneCompass checkpoint directory or parent with `checkpoint-*` subdirs (orchestrator picks highest-numbered checkpoint). Defaults to config `deconvolution.genecompass_model_dir` (v2: `data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` → `checkpoint-591763`).
 - `--n-cells` (optional): Max cells to embed; defaults to all pseudo-cells (full coverage, never subsamples; embed_cells auto-subsamples and breaks row alignment if `n_cells < actual`).
-- `--target-sum: 6500.0` — Normalization target for tokenizer `normalize_total()`. Must match corpus tokenization (calibrated on 10,000-normalized single cells; 6500 is a corpus-scale downsample). **Critical:** For Stage 12 (human transfer), must match the rat Stage 9 value.
+- `--target-sum` — Normalization target for tokenizer `normalize_total()`; default `deconvolution.pseudocell_target_sum` (v2 6,400; April 6,500), calibrated so the pseudo-cells' value median matches the model's corpus. **Critical:** For Stage 12 (human transfer), must match the rat Stage 9 value.
 - `--pa-genes`: Pass PA (training-regulated) gene priority list to tokenizer; off by default. Requires `config[deconvolution][pa_genes]` to point to a valid TSV.
 - `--device cuda` or `cpu`: GPU/CPU for embedding model (GPU required for production; CPU for testing).
 - `--from (1–2)`: Resume from step N.
@@ -313,8 +313,8 @@ data/deconvolution/genecompass_input/<label>/
 **Scope & Scaling:** Per-tissue (one label per run). Step 1 is light (login node); step 2 (embed_cells) is GPU-heavy and requires a GPU node.
 
 **Config Keys (from `config/pipeline_config.yaml[deconvolution]`):**
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Pseudo-cells input, embeddings output.
-- `genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species` — Default fine-tuned model directory.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Pseudo-cells input, embeddings output.
+- `genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` — Default fine-tuned model directory.
 - `pa_genes: deconvolution/reference/motrpac_pa_genes.tsv` — Training-regulated genes (optional; used if `--pa-genes` flag set).
 
 ---
@@ -372,7 +372,8 @@ data/deconvolution/genecompass_input/pseudobulk_de/
 
 **Config Keys:**
 - `results_dir: data/deconvolution/results` — Source pred_z directories.
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Output pseudobulk_de/ dir.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Output pseudobulk_de/ dir.
+- `hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv` — The rat gate whose q_sup_trained < 0.05 blocks are the hotspots (`--hotspots` overrides).
 - `reference_dir: deconvolution/reference` — Frozen posctrl_prereg.tsv.
 - `alpha: 0.05` — (from command-line override).
 
@@ -386,19 +387,19 @@ data/deconvolution/genecompass_input/pseudobulk_de/
 ```bash
 python pipeline/run_stage12.py \
     [--labels liver skmvl] \
-    [--model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species] \
-    [--target-sum 6500.0] [--n-cells 1000000] [--perms 1000] [--jobs 8] \
+    [--model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species] \
+    [--target-sum 6400] [--n-cells 1000000] [--perms 10000] [--repeats 10] [--jobs 8] \
     [--from 1] [--device cuda] [--dry-run] [-v]
 ```
 
 **Parameters:**
-- `--labels` (optional): Tissue labels for per-tissue steps 1–2; defaults to all rat tissues (auto-discovered from `genecompass_input/<label>/pseudocells.h5ad`).
+- `--labels` (optional): Tissue labels for per-tissue steps 1–2; defaults to all rat tissues (auto-discovered from `<genecompass_input_dir>/<label>/pseudocells.h5ad`).
 - `--label` (alias): Single tissue label.
 - `--model-dir`: Fine-tuned rat GeneCompass (same model as Stage 9; used for both species=2 and species=0 embedding).
-- `--target-sum: 6500.0` — **MUST match Stage 9 rat tokenization** (human tokenizer will use same value).
+- `--target-sum` — **MUST match Stage 9 rat tokenization**; default `deconvolution.pseudocell_target_sum` (v2 6,400), the same key Stage 9 reads.
 - `--n-cells`: Max pseudo-cells to embed (default: 1M >> any tissue; never subsamples).
-- `--perms: 1000` — Permutations for subspace_probe statistical significance.
-- `--jobs: 8` — Parallel jobs for subspace_probe (CV folds).
+- `--perms: 10000`, `--repeats: 10` — subspace_probe permutations and stratified 5-fold splits; the default is the canonical gate method (pre-registration §6), the same as the rat gate in `deconvolution.hotspots_table`'s folder.
+- `--jobs: 8` — Parallel jobs for subspace_probe (blocks); use the node's CPU count (production used 48).
 - `--device cuda` or `cpu`.
 - `--from (1–4)`: Resume from step N (1–2 per-tissue transfer+embed; 3–4 global probe+compare).
 - `--dry-run, -v, --verbose`: As in Stage 8.
@@ -409,33 +410,37 @@ python pipeline/run_stage12.py \
 |------|--------|--------|-------------|----------|-----------|
 | 1 (per-tissue) | `translation/transfer_to_human.py` | Rat pseudocells.h5ad (species=2); rat–human ortholog table; human token dict + medians; ortholog mapping | Human-space `<human_root>/<label>/dataset/` (token_ids mapped to human ENSG space, species=0 flag); metadata | ~2–10s | Login |
 | 2 (per-tissue) | `finetune/genecompass/embed_cells.py --species 0` | Human dataset; model checkpoint (same as Stage 9); `--species 0` flag (triggers human embedder logic) | `<human_root>/<label>/embeddings/cell_embeddings.npy` (N_cells × 768); metadata | ~5–30m | GPU |
-| 3 (global) | `deconvolution/subspace_probe.py --gc-root <human_root>` | All human-space embeddings (collected from all labels); metadata (trained, control, dose); PHENO merge | `<human_root>/subspace_probe.tsv` (per cell_type: sup_trained_auc, sup_dose_rho, pval, perms; primary E.2 detector) | ~5–30m | CPU (parallel) |
-| 4 (global) | `translation/compare_transfer.py` | Rat corroboration results (pre-computed or from Stage 9 exploration); human subspace_probe; rat/human metadata | `<human_root>/transfer_comparison.tsv` (per tissue×cell_type: does the axis survive?); `transfer_comparison.md` (E.2 deliverable) | ~1m | Login |
+| 3 (global) | `deconvolution/subspace_probe.py --gc-root <human_root>` | All human-space embeddings (collected from all labels); metadata (trained, control, dose); PHENO merge | `<human_root>/gate_rcv10/subspace_probe.tsv` (per cell_type: sup_trained_auc, sup_dose_rho, pval; primary E.2 detector) | hours at 10 × 10,000 | CPU (parallel) |
+| 4 (global) | `translation/compare_transfer.py` | The rat gate (`deconvolution.hotspots_table`'s folder: `corroboration_merged.tsv` + `subspace_probe.tsv`); human subspace_probe | `<human_root>/gate_rcv10/transfer_comparison.tsv` (per tissue×cell_type: does the axis survive?); `transfer_comparison.md` (E.2 deliverable) | ~1m | Login |
 
 **Ortholog Projection (Step 1):** Each rat ENSRNOG pseudo-cell → rat_human_orthologs (preferring one2one > one2many) → human ENSG pseudo-cell. Non-orthologous genes are dropped. Tokenization then uses human gene medians + token IDs (recalibrated to human space).
 
 **Subspace Probe (Step 3):** PLS-1 CV on human-space embeddings, per cell type:
 - Supervised signals: trained (exercise-trained vs. control) + dose (ordinal exercise dose).
-- Metrics: AUC (trained), Spearman ρ (dose), permutation p-values (1000 perms).
+- Metrics: AUC (trained), Spearman ρ (dose), permutation p-values (mean over 10 splits; 10,000 permutations).
 - Output: A "verdict" row per cell type indicating whether the exercise axis survives transfer.
 
 **Output Structure:**
 ```
-data/deconvolution/genecompass_input_human/    # (parallel human-space mirror)
+data/deconvolution/genecompass_input_v2_human/ # (parallel human-space mirror; April: genecompass_input_human/)
   <label>/
     dataset/                                    # (human ENSG space, species=0)
     embeddings/
       cell_embeddings.npy
-  subspace_probe.tsv                            # (per cell_type: trained_auc, dose_rho, pval, ...)
-  transfer_comparison.tsv                       # (per tissue×cell_type: survival verdict)
-  transfer_comparison.md                        # (E.2 deliverable summary)
+  gate_rcv10/                                   # (Stage 12 steps 3-4, canonical 10 x 10,000 method)
+    subspace_probe.tsv                          # (per cell_type: trained_auc, dose_rho, pval, ...)
+    transfer_comparison.tsv                     # (per tissue×cell_type: survival verdict)
+    transfer_comparison.md                      # (E.2 deliverable summary)
+  subspace_probe.tsv, transfer_comparison.*     # (registered 1 x 1,000 method, from the §6 SLURM job; not Stage 12)
 ```
 
 **Scope & Scaling:** Per-tissue steps 1–2 (one label per run, parallelize across tissues); global steps 3–4 (all human embeddings pooled). Step 2 (GPU embed) is the bottleneck. Production SLURM jobs submit one job per tissue for steps 1–2, then a second global job for steps 3–4.
 
 **Config Keys:**
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Rat pseudo-cells + embeddings input.
-- `genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species` — Shared fine-tuned model.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Rat pseudo-cells + embeddings input (human root = this + `_human`).
+- `genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` — Shared fine-tuned model.
+- `pseudocell_target_sum: 6400` — Tokenizer target, shared with Stage 9.
+- `hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv` — the rat gate; its folder gives the rat side of the comparison and names the human output subfolder.
 - `rat_human_orthologs: data/references/biomart/rat_human_orthologs.tsv` — Ortholog mapping (Ensembl BioMart, rel-113).
 
 ---
@@ -796,9 +801,9 @@ python -c "from lib.gene_utils import load_config, validate_config; \
 | Stage | Orchestrator | Scope | Per-Step Scripts | Config Pins | Key Flags |
 |-------|--------------|-------|------------------|-------------|-----------|
 | **8** | `run_stage8.py` | Per-tissue | `prepare_motrpac_bulk.sh` → `run_deconvolution.sh` → `extract_z.sh` → `build_pseudocells.py` | `[deconvolution]`: motrpac_bulk_dir, results_dir, genecompass_input_dir, n_cores | `--tissue` (req), `--ref-dir` (req), `--label`, `--from`, `--dry-run` |
-| **9** | `run_stage9.py` | Per-tissue | `tokenize_pseudocells.py` → `embed_cells.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir | `--label` (req), `--model-dir`, `--target-sum 6500`, `--device cuda`, `--from`, `--dry-run` |
+| **9** | `run_stage9.py` | Per-tissue | `tokenize_pseudocells.py` → `embed_cells.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir | `--label` (req), `--model-dir`, `--target-sum` (config; v2 6400), `--device cuda`, `--from`, `--dry-run` |
 | **10** | `run_stage10.py` | Whole-exp | `run_pseudobulk_de.sh` (R) → `compare_posctrl.py` (py) | `[deconvolution]`: results_dir, genecompass_input_dir, reference_dir | `--tissues` (opt), `--alpha 0.05`, `--from`, `--dry-run` |
-| **12** | `run_stage12.py` | Per-tissue then global | (Steps 1–2) `transfer_to_human.py` → `embed_cells.py`; (Steps 3–4) `subspace_probe.py` → `compare_transfer.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir, rat_human_orthologs | `--labels` (opt), `--model-dir`, `--target-sum 6500`, `--device cuda`, `--from`, `--dry-run` |
+| **12** | `run_stage12.py` | Per-tissue then global | (Steps 1–2) `transfer_to_human.py` → `embed_cells.py`; (Steps 3–4) `subspace_probe.py` → `compare_transfer.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir, rat_human_orthologs | `--labels` (opt), `--model-dir`, `--target-sum` (config; v2 6400), `--perms 10000`, `--repeats 10`, `--device cuda`, `--from`, `--dry-run` |
 
 
 ---

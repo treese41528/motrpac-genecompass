@@ -42,7 +42,7 @@ source /depot/reese18/apps/motrpac-env/bin/activate  # ← back to the pipeline 
 **Never `pip install cpa-tools` (or scvi-tools / pytorch-lightning) into `motrpac-env`.**
 Use `cpa-env`. There is no shared Python state to worry about: the CPA driver reads the
 pipeline's outputs as plain files on disk —
-`data/deconvolution/genecompass_input/<tissue>/pseudocells.h5ad`,
+`<genecompass_input_dir>/<tissue>/pseudocells.h5ad` (v2: `data/deconvolution/genecompass_input_v2/`),
 `.../pseudobulk_de/de_hotspots.tsv`, `.../<TISSUE>/de__<celltype>.tsv` — and writes its own
 outputs under `.../<tissue>/cpa/`. The two environments never need to be active at the same time.
 

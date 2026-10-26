@@ -35,11 +35,11 @@ M (1-3 days), L (1-2 weeks). Paths are relative to the repo root.
 
 | Input | Path |
 |---|---|
-| Fine-tuned rat model | `deconvolution.genecompass_model_dir` -> `data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species` (`config.json` + `.../models/pytorch_model.bin`; vocab 55275x768, 4 knowledge tensors) |
-| Tokenized pseudo-cells | `data/deconvolution/genecompass_input/<tissue>/dataset` (cols: input_ids, values, length, species=2, cell_id, sample, cell_type, tissue) |
+| Fine-tuned rat model | `deconvolution.genecompass_model_dir` -> v2 (default since 2026-10-25) `data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` (`checkpoint-591763`); April's `rat_genecompass_finetuned/...` via `config/profiles/april.yaml` (vocab 55275x768, 4 knowledge tensors) |
+| Tokenized pseudo-cells | `deconvolution.genecompass_input_dir` -> `data/deconvolution/genecompass_input_v2/<tissue>/dataset` (April: `genecompass_input/`) (cols: input_ids, values, length, species=2, cell_id, sample, cell_type, tissue) |
 | CLS embeddings | `.../<tissue>/embeddings/cell_embeddings.npy` |
 | Rat vocab / token dicts | `data/training/ortholog_mappings/{rat_tokens.pickle, rat_human_mouse_tokens.pickle (4,717 ENSRNOG keys), rat_token_mapping.tsv (human_ortholog+confidence), rat_to_human_mapping.pickle (15,234 / 94.5%)}` |
-| Hotspots | `.../genecompass_input/corroboration_merged.tsv` (q_sup_trained<0.05 -> 13 blocks) |
+| Hotspots | `deconvolution.hotspots_table` -> `.../genecompass_input_v2/gate_rcv10/corroboration_merged.tsv` (q_sup_trained<0.05 -> 13 blocks under v2; April 16) |
 | DE outputs (target gate) | `.../pseudobulk_de/{de_summary.tsv, de__*.tsv}` |
 | Loader pattern to copy | `finetune/genecompass/embed_cells.py:87-128` |
 
@@ -202,7 +202,7 @@ backdrop) -- NOT a binding gap. The output is a COUNTERFACTUAL human representat
 > **BUILT 2026-06-24** -- `translation/transfer_to_human.py` (E.1) + `pipeline/run_stage12.py`
 > (orchestrator) + `translation/compare_transfer.py` (E.2) + `slurm/analysis/run_stage12.slurm`.
 > Tokenization parity verified against the actual rat path before writing a line (5-agent map +
-> 4-lens adversarial review): target_sum **6500** (not the corpus 10000 -- all 14 rat runs use 6500),
+> 4-lens adversarial review): target_sum **6500** (not the corpus 10000 -- all 14 rat runs use 6500; v2 recalibrated to 6,400, `deconvolution.pseudocell_target_sum`),
 > top-2048, log2(1+x/median), species=0. The "rat checkpoint can't embed human tokens" worry was
 > DISPROVEN: rat tokens reuse the GeneCompass ID space, so 13,883/15,234 ortholog-mapped rat genes
 > already carry their human ortholog's token ID; human ENSG token IDs are 2..23114, inside the 55,275
