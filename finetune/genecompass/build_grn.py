@@ -17,8 +17,8 @@ and the target aggregation are what make it a population, exercise-conditioned n
 
 Usage:
   python finetune/genecompass/build_grn.py \
-      --model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models \
-      --dataset data/deconvolution/genecompass_input/skmvl/dataset \
+      --model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/checkpoint-591763 \
+      --dataset data/deconvolution/genecompass_input_v2/skmvl/dataset \
       --meta    data/deconvolution/augur_input/skmvl/meta.tsv \
       --cell-type "Skeletal muscle" --out data/deconvolution/grn/skmvl_skm.tsv --device cuda
 """

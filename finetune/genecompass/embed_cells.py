@@ -14,9 +14,9 @@ expression profile.
 
 Usage:
   python embed_cells.py \
-    --model-dir data/models/rat_genecompass_finetuned/models/rat_finetune/models \
-    --dataset data/training/tokenized_corpus/dataset \
-    --output data/models/rat_genecompass_finetuned/embeddings \
+    --model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/checkpoint-591763 \
+    --dataset data/training/tokenized_corpus_v2/dataset \
+    --output data/models/rat_genecompass_finetuned_v2/embeddings \
     --n-cells 10000 \
     --species 2
 

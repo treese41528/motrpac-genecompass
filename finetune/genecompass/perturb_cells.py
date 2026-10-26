@@ -22,8 +22,8 @@ DESIGN (why this is a clean rewrite, not the vendored class):
 
 Usage:
   python finetune/genecompass/perturb_cells.py \
-      --model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models \
-      --dataset   data/deconvolution/genecompass_input/skmvl/dataset \
+      --model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/checkpoint-591763 \
+      --dataset   data/deconvolution/genecompass_input_v2/skmvl/dataset \
       --genes ENSRNOG00000010829 \            # or --gene-file <tsv of ENSRNOG, 1/line>
       --cell-type "Skeletal muscle" \          # optional; default = all cell types
       --mode delete --targets --out out.tsv --device cuda

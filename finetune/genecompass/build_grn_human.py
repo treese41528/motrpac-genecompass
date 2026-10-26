@@ -16,7 +16,7 @@ projection (compare_grn_conservation.py).
 
 Usage (species-aware; mirrors build_grn_pooled args):
   python finetune/genecompass/build_grn_human.py --model-dir <...> \
-    --dataset data/deconvolution/genecompass_input_human/skmvl/dataset \
+    --dataset data/deconvolution/genecompass_input_v2_human/skmvl/dataset \
     --meta data/deconvolution/augur_input/skmvl/meta.tsv --cell-type "Skeletal muscle" \
     --out data/deconvolution/grn_human/skmvl_skeletal_muscle_pooled.tsv --bootstrap 30 --device cuda
 """

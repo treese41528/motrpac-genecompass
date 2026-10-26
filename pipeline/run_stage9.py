@@ -9,7 +9,7 @@ part of the pipeline and is run separately.
 
 Per-tissue chain:
   1. deconvolution/tokenize_pseudocells.py            (py; reuses pipeline/05 tokenizer)
-       pseudocells.h5ad -> normalize_total(--target-sum 6500) -> rank -> top-N
+       pseudocells.h5ad -> normalize_total(--target-sum; config pseudocell_target_sum, v2 6,400) -> rank -> top-N
        token seqs -> dataset/ (+ tokenize_summary.json)
   2. finetune/genecompass/embed_cells.py              (py; GPU)
        CLS (position-0) embedding from the fine-tuned rat GeneCompass ->

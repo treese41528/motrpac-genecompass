@@ -22,8 +22,8 @@ Output: <out>/dataset  (datasets.load_from_disk-able; cols input_ids, values, le
 
 Usage (project venv):
   python deconvolution/tokenize_pseudocells.py \
-      --h5ad data/deconvolution/genecompass_input/liver/pseudocells.h5ad \
-      --out  data/deconvolution/genecompass_input/liver --target-sum 10000
+      --h5ad data/deconvolution/genecompass_input_v2/liver/pseudocells.h5ad \
+      --out  data/deconvolution/genecompass_input_v2/liver --target-sum 10000
 """
 import argparse
 import json
@@ -89,9 +89,10 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--h5ad", required=True, help="pseudocells.h5ad from build_pseudocells.py")
     ap.add_argument("--out", required=True, help="output dir (writes dataset/ + tokenize_summary.json)")
-    ap.add_argument("--target-sum", type=float, default=6500.0,
-                    help="per-pseudo-cell library normalization target; 6500 calibrates the value "
-                    "distribution to the corpus (value median ~0.87). The script prints the achieved "
+    ap.add_argument("--target-sum", type=float, default=None,
+                    help="per-pseudo-cell library normalization target (default: "
+                    "deconvolution.pseudocell_target_sum -- v2 6,400, April 6,500 -- which calibrates the "
+                    "value distribution to the model's corpus; 6500 if unset). The script prints the achieved "
                     "median -- re-check/adjust per tissue if it drifts from the corpus reference.")
     ap.add_argument("--top-n", type=int, default=TOP_N_DEFAULT)
     ap.add_argument("--species", type=int, default=2, help="GeneCompass species id (rat=2)")
@@ -110,6 +111,8 @@ def main():
 
     cfg = load_config()
     paths = cfg["paths"]
+    if args.target_sum is None:
+        args.target_sum = float(cfg["deconvolution"].get("pseudocell_target_sum", 6500.0))
     token_dict = load_token_dict(Path(resolve_path(cfg, paths["ortholog_dir"])))
     median_dict = load_median_dict(Path(resolve_path(cfg, paths["median_dir"])))
     eligible_ids, eligible_tokens, eligible_medians = build_eligible_gene_arrays(token_dict, median_dict)

@@ -116,7 +116,7 @@ def load_pipeline_config(config_path: str = None) -> dict:
     """
     Load finetuning config. Supports two formats:
 
-    1. Standalone config (finetune/genecompass/configs/rat_4gpu.yaml):
+    1. Standalone config (finetune/genecompass/configs/rat_finetune_v2.yaml; April: rat_finetune.yaml):
        Has top-level sections: model, data, training, initialization, logging, output
 
     2. Legacy pipeline_config.yaml with a flat finetuning: section
@@ -290,11 +290,11 @@ def main(args):
     )
     dataset_dir = resolve_path(
         args.dataset_directory or ft_config.get('dataset_directory',
-            'data/training/tokenized_corpus/dataset')
+            'data/training/tokenized_corpus_v2/dataset')
     )
     output_dir = resolve_path(
         args.output_directory or ft_config.get('output_directory',
-            'data/models/rat_genecompass_finetuned')
+            'data/models/rat_genecompass_finetuned_v2')
     )
     stage6_dir = resolve_path(
         ft_config.get('stage6_dir', 'data/training/prior_knowledge')

@@ -5,7 +5,7 @@ run_stage7.py — Orchestrator for Stage 7 fine-tuning.
 
 Two-step pipeline:
   Step 1: rat_model_init.py — Extend GeneCompass_Base checkpoint for rat vocab
-  Step 2: rat_pretrain.py  — Fine-tune on 9.48M rat cells (SLURM submission)
+  Step 2: rat_pretrain.py  — Fine-tune on the mixed-species set (SLURM submission; v2 = 6,803,206 rat cells)
 
 Usage:
   python run_stage7.py              # Run both steps
@@ -45,7 +45,7 @@ def load_config(config_path: str = None):
     """Load finetuning config — standalone or pipeline_config.yaml."""
     if config_path is None:
         # Default: standalone GeneCompass config
-        config_path = _PROJECT_ROOT / 'finetune' / 'genecompass' / 'configs' / 'rat_4gpu.yaml'
+        config_path = _PROJECT_ROOT / 'finetune' / 'genecompass' / 'configs' / 'rat_finetune_v2.yaml'
     with open(config_path) as f:
         raw = yaml.safe_load(f)
 
@@ -55,6 +55,7 @@ def load_config(config_path: str = None):
         for section in ('model', 'data', 'training', 'initialization',
                         'logging', 'output', 'distributed'):
             flat.update(raw.get(section, {}))
+        flat['_config_path'] = str(config_path)
         return flat
 
     # Legacy: pipeline_config.yaml with finetuning: section
@@ -193,20 +194,27 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
 
 def submit_training(config: dict, dry_run: bool = False) -> bool:
     """Step 2: Submit SLURM job for fine-tuning."""
-    slurm_script = _PROJECT_ROOT / 'slurm' / 'stage7.slurm'
+    slurm_script = _PROJECT_ROOT / 'slurm' / 'finetune' / 'stage7.slurm'
+    # the SLURM script trains from CONFIG into OUT; pass this run's config so it matches Step 1
+    env = dict(os.environ)
+    if config.get('_config_path'):
+        env['CONFIG'] = os.path.relpath(config['_config_path'], _PROJECT_ROOT)
+    if config.get('output_directory'):
+        env['OUT'] = config['output_directory']
 
     if not slurm_script.exists():
         logger.error(f"SLURM script not found: {slurm_script}")
         return False
 
     if dry_run:
-        logger.info(f"[DRY RUN] Would submit: sbatch {slurm_script}")
+        logger.info(f"[DRY RUN] Would submit: CONFIG={env.get('CONFIG')} OUT={env.get('OUT')} "
+                    f"sbatch {slurm_script}")
         return True
 
     logger.info("Step 2: Submitting fine-tuning SLURM job...")
     result = subprocess.run(
         ['sbatch', str(slurm_script)],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=env,
     )
 
     if result.returncode != 0:
@@ -224,7 +232,7 @@ def submit_training(config: dict, dry_run: bool = False) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Stage 7 orchestrator")
     parser.add_argument('--config', default=None, type=str,
-                        help='Path to config YAML (default: finetune/genecompass/configs/rat_4gpu.yaml)')
+                        help='Path to config YAML (default: finetune/genecompass/configs/rat_finetune_v2.yaml; April: rat_finetune.yaml)')
     parser.add_argument('--from', dest='start_step', type=int, default=1,
                         help='Start from step N (1=init, 2=train)')
     parser.add_argument('--dry-run', action='store_true',
