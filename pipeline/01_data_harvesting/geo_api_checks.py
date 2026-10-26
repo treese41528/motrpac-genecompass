@@ -12,11 +12,11 @@ Systematically test different approaches for:
 Run this BEFORE modifying the main harvester to verify approaches work.
 
 Usage:
-    python test_geo_approaches.py --email your@email.com [--api-key KEY]
-    python test_geo_approaches.py --email your@email.com --test-all
-    python test_geo_approaches.py --email your@email.com --test-search
-    python test_geo_approaches.py --email your@email.com --test-ftp
-    python test_geo_approaches.py --email your@email.com --test-diagnose
+    python pipeline/01_data_harvesting/geo_api_checks.py --email your@email.com [--api-key KEY]
+    python pipeline/01_data_harvesting/geo_api_checks.py --email your@email.com --test-all
+    python pipeline/01_data_harvesting/geo_api_checks.py --email your@email.com --test-search
+    python pipeline/01_data_harvesting/geo_api_checks.py --email your@email.com --test-ftp
+    python pipeline/01_data_harvesting/geo_api_checks.py --email your@email.com --test-diagnose
 """
 
 import os
@@ -97,7 +97,7 @@ class TestSuite:
 # SECTION 0: DIAGNOSTIC TESTS - Figure out why Entrez is failing
 # =============================================================================
 
-def test_direct_ncbi_http(email: str) -> TestResult:
+def check_direct_ncbi_http(email: str) -> TestResult:
     """Test direct HTTP request to NCBI (bypassing Biopython)"""
     t0 = time.time()
     
@@ -157,7 +157,7 @@ def test_direct_ncbi_http(email: str) -> TestResult:
         )
 
 
-def test_direct_ncbi_https_variants(email: str) -> List[TestResult]:
+def check_direct_ncbi_https_variants(email: str) -> List[TestResult]:
     """Test different NCBI URL variants"""
     results = []
     
@@ -209,7 +209,7 @@ def test_direct_ncbi_https_variants(email: str) -> List[TestResult]:
     return results
 
 
-def test_biopython_version() -> TestResult:
+def check_biopython_version() -> TestResult:
     """Check Biopython version"""
     if not BIOPYTHON_AVAILABLE:
         return TestResult(
@@ -229,7 +229,7 @@ def test_biopython_version() -> TestResult:
     )
 
 
-def test_entrez_different_databases(email: str) -> List[TestResult]:
+def check_entrez_different_databases(email: str) -> List[TestResult]:
     """Test Entrez with different databases to isolate the problem"""
     results = []
     
@@ -273,7 +273,7 @@ def test_entrez_different_databases(email: str) -> List[TestResult]:
     return results
 
 
-def test_entrez_configuration() -> TestResult:
+def check_entrez_configuration() -> TestResult:
     """Check Entrez configuration and internal state"""
     details = {}
     
@@ -319,7 +319,7 @@ def test_entrez_configuration() -> TestResult:
         )
 
 
-def test_entrez_with_tool_set(email: str) -> TestResult:
+def check_entrez_with_tool_set(email: str) -> TestResult:
     """Test if setting Entrez.tool helps"""
     t0 = time.time()
     
@@ -349,7 +349,7 @@ def test_entrez_with_tool_set(email: str) -> TestResult:
         )
 
 
-def test_entrez_url_construction(email: str) -> TestResult:
+def check_entrez_url_construction(email: str) -> TestResult:
     """Inspect what URL Biopython constructs"""
     t0 = time.time()
     
@@ -394,7 +394,7 @@ def test_entrez_url_construction(email: str) -> TestResult:
         )
 
 
-def test_entrez_raw_request(email: str) -> TestResult:
+def check_entrez_raw_request(email: str) -> TestResult:
     """Try to see exactly what request Biopython sends"""
     t0 = time.time()
     
@@ -443,7 +443,7 @@ def test_entrez_raw_request(email: str) -> TestResult:
         )
 
 
-def test_compare_http_methods(email: str) -> TestResult:
+def check_compare_http_methods(email: str) -> TestResult:
     """
     Compare exactly what headers/params differ between working HTTP and Biopython.
     This is the key diagnostic test.
@@ -559,7 +559,7 @@ def test_compare_http_methods(email: str) -> TestResult:
     )
 
 
-def test_biopython_source_inspection() -> TestResult:
+def check_biopython_source_inspection() -> TestResult:
     """Inspect Biopython source to understand how it makes requests"""
     t0 = time.time()
     details = {}
@@ -602,7 +602,7 @@ def test_biopython_source_inspection() -> TestResult:
         )
 
 
-def test_biopython_build_request(email: str) -> TestResult:
+def check_biopython_build_request(email: str) -> TestResult:
     """
     Inspect what Biopython's _build_request actually produces.
     This is the KEY test to see exactly what URL/params Biopython constructs.
@@ -674,7 +674,7 @@ def test_biopython_build_request(email: str) -> TestResult:
         )
 
 
-def test_post_vs_get_to_ncbi(email: str) -> TestResult:
+def check_post_vs_get_to_ncbi(email: str) -> TestResult:
     """
     Test if NCBI accepts POST vs GET requests.
     Biopython might be using POST while NCBI expects GET for some endpoints.
@@ -745,7 +745,7 @@ def test_post_vs_get_to_ncbi(email: str) -> TestResult:
     )
 
 
-def test_biopython_internal_functions(email: str) -> TestResult:
+def check_biopython_internal_functions(email: str) -> TestResult:
     """
     Step through Biopython's internal functions to find exactly where it fails.
     """
@@ -798,7 +798,7 @@ def test_biopython_internal_functions(email: str) -> TestResult:
         )
 
 
-def test_empty_api_key_bug(email: str) -> TestResult:
+def check_empty_api_key_bug(email: str) -> TestResult:
     """
     Test if an empty api_key parameter causes the 400 error.
     This is likely the root cause!
@@ -878,7 +878,7 @@ def test_empty_api_key_bug(email: str) -> TestResult:
     )
 
 
-def test_biopython_fix_api_key(email: str) -> TestResult:
+def check_biopython_fix_api_key(email: str) -> TestResult:
     """
     Test if setting api_key to None fixes the issue.
     """
@@ -930,7 +930,7 @@ def test_biopython_fix_api_key(email: str) -> TestResult:
         )
 
 
-def test_entrez_with_retmode(email: str) -> TestResult:
+def check_entrez_with_retmode(email: str) -> TestResult:
     """Test if specifying retmode helps"""
     t0 = time.time()
     
@@ -960,7 +960,7 @@ def test_entrez_with_retmode(email: str) -> TestResult:
         )
 
 
-def test_requests_library_to_ncbi(email: str) -> TestResult:
+def check_requests_library_to_ncbi(email: str) -> TestResult:
     """Test using requests library instead of urllib"""
     t0 = time.time()
     
@@ -1012,7 +1012,7 @@ def test_requests_library_to_ncbi(email: str) -> TestResult:
         )
 
 
-def test_network_connectivity() -> TestResult:
+def check_network_connectivity() -> TestResult:
     """Basic network connectivity test"""
     t0 = time.time()
     
@@ -1050,73 +1050,73 @@ def run_diagnostic_tests(suite: TestSuite, email: str):
     logger.info("="*60)
     
     # 1. Check Biopython version
-    suite.add(test_biopython_version())
+    suite.add(check_biopython_version())
     
     # 2. Test basic network connectivity
-    suite.add(test_network_connectivity())
+    suite.add(check_network_connectivity())
     time.sleep(0.5)
     
     # 3. Test direct HTTP (bypass Biopython)
-    suite.add(test_direct_ncbi_http(email))
+    suite.add(check_direct_ncbi_http(email))
     time.sleep(0.5)
     
     # 4. Test HTTP/HTTPS variants
-    for result in test_direct_ncbi_https_variants(email):
+    for result in check_direct_ncbi_https_variants(email):
         suite.add(result)
     
     # 5. Check Entrez configuration
     logger.info("\n--- Biopython Entrez Diagnostics ---")
-    suite.add(test_entrez_configuration())
+    suite.add(check_entrez_configuration())
     
     # 6. Test Entrez URL construction
-    suite.add(test_entrez_url_construction(email))
+    suite.add(check_entrez_url_construction(email))
     
     # 7. Capture raw request
-    suite.add(test_entrez_raw_request(email))
+    suite.add(check_entrez_raw_request(email))
     time.sleep(0.5)
     
     # 8. KEY TEST: Compare what works vs what doesn't
     logger.info("\n--- Key Comparison Test ---")
-    suite.add(test_compare_http_methods(email))
+    suite.add(check_compare_http_methods(email))
     time.sleep(0.5)
     
     # 9. Inspect Biopython source code
-    suite.add(test_biopython_source_inspection())
+    suite.add(check_biopython_source_inspection())
     
     # 10. Inspect _build_request output
     logger.info("\n--- Deep Biopython Inspection ---")
-    suite.add(test_biopython_build_request(email))
+    suite.add(check_biopython_build_request(email))
     
     # 11. Test POST vs GET
-    suite.add(test_post_vs_get_to_ncbi(email))
+    suite.add(check_post_vs_get_to_ncbi(email))
     time.sleep(0.5)
     
     # 12. Internal functions inspection
-    suite.add(test_biopython_internal_functions(email))
+    suite.add(check_biopython_internal_functions(email))
     
     # 13. KEY BUG TEST: Empty api_key parameter
     logger.info("\n--- Testing Empty api_key Bug ---")
-    suite.add(test_empty_api_key_bug(email))
+    suite.add(check_empty_api_key_bug(email))
     time.sleep(0.5)
     
     # 14. TEST THE FIX: Set api_key to None
-    suite.add(test_biopython_fix_api_key(email))
+    suite.add(check_biopython_fix_api_key(email))
     time.sleep(0.5)
     
     # 15. Test with tool set (will likely still fail without the fix)
-    suite.add(test_entrez_with_tool_set(email))
+    suite.add(check_entrez_with_tool_set(email))
     time.sleep(0.5)
     
     # 16. Test with explicit retmode
-    suite.add(test_entrez_with_retmode(email))
+    suite.add(check_entrez_with_retmode(email))
     time.sleep(0.5)
     
     # 17. Test requests library as alternative
-    suite.add(test_requests_library_to_ncbi(email))
+    suite.add(check_requests_library_to_ncbi(email))
     time.sleep(0.5)
     
     # 18. Test different Entrez databases
-    for result in test_entrez_different_databases(email):
+    for result in check_entrez_different_databases(email):
         suite.add(result)
 
 
@@ -1124,7 +1124,7 @@ def run_diagnostic_tests(suite: TestSuite, email: str):
 # SECTION 1: NCBI E-UTILITIES SEARCH TESTS
 # =============================================================================
 
-def test_entrez_connection(email: str, api_key: Optional[str] = None) -> TestResult:
+def check_entrez_connection(email: str, api_key: Optional[str] = None) -> TestResult:
     """Test basic Entrez connection"""
     t0 = time.time()
     try:
@@ -1152,7 +1152,7 @@ def test_entrez_connection(email: str, api_key: Optional[str] = None) -> TestRes
         )
 
 
-def test_search_query(query: str, expected_min: int = 0) -> TestResult:
+def check_search_query(query: str, expected_min: int = 0) -> TestResult:
     """Test a specific search query against GDS database"""
     t0 = time.time()
     try:
@@ -1227,12 +1227,12 @@ def run_search_tests(suite: TestSuite):
     ]
     
     for query, expected_min in test_queries:
-        result = test_search_query(query, expected_min)
+        result = check_search_query(query, expected_min)
         suite.add(result)
         time.sleep(0.4)  # Rate limiting
 
 
-def test_uid_to_gse_conversion(uid: str) -> TestResult:
+def check_uid_to_gse_conversion(uid: str) -> TestResult:
     """Test converting a UID to GSE accession"""
     t0 = time.time()
     try:
@@ -1271,7 +1271,7 @@ def test_uid_to_gse_conversion(uid: str) -> TestResult:
 # SECTION 2: FTP CONNECTION TESTS
 # =============================================================================
 
-def test_ftp_connection() -> TestResult:
+def check_ftp_connection() -> TestResult:
     """Test basic FTP connection to NCBI"""
     t0 = time.time()
     try:
@@ -1297,7 +1297,7 @@ def test_ftp_connection() -> TestResult:
         )
 
 
-def test_ftp_gse_path(gse: str) -> TestResult:
+def check_ftp_gse_path(gse: str) -> TestResult:
     """Test FTP path construction and access for a GSE"""
     t0 = time.time()
     
@@ -1352,7 +1352,7 @@ def test_ftp_gse_path(gse: str) -> TestResult:
         )
 
 
-def test_ftp_filelist_txt(gse: str) -> TestResult:
+def check_ftp_filelist_txt(gse: str) -> TestResult:
     """Test fetching and parsing filelist.txt"""
     t0 = time.time()
     
@@ -1430,7 +1430,7 @@ def run_ftp_tests(suite: TestSuite, test_gses: List[str] = None):
     logger.info("="*60)
     
     # Basic connection
-    suite.add(test_ftp_connection())
+    suite.add(check_ftp_connection())
     
     # Test specific GSEs
     if test_gses is None:
@@ -1438,9 +1438,9 @@ def run_ftp_tests(suite: TestSuite, test_gses: List[str] = None):
         test_gses = ["GSE123456", "GSE200000", "GSE150000"]
     
     for gse in test_gses:
-        suite.add(test_ftp_gse_path(gse))
+        suite.add(check_ftp_gse_path(gse))
         time.sleep(0.5)
-        suite.add(test_ftp_filelist_txt(gse))
+        suite.add(check_ftp_filelist_txt(gse))
         time.sleep(0.5)
 
 
@@ -1448,7 +1448,7 @@ def run_ftp_tests(suite: TestSuite, test_gses: List[str] = None):
 # SECTION 3: GEOPARSE TESTS
 # =============================================================================
 
-def test_geoparse_fetch(gse: str, temp_dir: str = "/tmp/geo_test") -> TestResult:
+def check_geoparse_fetch(gse: str, temp_dir: str = "tmp/geo_test") -> TestResult:
     """Test fetching GSE metadata via GEOparse"""
     t0 = time.time()
     
@@ -1545,7 +1545,7 @@ def run_geoparse_tests(suite: TestSuite, test_gses: List[str] = None):
             test_gses = []
     
     for gse in test_gses:
-        suite.add(test_geoparse_fetch(gse))
+        suite.add(check_geoparse_fetch(gse))
         time.sleep(1)
 
 
@@ -1553,7 +1553,7 @@ def run_geoparse_tests(suite: TestSuite, test_gses: List[str] = None):
 # SECTION 4: SRA METADATA TESTS
 # =============================================================================
 
-def test_sra_search(srx_or_srr: str) -> TestResult:
+def check_sra_search(srx_or_srr: str) -> TestResult:
     """Test SRA metadata fetch"""
     t0 = time.time()
     
@@ -1612,7 +1612,7 @@ def test_sra_search(srx_or_srr: str) -> TestResult:
 # SECTION 5: PATTERN MATCHING TESTS
 # =============================================================================
 
-def test_file_patterns():
+def check_file_patterns():
     """Test file pattern matching logic"""
     import re
     
@@ -1741,7 +1741,7 @@ def main():
     # Run other tests only if Biopython is available
     if BIOPYTHON_AVAILABLE:
         if run_all or args.test_search:
-            suite.add(test_entrez_connection(args.email, args.api_key))
+            suite.add(check_entrez_connection(args.email, args.api_key))
             time.sleep(0.5)
             run_search_tests(suite)
         
@@ -1753,7 +1753,7 @@ def main():
             logger.info("SRA METADATA TESTS")
             logger.info("="*60)
             for acc in ["SRX000001", "SRR000001"]:
-                suite.add(test_sra_search(acc))
+                suite.add(check_sra_search(acc))
                 time.sleep(0.5)
     
     # FTP tests don't need Biopython
@@ -1765,7 +1765,7 @@ def main():
         logger.info("\n" + "="*60)
         logger.info("FILE PATTERN TESTS")
         logger.info("="*60)
-        suite.add(test_file_patterns())
+        suite.add(check_file_patterns())
     
     # Summary
     passed, failed = suite.summary()

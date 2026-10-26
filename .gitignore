@@ -82,3 +82,6 @@ deconvolution/genecompass_input/
 
 # local cluster profile for the deconvolution R bootstrap (template: site.env.gilbreth.example)
 deconvolution/setup/site.env
+
+# pytest
+.pytest_cache/

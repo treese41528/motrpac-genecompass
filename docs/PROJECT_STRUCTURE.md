@@ -208,13 +208,16 @@ motrpac-genecompass/
 │   TESTS & VALIDATION
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │
-├── tests/
-│   ├── test_gene_utils.py             # Unit tests: resolver, biotype, patterns
-│   ├── test_ortholog_mapping.py       # Verify no cartesian joins, tier consistency
-│   ├── test_reference_files.py        # Validate GeneCompass format compliance
-│   └── fixtures/                      # Test data
-│       ├── tricky_gene_ids.tsv        # Edge cases: RGD*, LOC*, versioned, whitespace
-│       └── mini_biomart.tsv           # Small BioMart subset for unit tests
+├── tests/                             # pytest (config in pytest.ini)
+│   ├── conftest.py                    # puts the pipeline folders on sys.path
+│   ├── test_harvesters.py             # Stage 1: file filters, GEO/ArrayExpress/ENA paths
+│   ├── test_gene_ids.py               # Stages 2-3: IDs, biotypes, symbol lookup, raw counts
+│   ├── test_tokenization.py           # Stages 5 and 8: tokenizer arithmetic, PA preference
+│   ├── test_pseudocells.py            # Stage 8: cell-type filenames, Z -> pseudo-cells
+│   ├── test_gate_probe.py             # Stage 10: eta^2, folds, supervised probe
+│   ├── test_transfer.py               # Stage 12: rat -> human transfer, orchestration
+│   ├── test_config.py                 # config layering, v2 default vs April profile
+│   └── test_v2_outputs.py             # data: cross-stage checks on this machine's outputs
 │
 │── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ── ──
 │   NOTEBOOKS & DOCUMENTATION

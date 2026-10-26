@@ -69,6 +69,17 @@ def resolve_model_dir(base: Path) -> Path:
     return cks[-1] if cks else base
 
 
+def resolve_gate_dirs(config: dict, rat_root: Path, human_root: Path) -> tuple:
+    """(rat gate dir, human gate dir). The rat gate is the hotspots table's folder; the human
+    probe + comparison go in the matching subfolder of the human root."""
+    d = config['deconvolution']
+    rat_gate = (resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
+                else rat_root / 'corroboration_merged.tsv').parent
+    human_gate = (human_root / rat_gate.relative_to(rat_root)) if rat_gate.is_relative_to(rat_root) \
+        else human_root / rat_gate.name
+    return rat_gate, human_gate
+
+
 def discover_labels(rat_root: Path) -> list:
     """All rat tissue labels (dirs holding pseudocells.h5ad) under the rat gc-root."""
     return sorted(p.parent.name for p in rat_root.glob('*/pseudocells.h5ad'))
@@ -185,11 +196,7 @@ def main() -> None:
     model_base = Path(args.model_dir).resolve() if args.model_dir \
         else resolve_path(config, d['genecompass_model_dir'])
 
-    # the rat gate = the hotspots table's folder; the human probe + comparison go in the matching subfolder
-    rat_gate = (resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
-                else rat_root / 'corroboration_merged.tsv').parent
-    human_gate = (human_root / rat_gate.relative_to(rat_root)) if rat_gate.is_relative_to(rat_root) \
-        else human_root / rat_gate.name
+    rat_gate, human_gate = resolve_gate_dirs(config, rat_root, human_root)
     for f in ('corroboration_merged.tsv', 'subspace_probe.tsv'):
         if args.from_step <= 4 and not (rat_gate / f).exists():
             msg = f"rat gate table missing: {rat_gate / f}  (run the Aim-2 gate first)"
