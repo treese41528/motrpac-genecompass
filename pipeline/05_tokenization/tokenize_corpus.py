@@ -17,14 +17,15 @@ Purpose:
     pre-training:
 
       1. Load raw counts (no normalization on disk — raw-count contract preserved).
-      2. normalize_total(target_sum=10,000) — in memory only, ephemeral.
-      3. Divide raw counts by per-gene hybrid median (hybrid_gene_medians.pickle).
-         Hybrid median = human median for T1-T3 ortholog-mapped genes,
-         rat median for T4 rat-specific genes. No normalize_total.
-      4. log2(1+x) transform.
-      5. Rank non-zero genes descending by transformed expression.
-      6. Take top 2,048 (or all non-zero genes if fewer than 2,048 expressed).
-      7. Map to token IDs via rat_tokens.pickle.
+      2. Divide raw counts by the per-gene hybrid median (hybrid_gene_medians.pickle).
+         NO normalize_total: GeneCompass's own corpora are raw counts / per-gene median
+         (checked on its human and mouse corpora). Hybrid median = GeneCompass's human
+         median where the rat gene has one; otherwise the rat median rescaled onto the
+         human-median scale (see build_hybrid_medians.py).
+      3. log2(1+x) transform.
+      4. Rank non-zero genes descending by transformed expression.
+      5. Take top 2,048 (or all non-zero genes if fewer than 2,048 expressed).
+      6. Map to token IDs via rat_tokens.pickle.
 
     Studies in reference_assembly.exclude_studies are silently skipped
     (MoTrPAC data-leakage prevention).
@@ -39,7 +40,10 @@ Arrow schema per shard (GeneCompass-compatible):
     length      — list<int16>   : [n_expressed_genes] (single-element list, ≤ 2048)
     species     — list<int16>   : [2] for rat (0=human, 1=mouse, 2=rat)
     study_id    — string        : source study accession (GEO/AE) — extra column for Aims 2-3
-    cell_id     — string        : obs_name from adata — extra column for Aims 2-3
+    cell_id     — string        : obs_name from adata (barcode) — extra column for Aims 2-3
+    sample_id   — string        : QC file stem, e.g. GSE280111_sample85 (file = qc_h5ad_dir/<sample_id>.h5ad)
+    gsm         — string        : GEO sample accession from the corpus plan ('' when unknown)
+    cell_index  — int32         : the cell's row in that QC file, so every row traces back exactly
 
 Design notes:
     - Reads each h5ad fully into memory before processing (Gilbreth NFS defence).
@@ -105,7 +109,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, resolve_path, qc_corpus_files, raw_counts_adata
 
 logging.basicConfig(
     level=logging.INFO,
@@ -131,6 +135,9 @@ def _build_arrow_schema() -> 'pa.Schema':
         pa.field('species',   pa.list_(pa.int16())),
         pa.field('study_id',  pa.string()),
         pa.field('cell_id',   pa.string()),
+        pa.field('sample_id', pa.string()),
+        pa.field('gsm',       pa.string()),
+        pa.field('cell_index', pa.int32()),
     ])
 
 
@@ -271,7 +278,7 @@ def _infer_study_id(h5ad_path: Path) -> str:
         idx = stem.find(sep)
         if idx > 0:
             candidate = stem[:idx]
-            if candidate.startswith(('GSE', 'GSM', 'E-')):
+            if candidate.startswith(('GSE', 'GSM', 'E-', 'OMIX')):
                 return candidate
     return stem
 
@@ -403,6 +410,7 @@ def process_file(
     task_id:          int,
     shard_counter:    List[int],    # [current_shard_number] — mutable singleton
     dry_run:          bool = False,
+    gsm_map:          Optional[Dict[str, str]] = None,
 ) -> Dict:
     """Process one h5ad file: load → map → tokenize → write Arrow shards.
 
@@ -413,7 +421,9 @@ def process_file(
     Returns a file-level metadata dict suitable for the task manifest.
     """
     t0 = time.time()
-    study_id = _infer_study_id(h5ad_path)
+    study_id  = _infer_study_id(h5ad_path)
+    sample_id = h5ad_path.stem
+    gsm       = (gsm_map or {}).get(sample_id, '')
 
     # ── Load fully into memory ───────────────────────────────────────────────
     logger.debug(f"  Loading: {h5ad_path.name}")
@@ -427,6 +437,15 @@ def process_file(
             'status': 'load_error',
             'error': str(exc),
         }
+
+    # Raw counts only: the Feb-18 files hold log-normalized X and their counts in .raw;
+    # a file with neither is refused (raises) rather than tokenized from normalized values.
+    try:
+        adata, used_raw_slot = raw_counts_adata(adata)
+    except ValueError as exc:
+        raise ValueError(f"{h5ad_path.name}: {exc}") from None
+    if used_raw_slot:
+        logger.info(f"  {h5ad_path.name}: X is not raw counts; using the raw-count .raw slot")
 
     n_cells_orig = adata.n_obs
     n_genes_orig = adata.n_vars
@@ -479,6 +498,7 @@ def process_file(
     shard_species:   List[List[int]]   = []   # [[2]] for rat
     shard_study_ids: List[str]         = []
     shard_cell_ids:  List[str]         = []
+    shard_cell_idx:  List[int]         = []   # row of the cell in its QC file
     shards_written:  List[str]         = []
 
     def _flush_shard() -> None:
@@ -498,6 +518,9 @@ def process_file(
                 shard_species,
                 shard_study_ids,
                 shard_cell_ids,
+                sample_id,
+                gsm,
+                shard_cell_idx,
             )
         shards_written.append(shard_name)
         shard_counter[0] += 1
@@ -507,6 +530,7 @@ def process_file(
         shard_species.clear()
         shard_study_ids.clear()
         shard_cell_ids.clear()
+        shard_cell_idx.clear()
 
     for batch_start in range(0, n_cells_total, CELL_BATCH_SIZE):
         batch_end   = min(batch_start + CELL_BATCH_SIZE, n_cells_total)
@@ -538,6 +562,7 @@ def process_file(
             shard_species.append([2])           # List(int16): [[2]] = rat
             shard_study_ids.append(study_id)
             shard_cell_ids.append(cid)
+            shard_cell_idx.append(batch_start + i)
             n_cells_written += 1
 
             if len(shard_input_ids) >= cells_per_shard:
@@ -557,6 +582,9 @@ def process_file(
     return {
         'file': h5ad_path.name,
         'study_id': study_id,
+        'sample_id': sample_id,
+        'gsm': gsm,
+        'used_raw_slot': bool(used_raw_slot),
         'status': 'ok',
         'n_cells_orig': n_cells_orig,
         'n_cells_written': n_cells_written,
@@ -581,11 +609,14 @@ def _write_arrow_shard(
     species:    List[List[int]],    # [[2]] per cell (rat)
     study_ids:  List[str],
     cell_ids:   List[str],
+    sample_id:  str,
+    gsm:        str,
+    cell_index: List[int],
 ) -> None:
     """Write one Arrow IPC streaming shard.
 
     Schema matches GeneCompass reference (randsel_5w_mouse) plus
-    study_id / cell_id extra columns for Aims 2-3.
+    study_id / cell_id / sample_id / gsm / cell_index source columns.
     """
     schema = _build_arrow_schema()
 
@@ -609,6 +640,9 @@ def _write_arrow_shard(
             ),
             'study_id': pa.array(study_ids, type=pa.string()),
             'cell_id':  pa.array(cell_ids,  type=pa.string()),
+            'sample_id': pa.array([sample_id] * len(cell_ids), type=pa.string()),
+            'gsm':       pa.array([gsm] * len(cell_ids),       type=pa.string()),
+            'cell_index': pa.array(cell_index,                 type=pa.int32()),
         },
         schema=schema,
     )
@@ -659,6 +693,9 @@ def write_task_manifest(
             'exclude_studies':  config.get('reference_assembly', {}).get(
                 'exclude_studies', []
             ),
+            'profile':          config.get('_profile'),
+            'file_list':        config.get('_qc_file_list_summary'),
+            'median_dir':       str(resolve_path(config, config['paths']['median_dir'])),
         },
         'summary': {
             'n_files_processed':  n_files_ok,
@@ -774,8 +811,20 @@ Examples:
 
     # ── File discovery and task splitting ────────────────────────────────────
     logger.info("Discovering h5ad files ...")
+    gsm_map: Dict[str, str] = {}
     try:
-        all_files = discover_h5ad_files(qc_h5ad_dir, exclude_studies)
+        if paths.get('qc_file_list'):
+            # Only the files the corpus plan keeps (retrain profile); exclude_studies still applies.
+            listed = qc_corpus_files(config)
+            all_files = [p for p in listed if _infer_study_id(p) not in exclude_studies]
+            fl = config['_qc_file_list_summary']
+            logger.info(f"File list: {fl['plan']} | kept {fl['kept']:,} | dropped by the plan: {fl['dropped']} "
+                        f"| excluded by exclude_studies: {len(listed) - len(all_files)}")
+            import csv as _csv
+            with open(resolve_path(config, paths['qc_file_list'])) as fh:
+                gsm_map = {r['sample_id']: r.get('gsm', '') or '' for r in _csv.DictReader(fh, delimiter='\t')}
+        else:
+            all_files = discover_h5ad_files(qc_h5ad_dir, exclude_studies)
     except FileNotFoundError as exc:
         logger.error(str(exc))
         sys.exit(1)
@@ -821,6 +870,7 @@ Examples:
             task_id       = args.task_id,
             shard_counter = shard_counter,
             dry_run       = args.dry_run,
+            gsm_map       = gsm_map,
         )
         file_results.append(meta)
 

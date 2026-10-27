@@ -9,8 +9,9 @@ across the training trajectory.
 Checkpoints are AUTO-DISCOVERED from the models directory tree — no hardcoded
 paths. The script scans:
   1. GC Base        → vendor/GeneCompass/pretrained_models/GeneCompass_Base
-  2. Rat Init       → data/models/rat_genecompass_init
-  3. All run dirs   → data/models/rat_genecompass_finetuned/models/*/
+  2. Rat Init       → data/models/rat_genecompass_init_v2        (--rat-init; April: rat_genecompass_init)
+  3. All run dirs   → data/models/rat_genecompass_finetuned_v2/models/*/
+                      (--finetuned-root; April: rat_genecompass_finetuned/models)
      Within each:   checkpoint-NNNNN/ and models/ (final snapshot)
 
 Phase is inferred from directory name ("phase1" → phase1, "phase2" → phase2).
@@ -33,7 +34,10 @@ Output:
 
 Usage:
   python forgetting_analysis.py [--n-cells 5000] [--mask-prob 0.15] [--seed 42]
-                                [--output-dir reports/forgetting]
+                                [--output-dir reports/forgetting] [--rat-init DIR] [--finetuned-root DIR]
+
+v2's pre-registered forgetting check is C1/C2 (analysis/aim1_validation/analyze.py,
+docs/RETRAIN_V2_RESULTS.md); this script is the per-checkpoint trajectory view.
 
 Cluster:  Gilbreth, 1x A100-40GB (eval only, no training)
 Account:  reese18
@@ -104,8 +108,8 @@ CORPORA = {
 
 # Anchors: fixed-location models that are always included
 GC_BASE_PATH = PROJECT_ROOT / "vendor/GeneCompass/pretrained_models/GeneCompass_Base"
-RAT_INIT_PATH = PROJECT_ROOT / "data/models/rat_genecompass_init"
-FINETUNED_ROOT = PROJECT_ROOT / "data/models/rat_genecompass_finetuned/models"
+RAT_INIT_PATH = PROJECT_ROOT / "data/models/rat_genecompass_init_v2"
+FINETUNED_ROOT = PROJECT_ROOT / "data/models/rat_genecompass_finetuned_v2/models"
 
 # Default vocab sizes (used as fallback when config.json is absent)
 GC_BASE_VOCAB = 50558
@@ -809,6 +813,11 @@ def main():
     parser.add_argument("--skip-missing", action="store_true", help="Skip checkpoints that don't exist on disk")
     parser.add_argument("--phases", type=str, nargs="*", default=None,
                         help="Filter to specific phases (e.g. --phases phase1 phase2). Default: all.")
+    parser.add_argument("--rat-init", type=str, default=str(RAT_INIT_PATH.relative_to(PROJECT_ROOT)),
+                        help="rat init model dir (default: v2's; April: data/models/rat_genecompass_init)")
+    parser.add_argument("--finetuned-root", type=str, default=str(FINETUNED_ROOT.relative_to(PROJECT_ROOT)),
+                        help="dir of fine-tuning run dirs (default: v2's; "
+                             "April: data/models/rat_genecompass_finetuned/models)")
     parser.add_argument("--max-checkpoints-per-phase", type=int, default=None,
                         help="Limit checkpoints per phase (keeps first, last, evenly spaced middle)")
     args = parser.parse_args()
@@ -827,7 +836,8 @@ def main():
     logger.info("STEP 0: Discovering checkpoints")
     logger.info("=" * 70)
 
-    checkpoints = discover_checkpoints()
+    checkpoints = discover_checkpoints(rat_init_path=PROJECT_ROOT / args.rat_init,
+                                       finetuned_root=PROJECT_ROOT / args.finetuned_root)
 
     # Apply phase filter if specified
     if args.phases:

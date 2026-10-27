@@ -7,6 +7,9 @@ tissue. Sources: **MoTrPAC PASS1B** — #21 Nature 2024 (temporal multi-omic atl
 genetics); **Yu 2023** (iScience, human PBMC scRNA, acute). Our numbers are from
 `genecompass_input/pseudobulk_de/{de_summary,de_hotspots,posctrl_*}`._
 
+> **v2 (2026-10-25).** The DE does not use the model, so the gene-level numbers below stand; only the hotspot
+> flags changed (v2: 13 hotspots, `genecompass_input_v2/pseudobulk_de/`). See `AIM2_DECONV_RESULTS.md` §4a.
+
 Read directionally: the MoTrPAC papers report **bulk-tissue** transcriptomics; **our contribution is
 cell-type resolution** — so the goal is (a) do we *confirm* the bulk tissue-level signal, and (b) what
 do we *add* (which cell types carry it) that bulk could not see.

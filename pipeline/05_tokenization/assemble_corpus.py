@@ -328,6 +328,10 @@ def _write_hf_metadata(
             'species':   {'feature': {'dtype': 'int16',   '_type': 'Value'}, '_type': 'Sequence'},
             'study_id':  {'dtype': 'string', '_type': 'Value'},
             'cell_id':   {'dtype': 'string', '_type': 'Value'},
+            **({'sample_id':  {'dtype': 'string', '_type': 'Value'},
+                'gsm':        {'dtype': 'string', '_type': 'Value'},
+                'cell_index': {'dtype': 'int32',  '_type': 'Value'}}
+               if schema is not None and 'sample_id' in schema.names else {}),
         },
         'num_rows': n_rows,
         'dataset_size': None,

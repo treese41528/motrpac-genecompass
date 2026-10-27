@@ -1,0 +1,22 @@
+# Since 2026-10-25 v2 is the default (config/pipeline_config.yaml holds these values), so this profile
+# changes nothing; it is kept because the jobs that built v2 and its downstream reruns set it.
+# April's model: config/profiles/april.yaml.
+#
+# Retrain v2 profile (2026-10-06).
+#   export PIPELINE_PROFILE=config/profiles/retrain_v2.yaml
+# Deep-merged over config/pipeline_config.yaml (and any pipeline_config.local.yaml) by
+# lib/gene_utils.load_config. Outputs of the retrain go to *_v2 folders so the current model's
+# inputs stay untouched, and corpus stages read only the files config/corpus_v2_plan.tsv keeps:
+# 48 non-rat samples and 234 duplicate files are dropped, 27 Feb-18 files are read from their raw-count
+# .raw slot, and OMIX767 testis (TESTES deconvolution reference, arms C + E7W) is read from the
+# OMIX767_grcr8_* files that qc_external_mtx.py resolved to Ensembl 115 (2026-10-08); the July files
+# with unresolved older-release gene IDs are dropped as superseded.
+#
+# Supported: Stage 4 (gene medians), build_hybrid_medians.py and Stage 5 (tokenization), which
+# also writes sample_id, gsm and cell_index on every row so each cell traces to its QC file.
+# The Stage 6 co-expression builder refuses to run under this profile (and is not needed:
+# T4 co-expression priors are zero). Do not run Stage 9+ for the CURRENT model under it.
+paths:
+  qc_file_list: config/corpus_v2_plan.tsv
+  median_dir: data/training/gene_medians_v2
+  tokenized_corpus_dir: data/training/tokenized_corpus_v2

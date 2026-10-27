@@ -9,30 +9,40 @@ Pipeline position:
     Stage 5, Step 1: tokenize_corpus.py         (reads hybrid_gene_medians.pickle)
 
 Purpose:
-    Construct a per-gene median dictionary that uses human median expression
-    values (from GeneCompass's human_gene_median_after_filter.pickle) for
-    ortholog-mapped rat genes, and falls back to rat-computed medians for
-    Tier 4 rat-specific genes with no human ortholog.
+    Construct a per-gene median dictionary that uses GeneCompass's human median
+    (human_gene_median_after_filter.pickle) for every rat gene whose rat->human
+    ortholog has one, and the Stage 4 rat median for the remaining genes (T2b,
+    T3b, T4 and a few others: every gene without a GeneCompass human median),
+    rescaled onto the human-median scale.
 
-    This hybrid approach is required for value-scale compatibility with the
-    GeneCompass pre-trained model:
-      - The pre-training corpus was normalized by dividing raw counts directly
-        by human gene medians (verified empirically by comparing value
-        distributions against randsel_5w_mouse reference corpus).
-      - Using rat-specific medians alone produces a compressed distribution
-        (std 0.25 vs reference 0.63) with insufficient dynamic range.
-      - Using human medians for ortholog-mapped genes (69.3% of eligible genes)
-        closely matches the reference distribution (median offset -0.075 vs
-        reference, std offset -0.096).
+    Why this design:
+      - GeneCompass's corpora are raw counts divided by a fixed per-gene median,
+        then log2(1+x), with no normalize_total. Verified on its human corpus
+        (raw counts recovered for 99.8% of values, Feb 2026) and per gene on both
+        its human and mouse corpora (Oct 2026). Mouse cells used mouse-specific
+        medians on the same scale as the human ones.
+      - Rat medians alone compress the values (corpus value median 0.50 vs
+        GeneCompass's ~1.01), so genes with a human median keep it. This also
+        keeps rat cells and their human re-expression (Stage 12) on the same
+        per-gene scaling.
+      - Stage 4 rat medians are computed after normalize_total(1e4) and sit ~2.24x
+        above GeneCompass's medians on the genes that have both. Left unscaled,
+        those genes enter at about half the value of their neighbours (0.50 vs
+        0.94 in the same cells), so they are divided by F = median(rat / human)
+        over the shared genes (--fallback-rescale auto; decided 2026-10-06).
+        Check on 20,370 rat cells: corpus value median 0.886 unscaled -> 0.946
+        rescaled, vs GeneCompass 1.007-1.015.
 
-Coverage (from compare_normalization.py on 3,000 rat cells):
+Coverage (March 2026 build):
     Human medians: 14,812 / 21,379 genes (69.3%)
     Rat medians:    6,567 / 21,379 genes (30.7%)
     Fallback (1.0):     0 genes
 
-Outputs (written to paths.median_dir):
+Outputs (written to paths.median_dir, or --output-dir):
     hybrid_gene_medians.pickle  — {ENSRNOG_base: median_float}
-    hybrid_median_provenance.json — per-gene source, coverage stats
+    hybrid_median_provenance.json — per-gene source, coverage stats, fallback scale
+    An existing hybrid_gene_medians.pickle is never replaced without --overwrite:
+    the current model's corpus and Stage 9 pseudo-cells were built with it.
 
 Usage:
     python pipeline/05_tokenization/build_hybrid_medians.py
@@ -121,16 +131,32 @@ def load_human_medians(gc_medians_path: Path) -> Dict[str, float]:
 # SECTION 2: BUILD HYBRID DICTIONARY
 # ═════════════════════════════════════════════════════════════════════════════
 
+def measure_fallback_scale(
+    rat_medians:   Dict[str, float],
+    rat_to_human:  Dict[str, str],
+    human_medians: Dict[str, float],
+) -> Tuple[float, int]:
+    """F = median(rat median / human median) over genes that have both; (F, n genes)."""
+    import numpy as np
+    ratios = [rat_med / human_medians[rat_to_human[eid]]
+              for eid, rat_med in rat_medians.items()
+              if rat_med > 0.0 and human_medians.get(rat_to_human.get(eid), 0.0) > 0.0]
+    if not ratios:
+        raise ValueError("No genes with both a rat and a human median: cannot measure the fallback scale")
+    return float(np.median(ratios)), len(ratios)
+
+
 def build_hybrid_medians(
     rat_medians:   Dict[str, float],
     rat_to_human:  Dict[str, str],
     human_medians: Dict[str, float],
+    fallback_scale: float = 1.0,
 ) -> Tuple[Dict[str, float], Dict[str, str]]:
     """Construct hybrid median dictionary and per-gene source provenance.
 
     Priority:
-      1. Human median (via rat→human ortholog mapping) — T1/T2/T3 genes
-      2. Rat median — T4 genes (no qualifying human ortholog)
+      1. Human median (via rat→human ortholog mapping) — genes with a GeneCompass human median
+      2. Rat median / fallback_scale — every other gene (T2b, T3b, T4 and a few others)
       3. Fallback 1.0 — should not occur given Stage 4 filtering
 
     Returns:
@@ -153,7 +179,7 @@ def build_hybrid_medians(
             sources[eid] = 'human'
             n_human += 1
         elif rat_med > 0.0:
-            hybrid[eid]  = rat_med
+            hybrid[eid]  = rat_med / fallback_scale
             sources[eid] = 'rat'
             n_rat += 1
         else:
@@ -163,9 +189,10 @@ def build_hybrid_medians(
 
     total = len(hybrid)
     logger.info(f"Hybrid median dictionary: {total:,} genes")
-    logger.info(f"  Human medians (T1-T3): {n_human:,} ({100*n_human/total:.1f}%)")
-    logger.info(f"  Rat medians   (T4):    {n_rat:,} ({100*n_rat/total:.1f}%)")
-    logger.info(f"  Fallback 1.0:          {n_fallback:,}")
+    logger.info(f"  Human medians:                {n_human:,} ({100*n_human/total:.1f}%)")
+    logger.info(f"  Rat medians / {fallback_scale:.3f}:        {n_rat:,} ({100*n_rat/total:.1f}%) "
+                f"(no GeneCompass human median)")
+    logger.info(f"  Fallback 1.0:                 {n_fallback:,}")
 
     return hybrid, sources
 
@@ -181,6 +208,8 @@ def write_outputs(
     config:        dict,
     t_start:       float,
     dry_run:       bool,
+    input_paths:   Dict[str, str],
+    fallback:      Dict[str, object],
 ) -> None:
     """Write hybrid_gene_medians.pickle and hybrid_median_provenance.json."""
     import numpy as np
@@ -199,15 +228,12 @@ def write_outputs(
         'dry_run':        dry_run,
         'description': (
             'Hybrid gene median dictionary for Stage 5 tokenization. '
-            'Human medians used for ortholog-mapped rat genes (T1-T3); '
-            'rat medians used for Tier 4 rat-specific genes. '
-            'Empirically validated against GeneCompass mouse reference corpus.'
+            'GeneCompass human median for every rat gene whose rat->human ortholog has one; '
+            'for every other gene (T2b, T3b, T4 and a few others) the Stage 4 rat median '
+            'divided by fallback_scale, which puts it on the human-median scale.'
         ),
-        'inputs': {
-            'rat_gene_medians':               str(output_dir / 'rat_gene_medians.pickle'),
-            'rat_to_human_mapping':           str(output_dir.parent / 'ortholog_mappings' / 'rat_to_human_mapping.pickle'),
-            'human_gene_median_after_filter': str(resolve_path(config, config['paths']['genecompass_medians'])),
-        },
+        'inputs': input_paths,
+        'fallback_rescale': fallback,
         'coverage': {
             'total_genes':      len(hybrid),
             'human_median':     src_cnt.get('human', 0),
@@ -223,9 +249,8 @@ def write_outputs(
             'median': round(float(sorted(vals)[len(vals) // 2]), 6),
         },
         'normalization_note': (
-            'Raw counts are divided directly by these medians (no normalize_total). '
-            'Empirical comparison against randsel_5w_mouse: '
-            'median offset -0.075, std offset -0.096 vs reference 0.63.'
+            'Raw counts are divided directly by these medians (no normalize_total), then '
+            'log2(1+x), as in GeneCompass\'s own human and mouse corpora.'
         ),
         'per_gene_source': sources,
     }
@@ -266,6 +291,14 @@ Run before Stage 5 scatter:
   python run_stage5.py
         """,
     )
+    parser.add_argument('--fallback-rescale', choices=['auto', 'none'], default='auto',
+                        help="auto (default): divide the rat medians of genes without a GeneCompass "
+                             "human median by F = median(rat / human) over shared genes. "
+                             "none: the March 2026 behaviour (unscaled rat medians).")
+    parser.add_argument('--output-dir', default=None,
+                        help='Write here instead of paths.median_dir')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='Allow replacing an existing hybrid_gene_medians.pickle (off by default)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Validate inputs; skip writing outputs')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -278,7 +311,7 @@ Run before Stage 5 scatter:
     t_start = time.time()
     logger.info("=" * 70)
     logger.info("BUILD HYBRID GENE MEDIANS")
-    logger.info("  Human medians (T1-T3) + Rat medians (T4) → hybrid_gene_medians.pickle")
+    logger.info("  Human medians + rescaled rat medians (genes without one) → hybrid_gene_medians.pickle")
     logger.info("=" * 70)
 
     try:
@@ -291,6 +324,13 @@ Run before Stage 5 scatter:
     median_dir  = resolve_path(config, paths['median_dir'])
     orth_dir    = resolve_path(config, paths['ortholog_dir'])
     gc_medians  = resolve_path(config, paths['genecompass_medians'])
+    output_dir  = Path(args.output_dir).resolve() if args.output_dir else median_dir
+
+    if (output_dir / 'hybrid_gene_medians.pickle').exists() and not args.overwrite and not args.dry_run:
+        logger.error(f"{output_dir / 'hybrid_gene_medians.pickle'} already exists. The current model's corpus "
+                     f"and Stage 9 pseudo-cells use it: write elsewhere (--output-dir, or a new "
+                     f"paths.median_dir), or pass --overwrite if replacing it is really intended.")
+        sys.exit(1)
 
     # ── Load inputs ──────────────────────────────────────────────────────────
     logger.info("Loading inputs ...")
@@ -302,25 +342,41 @@ Run before Stage 5 scatter:
         logger.error(str(exc))
         sys.exit(1)
 
+    # ── Fallback scale ────────────────────────────────────────────────────────
+    if args.fallback_rescale == 'auto':
+        scale, n_shared = measure_fallback_scale(rat_medians, rat_to_human, human_medians)
+        logger.info(f"Fallback scale F = {scale:.4f} (median rat/human over {n_shared:,} shared genes)")
+    else:
+        scale, n_shared = 1.0, 0
+        logger.info("Fallback scale: none (rat medians used unscaled, March 2026 behaviour)")
+
     # ── Build hybrid dictionary ───────────────────────────────────────────────
     logger.info("Building hybrid median dictionary ...")
-    hybrid, sources = build_hybrid_medians(rat_medians, rat_to_human, human_medians)
+    hybrid, sources = build_hybrid_medians(rat_medians, rat_to_human, human_medians,
+                                           fallback_scale=scale)
 
     # ── Write outputs ─────────────────────────────────────────────────────────
     logger.info("Writing outputs ...")
+    output_dir.mkdir(parents=True, exist_ok=True)
     write_outputs(
-        output_dir = median_dir,
-        hybrid     = hybrid,
-        sources    = sources,
-        config     = config,
-        t_start    = t_start,
-        dry_run    = args.dry_run,
+        output_dir  = output_dir,
+        hybrid      = hybrid,
+        sources     = sources,
+        config      = config,
+        t_start     = t_start,
+        dry_run     = args.dry_run,
+        input_paths = {
+            'rat_gene_medians':               str(median_dir / 'rat_gene_medians.pickle'),
+            'rat_to_human_mapping':           str(orth_dir / 'rat_to_human_mapping.pickle'),
+            'human_gene_median_after_filter': str(gc_medians),
+        },
+        fallback    = {'mode': args.fallback_rescale, 'scale': round(scale, 6), 'n_shared_genes': n_shared},
     )
 
     elapsed = time.time() - t_start
     logger.info("=" * 70)
     logger.info(f"DONE — {len(hybrid):,} genes in {elapsed:.1f}s")
-    logger.info(f"  Output: {median_dir / 'hybrid_gene_medians.pickle'}")
+    logger.info(f"  Output: {output_dir / 'hybrid_gene_medians.pickle'}")
     logger.info("  Next:   python run_stage5.py")
     logger.info("=" * 70)
 

@@ -24,10 +24,10 @@ transfer_comparison.md (the verdict) under --out.
 
 Usage:
   python translation/compare_transfer.py \
-    --rat-corr   data/deconvolution/genecompass_input/corroboration_merged.tsv \
-    --rat-probe  data/deconvolution/genecompass_input/subspace_probe.tsv \
-    --human-probe data/deconvolution/genecompass_input_human/subspace_probe.tsv \
-    --out        data/deconvolution/genecompass_input_human
+    --rat-corr   data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv \
+    --rat-probe  data/deconvolution/genecompass_input_v2/gate_rcv10/subspace_probe.tsv \
+    --human-probe data/deconvolution/genecompass_input_v2_human/gate_rcv10/subspace_probe.tsv \
+    --out        data/deconvolution/genecompass_input_v2_human/gate_rcv10
 """
 import argparse
 import os

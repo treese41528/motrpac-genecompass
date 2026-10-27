@@ -21,12 +21,18 @@ suppressWarnings(suppressMessages({
   if (length(f)) dirname(normalizePath(f[1])) else "."
 })
 source(file.path(.script_dir, "celltype_names.R"))
+source(file.path(.script_dir, "provenance.R"))
 
 ROOT   <- Sys.getenv("PIPELINE_ROOT", unset = normalizePath("."))
-DE_DIR <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de")
+# DE folder: $DE_DIR (pipeline/run_stage13.py sets it), else <genecompass_input_dir>/pseudobulk_de from
+# the config (CFG_GENECOMPASS_INPUT_DIR, exported by the .sh wrapper), else the repo default.
+GC_DIR <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2"))
+DE_DIR <- Sys.getenv("DE_DIR", unset = file.path(GC_DIR, "pseudobulk_de"))
+cat(sprintf("DE folder: %s\n", DE_DIR))
 OUT    <- file.path(DE_DIR, "enrichment"); dir.create(OUT, showWarnings = FALSE)
 MAP_F  <- file.path(ROOT, "data/training/ortholog_mappings/rat_token_mapping.tsv")
 MIN_SET <- 10; MAX_SET <- 500
+SEED    <- as.integer(Sys.getenv("GSEA_SEED", "1"))   # fgsea draws its sampling seeds from R's RNG
 
 # ---- rat ENSRNOG -> human symbol (uppercased rat symbol; keep genes w/ human ortholog) ----
 tm <- fread(MAP_F)
@@ -81,6 +87,7 @@ for (i in seq_len(nrow(blocks))) {
   ranks <- setNames(d$stat, d$hsym)
   ranks <- ranks[is.finite(ranks)]
   if (length(ranks) < 50) next
+  set.seed(SEED)                         # per block, so results don't depend on block order
   res <- tryCatch(
     fgsea(pathways = PATHWAYS, stats = ranks, minSize = MIN_SET, maxSize = MAX_SET),
     error = function(e) NULL)
@@ -97,6 +104,11 @@ for (i in seq_len(nrow(blocks))) {
 summ <- rbindlist(all_rows, fill = TRUE)
 setorder(summ, tissue, cell_type, padj)
 fwrite(summ, file.path(OUT, "enrichment_summary.tsv"), sep = "\t")
+write_provenance(OUT, inputs = c(summ_f, MAP_F),
+                 params = list(seed = SEED, min_set = MIN_SET, max_set = MAX_SET,
+                               n_pathways = length(PATHWAYS),
+                               fgsea = as.character(packageVersion("fgsea")),
+                               msigdbr = as.character(packageVersion("msigdbr"))))
 cat(sprintf("\nwrote %s  (%d significant pathway hits across %d blocks)\n",
             file.path(OUT, "enrichment_summary.tsv"), nrow(summ),
             length(unique(paste(summ$tissue, summ$cell_type)))))

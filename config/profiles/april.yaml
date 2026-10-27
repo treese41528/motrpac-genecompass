@@ -1,0 +1,21 @@
+# April model profile: the first fine-tuned rat GeneCompass (checkpoint-147941) and every input and output
+# it used, now that the working model is retrain v2 (config/pipeline_config.yaml).
+#   export PIPELINE_PROFILE=config/profiles/april.yaml
+# Reads the whole QC corpus (no file list), April's medians and tokenized corpus, and writes or reads
+# April's model-dependent folders: genecompass_input/ (+ _human/), augur_input/, grn/ and grn_human/.
+# Hotspots come from April's gate by the same method as v2's (10 splits x 10,000 permutations; 16 blocks).
+# April's July production runs used the July hash-seeded gate (15 blocks), kept in
+# data/deconvolution/_april_hashseed_backup_20261024/genecompass_input/corroboration_merged.tsv.
+paths:
+  qc_file_list: null
+  median_dir: data/training/gene_medians
+  hybrid_medians: data/training/gene_medians/hybrid_gene_medians.pickle
+  tokenized_corpus_dir: data/training/tokenized_corpus
+deconvolution:
+  genecompass_input_dir: data/deconvolution/genecompass_input
+  genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
+  pseudocell_target_sum: 6500
+  hotspots_table: data/deconvolution/genecompass_input/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input
+  grn_dir: data/deconvolution/grn
+  grn_human_dir: data/deconvolution/grn_human

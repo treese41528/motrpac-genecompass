@@ -182,7 +182,7 @@ RNA-fractions and a distortable Z. Gate claims accordingly:
 - **Immune / stromal cell types** (not high-mRNA): fractions AND Z reliable (our immune DE recovers
   known Yu/Vetr biology).
 - **Embedding-based results** (Stage 9 pseudo-cells → GeneCompass: the exercise hotspots, subspace probe,
-  cross-species transfer). Target-sum-6500 tokenization strips the mRNA-content **scale**, insulating
+  cross-species transfer). Fixed-target-sum tokenization (6,500 April / 6,400 v2) strips the mRNA-content **scale**, insulating
   them from the fraction bias — e.g. lung's 0→3 hotspots and their rat→human preservation are trustworthy.
 
 **RISKY (bias-compromised) — add a caveat, cross-check, or don't claim:**

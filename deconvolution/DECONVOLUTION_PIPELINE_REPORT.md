@@ -1,5 +1,11 @@
 # MoTrPAC → GeneCompass Deconvolution Pipeline — Technical Reference Report
 
+> **Model: retrain v2 (2026-10-25).** The canonical-figures box below gives v2's numbers. The body was written
+> with the April model (`checkpoint-147941`) and its model-dependent figures (hotspots, transfer, GRN,
+> checkpoint paths, target sum 6500) are April's; where the body and the box disagree, the box is
+> authoritative. v2 is the default config; April's model is `config/profiles/april.yaml`. Full comparison:
+> `docs/RETRAIN_V2_RESULTS.md`. Deconvolution (Stage 8), θ, Z and the DE statistics do not use the model.
+
 > ⚠️ **Headline figures updated to the 2026-07-16 reference rebuild; some deep-body build/validation detail predates it.**
 > Current production = **14 deconvolved tissues** (VENACV dropped — no genuine rat vena-cava reference; BAT/HYPOTH/SMLINT/TESTES
 > added), **172 DE blocks / 15 exercise hotspots**, and **8,450 pseudo-cells**. The rebuild adopted author-deposited labels for
@@ -51,32 +57,37 @@ external data (Yu 2023, Vetr 2024) and survive the cross-species transfer.
 | Bulk → rel-113 liftover | 24,003 / 32,883 mapped (**73.0%**); 8,880 dropped; primary-gene vocab coverage 89.5% → 94.8% | `MOTRPAC_BULK_LIFTOVER.md` |
 | Bulk design | 2 sex × 5 group {control,1w,2w,4w,8w} × 5 rep = 50 samples/tissue | — |
 | Pseudo-cells embedded (rat space) | **8,450** total across 14 tissues (1 per sample × cell type; merged refs) | sum of `embeddings/*.npy` |
-| Fine-tuned checkpoint | `rat_phase2_mixed_species/checkpoint-147941` (12-layer BERT, hidden 768, vocab 55,275) | config resolve |
-| Tokenization | target-sum **6500**, top-**2048**, log2(1+x/hybrid-median), species=2 (rat) | `tokenize_pseudocells.py` |
-| DE blocks (merged-reference production) | **172** blocks (status ok), **13** hotspots (q_sup_trained < 0.05) | `de_summary.tsv`, `de_hotspots.tsv` |
-| DE meta-tests | **2,017,173** Fisher tests; IHW~tissue; repfdr 8w sex-consistency | `de_methods.tsv` |
-| Embedding vs PCA-50 (rat space) | embed median **0.583** > genes 0.575 > PCA **0.564**; embed > PCA in **91/172** | `pca_control.tsv` |
+| Fine-tuned model | v2: `rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` (= `checkpoint-591763`; 12-layer BERT, hidden 768, vocab 55,275) | `deconvolution.genecompass_model_dir` |
+| Tokenization | target-sum **6400** (v2; April 6500), top-**2048**, log2(1+x/hybrid-median), species=2 (rat) | `deconvolution.pseudocell_target_sum` |
+| Cell-type separation (Stage 9 silhouette, median of 14 tissues) | **0.731** (April 0.712) | `RETRAIN_V2_RESULTS.md` |
+| DE blocks / exercise hotspots | **172** blocks (status ok), **13** hotspots (BH q_sup_trained < 0.05; gate with 10 splits × 10,000 permutations; April by the same method 16) | `genecompass_input_v2/gate_rcv10/corroboration_merged.tsv`, `pseudobulk_de/de_hotspots.tsv` |
+| DE meta-tests | **2,017,173** Fisher tests; IHW~tissue; repfdr's fit degenerate (Fdr = 1 everywhere) → 8w sex-consistency calls are concordance-only | `de_methods.tsv` |
+| Embedding vs PCA-50 (rat space, C5 method) | embedding higher in **95/172** blocks; median Δ +0.019, Wilcoxon p 0.073 (not significant) | `gate_rcv10/pca_control.tsv` |
 | Holdout / cross deconvolution (liver) | r = 0.998 / 0.949 (paper bar > 0.95) | `AIM2_DECONV_RESULTS.md` |
-| Cross-species transfer | **24 blocks PRESERVED / 8 WEAKENED** whole-table (185 paired; **10/21** hotspots PRESERVED, PLS-1 **and** Augur-RF); sex gate Spearman 0.782; fidelity 0.420 (PLS-1)/0.767 (Augur); cosine(rat,human) 0.979 | `transfer_comparison.md` |
+| Cross-species transfer | hotspots **13 / 0 / 0** preserved / weakened / lost (April 14 / 0 / 2 of 16); all 172 blocks 34 / 12 / 126; trained-AUC Spearman rat~human 0.616 (April 0.762); pooled sex check prints FAIL for both models (v2 0.682 → 0.671), block-level sex Spearman 0.90; cosine(rat, human) median 0.969 — measures how far apart the species' regions sit, not whether a cell keeps its identity | `genecompass_input_v2_human/gate_rcv10/transfer_comparison.md` |
+| GRN rat↔human self-consistency (Stage 13) | 9 networks; per-TF median ρ **0.292** (April 0.451); same cells through the same model, not cross-species biology | `grn_v2_human/conservation/` |
 
 ### Reconciliation notes (auto-generated body vs. verified ground truth)
 
 This report's body sections were drafted by parallel readers; a few numbers were reconciled here. **Where the
 body and this box disagree, this box is authoritative:**
 
-- **172 blocks / 15 hotspots / 2,017,173 Fisher tests** is the **current** production (the **2026-07-16 reference
+- **172 blocks / 13 hotspots (v2) / 2,017,173 Fisher tests** is the **current** production (the **2026-07-16 reference
   rebuild**: 14 deconvolved tissues, VENACV dropped, BAT + HEART author-deposited labels adopted, SKMGN+SKMVL
-  collinear myofiber merge). Earlier body figures — **178 blocks / 18 hotspots** (post-liver/lung fix) and
+  collinear myofiber merge; v2 model since 2026-10-25). Body mentions of **15 hotspots** / **13/15 transferred**
+  are April's July run. Earlier body figures — **178 blocks / 18 hotspots** (post-liver/lung fix) and
   **186 blocks / 22 hotspots** (pre-merge) — are superseded pre-rebuild runs; both appear because the agents read
   different artifacts.
 - **Pseudo-cells = 8,450** (per-tissue: bat 300, blood 700, cortex 550, heart 800, hippoc 900, hypoth 650,
   kidney 850, liver 300, lung 1400, skmgn 250, skmvl 250, smlint 700, testes 150, watsc 650). Body mentions of
   8,600 / 8,900 / 9,300 are pre-rebuild.
-- **The GeneCompass embedding DOES beat the PCA-50 baseline** in rat space (embed 0.583 vs PCA 0.564, 91/172;
-  human-space PCA control not re-run for the 2026-07-16 rebuild). The Detection/DE section's statement that "embedding does NOT beat PCA"
-  (citing embed 0.615 / PCA 0.701) is **incorrect** — those medians were misread; the verified `pca_control.tsv`
-  medians are embed 0.589 / PCA 0.540 / genes 0.564, consistent with §3b of `AIM2_DECONV_RESULTS.md`.
-- The checkpoint is **checkpoint-147941** (latest); intermediate dirs (110000–140000) also exist on disk.
+- **Embedding vs PCA-50.** Under the 10-split gate the embedding is higher than PCA-50 in 95 of 172 blocks for
+  both models, but not significantly (v2 p 0.073, April p 0.17), and Augur scores PCA-50 at least as high. So
+  the embedding is a faithful, compact representation of the exercise signal, not a better detector than PCA.
+  (The July box's "embedding DOES beat PCA", embed 0.583 vs PCA 0.564 in 91/172, came from the
+  single-split run.)
+- The model is **v2** (`checkpoint-591763`, the phase-2 final save); April's `checkpoint-147941` remains on disk
+  and under `config/profiles/april.yaml`.
 - Ortholog map: 15,234 rat→human pairs = ~69% of 22,213 rat genes (≈82% of the genes in a given tissue's
   pseudo-cells); **not** 94.5%. Of the mapped genes, 13,883 (91%) already share their human ortholog's token ID.
 
@@ -247,7 +258,7 @@ data/deconvolution/
 - `motrpac_bulk_dir: data/motrpac/rat_training_6mo/data` — Source `TRNSCRPT_*.rda` files.
 - `motrpac_bulk_out: data/deconvolution/motrpac_bulk` — Lifted bulk output.
 - `results_dir: data/deconvolution/results` — BayesPrism + Z extraction output.
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Pseudo-cells (Stage 9 input).
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Pseudo-cells (Stage 9 input).
 - `n_cores: 4` — Parallel cores for BayesPrism step 2.
 - `r_module: r/4.4.1` — R module name (cluster-specific; overridable in `site.env`).
 
@@ -260,16 +271,16 @@ data/deconvolution/
 **Invocation:**
 ```bash
 python pipeline/run_stage9.py --label skmgn \
-    [--model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species] \
-    [--target-sum 6500.0] [--n-cells 1000000] [--from 1] [--dry-run] [--device cuda]
+    [--model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species] \
+    [--target-sum 6400] [--n-cells 1000000] [--from 1] [--dry-run] [--device cuda]
 ```
 
 **Parameters:**
-- `--label` (REQUIRED or `--tissue`): Tissue label matching Stage 8 `--label`; folder name in `genecompass_input/<label>/`.
+- `--label` (REQUIRED or `--tissue`): Tissue label matching Stage 8 `--label`; folder name in `<genecompass_input_dir>/<label>/` (v2: `genecompass_input_v2/`).
 - `--tissue` (alternative to `--label`): MoTrPAC tissue code; label is derived as lowercase slug.
-- `--model-dir`: Path to fine-tuned rat GeneCompass checkpoint directory or parent with `checkpoint-*` subdirs (orchestrator picks highest-numbered checkpoint). Defaults to config `deconvolution.genecompass_model_dir` (e.g., `data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species`).
+- `--model-dir`: Path to fine-tuned rat GeneCompass checkpoint directory or parent with `checkpoint-*` subdirs (orchestrator picks highest-numbered checkpoint). Defaults to config `deconvolution.genecompass_model_dir` (v2: `data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` → `checkpoint-591763`).
 - `--n-cells` (optional): Max cells to embed; defaults to all pseudo-cells (full coverage, never subsamples; embed_cells auto-subsamples and breaks row alignment if `n_cells < actual`).
-- `--target-sum: 6500.0` — Normalization target for tokenizer `normalize_total()`. Must match corpus tokenization (calibrated on 10,000-normalized single cells; 6500 is a corpus-scale downsample). **Critical:** For Stage 12 (human transfer), must match the rat Stage 9 value.
+- `--target-sum` — Normalization target for tokenizer `normalize_total()`; default `deconvolution.pseudocell_target_sum` (v2 6,400; April 6,500), calibrated so the pseudo-cells' value median matches the model's corpus. **Critical:** For Stage 12 (human transfer), must match the rat Stage 9 value.
 - `--pa-genes`: Pass PA (training-regulated) gene priority list to tokenizer; off by default. Requires `config[deconvolution][pa_genes]` to point to a valid TSV.
 - `--device cuda` or `cpu`: GPU/CPU for embedding model (GPU required for production; CPU for testing).
 - `--from (1–2)`: Resume from step N.
@@ -302,8 +313,8 @@ data/deconvolution/genecompass_input/<label>/
 **Scope & Scaling:** Per-tissue (one label per run). Step 1 is light (login node); step 2 (embed_cells) is GPU-heavy and requires a GPU node.
 
 **Config Keys (from `config/pipeline_config.yaml[deconvolution]`):**
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Pseudo-cells input, embeddings output.
-- `genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species` — Default fine-tuned model directory.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Pseudo-cells input, embeddings output.
+- `genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` — Default fine-tuned model directory.
 - `pa_genes: deconvolution/reference/motrpac_pa_genes.tsv` — Training-regulated genes (optional; used if `--pa-genes` flag set).
 
 ---
@@ -361,7 +372,8 @@ data/deconvolution/genecompass_input/pseudobulk_de/
 
 **Config Keys:**
 - `results_dir: data/deconvolution/results` — Source pred_z directories.
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Output pseudobulk_de/ dir.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Output pseudobulk_de/ dir.
+- `hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv` — The rat gate whose q_sup_trained < 0.05 blocks are the hotspots (`--hotspots` overrides).
 - `reference_dir: deconvolution/reference` — Frozen posctrl_prereg.tsv.
 - `alpha: 0.05` — (from command-line override).
 
@@ -375,19 +387,19 @@ data/deconvolution/genecompass_input/pseudobulk_de/
 ```bash
 python pipeline/run_stage12.py \
     [--labels liver skmvl] \
-    [--model-dir data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species] \
-    [--target-sum 6500.0] [--n-cells 1000000] [--perms 1000] [--jobs 8] \
+    [--model-dir data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species] \
+    [--target-sum 6400] [--n-cells 1000000] [--perms 10000] [--repeats 10] [--jobs 8] \
     [--from 1] [--device cuda] [--dry-run] [-v]
 ```
 
 **Parameters:**
-- `--labels` (optional): Tissue labels for per-tissue steps 1–2; defaults to all rat tissues (auto-discovered from `genecompass_input/<label>/pseudocells.h5ad`).
+- `--labels` (optional): Tissue labels for per-tissue steps 1–2; defaults to all rat tissues (auto-discovered from `<genecompass_input_dir>/<label>/pseudocells.h5ad`).
 - `--label` (alias): Single tissue label.
 - `--model-dir`: Fine-tuned rat GeneCompass (same model as Stage 9; used for both species=2 and species=0 embedding).
-- `--target-sum: 6500.0` — **MUST match Stage 9 rat tokenization** (human tokenizer will use same value).
+- `--target-sum` — **MUST match Stage 9 rat tokenization**; default `deconvolution.pseudocell_target_sum` (v2 6,400), the same key Stage 9 reads.
 - `--n-cells`: Max pseudo-cells to embed (default: 1M >> any tissue; never subsamples).
-- `--perms: 1000` — Permutations for subspace_probe statistical significance.
-- `--jobs: 8` — Parallel jobs for subspace_probe (CV folds).
+- `--perms: 10000`, `--repeats: 10` — subspace_probe permutations and stratified 5-fold splits; the default is the canonical gate method (pre-registration §6), the same as the rat gate in `deconvolution.hotspots_table`'s folder.
+- `--jobs: 8` — Parallel jobs for subspace_probe (blocks); use the node's CPU count (production used 48).
 - `--device cuda` or `cpu`.
 - `--from (1–4)`: Resume from step N (1–2 per-tissue transfer+embed; 3–4 global probe+compare).
 - `--dry-run, -v, --verbose`: As in Stage 8.
@@ -398,33 +410,37 @@ python pipeline/run_stage12.py \
 |------|--------|--------|-------------|----------|-----------|
 | 1 (per-tissue) | `translation/transfer_to_human.py` | Rat pseudocells.h5ad (species=2); rat–human ortholog table; human token dict + medians; ortholog mapping | Human-space `<human_root>/<label>/dataset/` (token_ids mapped to human ENSG space, species=0 flag); metadata | ~2–10s | Login |
 | 2 (per-tissue) | `finetune/genecompass/embed_cells.py --species 0` | Human dataset; model checkpoint (same as Stage 9); `--species 0` flag (triggers human embedder logic) | `<human_root>/<label>/embeddings/cell_embeddings.npy` (N_cells × 768); metadata | ~5–30m | GPU |
-| 3 (global) | `deconvolution/subspace_probe.py --gc-root <human_root>` | All human-space embeddings (collected from all labels); metadata (trained, control, dose); PHENO merge | `<human_root>/subspace_probe.tsv` (per cell_type: sup_trained_auc, sup_dose_rho, pval, perms; primary E.2 detector) | ~5–30m | CPU (parallel) |
-| 4 (global) | `translation/compare_transfer.py` | Rat corroboration results (pre-computed or from Stage 9 exploration); human subspace_probe; rat/human metadata | `<human_root>/transfer_comparison.tsv` (per tissue×cell_type: does the axis survive?); `transfer_comparison.md` (E.2 deliverable) | ~1m | Login |
+| 3 (global) | `deconvolution/subspace_probe.py --gc-root <human_root>` | All human-space embeddings (collected from all labels); metadata (trained, control, dose); PHENO merge | `<human_root>/gate_rcv10/subspace_probe.tsv` (per cell_type: sup_trained_auc, sup_dose_rho, pval; primary E.2 detector) | hours at 10 × 10,000 | CPU (parallel) |
+| 4 (global) | `translation/compare_transfer.py` | The rat gate (`deconvolution.hotspots_table`'s folder: `corroboration_merged.tsv` + `subspace_probe.tsv`); human subspace_probe | `<human_root>/gate_rcv10/transfer_comparison.tsv` (per tissue×cell_type: does the axis survive?); `transfer_comparison.md` (E.2 deliverable) | ~1m | Login |
 
 **Ortholog Projection (Step 1):** Each rat ENSRNOG pseudo-cell → rat_human_orthologs (preferring one2one > one2many) → human ENSG pseudo-cell. Non-orthologous genes are dropped. Tokenization then uses human gene medians + token IDs (recalibrated to human space).
 
 **Subspace Probe (Step 3):** PLS-1 CV on human-space embeddings, per cell type:
 - Supervised signals: trained (exercise-trained vs. control) + dose (ordinal exercise dose).
-- Metrics: AUC (trained), Spearman ρ (dose), permutation p-values (1000 perms).
+- Metrics: AUC (trained), Spearman ρ (dose), permutation p-values (mean over 10 splits; 10,000 permutations).
 - Output: A "verdict" row per cell type indicating whether the exercise axis survives transfer.
 
 **Output Structure:**
 ```
-data/deconvolution/genecompass_input_human/    # (parallel human-space mirror)
+data/deconvolution/genecompass_input_v2_human/ # (parallel human-space mirror; April: genecompass_input_human/)
   <label>/
     dataset/                                    # (human ENSG space, species=0)
     embeddings/
       cell_embeddings.npy
-  subspace_probe.tsv                            # (per cell_type: trained_auc, dose_rho, pval, ...)
-  transfer_comparison.tsv                       # (per tissue×cell_type: survival verdict)
-  transfer_comparison.md                        # (E.2 deliverable summary)
+  gate_rcv10/                                   # (Stage 12 steps 3-4, canonical 10 x 10,000 method)
+    subspace_probe.tsv                          # (per cell_type: trained_auc, dose_rho, pval, ...)
+    transfer_comparison.tsv                     # (per tissue×cell_type: survival verdict)
+    transfer_comparison.md                      # (E.2 deliverable summary)
+  subspace_probe.tsv, transfer_comparison.*     # (registered 1 x 1,000 method, from the §6 SLURM job; not Stage 12)
 ```
 
 **Scope & Scaling:** Per-tissue steps 1–2 (one label per run, parallelize across tissues); global steps 3–4 (all human embeddings pooled). Step 2 (GPU embed) is the bottleneck. Production SLURM jobs submit one job per tissue for steps 1–2, then a second global job for steps 3–4.
 
 **Config Keys:**
-- `genecompass_input_dir: data/deconvolution/genecompass_input` — Rat pseudo-cells + embeddings input.
-- `genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species` — Shared fine-tuned model.
+- `genecompass_input_dir: data/deconvolution/genecompass_input_v2` — Rat pseudo-cells + embeddings input (human root = this + `_human`).
+- `genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` — Shared fine-tuned model.
+- `pseudocell_target_sum: 6400` — Tokenizer target, shared with Stage 9.
+- `hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv` — the rat gate; its folder gives the rat side of the comparison and names the human output subfolder.
 - `rat_human_orthologs: data/references/biomart/rat_human_orthologs.tsv` — Ortholog mapping (Ensembl BioMart, rel-113).
 
 ---
@@ -785,9 +801,9 @@ python -c "from lib.gene_utils import load_config, validate_config; \
 | Stage | Orchestrator | Scope | Per-Step Scripts | Config Pins | Key Flags |
 |-------|--------------|-------|------------------|-------------|-----------|
 | **8** | `run_stage8.py` | Per-tissue | `prepare_motrpac_bulk.sh` → `run_deconvolution.sh` → `extract_z.sh` → `build_pseudocells.py` | `[deconvolution]`: motrpac_bulk_dir, results_dir, genecompass_input_dir, n_cores | `--tissue` (req), `--ref-dir` (req), `--label`, `--from`, `--dry-run` |
-| **9** | `run_stage9.py` | Per-tissue | `tokenize_pseudocells.py` → `embed_cells.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir | `--label` (req), `--model-dir`, `--target-sum 6500`, `--device cuda`, `--from`, `--dry-run` |
+| **9** | `run_stage9.py` | Per-tissue | `tokenize_pseudocells.py` → `embed_cells.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir | `--label` (req), `--model-dir`, `--target-sum` (config; v2 6400), `--device cuda`, `--from`, `--dry-run` |
 | **10** | `run_stage10.py` | Whole-exp | `run_pseudobulk_de.sh` (R) → `compare_posctrl.py` (py) | `[deconvolution]`: results_dir, genecompass_input_dir, reference_dir | `--tissues` (opt), `--alpha 0.05`, `--from`, `--dry-run` |
-| **12** | `run_stage12.py` | Per-tissue then global | (Steps 1–2) `transfer_to_human.py` → `embed_cells.py`; (Steps 3–4) `subspace_probe.py` → `compare_transfer.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir, rat_human_orthologs | `--labels` (opt), `--model-dir`, `--target-sum 6500`, `--device cuda`, `--from`, `--dry-run` |
+| **12** | `run_stage12.py` | Per-tissue then global | (Steps 1–2) `transfer_to_human.py` → `embed_cells.py`; (Steps 3–4) `subspace_probe.py` → `compare_transfer.py` | `[deconvolution]`: genecompass_input_dir, genecompass_model_dir, rat_human_orthologs | `--labels` (opt), `--model-dir`, `--target-sum` (config; v2 6400), `--perms 10000`, `--repeats 10`, `--device cuda`, `--from`, `--dry-run` |
 
 
 ---
@@ -2389,28 +2405,30 @@ Per-tissue breakdown (significant blocks; gate p-threshold 0.05):
 
 **Output:** `/data/deconvolution/genecompass_input/subspace_probe.tsv` (172 rows)
 
-**Key findings (13 FDR-significant hotspots; authoritative AUC + is_hotspot from `de_hotspots.tsv`):**
+**Key findings (15 FDR-significant hotspots; authoritative AUC + is_hotspot from `de_hotspots.tsv`):**
 
 | Tissue | Cell Type | n | mean θ | sup_trained_auc | Status |
 |---|---|---|---|---|---|
-| SKMVL | Endothelial cells | 50 | 0.027 | 0.89 | Hotspot |
-| BLOOD | Megakaryocytes | 50 | 0.195 | 0.885 | Hotspot |
-| HEART | CD8+ T cells | 50 | 0.000 | 0.857 | Hotspot |
-| BLOOD | ISG-expressing T cells | 50 | 0.553 | 0.845 | Hotspot |
-| BLOOD | Basophils | 50 | 0.093 | 0.843 | Hotspot |
-| BLOOD | Naive B cells | 50 | 0.006 | 0.838 | Hotspot |
-| LUNG | Pulmonary fibroblasts | 50 | 0.244 | 0.838 | Hotspot |
-| LUNG | Myeloid dendritic cells | 50 | 0.002 | 0.833 | Hotspot |
-| LUNG | Alveolar macrophages | 50 | 0.003 | 0.823 | Hotspot |
-| KIDNEY | Proximal tubule cells | 50 | 0.799 | 0.82 | Hotspot |
-| BLOOD | Natural killer cells | 50 | 0.013 | 0.82 | Hotspot |
-| BLOOD | Classical monocytes | 50 | 0.054 | 0.815 | Hotspot |
-| BLOOD | Non-classical monocytes | 50 | 0.055 | 0.802 | Hotspot |
+| SKMGN | Skeletal myocytes | 50 | 0.962 | 0.893 | Hotspot |
+| BLOOD | Megakaryocytes | 50 | 0.195 | 0.858 | Hotspot |
+| HEART | Cardiac neurons | 50 | 0.002 | 0.858 | Hotspot |
+| BLOOD | Naive B cells | 50 | 0.006 | 0.835 | Hotspot |
+| BLOOD | Basophils | 50 | 0.093 | 0.83 | Hotspot |
+| KIDNEY | Renal interstitial fibroblasts | 50 | 0.000 | 0.828 | Hotspot |
+| BLOOD | Non-classical monocytes | 50 | 0.055 | 0.825 | Hotspot |
+| HEART | Monocytes | 50 | 0.063 | 0.825 | Hotspot |
+| BLOOD | ISG-expressing T cells | 50 | 0.553 | 0.823 | Hotspot |
+| LUNG | Endothelial cells | 50 | 0.469 | 0.818 | Hotspot |
+| BLOOD | Classical monocytes | 50 | 0.054 | 0.813 | Hotspot |
+| LUNG | Myeloid dendritic cells | 50 | 0.002 | 0.81 | Hotspot |
+| SKMVL | Endothelial cells | 50 | 0.027 | 0.805 | Hotspot |
+| SKMVL | Skeletal myocytes | 50 | 0.955 | 0.803 | Hotspot |
+| BLOOD | Memory T cells | 50 | 0.017 | 0.798 | Hotspot |
 
 **Summary statistics:**
-- **15 hotspots** (q_sup_trained < 0.05 by BH-FDR over 172 blocks) — blood 7, lung 3, skmvl 1, heart 1, kidney 1
-- **Max hotspot trained AUC:** 0.89 (SKMVL Endothelial cells); the dominant muscle myofiber (Skeletal myocytes) is excluded — its trained-vs-control AUC is uncomputable as dominant parenchyma (NA in de_summary)
-- **Supervised AUC ≥ 0.80:** the 13 FDR-significant hotspots (0 under the global trace gate)
+- **15 hotspots** (q_sup_trained < 0.05 by BH-FDR over 172 blocks) — blood 7, heart 2, lung 2, skmvl 2, skmgn 1, kidney 1
+- **Max hotspot trained AUC:** 0.893 (SKMGN Skeletal myocytes) — the muscle myofiber recovered after the correct-order redetect (2026-07-17) and is now the top hotspot; SKMVL Skeletal myocytes (0.803) is also a hotspot
+- **Supervised AUC ≥ 0.80:** the 15 FDR-significant hotspots (0 under the global trace gate)
 - The previous 5 SKMVL + 4 SKMGN "muscle" hotspots were collinear over-split artifacts, removed by the myofiber merge
 
 **Cross-method validation (Augur corroboration):** _(NB: `augur_results.tsv` / `corroboration_merged.tsv` were not re-run for the 2026-07-16 rebuild; the figures below reflect the prior 21/22-hotspot roster.)_
@@ -2903,22 +2921,22 @@ Driver: `run_stage12.py` step 4; implementation: `compare_transfer.py`
 
 Sex is a transfer-agnostic biological axis (driven by sex-chromosome dosage and hormones). If sex collapses in human space, the transfer corrupted the embedding.
 
-**Result:** **PASS**
+**Result:** **MARGINAL** (composition-driven, not a transfer failure)
 
-- **Median sup_sex_auc:** rat 0.686 → human 0.765 (no collapse)
-- **Spearman(rat~human sex AUC):** r = 0.782 (111 blocks, p < 0.001)
-- **Interpretation:** The strong sex axis is preserved. The embedding biology is intact; exercise claims downstream are interpretable.
+- **Median sup_sex_auc:** rat 0.694 → human 0.692 — both just below the pre-registered 0.70 floor
+- **Spearman(rat~human sex AUC):** r = 0.897 (166 blocks, p < 0.001) — *up* from 0.808 pre-rebuild
+- **Interpretation:** The sex axis transfers faithfully (rat↔human r = 0.90; strongly-dimorphic tissues 0.95–1.0). The pooled median dips below 0.70 only because the 2026-07-16 rebuild added weakly-dimorphic tissues (BAT/HYPOTH/SMLINT/TESTES, median 0.630); the rat-space median is *also* 0.694, and on the original 10 tissues the human median is 0.739 (would pass). The pooled-median gate is confounded by tissue mix — downstream exercise claims are embedding-space evidence, reported with this caveat.
 
 ### (2) Global fidelity — does human-space tracking follow rat-space?
 
-Across the 111 paired blocks with a computable human probe, how well does the trained AUC (and dose rho) rank order in human space match rat space?
+Across the 172 paired blocks with a computable human probe, how well does the trained AUC (and dose rho) rank order in human space match rat space?
 
 **Results:**
 
 | Axis | Spearman r | n |
 |------|-----------|---|
-| Trained AUC | 0.420 | 111 |
-| Ordinal dose rho | 0.452 | 111 |
+| Trained AUC | 0.665 | 172 |
+| Ordinal dose rho | 0.664 | 172 |
 
 **Interpretation:** Moderate correlation (~0.68). The human-space ranking of blocks is not identical to rat (not 1.0), but the block-level effect sizes track significantly better than chance. This is expected: cell type reorders slightly when transferred (relative positions shift), and the embedding's lower-variance training axis is noisier in human tokens than the rat tokens.
 
@@ -2926,7 +2944,7 @@ Across the 111 paired blocks with a computable human probe, how well does the tr
 
 **Definition:** Rat exercise "hotspots" = tissue×cell_type blocks with **q_sup_trained < 0.05** (FDR-corrected in rat space). These are the primary targets for downstream DE and biology.
 
-**Count:** the transfer table's hotspot flag = 21 blocks across 6 tissues (blood 7, skmgn 5, skmvl 4, lung 3, heart 1, kidney 1); note this predates the 2026-07-16 rebuild's 13-hotspot roster (the transfer was not re-run against the new hotspots)
+**Count:** the transfer table's hotspot flag = 15 blocks across 6 tissues (blood 7, heart 2, lung 2, skmvl 2, skmgn 1, kidney 1), matching the 2026-07-16 rebuild roster (transfer re-run 2026-07-17 against the current hotspots)
 
 **Classification in human space** (for each hotspot, apply decision rule):
 
@@ -2936,24 +2954,24 @@ WEAKENED:  human sup_trained_auc >= 0.65 BUT p >= 0.05
 LOST:      human sup_trained_auc < 0.65
 ```
 
-**Result (hotspot level):** **10/21 PRESERVED, 1 WEAKENED, 2 LOST, 8 no-human-block.** Whole-table (185 paired blocks): **24 PRESERVED / 8 WEAKENED / 79 LOST / 74 no-human-block.**
+**Result (hotspot level):** **13/15 PRESERVED, 0 WEAKENED, 2 LOST.** Whole-table (172 paired blocks): **34 PRESERVED / 20 WEAKENED / 118 LOST.**
 
-| Tissue | Preserved | Lost/Weakened | Example preserved | Example lost |
+| Tissue | Preserved | Lost | Example preserved | Example lost |
 |--------|-----------|------|-------------------|--------------|
-| Blood | 7/7 | 0 | Megakaryocytes (rat 0.885 → human 0.845) | — |
-| Lung | 2/3 | 1 LOST | Pulmonary fibroblasts (0.838 → 0.810) | Alveolar macrophages (0.823 → 0.578) |
-| Skmvl | 1/4 | 3 no-human-block | Endothelial cells (0.890 → 0.820) | — |
-| Heart | 0/1 | 1 LOST | — | CD8+ T cells (0.857 → 0.560) |
-| Kidney | 0/1 | 1 WEAKENED | — | Proximal tubule cells (0.820 → 0.660) |
-| Skmgn | 0/5 | 5 no-human-block | — | — |
+| Blood | 7/7 | 0 | Megakaryocytes (rat 0.858 → human 0.858) | — |
+| Lung | 2/2 | 0 | Endothelial cells (0.818 → 0.867) | — |
+| Skmvl | 2/2 | 0 | Skeletal myocytes (0.803 → 0.820) | — |
+| Kidney | 1/1 | 0 | Renal interstitial fibroblasts (0.828 → 0.800) | — |
+| Skmgn | 1/1 | 0 | Skeletal myocytes (0.893 → 0.752) | — |
+| Heart | 0/2 | 2 LOST | — | Cardiac neurons (0.858 → 0.645), Monocytes (0.825 → 0.575) |
 
 **Per-tissue hotspot preservation:**
 - blood: 7/7 (100%)
-- lung: 2/3 (67%)
-- skmvl: 1/4 (25%)
-- heart: 0/1 (0%)
-- kidney: 0/1 (0%)
-- skmgn: 0/5 (0%; all no-human-block)
+- lung: 2/2 (100%)
+- skmvl: 2/2 (100%)
+- kidney: 1/1 (100%)
+- skmgn: 1/1 (100%)
+- heart: 0/2 (0%; both lost)
 
 ---
 
@@ -2961,10 +2979,10 @@ LOST:      human sup_trained_auc < 0.65
 
 **Context:** The compare_transfer script optionally incorporates Augur-RF (Skinnider/Squair 2021 — published cross-validated random-forest standard for cell-type perturbation-responsiveness) if human-space corroboration_merged.tsv is present.
 
-**Result:** **19 / 20 hotspots (with an Augur AUC) PRESERVED by Augur-RF** (independent confirmation of PLS-1 verdict)
+**Result:** **8 / 11 hotspots (with an Augur AUC) keep human RF AUC ≥ 0.65** (independent corroboration of PLS-1 verdict)
 
-- **Augur-RF embed AUC Spearman(rat~human):** r = 0.767 (166 blocks, p < 0.001)
-- **Interpretation:** The PLS-1 survival is not an artifact of our linear method. A published, nonlinear, cross-validated RF method independently flags 19/20 hotspots as robust to transfer.
+- **Augur-RF embed AUC Spearman(rat~human):** r = 0.538 (96 blocks, p < 0.001)
+- **Interpretation:** The PLS-1 survival is not an artifact of our linear method. A published, nonlinear, cross-validated RF method independently corroborates the transferred hotspots.
 
 ---
 
@@ -2972,7 +2990,7 @@ LOST:      human sup_trained_auc < 0.65
 
 **Verdict document:** `/data/deconvolution/genecompass_input_human/transfer_comparison.md` (above, generated by compare_transfer.py)
 
-**Full paired join:** `/data/deconvolution/genecompass_input_human/transfer_comparison.tsv` (185 rows: 24 PRESERVED, 8 WEAKENED, 79 LOST, 74 no-human-block)
+**Full paired join:** `/data/deconvolution/genecompass_input_human/transfer_comparison.tsv` (205 rows; 172 analyzed after excluding 33 VENACV: 34 PRESERVED, 20 WEAKENED, 118 LOST)
 
 **Human-space embeddings:** `/data/deconvolution/genecompass_input_human/<tissue>/embeddings/cell_embeddings.npy` (per-tissue, 768-d CLS vectors; tissue-specific cell counts)
 
@@ -2982,7 +3000,7 @@ LOST:      human sup_trained_auc < 0.65
 
 ## Integration with downstream (Stage 10 + Aims 3b/3c)
 
-The PRESERVED hotspots form the **primary target set** for per-cell-type DE (downstream, Stage 10) and any putative mechanism work (Aim 3b regulators, Aim 3c human validation). The "transfer successfully carries the exercise axis" verdict (10/21 hotspots preserved, 24 blocks PRESERVED whole-table, both PLS-1 and Augur-RF) licenses the claim that **cell-type-resolved exercise biology is recoverable in human embedding space** — a key conceptual contribution of this work. Whether human patients *exhibit* the same response (E.3) remains a human-cohort experiment (out of scope here).
+The PRESERVED hotspots form the **primary target set** for per-cell-type DE (downstream, Stage 10) and any putative mechanism work (Aim 3b regulators, Aim 3c human validation). The "transfer carries the exercise axis" verdict (13/15 hotspots preserved, 34 blocks PRESERVED whole-table, both PLS-1 and Augur-RF; the sex positive control is marginal but composition-driven, §12.3) supports the claim that **cell-type-resolved exercise biology is recoverable in human embedding space** — a key conceptual contribution of this work, reported with the sex-gate caveat. Whether human patients *exhibit* the same response (E.3) remains a human-cohort experiment (out of scope here).
 
 ---
 
@@ -3201,7 +3219,7 @@ The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that take
   - Columns match rat version; AUC on human-space embeddings
 - **`genecompass_input_human/transfer_comparison.tsv`** — (185 rows; paired rat vs human AUC + dose-Spearman)
   - Cols: tissue, cell_type, rat_sup_trained_auc, human_sup_trained_auc, dAUC, rat_dose_rho, human_dose_rho, status (PRESERVED/WEAKENED/LOST)
-- **`genecompass_input_human/transfer_comparison.md`** — narrative summary (sex-control pass → 24 blocks PRESERVED / 8 WEAKENED whole-table, 10/21 hotspots PRESERVED; global Spearman r=0.420 trained, 0.452 dose)
+- **`genecompass_input_human/transfer_comparison.md`** — narrative summary (sex control marginal → 34 PRESERVED / 20 WEAKENED / 118 LOST whole-table, 13/15 hotspots PRESERVED; global Spearman r=0.665 trained, 0.664 dose)
 
 **UMAP visualization**:
 - **`genecompass_input/umap/`** — pre-computed UMAP & interactive viewer
@@ -3390,7 +3408,7 @@ Each tissue is deconvolved against a **tissue-specific single-cell reference**. 
 - **~18% of rat count-mass is non-mappable** (T4 rat-specific genes, e.g., olfactory receptors). This mass is kept in the normalize-total denominator but dropped from the sequence. Value-channel median drifts modestly; rank-order is robust.
 - **Confidence tiers** in `rat_token_mapping.tsv` classify orthologs (1:1 high-confidence, T3 many-to-many, T4 rat-specific)
 
-**Caveat:** Cross-species exercise conservation is imperfect. Some exerkines flip direction rat→human (IL15, BDNF, TGFB2); the transfer is **empirically tested, never assumed**. Results must be **confidence-gated** (report Tier 1 confidently, T3/T4 as exploratory) and **reported with survival statistics** (does the signal persist in human space? see transfer_comparison.md results: 24 blocks PRESERVED / 8 WEAKENED whole-table, 10/21 hotspots PRESERVED at AUC≥0.65 + p<0.05).
+**Caveat:** Cross-species exercise conservation is imperfect. Some exerkines flip direction rat→human (IL15, BDNF, TGFB2); the transfer is **empirically tested, never assumed**. Results must be **confidence-gated** (report Tier 1 confidently, T3/T4 as exploratory) and **reported with survival statistics** (does the signal persist in human space? see transfer_comparison.md results: 34 PRESERVED / 20 WEAKENED / 118 LOST whole-table, 13/15 hotspots PRESERVED at AUC≥0.65 + p<0.05).
 
 ---
 
@@ -3516,7 +3534,7 @@ sbatch slurm/analysis/run_stage12.slurm
 | CLS embeddings (human) | `data/deconvolution/genecompass_input_human/<tissue>/embeddings/cell_embeddings.npy` | ~8 MB | NPY | N_cells × 768 (human-space) |
 | Supervised probe (human) | `data/deconvolution/genecompass_input_human/subspace_probe.tsv` | 40 KB | TSV | 205 rows (111 with a computable human probe); human-space AUC + dose-rho |
 | Transfer comparison | `data/deconvolution/genecompass_input_human/transfer_comparison.tsv` | 28 KB | TSV | 185 rows; rat vs human AUC diffs |
-| Transfer summary | `data/deconvolution/genecompass_input_human/transfer_comparison.md` | 3 KB | MD | Survival verdict (24 PRESERVED / 8 WEAKENED whole-table; 10/21 hotspots PRESERVED) |
+| Transfer summary | `data/deconvolution/genecompass_input_human/transfer_comparison.md` | 3 KB | MD | Survival verdict (34 PRESERVED / 20 WEAKENED / 118 LOST whole-table; 13/15 hotspots PRESERVED) |
 | **Documentation** |
 | Aim-2 results | `deconvolution/AIM2_DECONV_RESULTS.md` | 39 KB | MD | Comprehensive; gate, supervised re-measure, Augur, validation |
 | Methods review | `deconvolution/EMBEDDING_DE_STANDARDS.md` | 8 KB | MD | PERMANOVA, Augur, pseudobulk DE precedent |
@@ -3558,7 +3576,7 @@ sbatch slurm/analysis/run_stage12.slurm
                           │   └─ genecompass_input_human/subspace_probe.tsv (human AUC)
                           │
                           └─ [Stage 12.4: Transfer Comparison]
-                              └─ transfer_comparison.md (survival: 24 PRESERVED / 8 WEAKENED; 10/21 hotspots)
+                              └─ transfer_comparison.md (survival: 34 PRESERVED / 20 WEAKENED / 118 LOST; 13/15 hotspots)
 ```
 
 The pipeline is **strictly sequential** within a tissue (Stages 8 → 9) and **multi-tissue collective** at the analysis layer (Stage 10, 12 global steps). Reproducibility requires:

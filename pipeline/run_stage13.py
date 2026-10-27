@@ -12,16 +12,20 @@ scores cross-species conservation and pathway enrichment.
 Chain:
   1. Differential GRN in RAT space         (GPU; finetune/genecompass/build_grn_pooled.py per cell type)
        dose-pooled bootstrap trained-vs-control TF->target network, per abundant hotspot.
-       -> data/deconvolution/grn/<tissue_celltype>_pooled.tsv
+       -> <grn_dir>/<tissue_celltype>_pooled.tsv
   2. Differential GRN in HUMAN space        (GPU; finetune/genecompass/build_grn_human.py per cell type)
        same perturbation on the transferred pseudo-cells (human ortholog token, species=0).
-       -> data/deconvolution/grn_human/<tissue_celltype>_pooled.tsv
+       -> <grn_human_dir>/<tissue_celltype>_pooled.tsv
   3. Cross-species conservation             (py; finetune/genecompass/compare_grn_conservation.py)
        per-TF rat-vs-human target-list rank correlation + pre-registered anchor edges.
-       -> data/deconvolution/grn_human/conservation/{conservation_per_tf,per_celltype,anchors}.tsv
+       -> <grn_human_dir>/conservation/{conservation_per_tf,per_celltype,anchors}.tsv
   4. Pathway / gene-set enrichment          (R;  deconvolution/R/run_gene_set_enrichment.sh)
        fgsea (signed dose statistic) vs MSigDB Hallmark + Reactome over the DE blocks.
-       -> data/deconvolution/genecompass_input/pseudobulk_de/enrichment/enrichment_summary.tsv
+       -> <genecompass_input_dir>/pseudobulk_de/enrichment/enrichment_summary.tsv
+
+Folders and the model come from the deconvolution section of the config (grn_dir, grn_human_dir,
+augur_input_dir, genecompass_input_dir, genecompass_model_dir -> latest checkpoint, as in Stages 9 and
+12), so a profile such as config/profiles/retrain_v2_downstream.yaml gives each model its own set.
 
 Steps 1-2 loop per cell type and SKIP a cell type whose output already exists (idempotent;
 --force re-runs). The heavy per-cell-type parallel path is slurm/analysis/build_grn_production.slurm
@@ -42,6 +46,7 @@ import argparse
 import csv
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -59,6 +64,14 @@ GC = _PROJECT_ROOT / 'finetune' / 'genecompass'
 DECONV = _PROJECT_ROOT / 'deconvolution'
 PY = os.environ.get('DECONV_PYTHON') or sys.executable
 THETA_MIN = 0.01
+
+
+def resolve_model_dir(base: Path) -> Path:
+    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest."""
+    if (base / 'config.json').exists():
+        return base
+    cks = sorted(base.glob('checkpoint-*'), key=lambda p: int(re.sub(r'\D', '', p.name) or 0))
+    return cks[-1] if cks else base
 
 
 def _safe(tissue: str, ct: str) -> str:
@@ -113,15 +126,15 @@ def build_steps(ctx: dict) -> list:
 
     return [
         {'num': 1, 'name': 'Differential GRN in rat space (GPU, per cell type)',
-         'desc': 'build_grn_pooled.py over abundant hotspots -> data/deconvolution/grn/',
+         'desc': f"build_grn_pooled.py over abundant hotspots -> {ctx['grn_dir']}/",
          'items': grn_items('build_grn_pooled.py', ctx['gc_input'], ctx['grn_dir']),
          'key': ctx['grn_dir']},
         {'num': 2, 'name': 'Differential GRN in human space (GPU, per cell type)',
-         'desc': 'build_grn_human.py over abundant hotspots -> data/deconvolution/grn_human/',
+         'desc': f"build_grn_human.py over abundant hotspots -> {ctx['grn_human_dir']}/",
          'items': grn_items('build_grn_human.py', ctx['gc_input_human'], ctx['grn_human_dir']),
          'key': ctx['grn_human_dir']},
         {'num': 3, 'name': 'Cross-species conservation (py)',
-         'desc': 'compare_grn_conservation.py -> grn_human/conservation/',
+         'desc': f"compare_grn_conservation.py -> {ctx['grn_human_dir']}/conservation/",
          'cmd': [PY, str(GC / 'compare_grn_conservation.py'),
                  '--rat-dir', str(ctx['grn_dir']), '--human-dir', str(ctx['grn_human_dir']),
                  '--out-dir', str(ctx['grn_human_dir'] / 'conservation')],
@@ -172,6 +185,9 @@ def main() -> None:
     p = argparse.ArgumentParser(
         description='Stage 13: Mechanism (differential GRN, cross-species conservation, enrichment)',
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
+    p.add_argument('--model-dir', default=None,
+                   help='fine-tuned rat GeneCompass dir or a parent with checkpoint-* '
+                        '(default: deconvolution.genecompass_model_dir -> latest checkpoint)')
     p.add_argument('--cell-types', nargs='*', default=[],
                    help="debug subset, e.g. 'SKMVL:Skeletal muscle' or a tissue name (GRN steps only)")
     p.add_argument('--from', dest='from_step', type=int, default=1, choices=[1, 2, 3, 4])
@@ -186,15 +202,16 @@ def main() -> None:
     config = load_config()
     d = config['deconvolution']
     gc_input = resolve_path(config, d['genecompass_input_dir'])
-    models_dir = resolve_path(config, config['paths']['models_dir'])
+    model_base = Path(args.model_dir).resolve() if args.model_dir \
+        else resolve_path(config, d['genecompass_model_dir'])
     ctx = {
         'gc_input': gc_input,
         'gc_input_human': Path(str(gc_input) + '_human'),
-        'augur_dir': gc_input.parent / 'augur_input',
-        'grn_dir': gc_input.parent / 'grn',
-        'grn_human_dir': gc_input.parent / 'grn_human',
+        'augur_dir': resolve_path(config, d['augur_input_dir']),
+        'grn_dir': resolve_path(config, d['grn_dir']),
+        'grn_human_dir': resolve_path(config, d['grn_human_dir']),
         'de_dir': gc_input / 'pseudobulk_de',
-        'model': models_dir / 'rat_genecompass_finetuned' / 'models' / 'rat_phase2_mixed_species' / 'models',
+        'model': resolve_model_dir(model_base),
     }
     ctx['hotspots'] = abundant_hotspots(ctx['de_dir'], args.cell_types)
 
@@ -204,11 +221,13 @@ def main() -> None:
     logger.info(f"  abundant hotspots (theta_bar>={THETA_MIN}): {len(ctx['hotspots'])} cell types"
                 + (f" [subset {args.cell_types}]" if args.cell_types else ""))
     logger.info(f"  model = {ctx['model']}")
+    logger.info(f"  grn = {ctx['grn_dir']}  grn_human = {ctx['grn_human_dir']}  meta = {ctx['augur_dir']}")
 
     errors = []
     if (args.only in (1, 2) or (args.only is None and args.from_step <= 2)):
-        if not ctx['model'].exists():
-            errors.append(f"fine-tuned model not found: {ctx['model']}\n  -> run Stage 7, or set paths.models_dir")
+        if not (ctx['model'] / 'config.json').exists():
+            errors.append(f"fine-tuned model not found: {ctx['model']}\n"
+                          f"  -> run Stage 7, or pass --model-dir / set deconvolution.genecompass_model_dir")
         if not ctx['hotspots']:
             errors.append(f"no abundant hotspots from {ctx['de_dir'] / 'de_hotspots.tsv'}\n  -> run Stage 10 first")
     if (args.only == 2 or (args.only is None and args.from_step <= 2)) and not ctx['gc_input_human'].exists():
@@ -219,7 +238,8 @@ def main() -> None:
         if not args.dry_run:
             sys.exit(1)
 
-    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT))
+    # DE_DIR: the enrichment R script's DE folder, passed explicitly (see run_gene_set_enrichment.R).
+    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), DE_DIR=str(ctx['de_dir']))
     steps = build_steps(ctx)
     steps = [s for s in steps if (s['num'] == args.only if args.only else s['num'] >= args.from_step)]
     t_total = time.time()

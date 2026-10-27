@@ -19,7 +19,7 @@
 #           per-sex per-timepoint contrasts, per-sex signed z at 8w
 #           z = qnorm(p/2, lower.tail=FALSE) * sign(log2FC)   (exactly Vetr's z definition)
 #         * sexes combined by FISHER's sum-of-logs into a meta training p
-#         * sex-consistent 8w states from repfdr (global replicability) x sign concordance:
+#         * sex-consistent 8w states: repfdr (global replicability) OR per-sex BH concordance, x sign:
 #           up_both (F1_M1) / down_both (F-1_M-1) / opposite / M_only / F_only / null
 #   (4) IHW multiple testing on the Fisher meta-p with TISSUE as covariate (Vetr used IHW
 #       with a tissue covariate); per-block BH retained as a local secondary.
@@ -38,7 +38,12 @@
 #     absent from motrpac_sample_pheno.tsv, and Z is a deconvolved expectation (not raw reads),
 #     so per-read technical artifacts are largely upstream/absorbed. Flagged as a limitation.
 #   * repfdr is run GLOBALLY on the assembled (z_M_8w, z_F_8w) matrix (more features -> stable
-#     EM, and closer to Vetr's single cross-dataset analysis) rather than per block.
+#     EM, and closer to Vetr's single cross-dataset analysis) rather than per block. In practice
+#     that fit is degenerate: on ~2M mostly-null gene-blocks ztobins put the female column at
+#     100% null (2026-10-05), so the 8w calls were per-sex BH concordance alone. PASS 2 detects
+#     this and says so in de_methods.tsv. MoTrPAC itself runs repfdr only on features already
+#     training-regulated at 5% IHW FDR (MotrpacRatTraining6moData::REPFDR_RES), which is the
+#     likely replacement.
 #   * Effect MAGNITUDES are expected to be SMALL (Vetr: ~52 genes/tissue >2 SDpheno; 56% of
 #     bulk fold-changes within 0.67-1.5x): the signal is reliable separability, not large logFC.
 #
@@ -60,6 +65,7 @@ suppressWarnings(suppressPackageStartupMessages({
   if (length(f)) dirname(normalizePath(f[1])) else "."
 })
 source(file.path(.script_dir, "celltype_names.R"))
+source(file.path(.script_dir, "provenance.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 5)
@@ -311,20 +317,41 @@ if (length(G_p) > 50) {
 cat(sprintf("\nGlobal multiple-testing: %s over %d Fisher meta-p tests.\n", ihw_used, length(G_p)))
 
 # ================= PASS 2: global repfdr sex-consistency at 8w =================
-# state by replicability (repfdr local fdr) x sign concordance; concordance fallback if repfdr fails.
-repfdr_localfdr <- setNames(rep(NA_real_, length(G_zkey)), G_zkey)
+# A gene is sex-consistent if repfdr calls it replicated OR both per-sex 8w BH tests are
+# significant (union), with matching signs. ztobins' two-group fit can be degenerate on these
+# pooled z-scores (2026-10-05: the female column came out 100% null, so every Fdr was 1 and all
+# calls were concordance-only while being labelled repfdr). Detect that, say so in de_methods.tsv,
+# and keep ztobins' warnings instead of discarding them.
+repfdr_localfdr <- setNames(rep(NA_real_, length(G_zkey)), G_zkey)   # holds repfdr's tail-area Fdr
 sexcons_method <- "concordance(per-sex BH 8w + sign)"
+repfdr_warnings <- character(0)
 if (length(G_zM) > 200) {
-  rf <- tryCatch({
+  rf <- tryCatch(withCallingHandlers({
     zmat <- cbind(male = G_zM, female = G_zF)
     bz   <- ztobins(zmat)
     rr   <- repfdr(bz$pdf.binned.z, bz$binned.z.mat, non.null = "replication")
-    sexcons_method <<- "repfdr(replication) x sign"
     rr$mat[, "Fdr"]   # tail-area Bayes FDR per feature for the replication alternative
-  }, error = function(e) { sexcons_method <<- paste0("concordance fallback (repfdr failed: ", conditionMessage(e), ")"); NULL })
-  if (!is.null(rf)) repfdr_localfdr <- setNames(rf, G_zkey)
+  }, warning = function(w) {
+    repfdr_warnings <<- c(repfdr_warnings, gsub("[[:space:]]+", " ", trimws(conditionMessage(w))))
+    invokeRestart("muffleWarning")
+  }), error = function(e) {
+    sexcons_method <<- paste0("concordance fallback (repfdr failed: ",
+                              gsub("[[:space:]]+", " ", trimws(conditionMessage(e))), ")"); NULL
+  })
+  if (!is.null(rf)) {
+    if (all(rf[is.finite(rf)] >= 1 - 1e-9)) {
+      sexcons_method <- sprintf(paste0("concordance(per-sex BH 8w + sign); repfdr degenerate ",
+                                       "(Fdr = 1 for all %d finite of %d gene-blocks)"),
+                                sum(is.finite(rf)), length(rf))
+    } else {
+      sexcons_method <- "repfdr(replication) OR concordance(per-sex BH 8w), x sign"
+      repfdr_localfdr <- setNames(rf, G_zkey)
+    }
+  }
 }
-cat(sprintf("Sex-consistency caller: %s over %d gene-blocks with both-sex 8w z.\n", sexcons_method, length(G_zM)))
+cat(sprintf("\nSex-consistency caller: %s over %d gene-blocks with both-sex 8w z.\n", sexcons_method, length(G_zM)))
+if (length(repfdr_warnings))
+  cat("repfdr/ztobins warnings:\n  ", paste(unique(repfdr_warnings), collapse = "\n   "), "\n")
 
 # assign per-gene FDR_IHW + sex-consistency state back into the block tables
 state_counts <- function(df) c(
@@ -343,7 +370,7 @@ for (key in names(block_tabs)) {
   same_up   <- df$z_8w_M > 0 & df$z_8w_F > 0
   same_down <- df$z_8w_M < 0 & df$z_8w_F < 0
   sig_either <- (is.finite(df$fdr_8w_M) & df$fdr_8w_M < ALPHA) | (is.finite(df$fdr_8w_F) & df$fdr_8w_F < ALPHA)
-  # primary = repfdr replicability where available, else per-sex-BH concordance
+  # union: repfdr replication OR per-sex-BH concordance (repl is all FALSE when repfdr is degenerate)
   base <- ifelse(repl | conc_sig, "sig_consistent", ifelse(sig_either, "sig_one", "null"))
   st <- rep("null", nrow(df))
   st[base == "sig_consistent" & same_up]   <- "up_both"
@@ -403,12 +430,20 @@ write.table(data.frame(tissue    = ok$tissue,
 writeLines(c(
   sprintf("multiple_testing\t%s", ihw_used),
   sprintf("sex_consistency\t%s", sexcons_method),
+  sprintf("sex_consistency_warnings\t%s",
+          if (length(repfdr_warnings)) paste(unique(repfdr_warnings), collapse = " | ") else "none"),
   sprintf("alpha\t%s", ALPHA),
   sprintf("n_blocks_ok\t%d", sum(summ$status == "ok")),
   sprintf("n_fisher_tests\t%d", length(G_p)),
-  sprintf("design\tlimma-trend(robust) on log2CPM of continuous Z; combined ~sex*factor(week) + ordinal ~sex+week_num; per-sex ~factor(week); Fisher sex-combine; IHW~tissue; repfdr 8w sex-consistency"),
+  sprintf("design\tlimma-trend(robust) on log2CPM of continuous Z; combined ~sex*factor(week) + ordinal ~sex+week_num; per-sex ~factor(week); Fisher sex-combine; IHW~tissue; 8w sex-consistency as in sex_consistency"),
   sprintf("deviations\tcontinuous-Z not DESeq2-NB; no RIN/globin/PCRdup covariates (absent + post-deconvolution)")
 ), file.path(out_dir, "de_methods.tsv"))
+write_provenance(out_dir,
+  inputs = c(pheno_tsv, hotspots_tsv, file.path(bulk_root, tissues, "bulk_samples.tsv"),
+             file.path(results_root, tissues, "pred_z", "genes.txt")),
+  params = list(results_root = results_root, bulk_root = bulk_root, tissues = tissues,
+                alpha = ALPHA, multiple_testing = ihw_used, sex_consistency = sexcons_method,
+                n_blocks_ok = sum(summ$status == "ok")))
 
 cat("\n=== DE summary (hotspots first) ===\n")
 print(utils::head(summ[, c("tissue","cell_type","is_hotspot","n_sig_dose_IHW",

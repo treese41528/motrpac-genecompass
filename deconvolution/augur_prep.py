@@ -3,7 +3,7 @@
 
 Two outputs:
   (A) Per-tissue inputs for CANONICAL Augur (R / neurorestore) under
-      data/deconvolution/augur_input/<tissue>/:
+      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2/ by default):
         embed.tsv   768-d GeneCompass CLS embedding, cells x dims
         pca.tsv     PCA-50 of the log-normalized deconvolved Z, cells x PCs
         meta.tsv    cell_id, cell_type, sample, label(trained/control), sex, week
@@ -33,7 +33,7 @@ from joblib import Parallel, delayed
 from sklearn.decomposition import PCA
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from subspace_probe import make_folds, supervised                         # reuse the CV probe
+from subspace_probe import block_seed, make_fold_sets, supervised         # reuse the CV probe
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
@@ -60,10 +60,12 @@ def main():
     bulk = str(resolve_path(cfg, dc["motrpac_bulk_out"]))
     ap = argparse.ArgumentParser()
     ap.add_argument("--gc-root", default=gc)
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(gc), "augur_input"))
+    ap.add_argument("--out", default=str(resolve_path(cfg, dc["augur_input_dir"])))
     ap.add_argument("--pca", type=int, default=50)
     ap.add_argument("--perms", type=int, default=500)
     ap.add_argument("--folds", type=int, default=5)
+    ap.add_argument("--repeats", type=int, default=1,
+                    help="fold splits per probe, as in subspace_probe.py (1 = a single split)")
     ap.add_argument("--jobs", type=int, default=16)
     ap.add_argument("--ctl-out", default=os.path.join(gc, "pca_control.tsv"))
     args = ap.parse_args()
@@ -128,7 +130,7 @@ def main():
                 continue
             items.append(dict(tissue=tis, cell_type=c, n=int(m.sum()),
                               embed=ek[m], pca=pcs[m], genes=Xz[m],
-                              trained=tk[m], week=wk[m], seed=1000 * (hash(tis) % 9973) + ci))
+                              trained=tk[m], week=wk[m], seed=block_seed(tis, ci)))
         print(f"[{tis}] exported {int(keep.sum())} cells x {len(genes)} genes; "
               f"{len(set(ck))} cell types; PCA={ncomp}")
 
@@ -137,7 +139,7 @@ def main():
         rng_seed = it["seed"]
         out = {"tissue": it["tissue"], "cell_type": it["cell_type"], "n": it["n"]}
         y = (np.asarray(it["trained"]) == "trained").astype(float)
-        f = make_folds(it["trained"], args.folds, np.random.default_rng(rng_seed + 1))
+        f = make_fold_sets(it["trained"], args.folds, rng_seed + 1, args.repeats)
         if not f:
             return out
         for space in ["embed", "pca", "genes"]:

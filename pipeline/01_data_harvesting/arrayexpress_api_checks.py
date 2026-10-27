@@ -17,12 +17,12 @@ Note: ArrayExpress was migrated to BioStudies on September 30, 2022.
 All ArrayExpress data is now served via the BioStudies API.
 
 Usage:
-    python test_arrayexpress_approaches.py --test-all
-    python test_arrayexpress_approaches.py --test-diagnose
-    python test_arrayexpress_approaches.py --test-search
-    python test_arrayexpress_approaches.py --test-ftp
-    python test_arrayexpress_approaches.py --test-ena
-    python test_arrayexpress_approaches.py --accession E-MTAB-5920
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-all
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-diagnose
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-search
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-ftp
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-ena
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --accession E-MTAB-5920
 """
 
 import os
@@ -235,7 +235,7 @@ class TestSuite:
 # SECTION 0: DIAGNOSTIC TESTS
 # =============================================================================
 
-def test_network_connectivity() -> TestResult:
+def check_network_connectivity() -> TestResult:
     """Test basic network connectivity to EMBL-EBI services"""
     t0 = time.time()
     
@@ -271,7 +271,7 @@ def test_network_connectivity() -> TestResult:
     )
 
 
-def test_requests_library() -> TestResult:
+def check_requests_library() -> TestResult:
     """Test if requests library is available and working"""
     t0 = time.time()
     
@@ -309,7 +309,7 @@ def test_requests_library() -> TestResult:
         )
 
 
-def test_bioservices_library() -> TestResult:
+def check_bioservices_library() -> TestResult:
     """Test if bioservices library is available and working"""
     t0 = time.time()
     
@@ -355,7 +355,7 @@ def test_bioservices_library() -> TestResult:
         )
 
 
-def test_direct_api_json() -> TestResult:
+def check_direct_api_json() -> TestResult:
     """Test direct JSON API access (bypassing libraries)"""
     t0 = time.time()
     
@@ -403,7 +403,7 @@ def test_direct_api_json() -> TestResult:
         )
 
 
-def test_api_search_endpoint() -> TestResult:
+def check_api_search_endpoint() -> TestResult:
     """Test the EBI Search API for BioStudies"""
     t0 = time.time()
     
@@ -458,19 +458,19 @@ def run_diagnostic_tests(suite: TestSuite):
     logger.info("DIAGNOSTIC TESTS - Verifying connectivity and libraries")
     logger.info("="*60)
     
-    suite.add(test_network_connectivity())
+    suite.add(check_network_connectivity())
     time.sleep(0.5)
     
-    suite.add(test_requests_library())
+    suite.add(check_requests_library())
     time.sleep(0.5)
     
-    suite.add(test_bioservices_library())
+    suite.add(check_bioservices_library())
     time.sleep(0.5)
     
-    suite.add(test_direct_api_json())
+    suite.add(check_direct_api_json())
     time.sleep(0.5)
     
-    suite.add(test_api_search_endpoint())
+    suite.add(check_api_search_endpoint())
 
 
 # =============================================================================
@@ -488,7 +488,7 @@ def _fetch_json(url: str, timeout: int = 30) -> Dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def test_search_query(query: str, expected_min: int = 0, description: str = None) -> TestResult:
+def check_search_query(query: str, expected_min: int = 0, description: str = None) -> TestResult:
     """Test a specific search query against EBI Search BioStudies API"""
     t0 = time.time()
     test_name = description or f"Search: {query[:40]}..."
@@ -538,7 +538,7 @@ def test_search_query(query: str, expected_min: int = 0, description: str = None
         )
 
 
-def test_lucene_query_syntax() -> List[TestResult]:
+def check_lucene_query_syntax() -> List[TestResult]:
     """Test various query syntax patterns with EBI Search API"""
     results = []
     
@@ -585,14 +585,14 @@ def test_lucene_query_syntax() -> List[TestResult]:
     ]
     
     for query, expected_min, description in test_queries:
-        result = test_search_query(query, expected_min, description)
+        result = check_search_query(query, expected_min, description)
         results.append(result)
         time.sleep(0.4)  # Rate limiting
     
     return results
 
 
-def test_pagination() -> TestResult:
+def check_pagination() -> TestResult:
     """Test pagination functionality with EBI Search API"""
     t0 = time.time()
     
@@ -654,18 +654,18 @@ def run_search_tests(suite: TestSuite):
     logger.info("="*60)
     
     # Run Lucene query syntax tests
-    for result in test_lucene_query_syntax():
+    for result in check_lucene_query_syntax():
         suite.add(result)
     
     # Test pagination
-    suite.add(test_pagination())
+    suite.add(check_pagination())
 
 
 # =============================================================================
 # SECTION 2: STUDY METADATA TESTS
 # =============================================================================
 
-def test_study_metadata(accession: str) -> TestResult:
+def check_study_metadata(accession: str) -> TestResult:
     """Test fetching study metadata from BioStudies API"""
     t0 = time.time()
     
@@ -712,7 +712,7 @@ def test_study_metadata(accession: str) -> TestResult:
         )
 
 
-def test_study_info(accession: str) -> TestResult:
+def check_study_info(accession: str) -> TestResult:
     """Test fetching study info (includes FTP link)"""
     t0 = time.time()
     
@@ -744,7 +744,7 @@ def test_study_info(accession: str) -> TestResult:
         )
 
 
-def test_study_files(accession: str) -> TestResult:
+def check_study_files(accession: str) -> TestResult:
     """Test listing files for a study"""
     t0 = time.time()
     
@@ -825,13 +825,13 @@ def run_metadata_tests(suite: TestSuite, accessions: List[str] = None):
         ]
     
     for accession in accessions:
-        suite.add(test_study_metadata(accession))
+        suite.add(check_study_metadata(accession))
         time.sleep(0.4)
         
-        suite.add(test_study_info(accession))
+        suite.add(check_study_info(accession))
         time.sleep(0.4)
         
-        suite.add(test_study_files(accession))
+        suite.add(check_study_files(accession))
         time.sleep(0.4)
 
 
@@ -839,7 +839,7 @@ def run_metadata_tests(suite: TestSuite, accessions: List[str] = None):
 # SECTION 3: MAGE-TAB (IDF/SDRF) PARSING TESTS
 # =============================================================================
 
-def test_idf_download(accession: str) -> TestResult:
+def check_idf_download(accession: str) -> TestResult:
     """Test downloading and parsing IDF (Investigation Description Format) file"""
     t0 = time.time()
     
@@ -891,7 +891,7 @@ def test_idf_download(accession: str) -> TestResult:
         )
 
 
-def test_sdrf_download(accession: str) -> TestResult:
+def check_sdrf_download(accession: str) -> TestResult:
     """Test downloading and parsing SDRF (Sample and Data Relationship Format) file"""
     t0 = time.time()
     
@@ -969,10 +969,10 @@ def run_magetab_tests(suite: TestSuite, accessions: List[str] = None):
         accessions = ["E-MTAB-5920", "E-MTAB-10868"]
     
     for accession in accessions:
-        suite.add(test_idf_download(accession))
+        suite.add(check_idf_download(accession))
         time.sleep(0.4)
         
-        suite.add(test_sdrf_download(accession))
+        suite.add(check_sdrf_download(accession))
         time.sleep(0.4)
 
 
@@ -980,7 +980,7 @@ def run_magetab_tests(suite: TestSuite, accessions: List[str] = None):
 # SECTION 4: FTP ACCESS TESTS
 # =============================================================================
 
-def test_ftp_connection() -> TestResult:
+def check_ftp_connection() -> TestResult:
     """Test basic FTP connection to EMBL-EBI"""
     t0 = time.time()
     
@@ -1025,7 +1025,7 @@ def construct_ftp_path(accession: str) -> str:
     return f"/biostudies/fire/{prefix}/{last_three}/{accession}/Files"
 
 
-def test_ftp_study_path(accession: str) -> TestResult:
+def check_ftp_study_path(accession: str) -> TestResult:
     """Test FTP path construction and access for a study"""
     t0 = time.time()
     
@@ -1083,7 +1083,7 @@ def test_ftp_study_path(accession: str) -> TestResult:
         )
 
 
-def test_https_ftp_access(accession: str) -> TestResult:
+def check_https_ftp_access(accession: str) -> TestResult:
     """Test HTTPS access to FTP content (browser-compatible)"""
     t0 = time.time()
     
@@ -1137,17 +1137,17 @@ def run_ftp_tests(suite: TestSuite, accessions: List[str] = None):
     logger.info("="*60)
     
     # Basic connection test
-    suite.add(test_ftp_connection())
+    suite.add(check_ftp_connection())
     time.sleep(0.5)
     
     if accessions is None:
         accessions = ["E-MTAB-5920", "E-MTAB-10868"]
     
     for accession in accessions:
-        suite.add(test_ftp_study_path(accession))
+        suite.add(check_ftp_study_path(accession))
         time.sleep(0.5)
         
-        suite.add(test_https_ftp_access(accession))
+        suite.add(check_https_ftp_access(accession))
         time.sleep(0.5)
 
 
@@ -1155,7 +1155,7 @@ def run_ftp_tests(suite: TestSuite, accessions: List[str] = None):
 # SECTION 5: ENA INTEGRATION TESTS
 # =============================================================================
 
-def test_ena_portal_api() -> TestResult:
+def check_ena_portal_api() -> TestResult:
     """Test ENA Portal API basic connectivity"""
     t0 = time.time()
     
@@ -1199,7 +1199,7 @@ def test_ena_portal_api() -> TestResult:
         )
 
 
-def test_ena_study_lookup(study_accession: str) -> TestResult:
+def check_ena_study_lookup(study_accession: str) -> TestResult:
     """Test looking up ENA study by accession"""
     t0 = time.time()
     
@@ -1273,7 +1273,7 @@ def construct_ena_fastq_url(run_accession: str) -> str:
     return f"ftp://{ENA_FTP}/{path}"
 
 
-def test_ena_fastq_url_construction() -> TestResult:
+def check_ena_fastq_url_construction() -> TestResult:
     """Test ENA FASTQ URL construction patterns"""
     t0 = time.time()
     
@@ -1320,18 +1320,18 @@ def run_ena_tests(suite: TestSuite, study_accessions: List[str] = None):
     logger.info("="*60)
     
     # Basic ENA API test
-    suite.add(test_ena_portal_api())
+    suite.add(check_ena_portal_api())
     time.sleep(0.5)
     
     # URL construction test
-    suite.add(test_ena_fastq_url_construction())
+    suite.add(check_ena_fastq_url_construction())
     
     if study_accessions is None:
         # Try some known ENA study accessions (BioProject format works better)
         study_accessions = ["PRJEB26011", "PRJEB4337"]
     
     for acc in study_accessions:
-        suite.add(test_ena_study_lookup(acc))
+        suite.add(check_ena_study_lookup(acc))
         time.sleep(0.5)
 
 
@@ -1339,7 +1339,7 @@ def run_ena_tests(suite: TestSuite, study_accessions: List[str] = None):
 # SECTION 6: FILE PATTERN MATCHING TESTS (FIXED)
 # =============================================================================
 
-def test_file_patterns() -> TestResult:
+def check_file_patterns() -> TestResult:
     """Test file pattern matching for single-cell vs bulk data"""
     
     # Test files with expected classifications
@@ -1404,7 +1404,7 @@ def test_file_patterns() -> TestResult:
     )
 
 
-def test_accession_patterns() -> TestResult:
+def check_accession_patterns() -> TestResult:
     """Test accession number pattern recognition"""
     
     # ArrayExpress accession patterns
@@ -1480,8 +1480,8 @@ def run_pattern_tests(suite: TestSuite):
     logger.info("PATTERN MATCHING TESTS")
     logger.info("="*60)
     
-    suite.add(test_file_patterns())
-    suite.add(test_accession_patterns())
+    suite.add(check_file_patterns())
+    suite.add(check_accession_patterns())
 
 
 # =============================================================================
@@ -1545,7 +1545,7 @@ def _parse_bioservices_response(result):
     return result, type(result).__name__, None
 
 
-def test_bioservices_query() -> TestResult:
+def check_bioservices_query() -> TestResult:
     """Test bioservices ArrayExpress query functionality"""
     t0 = time.time()
     
@@ -1615,7 +1615,7 @@ def test_bioservices_query() -> TestResult:
         )
 
 
-def test_bioservices_get_experiment(accession: str) -> TestResult:
+def check_bioservices_get_experiment(accession: str) -> TestResult:
     """Test bioservices experiment retrieval using getAE method"""
     t0 = time.time()
     
@@ -1680,7 +1680,7 @@ def test_bioservices_get_experiment(accession: str) -> TestResult:
         )
 
 
-def test_bioservices_files(accession: str) -> TestResult:
+def check_bioservices_files(accession: str) -> TestResult:
     """Test bioservices file listing using retrieveFilesFromExperiment"""
     t0 = time.time()
     
@@ -1758,7 +1758,7 @@ def test_bioservices_files(accession: str) -> TestResult:
         )
 
 
-def test_bioservices_retrieve_file(accession: str) -> TestResult:
+def check_bioservices_retrieve_file(accession: str) -> TestResult:
     """Test bioservices file download using retrieveFile"""
     t0 = time.time()
     
@@ -1826,20 +1826,20 @@ def run_bioservices_tests(suite: TestSuite, accessions: List[str] = None):
     logger.info("BIOSERVICES LIBRARY TESTS")
     logger.info("="*60)
     
-    suite.add(test_bioservices_query())
+    suite.add(check_bioservices_query())
     time.sleep(0.5)
     
     if accessions is None:
         accessions = ["E-MTAB-5920"]
     
     for accession in accessions:
-        suite.add(test_bioservices_get_experiment(accession))
+        suite.add(check_bioservices_get_experiment(accession))
         time.sleep(0.5)
         
-        suite.add(test_bioservices_files(accession))
+        suite.add(check_bioservices_files(accession))
         time.sleep(0.5)
         
-        suite.add(test_bioservices_retrieve_file(accession))
+        suite.add(check_bioservices_retrieve_file(accession))
         time.sleep(0.5)
 
 
@@ -1853,10 +1853,10 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    python test_arrayexpress_approaches.py --test-all
-    python test_arrayexpress_approaches.py --test-diagnose
-    python test_arrayexpress_approaches.py --test-search --test-ftp
-    python test_arrayexpress_approaches.py --accession E-MTAB-5920 E-MTAB-10868
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-all
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-diagnose
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --test-search --test-ftp
+    python pipeline/01_data_harvesting/arrayexpress_api_checks.py --accession E-MTAB-5920 E-MTAB-10868
         """
     )
     

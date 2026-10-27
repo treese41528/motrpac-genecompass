@@ -18,6 +18,11 @@ suppressWarnings(suppressPackageStartupMessages({
   .libPaths(c(Sys.getenv("R_LIBS_USER"), .libPaths()))
   library(Matrix); library(BayesPrism)
 }))
+source(file.path(local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else "."
+}), "provenance.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3) stop("usage: run_deconvolution.R <ref_dir> <mixture_dir> <out_dir> [mtx_basename]")
@@ -110,6 +115,17 @@ cat(sprintf("run.prism wall time: %.2f min\n",
 theta <- get.fraction(bp = bp, which.theta = "final", state.or.type = "type")
 write.csv(theta, file.path(out_dir, "estimated_fractions.csv"))
 saveRDS(bp, file.path(out_dir, "bp_result.rds"))
+# mixture rows are renamed mix1..N above, so record which samples file (and its mtime) they came from
+write_provenance(out_dir,
+  inputs = c(file.path(ref_dir, c("reference_counts.mtx", "cells_meta.tsv", "genes.tsv")),
+             file.path(mix_dir, c(paste0(mtx_base, ".mtx"), paste0(genes_base, "_genes.tsv"),
+                                  paste0(genes_base, "_samples.tsv"))),
+             excl_path, sex_path, pc_path),
+  params = list(ref_dir = ref_dir, mix_dir = mix_dir, mtx_base = mtx_base, n_cores = n.cores,
+                bayesprism = as.character(packageVersion("BayesPrism")),
+                outlier_cut = 0.01, outlier_fraction = 0.1,
+                exclude_sex_chromosomes = sex_on, protein_coding_only = pc_only,
+                n_ref_cells = nrow(ref), n_ref_genes = ncol(ref), n_mixtures = nrow(mix)))
 cat("\n=== mean estimated cell-type fraction ===\n")
 print(round(sort(colMeans(theta), decreasing = TRUE), 4))
 cat(sprintf("\nWrote: %s/estimated_fractions.csv\n", out_dir))

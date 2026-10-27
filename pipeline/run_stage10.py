@@ -25,6 +25,7 @@ Usage:
   python pipeline/run_stage10.py                      # full experiment (all tissues)
   python pipeline/run_stage10.py --tissues BLOOD SKMVL # debug subset (DE only; comparison still global)
   python pipeline/run_stage10.py --from 2             # re-run only the comparison
+  python pipeline/run_stage10.py --hotspots data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
   python pipeline/run_stage10.py --dry-run
 
 HPC: step 1 is an R job (limma/IHW/repfdr on existing pred_z; NO run.prism, NO GPU compute,
@@ -87,6 +88,9 @@ def validate_inputs(ctx: dict, from_step: int) -> list:
                 f"no per-tissue pred_z found under {motrpac}\n"
                 f"  -> run Stage 8 deconvolution first (python pipeline/run_stage8.py ...)"
             )
+        if not ctx['hotspots'].exists():   # the R step would read it as "no hotspots" and carry on
+            errors.append(f"hotspot table not found: {ctx['hotspots']}\n"
+                          f"  -> run the Aim-2 gate (corroborate_summary.py) first, or pass --hotspots")
     if from_step == 2 and not (ctx['de_dir'] / 'de_summary.tsv').exists():
         errors.append(f"de_summary.tsv not found under {ctx['de_dir']}\n  -> run step 1 first")
     if not ctx['prereg'].exists():
@@ -128,6 +132,9 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
     p.add_argument('--tissues', nargs='*', default=[],
                    help='optional tissue subset for the DE step (debug only; comparison stays global)')
+    p.add_argument('--hotspots', default=None,
+                   help='Aim-2 gate table whose q_sup_trained < 0.05 blocks are the hotspots '
+                        '(default: deconvolution.hotspots_table, else <genecompass_input_dir>/corroboration_merged.tsv)')
     p.add_argument('--alpha', type=float, default=0.05)
     p.add_argument('--min-fraction', type=float, default=0.01, help='power floor for the comparison')
     p.add_argument('--min-nonzero', type=int, default=25, help='power floor for the comparison')
@@ -140,12 +147,17 @@ def main() -> None:
 
     config = load_config()
     d = config['deconvolution']
-    de_dir = resolve_path(config, d['genecompass_input_dir']) / 'pseudobulk_de'
+    gc_input = resolve_path(config, d['genecompass_input_dir'])
+    de_dir = gc_input / 'pseudobulk_de'
     results_root = resolve_path(config, d['results_dir']) / 'motrpac'
     prereg = resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv'
+    hotspots = (Path(args.hotspots).resolve() if args.hotspots
+                else resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
+                else gc_input / 'corroboration_merged.tsv')
 
     ctx = {
         'de_dir': de_dir,
+        'hotspots': hotspots,
         'results_root': results_root,
         'prereg': prereg,
         'tissues': [t.upper() for t in args.tissues],
@@ -159,6 +171,7 @@ def main() -> None:
     logger.info("=" * 70)
     logger.info(f"  scope = {'tissues ' + ','.join(ctx['tissues']) if ctx['tissues'] else 'ALL tissues (whole experiment)'}")
     logger.info(f"  de_dir = {de_dir}")
+    logger.info(f"  hotspots = {hotspots}")
     logger.info(f"  prereg = {prereg}")
     if ctx['tissues']:
         logger.warning("  NOTE: tissue subset given -- global IHW/repfdr and the comparison are still "
@@ -171,7 +184,9 @@ def main() -> None:
         if not args.dry_run:
             sys.exit(1)
 
-    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT))
+    # The R wrapper's own defaults come from config only when its python3 can read the YAML, so pass
+    # the output dir and the hotspot table explicitly.
+    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), OUT_DIR=str(de_dir), HOTSPOTS=str(hotspots))
     steps = [s for s in build_steps(ctx) if s['num'] >= args.from_step]
     t_total = time.time()
     for step in steps:

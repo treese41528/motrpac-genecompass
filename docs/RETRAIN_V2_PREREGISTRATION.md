@@ -1,0 +1,276 @@
+# Retrain v2 — pre-registered evaluation
+
+**Registered:** 2026-10-08, before any v2 training step. **Status:** locked — changes after
+training starts must be logged in §6 with a date and reason, never edited in place.
+
+## 1. Question and scope
+
+The project asks whether a GeneCompass model extended to rat can carry MoTrPAC rat endurance-training
+signals into a human-comparable space. The model is a means; it succeeds when (a) it learned rat
+expression without losing what GeneCompass knew about human and mouse, and (b) the downstream analyses
+built on it hold up at least as well as with the April model.
+
+There is **no held-out study set** (decided 2026-10-08): the rat corpus is small, and every study usable
+as a deconvolution reference must stay in training. Criteria 3–5 therefore use labels or analyses that
+training never sees (training is self-supervised; no cell-type, sex or exercise label enters it), and no
+MoTrPAC data enters training (checked 2026-10-08: the rat corpus is 80 GEO single-cell studies + OMIX767;
+MoTrPAC bulk lives only in `data/motrpac/`).
+
+| Model | What it is |
+|---|---|
+| **base** | GeneCompass_Base (human + mouse), `vendor/GeneCompass/pretrained_models/GeneCompass_Base` |
+| **April** | `rat_phase2_mixed_species/checkpoint-147941` — trained on 25% of its mix per phase (sampler bug), old priors, scheme-A medians, uncleaned corpus |
+| **v2 init** | `data/models/rat_genecompass_init_v2` — fixed priors, before training |
+| **v2** | phase-2 final model of `finetune/genecompass/configs/rat_finetune_v2.yaml` |
+
+Criteria 1–2 are **pass/fail** checks on training itself. Criteria 3–5 are **comparisons** against
+April, reported in full whichever way they fall; they have no pass marks.
+
+## 2. Fixed probe set (criteria 1–2)
+
+`finetune/genecompass/eval_mlm.py build-probe`: 2,000 distinct cells per species drawn from the v2
+training mix (seed 20261008; distinct = distinct `(species, source_row)`), saved once and never redrawn.
+Masks are GeneCompass's own collator (15%; 80/10/10), seeded per batch, so every model sees the same
+masked positions. Metrics per species: gene-ID loss (cross-entropy over masked tokens), value loss
+(MSE over masked tokens), and masked top-1 gene-ID accuracy, all token-weighted.
+
+These are in-sample cells for every model (base trained on the human/mouse corpora; v2 on all three).
+That is deliberate: criterion 2 asks whether v2 *kept* what base knew on base's own data.
+
+## 3. Criteria
+
+### C1 — GeneCompass's own pretraining losses (pass/fail)
+- **C1a.** Every logged training step of both phases has finite `id_loss` and `value_loss`.
+- **C1b.** On the rat probe, v2 has lower gene-ID loss **and** lower value loss than v2 init.
+- Reported, not gated: training curves per phase; the same probe metrics for April (April was trained on
+  scheme-A values, so its rat numbers on scheme-B inputs are context, not a target).
+
+### C2 — no forgetting of human and mouse (pass/fail)
+- On the human and on the mouse probe, v2's gene-ID loss and value loss are each **at most 10% above
+  base's** on the same cells and masks (four comparisons; all must hold).
+- Reported, not gated: April on the same probes; masked top-1 accuracy.
+
+### C3 — cell embeddings (comparison)
+- Data: cells of the deconvolution reference datasets with their author / consensus cell-type labels
+  (the `cells_meta.tsv` of each reference in `deconvolution/tissue_references.yaml`), joined to tokenized
+  rows by `sample_id` + barcode. Each model embeds the tokenization it was trained on (April: v1 corpus;
+  v2: v2 corpus); only cells present in both are scored.
+- Metrics, per reference: 5-fold kNN (k = 10, cosine) macro-F1 and accuracy for cell type; silhouette
+  (cosine) by cell type; study/sample mixing as kNN accuracy for `sample_id` within the same cell type
+  (lower = less batch-driven).
+- Reported: per-reference table, median across references, v2 − April with a paired Wilcoxon over
+  references.
+
+### C4 — gene embeddings (comparison, with nulls)
+- **C4a. T4 symbol-matched genes (255).** Rat-only tokens that share a symbol with a human token
+  (decision record, 2026-10-06; no warm start). For each, the rank of its human counterpart among all
+  human tokens by cosine of the input word embeddings. Statistic: median rank and top-10 / top-100 hit
+  rates. Null: the same statistic over 1,000 random re-pairings of the 255 rat tokens to human tokens.
+  Reported for v2 init (expected ≈ null), April and v2.
+- **C4b. T3 ortholog retention (2,243).** Cosine between each T3 rat token and its ortholog's token, and
+  the ortholog's rank among all human tokens. At init these are near-identical by construction, so this
+  is reported as **drift**, not success.
+
+### C5 — downstream analyses (comparison; the real judge)
+Rerun with v2 the pipeline stages that consume the model, after recalibrating Stage 9's pseudo-cell
+target sum for the v2 corpus, and compare with April on the same inputs:
+
+| Stage | Metric |
+|---|---|
+| 9 (pseudo-cell embedding) | per-tissue cell-type silhouette of pseudo-cell CLS embeddings |
+| Aim-2 gate | cell type / sex / exercise separability (AUC), number of exercise hotspots |
+| 12 (transfer to human) | rat↔human-re-expressed cosine per tissue; cell types whose exercise signal transfers |
+| 13 Module A | the four pre-registered perturbation checks (`score_perturb_prereg.py`) |
+
+April's values are re-read from the on-disk April outputs at evaluation time, not from documents.
+
+## 4. Decision rule
+- C1 or C2 fails → v2 is not adopted; the failure is investigated before anything downstream is rerun.
+- C1 and C2 pass → v2 becomes the working model for downstream reruns; C3–C5 are reported as found,
+  including any where v2 is worse than April.
+
+## 5. What is fixed before training
+Probe set file + its md5, the seed, this document's commit. The probe set is built from the final
+v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 starts.
+
+## 6. Change log
+- 2026-10-08 — registered.
+- 2026-10-08 — evaluator smoke test (job 11911214) on a probe drawn from the PRE-OMIX767 mix (not the
+  registered probe). Human / mouse gene-ID loss: base 3.444 / 3.422, v2 init 3.532 / 3.518, April
+  3.450 / 3.455; value loss: base 1.73e-4 / 1.95e-4, April 1.72e-4 / 2.02e-4 (v2 init = base exactly on
+  human/mouse values, as expected: only shared weights are used). Rat: v2 init 7.141 / 0.120, April
+  5.318 / 4.7e-4. April would pass C2 (+0.2% to +3.3%). v2 init's ~2.5% higher human/mouse ID loss comes
+  from the 4,717 extra softmax classes. Values are small because GeneCompass orders genes by value, so a
+  masked value is bracketed by its neighbours'. No criterion was changed after seeing these.
+- 2026-10-09 — registered probe built (job 11916410) from the rebuilt v2 mix (OMIX767 included; corpus
+  6,803,206 cells / 584 samples, mix 33,138,703 rows, verify_mix 21/21 PASS): `data/training/eval_probe_v2`,
+  2,000 cells per species, seed 20261008. md5 (also in `data/training/eval_probe_v2.md5`):
+  `90aa2d9030f4b769a3388a0b1ea808f9  data-00000-of-00001.arrow`,
+  `c6b1b65c0b5e667f07333ff624d2e3ff  dataset_info.json`,
+  `76fbde1fbb8cf2d289ec81efeaedf628  state.json`. Fixed before phase 1 starts.
+- 2026-10-22 — TESTES inputs corrected; logged before any C3–C5 result exists (phase 2 still training,
+  no v2 model evaluated). The TESTES deconvolution reference kept OMIX767's Rnor_6.0 gene IDs while the
+  MoTrPAC bulk was lifted to Ensembl 115, so 587 bulk genes (2.3% of TESTES bulk counts) had no reference
+  partner. The reference is rebuilt through the bulk's own liftover map
+  (`deconvolution/reference/motrpac_bulk_liftover.tsv`) from the same cells and labels, and TESTES is
+  deconvolved again. So that C5 compares April and v2 on the same inputs, April's TESTES rows are
+  recomputed on the fixed pseudo-cells with the April checkpoint and April's Stage 9 settings (target sum
+  6500, April medians and token dictionary) before C5 is scored: the Stage 9 embedding; the Aim-2 gate rows
+  (`pheno_merge_test`, `subspace_probe`, `pca_control`), with hotspots re-derived by `corroborate_summary`
+  over all blocks; the Stage 12 human embedding, `subspace_probe` and `transfer_comparison`. Recomputed rows
+  use the current code (crc32 block seeds). Other tissues keep their on-disk April rows. Superseded TESTES
+  outputs are kept in `data/deconvolution/_testes_rawid_backup_20260716/`. TESTES is not in Stage 13.
+- 2026-10-22 — that recompute is done (jobs 12007286, 12007401, 12007434), still before any v2 C3–C5
+  result. Controls on April's own inputs: the April embedding of the old TESTES pseudo-cells is reproduced
+  exactly; `pheno_merge_test` reproduces every non-TESTES row; `corroborate_summary` and `compare_transfer`
+  reproduce every value of the 172 current blocks. April's `transfer_comparison.tsv` also held 33 VENACV
+  rows left from before VENACV was dropped (2026-07-16), all `no_human_block` with no values. The
+  regenerated table has the 172 current blocks only, so April's "blocks compared" goes from 205 to 172 and no
+  hotspot or status count changes. April after the recompute: 15 exercise hotspots, as before, with no block
+  changing hotspot status; TESTES has none.
+- 2026-10-24 — April's seed-dependent Aim-2 gate and Stage 12 rows are recomputed with the current code,
+  logged before any v2 C3–C5 result exists (C1/C2 scored 2026-10-23, see `docs/RETRAIN_V2_RESULTS.md`; no
+  v2 downstream output exists). April's on-disk `subspace_probe` and `pca_control` rows were computed in
+  July with per-block seeds from Python's salted `hash()`, so they cannot be reproduced; since 2026-10-05
+  (3a0165f) the code uses stable crc32 seeds, and v2's rows will too. On TESTES the seed change alone moved
+  the exercise AUCs by 0.048 per block on average. Recomputed on April's on-disk embeddings with July's
+  settings (`subspace_probe` 1,000 permutations, 5 folds; `augur_prep` 500 permutations, PCA-50): rat
+  `subspace_probe` and `pca_control` for all 172 blocks, with hotspots re-derived by `corroborate_summary`;
+  the human-space `subspace_probe`; `transfer_comparison`. Controls: every seed-independent column (n and
+  the eta² values) must equal April's on-disk value, and TESTES's rows, already crc32-seeded on 2026-10-22,
+  must be reproduced exactly. `pheno_merge_test` and canonical Augur are deterministically seeded and are
+  kept (TESTES has no Augur rows: 5 control pseudo-cells per cell type, below Augur's 10-cell minimum).
+  April's human-space Augur and corroboration tables date from 2026-06-25, before the July reference
+  rebuild; no C5 metric uses them and they are left as they are. Superseded tables are kept in
+  `data/deconvolution/_april_hashseed_backup_20261024/`.
+- 2026-10-24 — that recompute is done (job 12013854), still before any v2 C3–C5 result. Controls: every
+  seed-independent column equals April's on-disk value on all 172 blocks, rat and human-space; TESTES's rows
+  are reproduced in every column; `augur_prep`'s exports equal the on-disk Augur inputs for all 14 tissues.
+  With the crc32 seeds April has 7 exercise hotspots, not 15. The 8 lost blocks all sat just under
+  q = 0.05 (0.025–0.046) and now sit just over it (0.052–0.118), with AUCs within 0.042 of before. At 1,000
+  permutations and 172 tests a block needs at most 3 of 1,000 permuted AUCs above its own to be a hotspot,
+  so membership at the edge is decided by permutation noise and the fold split. Transfer: 6 of the 7
+  hotspots PRESERVED and 1 WEAKENED (before: 13 of 15 PRESERVED, 2 LOST); all blocks 33 PRESERVED /
+  19 WEAKENED / 120 LOST (before: 34 / 21 / 117).
+- 2026-10-24 — Stage 9 target sum for v2: 6,400, by April's rule, fixed before any v2 downstream output
+  (job 12013898). April used one target sum for every tissue, 6,500, at which liver's pseudo-cells have
+  the corpus's median token value. Token selection does not depend on the target sum T and a token's value
+  is log2(1 + T·r), so T* = 6,500 · (2^m_corpus − 1) / (2^m_liver(6,500) − 1), rounded to the nearest 100.
+  Corpus medians over the real tokens of every 211th row: April's corpus 0.8690, v2's 0.9145. The rule
+  gives back April's 6,500 (liver 0.8703 with April's medians, T* 6,488) and gives 6,400 for v2 (liver
+  0.9302 with v2's medians, T* 6,352). Control: April's liver tokenization was reproduced exactly. v2's
+  Stage 12 uses the same 6,400 (it must equal the rat side). v2 outputs go to
+  `data/deconvolution/genecompass_input_v2/` (and `_human`) under `config/profiles/retrain_v2_downstream.yaml`;
+  pseudo-cells are model-independent and shared with April.
+- 2026-10-24 — Module A (C5, Stage 13) is scored for both models on the current inputs, logged before any
+  v2 C5 result. April's on-disk Module A result (2026-07-03) was computed on the SKMVL pseudo-cells from
+  before the July reference rebuild, whose muscle type was "Skeletal muscle"; the current SKMVL pseudo-cells
+  call it "Skeletal myocytes". Both models are therefore run on the current SKMVL pseudo-cells (April: its
+  checkpoint and on-disk tokenization; v2: its model and tokenization at 6,400) with
+  `perturb_cells.py --mode delete --targets`, cell type "Skeletal myocytes", the frozen 80-gene panel
+  (`data/deconvolution/perturb_prereg/prereg_genes.txt`) plus the frozen negatives Alb and Snap25
+  (`deconvolution/reference/perturb_prereg_genes.tsv`), and scored by `score_perturb_prereg.py`.
+  Criterion #3, which the July report printed as PASS from an earlier smoke run, is scored from the same
+  run (af96ebb): each negative in 0 cells, or its shift below the matched-null median. #1's matched null
+  is re-derived from each tokenization as before (panel genes within ±15% of Mef2c's mean value); its size
+  is reported.
+- 2026-10-24 — C4 implementation (`finetune/genecompass/eval_gene_embeddings.py`), fixed before any C4
+  number is computed. C4a: the 255 genes are the T4 tokens whose rat symbol, upper-cased, is the symbol of
+  a human (ENSG) token in GeneCompass's `Gene_id_name_dict_human_mouse.pickle`; each matches exactly one
+  human token. Ranks are among all 23,113 human tokens. The null re-pairs by permuting the 255 human
+  counterparts across the 255 rat tokens (1,000 permutations, seed 20261008), so it keeps the counterparts'
+  own neighbourhoods; p = (1 + null permutations at least as good) / 1,001. C4b: each T3 token's ortholog is
+  the token its init row was cloned from (`rat_model_init.t3_ortholog_token_ids`). The 892 T3b orthologs
+  are mouse tokens, so "rank among all human tokens" cannot apply to them: T3a orthologs are ranked among
+  the human tokens as registered, T3b orthologs among the 27,443 mouse tokens, and the two are reported
+  separately.
+- 2026-10-24 — C3 implementation (`finetune/genecompass/eval_cell_embeddings.py`), fixed before any C3
+  number is computed. References: the 13 built references with a `cells_meta.tsv` among the active entries
+  of `tissue_references.yaml` (MUSCLE_GSE137869_Y once, for SKMGN and SKMVL; VENACV, dropped 2026-07-16 and
+  from the same study as HEART, is excluded); labels = its `cell_type` column. v2 rows are joined by
+  `sample_id` + `cell_id`; a reference sample that the clean corpus dropped as a byte-identical copy
+  (`config/corpus_v2_plan.tsv`) is looked up under the copy it kept (18 of HEART's 19 samples, both of
+  CORTEX's). April's v1 corpus has no sample column, so each row's sample is rebuilt from the Stage 5 task
+  manifests (tasks in order, files in order, cells written each) and checked barcode-for-barcode against v2.
+  TESTES is not in April's corpus (OMIX767 was added for v2), so it drops out under "only cells present in
+  both", leaving 12 references. Embeddings: final-layer CLS from `embed_cells.py` (species 2, fp32), each
+  model on its own corpus's rows of the same cells, all joined cells (no subsampling). Metrics per
+  reference on L2-normalised embeddings: cell type by 5-fold stratified CV (seed 20261008), 10 nearest
+  training cells by cosine, majority vote (ties to the first label in sorted order), macro-F1 and
+  accuracy over all held-out cells; silhouette by cell type with cosine distance over all cells; sample
+  mixing as the same 5-fold kNN predicting `sample_id` within each cell type that has at least two
+  samples of 5 or more cells (smaller samples left out), pooled accuracy, undefined for the single-sample
+  references (BLOOD, HYPOTH). Summary: median over references and v2 − April with a two-sided paired
+  Wilcoxon over the references where both are defined.
+- 2026-10-24 — C5 Stage 9 silhouette and Stage 12 cosine implementation. Stage 9:
+  `deconvolution/embed_qc.py` on each model's root, silhouette by cell type with cosine distance over all
+  pseudo-cells of a tissue, for all 14 tissues; reported per tissue with v2 − April and the median over
+  tissues. The tool and its inputs were set by the v2 Stage 9 job script, submitted before any v2 output
+  existed (job 12013967); its QC tail failed on a shell error and was rerun as job 12014306, which printed
+  the silhouettes at 12:48, two minutes before this entry was committed and before they were read. Stage
+  12 cosine, fixed before it is computed for either model (`translation/transfer_cosine.py`): for each
+  pseudo-cell, the cosine between its rat-space (Stage 9) and human-space (Stage 12) CLS embeddings from
+  the same model, paired by `cell_id`; per tissue the mean, median and 5th percentile over all paired
+  cells; summary = the median over tissues of the per-tissue mean. July's 0.979 (liver, smoke job
+  11103493) is not on disk, so April's values are computed from its on-disk embeddings (human side built
+  2026-07-17 from the current pseudo-cells; TESTES 2026-10-22). The transfer status (PRESERVED /
+  WEAKENED / LOST) is scored with the gate, after its permutation setting is fixed.
+- 2026-10-24 — Aim-2 gate method for C5, chosen by the user and logged before any v2 gate number exists:
+  the supervised probes are scored with repeated cross-validation, 10 stratified 5-fold splits and
+  10,000 permutations, for both models in rat and human space. Reason: with the registered single split
+  and 1,000 permutations the seed decides April's hotspot set. Over 10 seed sets (each block's crc32 seed
+  + o·1,000,003; April's on-disk rat embeddings; trained probe only) April has 7–16 hotspots, 3 in every
+  set and 20 in any. One fold split moves a block's AUC by about 0.04, and at 1,000 permutations a
+  hotspot has at most 3 permuted AUCs above its own. With 10 splits and 10,000 permutations over 5 seed
+  sets: 16–17 hotspots, 15 in every set and 18 in any (mean pairwise Jaccard 0.91, against 0.56); the 3
+  that differ have q between 0.04 and 0.07 under every seed set. One split with 10,000 permutations gives
+  10 in every set and 22 in any; 10 splits with 1,000 give 12 and 18. Evidence and scripts:
+  `data/results/retrain_v2/gate_stability/`.
+  Implementation: `subspace_probe.py --repeats 10 --perms 10000`, and for the PCA control
+  `augur_prep.py --repeats 10 --perms 10000`. Split r of each probe (trained, dose, sex, and each space of
+  the PCA control) is seeded like the single split plus 7919·r, so r = 0 is the registered split. The
+  statistic (AUC; Spearman ρ for dose) and the out-of-fold η² are means over the 10 splits, and each
+  permutation is scored on the same 10 splits. The η² permutation tests run at the same 10,000
+  permutations. Hotspots: BH q_sup_trained < 0.05 over all blocks (`corroborate_summary.py`), as before.
+  Controls before any result is used: with `--repeats 1` the new code reproduces April's on-disk rat and
+  human `subspace_probe` and `pca_control` in every column, and April's trained-probe AUC and p at
+  10 × 10,000 equal the stability run's seed set 0.
+  Outputs: a `gate_rcv10/` folder in each model's rat and human root (`subspace_probe.tsv`,
+  `pca_control.tsv`, `corroboration_merged.tsv`, `transfer_comparison.{tsv,md}`); April's registered tables
+  are left as they are. The registered method (1 split, 1,000 permutations; PCA control 500) is also run
+  for v2 and reported alongside; April's registered rows are its on-disk tables (2026-10-24). Run once for
+  v2, since the method does not change them: `pheno_merge_test` and canonical Augur (inputs exported by
+  `augur_prep` to `data/deconvolution/augur_input_v2`). Human-space Augur is run for neither model, so
+  `compare_transfer` has no human Augur column for either (April's registered table carries one from
+  2026-06-25; no status uses it).
+  Gate summary for C5, per model and method: exercise = number of hotspots, median and maximum
+  `sup_trained_auc`, median `sup_dose_rho` over blocks; sex = median `sup_sex_auc`; cell type = the Stage 9
+  silhouette above (the gate tables have no cell-type AUC); April vs v2 paired by block (median
+  difference, blocks where v2 is higher) and the overlap of the two hotspot sets. Transfer: status counts
+  among each model's own hotspots and over all blocks, the sex control's human-space median, and the rat ~
+  human Spearman of `sup_trained_auc`.
+- 2026-10-24 — Downstream reruns with v2 (§4: v2 is the working model), logged before any v2 rat-space
+  gate output is read. The only v2 gate output seen so far is the last four per-tissue rows of the
+  human-space probe's log (skmvl, smlint, testes, watsc), shown while checking that the job had ended.
+  Everything that uses the model, its embeddings or its hotspots is rerun with v2's phase-2 final save
+  (as in v2's Stages 9 and 12), with the settings of April's production runs, into v2's own folders
+  (`config/profiles/retrain_v2_downstream.yaml`: `genecompass_input_v2/` and `_human/`,
+  `augur_input_v2/`, `grn_v2/`, `grn_v2_human/`; a8145d8 moved the folders that Stages 13–14 had
+  hardcoded to April's into the config):
+  Stage 10, the per-cell-type DE on the BayesPrism Z and the pre-registered positive-control comparison,
+  plus `validate_parenchyma_dataanchored.py`'s two tables (the DE does not use the model; it is rerun
+  because the hotspot flags change, TESTES was deconvolved again on 2026-10-22, and IHW pools all
+  tissues); Stage 13, the rat- and human-space differential GRNs for every hotspot with mean fraction
+  ≥ 0.01 (30 bootstraps, seed 0), their conservation, and the enrichment; Stage 14 steps 2–3, the
+  composition-confound and RIN/globin tables; the pseudo-cell UMAP and viewer; and the Aim-1
+  representation checks (`analysis/aim1_validation`, V1–V3) with the v2 model, v2 init and the v2 corpus
+  (labelled subset rebuilt by the same procedure and seed; the same human and mouse reference cells).
+  v2's hotspots are the C5 gate method's (`genecompass_input_v2/gate_rcv10/corroboration_merged.tsv`,
+  10 splits × 10,000 permutations), not the registered single split's, whose hotspot set is decided by
+  the seed (entry above). Not rerun: model-independent work (Stage 8, the Stage 14 purity sweeps); the
+  id-loss trajectory, which the C1/C2 probe already gives for base, v2 init and both v2 phases; and
+  model-dependent outputs that no reported result reads: human-space Augur, corroboration and
+  `pheno_merge_test` (April's date from 2026-06-25), and the GRN permutation nulls and uncapped
+  variants (2026-07-13). These reruns are not C5 criteria; their results are reported in
+  `docs/RETRAIN_V2_RESULTS.md` under their own heading, with April's alongside where April has the same
+  output.

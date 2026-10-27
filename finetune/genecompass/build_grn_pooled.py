@@ -20,7 +20,7 @@ CLS shift). Reuses the arm split (augur meta) and the engine primitives from bui
 
 Usage:
   python finetune/genecompass/build_grn_pooled.py --model-dir <...> \
-      --dataset data/deconvolution/genecompass_input/skmvl/dataset \
+      --dataset data/deconvolution/genecompass_input_v2/skmvl/dataset \
       --meta data/deconvolution/augur_input/skmvl/meta.tsv --cell-type "Skeletal muscle" \
       --out data/deconvolution/grn/skmvl_skeletal_muscle_pooled.tsv --bootstrap 30 --device cuda
 """

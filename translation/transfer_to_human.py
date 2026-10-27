@@ -18,18 +18,19 @@ WHAT  (this script = step 1, CPU)
     --ortholog map (rat_to_human_mapping.pickle; many rat genes -> one human ENSG are SUMMED)-->
   human ENSG expression profile
     --tokenize (HUMAN ENSG tokens [genecompass_tokens] + HUMAN gene medians
-       [genecompass_medians], SAME target-sum 6500 + top-2048 as the rat path)-->
+       [genecompass_medians], SAME target sum + top-2048 as the rat path)-->
   HuggingFace dataset/ with species=0 (human)
   Step 2 = embed_cells.py --species 0 (GPU); both driven by pipeline/run_stage12.py.
 
 PARITY  (make-or-break -- verified 2026-06-24)
   Reuses the EXACT corpus tokenization math
   (pipeline/05_tokenization/tokenize_corpus.tokenize_cell_batch):
-      normalize_total(6500) over the full gene set
+      normalize_total(target_sum) over the full gene set
       -> divide by per-gene median -> log2(1+x) -> rank descending -> top-2048 -> zero-pad.
   ONLY THREE things change vs the rat path: the token dict (human ENSG), the median
   dict (human), and the species token (0, not 2). Empirical grounding:
-    * target_sum = 6500.0 in ALL 10 rat tissues (tokenize_summary.json), value median ~0.87.
+    * target_sum = deconvolution.pseudocell_target_sum, the rat run's value in every tissue
+      (tokenize_summary.json): v2 6,400, April 6,500 -- each matches its model's corpus value median.
     * 13,883 / 15,234 ortholog-mapped rat genes already carry the SAME GeneCompass token
       ID as their human ortholog (the rat tokens reuse the GC ID space) -> for those the
       transfer reuses the identical token. Human ENSG token IDs are 2..23114, all < the
@@ -126,7 +127,7 @@ def project_rat_to_human(adata: ad.AnnData, r2h: dict):
     surviving mapped count-mass by the full rat library keeps each surviving gene's value scale
     IDENTICAL to the rat path; using the mapped-only sum instead would inflate every value ~1.2x
     (~17% of rat count-mass is in dropped T4 genes) and re-introduce the value-scale drift that
-    target_sum=6500 was calibrated to remove.
+    target_sum was calibrated to remove.
     """
     rat_base = [_base(v) for v in adata.var_names]
     pairs = [(j, r2h[g]) for j, g in enumerate(rat_base) if g in r2h]   # (rat_col, ENSG)
@@ -244,8 +245,9 @@ def main():
                     help="human ENSG token pickle (default: paths.genecompass_tokens)")
     ap.add_argument("--median-dict", default=None,
                     help="human ENSG median pickle (default: paths.genecompass_medians)")
-    ap.add_argument("--target-sum", type=float, default=6500.0,
-                    help="per-pseudo-cell normalize_total target; MUST match the rat run (6500)")
+    ap.add_argument("--target-sum", type=float, default=None,
+                    help="per-pseudo-cell normalize_total target; MUST match the rat run "
+                         "(default: deconvolution.pseudocell_target_sum; 6500 if unset)")
     ap.add_argument("--top-n", type=int, default=TOP_N_DEFAULT)
     ap.add_argument("--min-genes", type=int, default=200,
                     help="drop pseudo-cells expressing < this many eligible genes (GeneCompass QC parity)")
@@ -253,6 +255,8 @@ def main():
 
     cfg = load_config()
     paths, dc = cfg["paths"], cfg["deconvolution"]
+    if args.target_sum is None:
+        args.target_sum = float(dc.get("pseudocell_target_sum", 6500.0))
     in_root = Path(args.in_root) if args.in_root else resolve_path(cfg, dc["genecompass_input_dir"])
     out_root = Path(args.out_root) if args.out_root else Path(str(in_root) + "_human")
     omap = Path(args.ortholog_map) if args.ortholog_map \

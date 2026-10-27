@@ -49,6 +49,8 @@ def build_cmd(cfg):
         c += ["--sample-ids", ",".join(cfg["sample_ids"])]
     if not cfg.get("dedup_gsm", True):
         c += ["--no-dedup-gsm"]
+    if cfg.get("gene_map"):
+        c += ["--gene-map", cfg["gene_map"]]
     return c
 
 

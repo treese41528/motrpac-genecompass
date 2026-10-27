@@ -15,6 +15,7 @@ from scipy.stats import spearmanr, wilcoxon
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
+from provenance import write_provenance                                   # noqa: E402
 
 _ap = argparse.ArgumentParser(description=__doc__)
 _ap.add_argument("--gc-root", default=None,
@@ -81,4 +82,6 @@ print(m.dropna(subset=["sup_trained_auc"]).sort_values("sup_trained_auc", ascend
       .head(22).to_string(index=False))
 
 m.to_csv(f"{gc}/corroboration_merged.tsv", sep="\t", index=False)
+write_provenance(gc, params={"gc_root": gc},
+                 inputs=[f"{gc}/subspace_probe.tsv", f"{gc}/pca_control.tsv", f"{gc}/augur_results.tsv"])
 print(f"\nwrote {gc}/corroboration_merged.tsv ({len(m)} rows)")

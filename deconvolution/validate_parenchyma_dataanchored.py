@@ -11,16 +11,21 @@ A: the pre-registered Tier-A controls were MIS-SPECIFIED (flat/down in rat bulk 
 C: emit the dominant (most-abundant) cell type per tissue so the write-up can flag/down-weight
    absolute per-gene DE there (H3-robust reporting).
 
-Read-only. Outputs printed + written to data/deconvolution/genecompass_input/pseudobulk_de/.
+Outputs printed + written to the DE folder: $DE_DIR, else <genecompass_input_dir>/pseudobulk_de from the
+config (dominant_celltype_flags.tsv, parenchyma_dataanchored_validation.tsv).
 """
-import os, re
+import os, re, sys
 import numpy as np, pandas as pd
 from scipy.io import mmread
 from scipy import stats
 
 ROOT = os.environ.get('PIPELINE_ROOT', '.')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'))
+from gene_utils import load_config, resolve_path  # noqa: E402
+_cfg = load_config()
 BULK = os.path.join(ROOT, 'data/deconvolution/motrpac_bulk')
-DE   = os.path.join(ROOT, 'data/deconvolution/genecompass_input/pseudobulk_de')
+DE   = os.environ.get('DE_DIR') or str(resolve_path(_cfg, _cfg['deconvolution']['genecompass_input_dir']) / 'pseudobulk_de')
+print(f'DE folder: {DE}')
 PH   = os.path.join(ROOT, 'deconvolution/reference/motrpac_sample_pheno.tsv')
 THR_LFC, ALPHA, MINNZ = 0.25, 0.05, 25
 PAR = {'SKMGN': ['Skeletal myocytes'],

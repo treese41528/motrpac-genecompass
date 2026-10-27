@@ -34,6 +34,9 @@
 # Plus two small AUDITABLE artifacts (committed):
 #   <map_out>     per-gene liftover map (old_id, lifted_id, method, symbol)
 #   <report_out> coverage report (direct/bridge/drop + primary-gene vocab coverage)
+# (and motrpac_missed_genes.{tsv,_summary.txt} next to the map). These are written ONLY on an
+# ALL run, or when map_out/report_out are passed explicitly: a single-tissue run (Stage 8 step 1)
+# would otherwise overwrite the committed all-tissue report with a one-tissue view.
 #
 # Usage: prepare_motrpac_bulk.R <TISSUE|ALL> <out_dir> [map_out] [report_out]
 #   env overrides: MOTRPAC_DATA_DIR, RAT_TOKEN_MAPPING, RAT_GENE_INFO
@@ -185,13 +188,19 @@ tissues <- if (which_tissue == "ALL") sort(all_tis) else {
   which_tissue
 }
 
+# The committed audit artifacts describe ALL tissues, so only an ALL run (or an explicit
+# map_out/report_out) may write them; a single-tissue run leaves them untouched.
+write_audit <- which_tissue == "ALL" || length(args) >= 3
+
 # ---- write the auditable liftover map (canonical bulk gene set = first tissue) ----
-canon_ids <- as.character(ld(file.path(DATA_DIR,
-                  sprintf("TRNSCRPT_%s_RAW_COUNTS.rda", tissues[1])))$feature_ID)
-lm_canon <- lift_ids(canon_ids)
-dir.create(dirname(MAP_OUT), recursive = TRUE, showWarnings = FALSE)
-write.table(lm_canon, MAP_OUT, sep = "\t", quote = FALSE, row.names = FALSE)
-cat(sprintf("Wrote liftover map: %s (%d genes)\n", MAP_OUT, nrow(lm_canon)))
+if (write_audit) {
+  canon_ids <- as.character(ld(file.path(DATA_DIR,
+                    sprintf("TRNSCRPT_%s_RAW_COUNTS.rda", tissues[1])))$feature_ID)
+  lm_canon <- lift_ids(canon_ids)
+  dir.create(dirname(MAP_OUT), recursive = TRUE, showWarnings = FALSE)
+  write.table(lm_canon, MAP_OUT, sep = "\t", quote = FALSE, row.names = FALSE)
+  cat(sprintf("Wrote liftover map: %s (%d genes)\n", MAP_OUT, nrow(lm_canon)))
+}
 
 # ---- process tissues ----
 cat(sprintf("\nProcessing %d tissue(s) -> %s\n", length(tissues), out_dir))
@@ -202,6 +211,16 @@ summ <- do.call(rbind, lapply(tissues, function(t) {
               s$dropped, s$collapsed, s$samples))
   s
 }))
+
+if (!write_audit) {
+  cat("\n-- per-tissue summary --\n")
+  print(summ, row.names = FALSE)
+  cat(sprintf(paste0("\nSingle-tissue run: audit artifacts left untouched (%s, %s, %s).\n",
+                     "Run with ALL (or pass map_out/report_out) to refresh them.\n"),
+              MAP_OUT, REPORT_OUT, MISSED_TSV))
+  cat("Done.\n")
+  quit(save = "no", status = 0)
+}
 
 # ---- coverage report (primary = training-regulated transcriptome genes) ----
 sink(REPORT_OUT)

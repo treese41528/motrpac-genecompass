@@ -104,7 +104,8 @@ Ranked by how established:
 ## Bottom line for Aim 2
 
 1. The gate (PERMANOVA R²) and the supervised probe (Augur) are both standard; we ran **canonical Augur**
-   and it corroborates the probe (Spearman r = 0.83, 19–22/22 hotspots).
+   and it corroborates the probe (Spearman r = 0.83, 19–22/22 hotspots; under v2 and the 10-split gate,
+   r = 0.822 and 13/13 hotspots at AUC ≥ 0.65).
 2. Do the DE in **gene space, per cell type, pseudobulk-style** (Squair) on `Z` —
    `expression ~ ordinal_dose + sex` — **not** on the embedding. Optionally CPA for latent dose modeling.
 3. Value-add over PCA was sanity-checked (modest), per the "one PCA" caution.

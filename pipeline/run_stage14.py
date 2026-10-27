@@ -68,6 +68,11 @@ PURITY = [
     dict(sweep='SWEEP_skmvl_holdout',     study='GSE254371', tissue='skeletal muscle',   focal='Skeletal muscle',         label_scheme='muscle', gene_join='outer', min_gene_cells=10, cpm=800),
     dict(sweep='SWEEP_lung_club_holdout', tissue='lung',     focal='Club cells',            pooled_lung=True, cpm=1000),
     dict(sweep='SWEEP_lung_at2_holdout',  tissue='lung',     focal='Alveolar type II cells', pooled_lung=True, cpm=300),
+    # ---- 2026-07 reference-rebuild additions (were added after the original Stage-14 run) ----
+    dict(sweep='SWEEP_bat_holdout',       study='GSE244451', tissue='subscapular brown adipose tissue', focal='Brown adipocytes',       label_scheme='none', gene_join='inner', sample_ids='GSE244451_sample1,GSE244451_sample3', cpm=1000),
+    dict(sweep='SWEEP_hypoth_holdout',    study='GSE248413', tissue='hypothalamus',                     focal='Glutamatergic neurons',  label_scheme='none', gene_join='inner', sample_ids='GSE248413_sample0', cpm=1000),
+    dict(sweep='SWEEP_smlint_holdout',    study='GSE272055', tissue='proximal jejunum',                 focal='Enterocytes',            label_scheme='none', gene_join='inner', sample_ids='GSE272055_sample0,GSE272055_sample1', cpm=1000),
+    dict(sweep='SWEEP_testes_holdout',    study='OMIX767',   tissue='testis',                           focal='Round spermatids',       label_scheme='none', gene_join='inner', sample_ids='OMIX767_sampleC,OMIX767_sampleE7W', gene_map='deconvolution/reference/motrpac_bulk_liftover.tsv', cpm=1000),
 ]
 GRID = '0.1,0.3,0.5,0.7,0.85,0.95'
 
@@ -110,6 +115,8 @@ def build_steps(ctx: dict, subset: list) -> list:
             build += ['--conditions', cfg['conditions']]
         if cfg.get('sample_ids'):
             build += ['--sample-ids', cfg['sample_ids']]
+        if cfg.get('gene_map'):
+            build += ['--gene-map', cfg['gene_map']]
         items.append({
             'label': tag, 'out': S / 'scores' / 'purity_sweep_summary.tsv',
             'cmds': [
@@ -126,7 +133,7 @@ def build_steps(ctx: dict, subset: list) -> list:
          'items': items, 'key': valdir},
         {'num': 2, 'name': 'Composition-confound table (py)',
          'desc': 'build_composition_confound_table.py -> pseudobulk_de/composition_confound_table.tsv',
-         'cmd': [PY, str(DECONV / 'build_composition_confound_table.py')],
+         'cmd': [PY, str(DECONV / 'build_composition_confound_table.py'), '--de-dir', str(de_dir)],
          'key': de_dir / 'composition_confound_table.tsv'},
         {'num': 3, 'name': 'RIN / %-globin technical-covariate robustness (R)',
          'desc': 'de_technical_covariate_robustness.sh -> pseudobulk_de/rin_globin_robustness.tsv',
@@ -195,6 +202,7 @@ def main() -> None:
     logger.info("STAGE 14: HARDENING (purity sweeps -> composition-confound -> RIN/globin robustness)")
     logger.info("=" * 70)
     logger.info(f"  validation dir = {ctx['valdir']}")
+    logger.info(f"  DE dir = {ctx['de_dir']}")
 
     errors = []
     if (args.only in (2, 3) or (args.only is None and args.from_step >= 2)) \
@@ -206,7 +214,8 @@ def main() -> None:
         if not args.dry_run:
             sys.exit(1)
 
-    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT))
+    # DE_DIR: the RIN/globin R script's DE folder, passed explicitly (see de_technical_covariate_robustness.R).
+    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), DE_DIR=str(ctx['de_dir']))
     steps = build_steps(ctx, args.tissues)
     steps = [s for s in steps if (s['num'] == args.only if args.only else s['num'] >= args.from_step)]
     t_total = time.time()

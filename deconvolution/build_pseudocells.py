@@ -26,7 +26,7 @@ Output:
 Usage (project venv):
   python deconvolution/build_pseudocells.py \
       --pred-z-dir data/deconvolution/validation/V0_liver/results/pred_z \
-      --tissue liver --out data/deconvolution/genecompass_input/liver
+      --tissue liver --out data/deconvolution/genecompass_input_v2/liver
   optional metadata join (real bulk): --meta-tsv pheno.tsv --meta-key viallabel
 """
 import argparse

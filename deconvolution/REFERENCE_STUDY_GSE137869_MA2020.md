@@ -262,7 +262,7 @@ build: build_reference.py --study GSE137869 --tissue "white adipose tissue" \
 Cost: one `build_reference.py` run (minutes) plus one `run_deconvolution.R` on the WAT bulk (**sbatch — not
 the login node**). Everything downstream of WATSC's θ/Z must be re-run: the WATSC pseudobulk DE blocks and
 any WATSC hotspot or GRN claim. The other nine tissues are untouched — **except** that the pseudobulk DE's
-IHW/repfdr fit is **pooled globally across all 185 blocks**, so changing WATSC's blocks perturbs adjusted
+IHW/repfdr fit is **pooled globally across all 172 blocks**, so changing WATSC's blocks perturbs adjusted
 p-values in *every* tissue.
 
 **Be clear about what this buys.** It makes ψ **honest** (young-adult, age-matched to MoTrPAC). It does

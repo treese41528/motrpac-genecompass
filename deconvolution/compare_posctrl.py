@@ -38,7 +38,8 @@ import pandas as pd
 import numpy as np
 
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve().parents[1])
-
+sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
+from provenance import write_provenance  # noqa: E402
 
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 
@@ -156,6 +157,30 @@ def resolve_targets(store, tissue, target):
     return [t for t in wanted if t in avail]
 
 
+def check_targets(store, prereg):
+    """Fail if an explicit target matches no DE block; warn if it matches only some.
+
+    resolve_targets() drops names it cannot find, so a stale label used to be scored silently
+    as 'not_testable' -- all 28 muscle controls after the muscle relabel to 'Skeletal myocytes'.
+    """
+    none, partial = [], []
+    for (tissue, target), g in prereg.groupby(['tissue', 'cell_type_target']):
+        if str(target).strip().upper() == 'ANY':
+            continue
+        wanted = [t.strip() for t in str(target).split('|')]
+        avail = set(store.celltypes(tissue))
+        hit = [t for t in wanted if t in avail]
+        if not hit:
+            none.append(f"{tissue}: {target!r} ({len(g)} rows)")
+        elif len(hit) < len(wanted):
+            partial.append(f"{tissue}: {sorted(set(wanted) - avail)} absent")
+    for p in partial:
+        print(f"WARNING: pre-registered target partly absent -- {p}", file=sys.stderr)
+    if none:
+        sys.exit("ERROR: pre-registered targets match no DE block (relabelled cell type? regenerate "
+                 "posctrl_prereg.tsv with build_posctrl_prereg.py):\n  " + "\n  ".join(none))
+
+
 def classify_identity(evals, tier, expected_dir):
     """Aggregate per-cell-type evals for a single gene into one frozen-ladder outcome.
     evals: list of gene_eval dicts (present blocks only considered for the ladder)."""
@@ -186,7 +211,7 @@ def classify_identity(evals, tier, expected_dir):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input/pseudobulk_de'))
+    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input_v2/pseudobulk_de'))
     ap.add_argument('--prereg', default=str(_PROJECT_ROOT / 'deconvolution/reference/posctrl_prereg.tsv'))
     ap.add_argument('--out', default=None, help='output dir (default: --de-dir)')
     ap.add_argument('--alpha', type=float, default=0.05)
@@ -199,6 +224,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
     prereg = pd.read_csv(args.prereg, sep='\t')
     store = DEStore(de_dir, args.alpha)
+    check_targets(store, prereg)
 
     rows = []            # per-gene (tiers A/Ai/B) result rows
     cprog = []           # Tier C program-enrichment rows
@@ -324,6 +350,8 @@ def main():
         counts, n = tally(res, [tier])
         rec = counts.get('recovered', 0) + counts.get('recovered_confounded', 0)
         print(f"  Tier {tier}: {rec}/{n} recovered | " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    write_provenance(out_dir, params=vars(args),
+                     inputs=[args.prereg, de_dir / 'de_summary.tsv', de_dir / 'de_methods.tsv'])
 
 
 if __name__ == '__main__':

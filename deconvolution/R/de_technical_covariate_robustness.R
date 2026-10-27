@@ -7,15 +7,19 @@
 # {RIN + pct_globin} as covariates and compare the per-gene dose statistic. High agreement =
 # the exercise signal is not a technical-quality artifact.
 #
-# Out: data/deconvolution/genecompass_input/pseudobulk_de/rin_globin_robustness.tsv
+# Out: <DE folder>/rin_globin_robustness.tsv (DE folder: $DE_DIR, which pipeline/run_stage14.py sets, else
+# <genecompass_input_dir>/pseudobulk_de from the config, else the repo default)
 suppressWarnings(suppressMessages({ library(limma); library(edgeR); library(data.table) }))
 
 ROOT     <- Sys.getenv("PIPELINE_ROOT", ".")
 RESULTS  <- file.path(ROOT, "data/deconvolution/results/motrpac")
 BULK     <- file.path(ROOT, "data/deconvolution/motrpac_bulk")
 PHENO    <- file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv")
-HOT      <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de/de_hotspots.tsv")
-OUT      <- file.path(ROOT, "data/deconvolution/genecompass_input/pseudobulk_de/rin_globin_robustness.tsv")
+GC_DIR   <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2"))
+DE_DIR   <- Sys.getenv("DE_DIR", unset = file.path(GC_DIR, "pseudobulk_de"))
+HOT      <- file.path(DE_DIR, "de_hotspots.tsv")
+OUT      <- file.path(DE_DIR, "rin_globin_robustness.tsv")
+cat(sprintf("DE folder: %s\n", DE_DIR))
 META_RDA <- "/depot/reese18/apps/MotrpacRatTraining6moData/data/TRNSCRPT_META.rda"
 
 # Shared cell-type -> filename contract (see deconvolution/R/celltype_names.R).

@@ -73,7 +73,7 @@ from pathlib import Path
 
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, qc_corpus_files, resolve_path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -195,15 +195,23 @@ def validate_inputs(config: dict, from_step: int) -> bool:
         else:
             logger.info(f"  hybrid_gene_medians.pickle: {hybrid.stat().st_size / 1e6:.1f} MB [OK]")
 
+        # The files tokenize_corpus.py will read: the corpus plan's kept files when
+        # paths.qc_file_list is set (retrain profile), else every QC'd h5ad
         qc_dir   = resolve_path(config, paths['qc_h5ad_dir'])
-        h5ad_files = list(qc_dir.glob('**/*.h5ad'))
-        if not h5ad_files:
+        try:
+            h5ad_files = qc_corpus_files(config)
+        except FileNotFoundError as e:
+            errors.append(str(e))
+            h5ad_files = None
+        if h5ad_files is not None and not h5ad_files:
             errors.append(
                 f"No .h5ad files found in {qc_dir}\n"
                 f"  → Run Stage 2 first (python run_stage2.py)"
             )
-        else:
-            logger.info(f"  QC'd h5ad files: {len(h5ad_files):,} [OK]")
+        elif h5ad_files:
+            plan = paths.get('qc_file_list')
+            logger.info(f"  QC'd h5ad files: {len(h5ad_files):,} [OK]"
+                        + (f" (kept by {plan})" if plan else ""))
 
     if from_step <= 2:
         # Inputs for Step 2 (gather) — shards from Step 1

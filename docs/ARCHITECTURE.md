@@ -186,8 +186,7 @@ rat-genecompass/
 │   ├── 03_vocabulary_pruning.slurm
 │   ├── 05_compute_gene_medians.slurm
 │   └── run_full_pipeline.slurm    # End-to-end orchestration
-├── tests/
-│   └── test_gene_utils.py         # Unit tests for resolver, biotype normalization
+├── tests/                         # pytest; see README "Tests"
 ├── data/                          # .gitignore'd, documented in README
 │   ├── references/                # BioMart downloads, RGD (read-only)
 │   │   ├── biomart/

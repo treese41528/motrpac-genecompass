@@ -9,7 +9,7 @@ part of the pipeline and is run separately.
 
 Per-tissue chain:
   1. deconvolution/tokenize_pseudocells.py            (py; reuses pipeline/05 tokenizer)
-       pseudocells.h5ad -> normalize_total(--target-sum 6500) -> rank -> top-N
+       pseudocells.h5ad -> normalize_total(--target-sum; config pseudocell_target_sum, v2 6,400) -> rank -> top-N
        token seqs -> dataset/ (+ tokenize_summary.json)
   2. finetune/genecompass/embed_cells.py              (py; GPU)
        CLS (position-0) embedding from the fine-tuned rat GeneCompass ->
@@ -164,8 +164,9 @@ def main() -> None:
                         '(default: deconvolution.genecompass_model_dir from config -> latest checkpoint)')
     p.add_argument('--n-cells', type=int, default=None,
                    help='cells to embed (default: all pseudo-cells; never subsample)')
-    p.add_argument('--target-sum', type=float, default=6500.0,
-                   help='tokenizer normalize_total target (default 6500; calibrated to the corpus)')
+    p.add_argument('--target-sum', type=float, default=None,
+                   help='tokenizer normalize_total target (default: deconvolution.pseudocell_target_sum, '
+                        'calibrated to the model\'s corpus; 6500 if unset)')
     p.add_argument('--pa-genes', action='store_true',
                    help='also pass the PA/training-regulated gene priority list to the tokenizer (off by default)')
     p.add_argument('--device', default='cuda')
@@ -201,7 +202,8 @@ def main() -> None:
         'emb_dir':    gc_dir / 'embeddings',
         'model_dir':  resolve_model_dir(model_base),
         'pa_genes':   resolve_path(config, d['pa_genes']) if (args.pa_genes and d.get('pa_genes')) else None,
-        'target_sum': args.target_sum,
+        'target_sum': args.target_sum if args.target_sum is not None
+                      else float(d.get('pseudocell_target_sum', 6500.0)),
         'n_cells':    n_cells,
         'device':     args.device,
     }

@@ -379,8 +379,8 @@ HIPPOC:
 
 # ============================ BUILT 2026-07-16 (staged OMIX767, paper-panel annotation) ==============
 TESTES:
-  status: needs-build                    # reference BUILT; not yet deconvolved (Stage 8). run_deconv_all picks it up.
-  reference_dir: data/deconvolution/references_v3/TESTES_OMIX767
+  status: needs-build                    # reference BUILT + deconvolved (lifted genes, 2026-10-22). run_deconv_all picks it up.
+  reference_dir: data/deconvolution/references_v3/TESTES_OMIX767_lifted
   study: OMIX767
   tissue: testis
   organism: Rattus norvegicus
@@ -388,6 +388,7 @@ TESTES:
   sample_ids: [OMIX767_sampleC, OMIX767_sampleE7W]   # pool C + E7W = normal-testosterone arms (Geyu)
   min_state_cells: 20
   label_scheme: none
+  gene_map: deconvolution/reference/motrpac_bulk_liftover.tsv   # OMIX767 ships Rnor_6.0 IDs: lift with the bulk's own map
   assay: scRNA
   expect:
     n_samples: 2
@@ -400,8 +401,10 @@ TESTES:
     # (2) python deconvolution/annotate_omix767_testes.py       # PAPER-PANEL per-cell annotation (see below)
     # (3) python deconvolution/build_reference.py --study OMIX767 --tissue testis
     #        --sample-ids OMIX767_sampleC,OMIX767_sampleE7W --min-state-cells 20
-    #        --out data/deconvolution/references_v3/TESTES_OMIX767
+    #        --gene-map deconvolution/reference/motrpac_bulk_liftover.tsv
+    #        --out data/deconvolution/references_v3/TESTES_OMIX767_lifted
   notes: >
+    Only rat testis scRNA; C+E7W = 5,850 cells (Geyu). Heavy ambient -> differential. Ingestion required.
     Generic PanglaoDB/ScType panels lack the spermatogenesis stages -> collapse the germ lineage to one
     "Germ cells" bucket. FIX: annotate with the SOURCE PAPER's own scheme (Guan et al. Sci Data 2022;
     OMIX767-20-02.xlsx "DEG list for 7 cell types" + rat-validated markers Dazl/Sohlh2/Elavl3, NOT the
@@ -410,7 +413,10 @@ TESTES:
     Condensed spermatids) + Sertoli (42). Leydig/immune/endothelial are genuinely too thin (<20 cells/state)
     and were dropped -> germ-stage resolution is trustworthy; absolute SOMATIC fractions are NOT
     (differential only). GSE268104 snRNA is the alternative if somatic fractions matter.
-  notes: Only rat testis scRNA; C+E7W = 5,850 cells (Geyu). Heavy ambient -> differential. Ingestion required.
+    GENE IDs (2026-10-22): OMIX767 ships Rnor_6.0 IDs while the bulk is lifted to Ensembl 115, so the July
+    reference (references_v3/TESTES_OMIX767) left 587 bulk genes (2.3% of bulk counts) unpaired. The
+    reference is now built through the bulk's own liftover map (gene_map; same cells and labels):
+    deconvolution genes 13,124 -> 13,711, bulk counts covered 91.5% -> 93.8%, theta shifts <= 1.1 pp.
 
 SPLEEN:
   status: needs-online-data

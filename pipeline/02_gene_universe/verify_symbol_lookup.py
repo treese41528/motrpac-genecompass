@@ -11,13 +11,13 @@ VERSION 1.1 ENHANCEMENTS:
 
 Usage:
     # Basic test with standard genes
-    python verify_symbol_lookup.py
+    python pipeline/02_gene_universe/verify_symbol_lookup.py
     
     # Test against actual corpus inventory
-    python verify_symbol_lookup.py --inventory /path/to/gene_inventory.tsv
+    python pipeline/02_gene_universe/verify_symbol_lookup.py --inventory /path/to/gene_inventory.tsv
     
     # Full verification with study-level summary
-    python verify_symbol_lookup.py --inventory /path/to/gene_inventory.tsv --study-summary
+    python pipeline/02_gene_universe/verify_symbol_lookup.py --inventory /path/to/gene_inventory.tsv --study-summary
 """
 
 import pickle
@@ -62,7 +62,7 @@ def classify_gene_format(gene_id: str) -> str:
         return 'other'
 
 
-def test_standard_genes(lookup: dict):
+def check_standard_genes(lookup: dict):
     """Test standard housekeeping and commonly used genes."""
     test_genes = [
         'actb', 'gapdh', 'ube2m', 'dhfr', 'gnai3', 'pin1', 'ccl5',
@@ -87,7 +87,7 @@ def test_standard_genes(lookup: dict):
     return found, len(test_genes)
 
 
-def test_custom_file(lookup: dict, test_file: Path):
+def check_custom_file(lookup: dict, test_file: Path):
     """Test genes from a custom file."""
     with open(test_file) as f:
         custom_genes = [line.strip().lower() for line in f if line.strip()]
@@ -113,7 +113,7 @@ def test_custom_file(lookup: dict, test_file: Path):
     return found_custom, len(custom_genes)
 
 
-def test_inventory(lookup: dict, inventory_path: Path, show_study_summary: bool = False):
+def check_inventory(lookup: dict, inventory_path: Path, show_study_summary: bool = False):
     """
     Test actual corpus genes from gene_inventory.tsv against the lookup.
     
@@ -300,13 +300,13 @@ def main():
         epilog="""
 Examples:
   # Basic test
-  python verify_symbol_lookup.py
+  python pipeline/02_gene_universe/verify_symbol_lookup.py
   
   # Test against corpus inventory (RECOMMENDED before ortholog mapping)
-  python verify_symbol_lookup.py --inventory ../../data/training/gene_inventory/gene_inventory.tsv
+  python pipeline/02_gene_universe/verify_symbol_lookup.py --inventory ../../data/training/gene_inventory/gene_inventory.tsv
   
   # Test custom gene list
-  python verify_symbol_lookup.py --test-file my_genes.txt
+  python pipeline/02_gene_universe/verify_symbol_lookup.py --test-file my_genes.txt
 """
     )
     parser.add_argument(
@@ -340,11 +340,11 @@ Examples:
     print(f"Loaded {len(lookup):,} symbols from {args.lookup.name}")
     
     # Standard test
-    test_standard_genes(lookup)
+    check_standard_genes(lookup)
     
     # Custom file test
     if args.test_file and args.test_file.exists():
-        test_custom_file(lookup, args.test_file)
+        check_custom_file(lookup, args.test_file)
     
     # Corpus inventory test
     if args.inventory:
@@ -352,7 +352,7 @@ Examples:
             print(f"\nERROR: Inventory file not found: {args.inventory}")
             print("Run build_gene_inventory_v3.py first to generate it.")
             return 1
-        test_inventory(lookup, args.inventory, args.study_summary)
+        check_inventory(lookup, args.inventory, args.study_summary)
     
     # Lookup stats
     print_lookup_stats(lookup)

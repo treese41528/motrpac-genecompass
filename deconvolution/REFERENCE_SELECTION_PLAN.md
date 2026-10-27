@@ -166,7 +166,7 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
 
 ## 5. Missing-tissue plan
 
-- **TESTES** — 2-phase: (1) ingest staged OMIX767 arms **C + E7W** (`data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/`, 2,157 + 3,693 = 5,850 cells): mtx→h5ad, ambient-correct (SoupX manual — filtered matrices only, no CellBender), QC/cluster/annotate, append 2 inventory rows; (2) `build_reference.py --study OMIX767 --sample-ids OMIX767_sampleC,OMIX767_sampleE7W`. Spermatids recovered (passes parenchyma bar); heavy ambient + thin somatics ⇒ differential-only. Evaluate **GSE268104** (rat snRNA multiome, unselected fraction) as a cleaner upgrade first.
+- **TESTES** — *(NOW BUILT & deconvolved 2026-07-16 — OMIX767 C+E7W reference committed d015399; the plan below was executed.)* 2-phase: (1) ingest staged OMIX767 arms **C + E7W** (`data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/`, 2,157 + 3,693 = 5,850 cells): mtx→h5ad, ambient-correct (SoupX manual — filtered matrices only, no CellBender), QC/cluster/annotate, append 2 inventory rows; (2) `build_reference.py --study OMIX767 --sample-ids OMIX767_sampleC,OMIX767_sampleE7W`. Spermatids recovered (passes parenchyma bar); heavy ambient + thin somatics ⇒ differential-only. Evaluate **GSE268104** (rat snRNA multiome, unselected fraction) as a cleaner upgrade first.
 - **SPLEEN** — ingest online **GSE186158** (GSM5639495; verified rat spleen 10x, healthy, ~10k cells); confirm age/sex/strain (proposed 6-wk juvenile male SD, pooled). ACK RBC-lysis + live-sort removes red-pulp erythroid ⇒ cross-check CDSeq, frame differential. Ma-2020 bone-marrow `-Y` is the in-corpus fallback proxy.
 - **VENACV** — **DROPPED 2026-07-16 (BLOCKED).** The GSE280111 pulmonary-vein subset was built (8 dedup GSMs) but the roster is irreducibly lung-contaminated (Clara / airway-club / lung-fibroblast / alveolar-macrophage clusters plus a "Cardiomyocyte contamination" cluster surviving even after the myocardial-sleeve drop), so it was **not deconvolved**. No genuine rat vena cava exists anywhere (only IVC atlas GSE221978 is mouse). Provenance retained.
 - **ADRNL** — no rat adrenal scRNA/snRNA exists (only mouse GSE108097, human GSE134355; rat snATAC atlas excludes adrenal, wrong modality). Leave non-deconvolved; CDSeq on the 50 bulk samples if a composition is required.
@@ -180,9 +180,9 @@ The GEO descriptions confirm the selection; every multi-arm study is restricted 
 2. Rebuild the corpus tissues in one batch (CORTEX, HEART, VENACV, WATSC, **SKMGN+SKMVL from one shared Ma-2020
    muscle -Y build**, BAT, HYPOTH, SMLINT, LUNG-drop-neonate, HIPPOC-if-approved) with the exact commands in §2.
    BLOOD stays as-deployed (GSE285476 PBMC) — no rebuild.
-3. Ingest the online/staged tissues (TESTES/OMIX767, SPLEEN/GSE186158, COLON/GSE326856-if-usable).
+3. Ingest the online/staged tissues (TESTES/OMIX767 — **DONE: built & deconvolved, d015399**; SPLEEN/GSE186158, COLON/GSE326856-if-usable still pending).
 4. Re-run Stage 8 → 9 → 10 → 12 → 13/14 **together** — every reference change perturbs the globally-pooled
-   IHW/repfdr fit across all 185 pseudobulk-DE blocks, so adjusted-p shifts in every tissue. Then re-execute the
+   IHW/repfdr fit across all 172 pseudobulk-DE blocks, so adjusted-p shifts in every tissue. Then re-execute the
    per-stage notebooks and hand-edit their display constants.
 5. Extend `tissue_references.yaml` with per-tissue `{organism, conditions, title_include, title_exclude,
    sample_ids, dedup_gsm, label_scheme, gene_join}` so every build above is reproducible from the map, and update

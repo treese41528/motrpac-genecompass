@@ -143,6 +143,14 @@ cat config/pipeline_config.yaml
 
 See `config/pipeline_config.yaml` for full documentation of each parameter.
 
+**Which model.** The default config uses the retrained **v2** model, its corpus, medians and output folders
+(`docs/RETRAIN_V2_RESULTS.md`). To run with the April model and its folders instead, set a profile, which
+`lib/gene_utils.load_config` merges over the config (after any `pipeline_config.local.yaml`):
+
+```bash
+export PIPELINE_PROFILE=config/profiles/april.yaml
+```
+
 ---
 
 ## Project structure
@@ -170,11 +178,26 @@ motrpac-genecompass/
 ├── analysis/                   # Aim 2: Downstream analysis
 ├── translation/                # Aim 3: Cross-species translation
 ├── slurm/                      # SLURM job scripts
-├── tests/                      # Unit and integration tests
+├── tests/                      # pytest suite (see Tests)
 ├── notebooks/                  # Jupyter notebooks
 ├── docs/                       # Architecture docs, bug tracker
 └── data/                       # NOT committed (see .gitignore)
 ```
+
+---
+
+## Tests
+
+```bash
+pytest                 # offline tests, about 10 s; no data or internet needed
+pytest -m data         # checks against this machine's pipeline outputs (corpus files, v2 results)
+pytest -m network      # live NCBI / EBI / ENA checks (set NCBI_EMAIL for the Entrez one)
+```
+
+The offline tests cover each stage's core logic on small made-up inputs: harvester file
+filters, gene-ID handling, the tokenizer, pseudo-cell building, the gate statistics, the
+rat-to-human transfer and config layering. The data tests read whichever model the config
+selects (`PIPELINE_PROFILE=config/profiles/april.yaml` for April).
 
 ---
 

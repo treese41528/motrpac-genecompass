@@ -116,5 +116,5 @@ proxy was dropped — irreducibly lung-contaminated — so it is not deconvolved
 - **BLOCKED:** ADRNL, OVARY — no rat reference exists; **VENACV** — the only proxy (GSE280111 pulmonary vein) is
   irreducibly lung-contaminated, so the built reference was **dropped, not deconvolved**. Reference-free CDSeq if
   a composition is required.
-- **Downstream:** any reference change perturbs the globally-pooled IHW/repfdr fit across all 185 pseudobulk-DE
+- **Downstream:** any reference change perturbs the globally-pooled IHW/repfdr fit across all 172 pseudobulk-DE
   blocks → re-run Stage 10 → 12 (and re-execute the per-stage notebooks) **together** after the deconv wave.

@@ -9,9 +9,12 @@ crashes on ENSRNOG tokens. This version:
   1. Starts with ZERO tensors of shape [vocab_size, 768]
   2. Copies rows 0-50557 from the pre-trained GeneCompass checkpoint
      (preserving calibrated embeddings for all four knowledge types)
-  3. Fills new token rows (50558+) from Stage 6 embedding pickles
-  4. Applies co-expression norm rescaling to new rows only
-  5. Returns the homologous_gene_human2mouse dict unchanged
+  3. T3 rows (new tokens with an ortholog, given as t3_ortholog_ids) copy their
+     ortholog's pre-trained row, for all four knowledge types
+  4. Remaining new rows (T4) are filled from Stage 6 embedding pickles, except
+     the knowledge types listed in t4_zero_priors, which stay zero
+  5. Applies co-expression norm rescaling only to rows filled from Stage 6
+  6. Returns the homologous_gene_human2mouse dict unchanged
 
 Vocab size is derived at runtime from max(rat_token_dict.values()) + 1.
 New tokens include both T3 (reclassified from shared to unique, with
@@ -20,10 +23,22 @@ ortholog relationship preserved) and T4 (no ortholog, rat-specific).
 The key insight: rows 0-50557 in our Stage 6 dicts are NOT used. The
 pre-trained values at those positions are already calibrated to the
 projection layers (linear1) -- overwriting them with our independently
-computed embeddings would break the learned projections.
+computed embeddings would break the learned projections. The same holds for
+new rows: only vectors in GeneCompass's coordinates mean anything to those
+frozen projections. Checked 2026-10-05 against the pre-trained rows of the
+same genes: the Stage 6 GRN vectors match exactly (they are GeneCompass's own
+PECA2vec vectors); the co-expression gene2vec and the stock-DNABert promoter
+vectors carry no gene-specific match, even after a fitted rotation.
+
+History: the April 2026 T3 reclassification gave T3 genes their own tokens, but
+Stage 6 stores T3 vectors under the human ID while this loader looked rows up by
+rat ID, so all 1,351 T3a rows were zero in every prior. Fixed 2026-10-05 by
+copying ortholog rows (T3a from the human ortholog, T3b from the mouse ortholog).
+T4 promoter and co-expression priors are zero by decision: an anchored co-expression
+rebuild on the cleaned corpus failed its pre-registered held-out test (2026-10-06).
 
 Author: Tim Reese Lab
-Date: March 2026 (updated April 2026 for T3 reclassification)
+Date: March 2026 (updated April 2026 for T3 reclassification; October 2026 for T3 priors)
 """
 
 import logging
@@ -53,6 +68,8 @@ def load_rat_prior_embeddings(
     stage6_dir,
     homologous_gene_path,
     coexp_rescale_factor=3.9,
+    t3_ortholog_ids: Optional[Dict[int, int]] = None,
+    t4_zero_priors: Tuple[str, ...] = (),
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, dict]:
     """
     Build the five knowledge objects required by KnowledgeBertEmbeddings.
@@ -72,8 +89,16 @@ def load_rat_prior_embeddings(
     homologous_gene_path : path
         Path to GeneCompass homologous_hm_token.pickle.
     coexp_rescale_factor : float
-        Scale factor for new token co-expression embeddings (default 3.9).
+        Scale factor for co-expression rows filled from Stage 6 (default 3.9).
         Our new token co-exp norms are ~4.8 vs model expectation ~18.6.
+        Rows copied from the pre-trained checkpoint are never rescaled.
+    t3_ortholog_ids : dict, optional
+        {new token ID: ortholog token ID in the GeneCompass vocab}. These rows
+        copy the ortholog's pre-trained row in all four priors. Without it, every
+        new row is looked up in Stage 6 by rat ID (the pre-October behaviour).
+    t4_zero_priors : tuple of str
+        Knowledge types left at zero for new tokens without an ortholog
+        (e.g. ('promoter',)).
 
     Returns
     -------
@@ -82,7 +107,18 @@ def load_rat_prior_embeddings(
     """
     stage6_dir = Path(stage6_dir)
     vocab_size = max(rat_token_dict.values()) + 1
-    t4_start = ORIGINAL_VOCAB_SIZE
+    t3 = dict(t3_ortholog_ids or {})
+    bad = {t: o for t, o in t3.items()
+           if not (ORIGINAL_VOCAB_SIZE <= t < vocab_size and 0 <= o < ORIGINAL_VOCAB_SIZE)}
+    if bad:
+        raise ValueError(f"t3_ortholog_ids must map new token IDs to GeneCompass token IDs; "
+                         f"{len(bad)} bad entries, e.g. {list(bad.items())[:3]}")
+    unknown = set(t4_zero_priors) - set(EMBEDDING_TYPES)
+    if unknown:
+        raise ValueError(f"t4_zero_priors has unknown knowledge types: {sorted(unknown)}")
+    # new tokens that are not T3: filled from Stage 6 by rat ID (T4, or T3 when no map is given)
+    other_new = {g: t for g, t in rat_token_dict.items()
+                 if t >= ORIGINAL_VOCAB_SIZE and t not in t3}
     # ── 1. Load Stage 6 embedding pickles ────────────────────────────────
     stage6_files = {
         'promoter': stage6_dir / 'promoter_embeddings.pkl',
@@ -118,41 +154,44 @@ def load_rat_prior_embeddings(
             f"got {pretrained.shape}"
         tensor[:ORIGINAL_VOCAB_SIZE] = pretrained
 
-        # Fill T4 rows (50558–53031) from Stage 6
+        # T3 rows: the ortholog's pre-trained row (already in GeneCompass's coordinates)
+        if t3:
+            new_ids = torch.tensor(list(t3.keys()), dtype=torch.long)
+            orth_ids = torch.tensor(list(t3.values()), dtype=torch.long)
+            tensor[new_ids] = pretrained[orth_ids].to(tensor.dtype)
+
+        # Other new rows: Stage 6 vectors keyed by rat ID, unless this prior is zeroed by policy
         stage6 = stage6_dicts[name]
-        t4_filled = 0
-        t4_zero = 0
+        from_stage6, absent = [], 0
+        if name not in t4_zero_priors:
+            for gene_str, token_id in other_new.items():
+                emb = stage6.get(gene_str)
+                if emb is None:
+                    absent += 1
+                    continue
+                tensor[token_id] = torch.as_tensor(np.asarray(emb), dtype=torch.float32)
+                from_stage6.append(token_id)
 
-        for gene_str, token_id in rat_token_dict.items():
-            if token_id < t4_start:
-                continue  # T1-T3: keep pre-trained values
-            if gene_str in ('<pad>', '<mask>'):
-                continue  # Special tokens: stay zero
+        # Co-expression rescaling: only rows that came from Stage 6, never copied rows
+        if name == 'coexp' and coexp_rescale_factor != 1.0 and from_stage6:
+            tensor[torch.tensor(from_stage6, dtype=torch.long)] *= coexp_rescale_factor
+            logger.info(f"Co-expression: {len(from_stage6)} Stage 6 rows rescaled by "
+                        f"{coexp_rescale_factor:.1f}x (norm ratio correction)")
 
-            if gene_str in stage6:
-                emb = stage6[gene_str]
-                if isinstance(emb, np.ndarray):
-                    emb = torch.from_numpy(emb).float()
-                tensor[token_id] = emb
-                t4_filled += 1
-            else:
-                t4_zero += 1  # Zero-vector fallback
-
-        # Apply co-expression rescaling to T4 rows only
-        if name == 'coexp' and coexp_rescale_factor != 1.0:
-            tensor[t4_start:] *= coexp_rescale_factor
-            logger.info(
-                f"Co-expression T4 rows rescaled by {coexp_rescale_factor:.1f}× "
-                f"(norm ratio correction)"
-            )
+        # Coverage = non-zero rows. Stage 6 pickles hold explicit zero vectors, so a key
+        # being present is not coverage (the April logs counted keys and called it "T4").
+        nonzero = tensor.abs().sum(dim=1) > 0
+        n_t3 = int(nonzero[list(t3)].sum()) if t3 else 0
+        n_other = int(nonzero[list(other_new.values())].sum()) if other_new else 0
+        source = ("zero by policy" if name in t4_zero_priors
+                  else f"{len(from_stage6)} from Stage 6, {absent} absent")
+        logger.info(f"{name}: T3 non-zero {n_t3}/{len(t3)} (ortholog rows) | "
+                    f"other new tokens non-zero {n_other}/{len(other_new)} ({source})")
+        if t3 and n_t3 < len(t3):
+            raise ValueError(f"{name}: {len(t3) - n_t3} T3 rows are zero after copying "
+                             f"their ortholog's pre-trained row")
 
         tensors[name] = tensor
-        total_t4 = t4_filled + t4_zero
-        coverage = (t4_filled / total_t4 * 100) if total_t4 > 0 else 0
-        logger.info(
-            f"{name}: T4 coverage {t4_filled}/{total_t4} ({coverage:.1f}%), "
-            f"{t4_zero} zero-vector fallback"
-        )
 
     # ── 4. Load homologous gene dict (unchanged from GeneCompass) ────────
     with open(homologous_gene_path, 'rb') as f:
@@ -181,6 +220,8 @@ def build_knowledges_dict(
     stage6_dir: str | Path,
     homologous_gene_path: str | Path,
     coexp_rescale_factor: float = 3.9,
+    t3_ortholog_ids: Optional[Dict[int, int]] = None,
+    t4_zero_priors: Tuple[str, ...] = (),
 ) -> Dict[str, object]:
     """
     Convenience wrapper: returns the dict format expected by BertForMaskedLM.
@@ -191,6 +232,8 @@ def build_knowledges_dict(
         stage6_dir=stage6_dir,
         homologous_gene_path=homologous_gene_path,
         coexp_rescale_factor=coexp_rescale_factor,
+        t3_ortholog_ids=t3_ortholog_ids,
+        t4_zero_priors=t4_zero_priors,
     )
 
     return {

@@ -71,18 +71,17 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def init_t3_warm_start(
-    word_emb: torch.Tensor,
+def t3_ortholog_token_ids(
     rat_token_dict: dict,
     rat_token_mapping_path: str | Path,
     gc_vocab: dict,
-    noise_std: float = 0.001,
-) -> None:
+) -> tuple[dict, list]:
     """
-    Initialize T3 word embeddings from their ortholog's pre-trained embedding.
+    Map each T3 token to its ortholog's token in the GeneCompass vocab: the human
+    ortholog for T3a, the mouse ortholog for T3b. Used by both the word-embedding
+    warm start and the prior rows, so the two always agree.
 
-    Each T3 gene has a known ortholog in the GC vocabulary. We clone that
-    ortholog's embedding row and add minimal noise to break symmetry.
+    Returns ({new token ID: ortholog token ID}, [T3 token IDs with no usable ortholog]).
     """
     import csv
     mapping = {}
@@ -96,23 +95,43 @@ def init_t3_warm_start(
                     'tier': row['tier'],
                 }
 
-    n_cloned = 0
-    n_fallback = 0
+    found, missing = {}, []
     for gene_str, token_id in rat_token_dict.items():
-        if token_id < ORIGINAL_VOCAB_SIZE:
-            continue
-        if gene_str not in mapping:
-            continue  # T4 gene, handled separately
-
+        if token_id < ORIGINAL_VOCAB_SIZE or gene_str not in mapping:
+            continue  # pre-trained token, or a T4 gene (handled separately)
         info = mapping[gene_str]
-        # Find the ortholog's token ID in the original GC vocab
         ortholog_id = None
         if info['tier'] == 'T3a_human_multi' and info['human_ortholog']:
             ortholog_id = gc_vocab.get(info['human_ortholog'])
         elif info['tier'] == 'T3b_mouse_multi' and info['mouse_ortholog']:
             ortholog_id = gc_vocab.get(info['mouse_ortholog'])
-
         if ortholog_id is not None and ortholog_id < ORIGINAL_VOCAB_SIZE:
+            found[token_id] = ortholog_id
+        else:
+            missing.append(token_id)
+    return found, missing
+
+
+def init_t3_warm_start(
+    word_emb: torch.Tensor,
+    rat_token_dict: dict,
+    rat_token_mapping_path: str | Path,
+    gc_vocab: dict,
+    noise_std: float = 0.001,
+) -> None:
+    """
+    Initialize T3 word embeddings from their ortholog's pre-trained embedding.
+
+    Each T3 gene has a known ortholog in the GC vocabulary. We clone that
+    ortholog's embedding row and add minimal noise to break symmetry.
+    """
+    found, missing = t3_ortholog_token_ids(rat_token_dict, rat_token_mapping_path, gc_vocab)
+
+    n_cloned = 0
+    n_fallback = 0
+    for token_id in list(found) + missing:
+        ortholog_id = found.get(token_id)
+        if ortholog_id is not None:
             word_emb[token_id] = word_emb[ortholog_id].clone()
             if noise_std > 0:
                 word_emb[token_id] += torch.randn(EMBEDDING_DIM) * noise_std
@@ -217,14 +236,33 @@ def extend_checkpoint(
     species_noise_std: float = 0.02,
     coexp_rescale_factor: float = 3.9,
     family_dict_path: str | Path | None = None,
+    t3_prior_source: str = 'ortholog',
+    t4_zero_priors: tuple = ('promoter', 'coexp'),
+    overwrite: bool = False,
 ) -> Path:
     """
     Extend GeneCompass_Base checkpoint for rat fine-tuning.
+
+    t3_prior_source: 'ortholog' copies each T3 token's prior rows from its ortholog's
+        pre-trained rows (human for T3a, mouse for T3b); 'stage6' is the pre-October
+        behaviour (rat-ID lookup in Stage 6, which leaves T3a rows zero).
+    t4_zero_priors: knowledge types left at zero for T4 tokens. Promoter (2026-10-05): the Stage 6
+        vectors are not in GeneCompass's space. Co-expression (2026-10-06): neither the Stage 6 gene2vec
+        nor an anchored rebuild on the clean corpus recovered held-out genes' GeneCompass rows
+        (pre-registered test: cosine 0.034 vs 0.035 shuffled, top-10 0.1%).
+    overwrite: an existing checkpoint in output_dir is never replaced unless this is set,
+        so a rebuild cannot silently overwrite the starting checkpoint of a trained model.
 
     Returns the output directory path.
     """
     checkpoint_path = Path(checkpoint_path)
     output_dir = Path(output_dir)
+    if (output_dir / 'pytorch_model.bin').exists() and not overwrite:
+        raise FileExistsError(
+            f"{output_dir} already holds a checkpoint. Write the new one to a new directory "
+            f"(or pass overwrite=True / --overwrite if replacing it is really intended).")
+    if t3_prior_source not in ('ortholog', 'stage6'):
+        raise ValueError(f"t3_prior_source must be 'ortholog' or 'stage6', got {t3_prior_source!r}")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # ── 1. Load pre-trained state dict ───────────────────────────────────
@@ -243,12 +281,26 @@ def extend_checkpoint(
         f"Token ID gap: {len(rat_token_dict)} entries but max ID implies {vocab_size}"
 
     # ── 3. Build prior knowledge tensors ─────────────────────────────────
+    # T3 ortholog map (same one the word-embedding warm start uses below)
+    rat_token_mapping_path = Path(rat_token_dict_path).parent / 'rat_token_mapping.tsv'
+    gc_vocab_path = checkpoint_path.parent / 'prior_knowledge' / 'human_mouse_tokens.pickle'
+    if not gc_vocab_path.exists():
+        gc_vocab_path = _PROJECT_ROOT / 'vendor' / 'GeneCompass' / 'prior_knowledge' / 'human_mouse_tokens.pickle'
+    assert gc_vocab_path.exists(), f"GC vocab not found: {gc_vocab_path}"
+    with open(gc_vocab_path, 'rb') as f:
+        gc_vocab = pickle.load(f)
+    t3_map, t3_missing = t3_ortholog_token_ids(rat_token_dict, rat_token_mapping_path, gc_vocab)
+    logger.info(f"T3 ortholog map: {len(t3_map)} tokens, {len(t3_missing)} without a usable ortholog | "
+                f"T3 priors from: {t3_prior_source} | T4 priors left zero: {list(t4_zero_priors) or 'none'}")
+
     knowledges = build_knowledges_dict(
             pretrained_state_dict=state,
             rat_token_dict=rat_token_dict,
             stage6_dir=stage6_dir,
             homologous_gene_path=homologous_gene_path,
             coexp_rescale_factor=coexp_rescale_factor,
+            t3_ortholog_ids=t3_map if t3_prior_source == 'ortholog' else None,
+            t4_zero_priors=tuple(t4_zero_priors),
         )
 
     # ── 4. Resize vocab-indexed tensors ──────────────────────────────────
@@ -269,15 +321,6 @@ def extend_checkpoint(
 
 
     # Initialize T3 word embeddings (warm-start from ortholog)
-    rat_token_mapping_path = Path(rat_token_dict_path).parent / 'rat_token_mapping.tsv'
-    gc_vocab_path = checkpoint_path.parent / 'prior_knowledge' / 'human_mouse_tokens.pickle'
-    if not gc_vocab_path.exists():
-        gc_vocab_path = _PROJECT_ROOT / 'vendor' / 'GeneCompass' / 'prior_knowledge' / 'human_mouse_tokens.pickle'
-    assert gc_vocab_path.exists(), f"GC vocab not found: {gc_vocab_path}"
-    # or resolve from config
-    with open(gc_vocab_path, 'rb') as f:
-        gc_vocab = pickle.load(f)
-
     init_t3_warm_start(
         new_word_emb, rat_token_dict, rat_token_mapping_path, gc_vocab,
         noise_std=0.001,
@@ -388,6 +431,18 @@ def extend_checkpoint(
     logger.info(f"Extended model: {total_params:,} parameters")
     logger.info(f"Growth: {total_params - 326_847_102:+,} from base ({(total_params/326_847_102 - 1)*100:+.1f}%)")
 
+    try:
+        from lib.provenance import write_provenance
+        write_provenance(output_dir,
+                         inputs=[model_bin, rat_token_dict_path, rat_token_mapping_path, gc_vocab_path,
+                                 homologous_gene_path] + sorted(Path(stage6_dir).glob('*_embeddings.pkl')),
+                         params=dict(t3_prior_source=t3_prior_source, t4_zero_priors=list(t4_zero_priors),
+                                     coexp_rescale_factor=coexp_rescale_factor, t4_init_strategy=t4_init_strategy,
+                                     t4_init_std=t4_init_std, species_noise_std=species_noise_std,
+                                     n_t3_ortholog=len(t3_map), n_t3_missing=len(t3_missing)))
+    except ImportError:
+        logger.warning("lib.provenance not importable; no provenance record written")
+
     return output_dir
 
 
@@ -439,6 +494,20 @@ def main():
         '--family-dict', default=None,
         help='Path to gene family dict pickle (required for family_mean init)'
     )
+    parser.add_argument(
+        '--t3-priors', default='ortholog', choices=['ortholog', 'stage6'],
+        help="T3 prior rows: copy the ortholog's pre-trained rows (default) or the "
+             "pre-October Stage 6 lookup"
+    )
+    parser.add_argument(
+        '--t4-zero-priors', default='promoter,coexp',
+        help="Comma-separated knowledge types left zero for T4 tokens "
+             "(promoter, coexp, family, grn); '' for none. Default: promoter,coexp"
+    )
+    parser.add_argument(
+        '--overwrite', action='store_true',
+        help='Allow replacing an existing checkpoint in --output-dir (off by default)'
+    )
 
     args = parser.parse_args()
 
@@ -453,6 +522,9 @@ def main():
         species_noise_std=args.species_noise_std,
         coexp_rescale_factor=args.coexp_rescale,
         family_dict_path=args.family_dict,
+        t3_prior_source=args.t3_priors,
+        t4_zero_priors=tuple(p.strip() for p in args.t4_zero_priors.split(',') if p.strip()),
+        overwrite=args.overwrite,
     )
 
 

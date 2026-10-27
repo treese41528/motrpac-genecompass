@@ -66,7 +66,7 @@ GSE254371 chimera sample. Any species check must also read the free-text `geo_ti
 
 ---
 
-## 4. The MoTrPAC bulk (19 tissues, 10 deconvolved)
+## 4. The MoTrPAC bulk (19 tissues, 14 deconvolved)
 
 MoTrPAC PASS1B bulk RNA-seq: `data/deconvolution/motrpac_bulk/`. Design is 2 sex × 5 group × 5 replicates.
 
