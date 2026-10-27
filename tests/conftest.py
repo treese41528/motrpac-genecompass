@@ -39,3 +39,9 @@ def require():
             pytest.skip(f"not on this machine: {path}")
         return Path(path)
     return _require
+
+
+def pytest_configure(config):
+    """Keep tmp_path folders in the project's tmp/, not the shared cluster's /tmp."""
+    if not config.option.basetemp:
+        config.option.basetemp = str(ROOT / "tmp" / "pytest")
