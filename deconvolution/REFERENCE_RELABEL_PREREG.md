@@ -130,3 +130,14 @@ The retrain-v2 C5 comparison (April vs v2 on the July references) stays as score
 
 ## 9. Change log
 - 2026-10-27 — registered.
+- 2026-10-27 — Audit computed (jobs 12033639, 12033678; `audit_reference_labels.py`), results in
+  `REFERENCE_LABEL_AUDIT.md`. Nothing has been applied, rebuilt or deconvolved. Three findings the rule
+  does not handle: HIPPOC's labels barely match themselves across samples (median r 0.12, τ −0.07), so its
+  merges follow noise; two single-sample labels can't merge with each other (KIDNEY "Renal interstitial
+  fibroblasts" with "Renal vesicle cells", r 0.61; WATSC "Pre-B" with "Naive B", r 0.53); and many labels
+  carry names their markers contradict, including the KIDNEY hotspot (Havcr1+ injured tubular cells). §4
+  also does not say whether plausibility is judged by name or by cells. Pending: applying the rule with
+  amendments, or joint re-annotation (§5's fallback) for every consensus-labelled reference, logged here
+  before either starts. BLOOD: candidate references found and checked (GSE239996 sorted blood neutrophils,
+  GSE306764 rat whole blood scRNA, GSE335156 5-rat PBMC); its reference and validation checks are to be
+  logged here before BLOOD is deconvolved again.
