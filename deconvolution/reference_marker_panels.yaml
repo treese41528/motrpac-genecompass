@@ -276,3 +276,40 @@ LUNG:
         genes: [Jchain, Mzb1, Xbp1, Sdc1, Prdm1]
   use: [Endothelial cells, Lymphatic endothelial cells, Fibroblasts, Mural cells, Mesothelial cells,
         Erythroid cells]
+
+# BLOOD (REFERENCE_RELABEL_PREREG.md §12): one panel for the GSE335156 PBMC libraries and the GSE306764
+# whole-blood / marrow libraries, so every compartment is named by the same genes. Written 2026-10-27
+# before either dataset was downloaded.
+BLOOD:
+  Immune cells:
+    compartment: immune
+    genes: [Ptprc, Coro1a, Lcp1, Laptm5, Cd53]
+    sub:
+      Classical monocytes:
+        genes: [Cd14, Fcnb, Sell, Vcan, Plac8]
+      Non-classical monocytes:
+        genes: [Spn, Treml4, Adgre4, Fcgr3a, Cx3cr1]
+      Dendritic cells:
+        genes: [Flt3, Xcr1, Clec9a, Ccr7, Cd209a]
+      Plasmacytoid dendritic cells:
+        genes: [Siglech, Spib, Irf8, Bst2, Ccr9]
+      Neutrophils:
+        genes: [S100a8, S100a9, Csf3r, Cxcr2, Mmp8, Retnlg]
+      Eosinophils:
+        genes: [Prg2, Epx, Il5ra, Ccr3, Alox15]
+      Basophils:
+        genes: [Fcer1a, Hdc, Ms4a2, Cpa3, Gata2]
+      T cells:
+        genes: [Cd3e, Cd3g, Cd3d, Cd2, Lck]
+      NK cells:
+        genes: [Nkg7, Klrd1, Gzma, Ncr1, Klrb1a]
+      B cells:
+        genes: [Cd79a, Cd79b, Ms4a1, Cd19, Pax5]
+      Plasma cells:
+        genes: [Jchain, Mzb1, Xbp1, Sdc1, Prdm1]
+  Megakaryocytes and platelets:
+    compartment: other
+    genes: [Itga2b, Pf4, Ppbp, Gp9, Gp1bb]
+  Erythroid cells:
+    compartment: other
+    genes: [Hba-a1, Hbb, Alas2, Slc4a1, Ahsp, Epb42]

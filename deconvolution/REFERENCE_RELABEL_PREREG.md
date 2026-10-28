@@ -271,3 +271,49 @@ expression). No joint clustering, panel score or marker of a joint cluster.
   23,892 pass with median r_self 0.89 (criterion ≥ 0.5). 100 review decisions (70 reviews, 18 overrides,
   12 under-calls) are in `joint_reannotation_review.tsv` and should be read by someone with tissue
   knowledge before §10.5's rebuild. Nothing has been rebuilt or deconvolved.
+
+## 12. BLOOD reference, option B (registered 2026-10-27, before either dataset was downloaded)
+
+**Decision.** The user chose option B of `BLOOD_REFERENCE_PROPOSAL.md` on 2026-10-27: lymphocytes,
+monocytes, dendritic cells and platelets from GSE335156; neutrophils, eosinophils/basophils if present,
+and erythroid cells from GSE306764 Blood-CFA, after the checks below. Geyu chose the current PBMC
+reference; the proposal is written for Geyu's review and this change has not yet been put to Geyu. The
+current reference (GSE285476) is kept as a sensitivity arm. BLOOD results stay flagged until the new
+reference passes and BLOOD is rerun.
+
+**Draw site.** MoTrPAC rats were bled by cardiac puncture at harvest (Schenk et al. 2024, *Function*,
+PMC11245678). Rat cardiac puncture usually samples the right ventricle, i.e. venous blood (an inference;
+the paper does not name the ventricle). So GSE335156's **venous** libraries (V1–V5, GSM9806833–37, inferior
+vena cava) are used; the arterial ones are not.
+
+**Annotation.** Each dataset is clustered as in §10.3 (HVGs per library, Harmony on library where there is
+more than one, Leiden 1.0, seed 0) and labelled by the BLOOD panel in `reference_marker_panels.yaml` with
+the §10.3 rule plus the §9 review rules (markers checked for every cluster; overrides and under-calls
+recorded; doublets, low quality and clusters under 20 cells dropped).
+
+**Checks (all must pass before the composite is built; reported in full either way):**
+1. *GSE306764 composition.* Cells per compartment in Blood-CFA and Bone-CFA are reported. Neutrophils in
+   Blood-CFA: at least 100 cells, or the neutrophil type comes from Bone-CFA's most mature neutrophil
+   cluster (Mmp8/Retnlg/Ltf low, S100a8/9 high), recorded as a deviation.
+2. *Erythroid cluster is cells, not ambient RNA.* At least 50 cells; the summed CPM of the non-globin
+   erythroid genes (Alas2, Slc4a1, Epb42, Car2, Slc25a37, Ahsp) at least 4× that of every other cluster;
+   and a median of at least 100 genes per cell. If Blood-CFA fails, late erythroblasts from Bone-CFA
+   (erythroid cluster with Mki67/Top2a CPM below the marrow median) are used, recorded as a deviation.
+3. *Neutrophil activation.* The CFA control's neutrophils are scored for interferon (Ifit1, Ifit3, Isg15,
+   Rsad2) and acute-phase/activation genes (Il1b, Cxcl2, Nfkbia); the share of neutrophils above the 95th
+   percentile of the PBMC monocytes' score is reported. No pass/fail threshold (no rat resting reference
+   exists); a high share is a stated limitation. The comparison with mouse resting blood neutrophils
+   (GSE137540) is deferred.
+4. *GSE335156.* Every PBMC type used must be present in at least 4 of the 5 venous rats; per-label
+   cross-rat r_self is reported (§4 metric).
+5. *Gene space.* Both datasets are put in the BLOOD bulk's gene-ID space; genes not mappable are dropped and
+   counted. The composite uses genes present in both.
+6. *Recovery on simulated mixtures* (before any real BLOOD run). Reference built from 3 venous rats plus
+   half of the GSE306764 cells; mixtures summed from the held-out 2 rats and the other half at known
+   proportions (erythroid 0–60% of mRNA, neutrophils 0–40%, the rest PBMC types in their observed ratios;
+   20 mixtures); BayesPrism as in Stage 8. Pass: per-type Pearson r ≥ 0.9 between true and estimated
+   fractions for erythroid, neutrophils, monocytes, T, B and NK cells.
+
+**Composite.** Cell types and joint clusters (cell states) from both datasets, one reference; the source is
+kept per cell. Built with and without the Hba/Hbb paralogs (both reported; the with-globin build is primary
+unless check 6 fails for it and not for the other).
