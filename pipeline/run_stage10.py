@@ -150,7 +150,10 @@ def main() -> None:
     gc_input = resolve_path(config, d['genecompass_input_dir'])
     de_dir = gc_input / 'pseudobulk_de'
     results_root = resolve_path(config, d['results_dir']) / 'motrpac'
-    prereg = resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv'
+    # The frozen positive-control spec; a profile whose references renamed cell types points at its own
+    # renamed copy (deconvolution.posctrl_prereg, e.g. config/profiles/refs_v4.yaml).
+    prereg = (resolve_path(config, d['posctrl_prereg']) if d.get('posctrl_prereg')
+              else resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv')
     hotspots = (Path(args.hotspots).resolve() if args.hotspots
                 else resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
                 else gc_input / 'corroboration_merged.tsv')

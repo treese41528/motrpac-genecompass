@@ -12,3 +12,6 @@ deconvolution:
   augur_input_dir: data/deconvolution/augur_input_v2_refs4
   grn_dir: data/deconvolution/grn_v2_refs4
   grn_human_dir: data/deconvolution/grn_v2_refs4_human
+  # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
+  # deconvolution/reference/posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11).
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
