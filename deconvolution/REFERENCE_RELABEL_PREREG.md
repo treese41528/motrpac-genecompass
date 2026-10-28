@@ -141,3 +141,101 @@ The retrain-v2 C5 comparison (April vs v2 on the July references) stays as score
   before either starts. BLOOD: candidate references found and checked (GSE239996 sorted blood neutrophils,
   GSE306764 rat whole blood scRNA, GSE335156 5-rat PBMC); its reference and validation checks are to be
   logged here before BLOOD is deconvolved again.
+- 2026-10-27 — **Joint re-annotation chosen** (option B in `REFERENCE_LABEL_AUDIT.md` §4) for the eight
+  consensus-labelled references, replacing §4–5's merge rule for them; registered in §10 below, before any
+  joint clustering was run. The annotation procedure was checked as part of this decision (§10.1): its
+  wrong names come from the procedure itself, not from chance.
+
+## 10. Joint re-annotation (registered 2026-10-27)
+
+### 10.1 Why: what the annotation procedure did
+
+The consensus labels come from three steps, all per sample (`analysis/annotate_celltypes.py`,
+`annotate_sctype.py`, `consensus_annotations.py`):
+
+1. **Per-sample clustering.** Each sample was clustered alone (Leiden, resolution 0.8). Cluster numbers and
+   boundaries mean nothing across samples.
+2. **Two automatic annotators per cluster.**
+   - PanglaoDB: `score_genes` against every PanglaoDB cell type of every organ (the tissue hint only adds
+     organ-specific types to the global set), argmax with no abstain. This is where kidney endothelium was
+     called "Glutaminergic neurons", lung cells "Ionocytes", jejunal cells "Merkel cells".
+   - ScType: tissue lists looked up from `tissue_normalized` by exact or substring match. "brain"
+     (HIPPOC), "skeletal muscle", "white adipose tissue", "proximal jejunum" and "peripheral blood
+     mononuclear cells" match nothing and fall back to the **immune-system list only**, so every HIPPOC,
+     MUSCLE, WATSC, SMLINT and BLOOD cluster, neurons and myofibres included, was scored only against
+     immune cell types. HIPPOC's samples also carry `motrpac_tissue = cortex`.
+3. **LLM reconciliation.** Claude Haiku received each unique (PanglaoDB label, ScType label, tissue) triple
+   with the top 5 markers of one representative cluster from anywhere in the corpus, and returned one name
+   per triple. Names are keyed by the label pair, not the cluster, so two samples' clusters of the same cells
+   get different names whenever the PanglaoDB argmax differs (KIDNEY: "Myofibroblasts" + ScType "Renal
+   vesicle" → "Renal interstitial fibroblasts" in sample 4; "Transient cells" + the same ScType label →
+   "Renal vesicle cells" in sample 8). With the instruction to correct implausible labels, it also invented
+   names neither annotator gave (`consensus_source = corrected`): 68% of HIPPOC's cells, 55% of MUSCLE's,
+   43% of WATSC's. A failed batch silently fell back to the PanglaoDB label (11% of SMLINT's cells). No step
+   checked a final name against the cluster's own markers.
+
+So relabelling within the old clusters (§4–5) cannot fix the names, and per-sample clusters cannot be made
+to agree. The labels are re-derived jointly.
+
+### 10.2 Scope
+
+KIDNEY, LIVER, CORTEX, WATSC, MUSCLE (SKMGN = SKMVL), SMLINT, LUNG, HIPPOC. Not BAT and HEART (authors'
+labels) or TESTES (paper panel). HYPOTH (one sample, ScType had brain markers, 1% "corrected") and BLOOD
+(reference under review, `BLOOD_REFERENCE_PROPOSAL.md`) are not re-annotated now; both carry the same
+procedure and can go through the same code later with a panel each.
+
+### 10.3 Method and rule (`deconvolution/joint_reannotate.py`, panels `reference_marker_panels.yaml`)
+
+- **Cells.** Every QC cell of the reference's samples (the `expect` sample list of
+  `tissue_references.yaml`), loaded with the production loader and gene join; LUNG as `build_lung_pooled.py`
+  (outer join, genes in ≥ 10 cells). The old labels play no part.
+- **Clustering.** normalize_total 10⁴ + log1p; 3,000 HVGs (seurat_v3 on counts, `batch_key = sample`);
+  scale (max 10), PCA 50; Harmony on sample (harmonypy 0.0.10) when there is more than one sample; kNN 15 on
+  30 components; Leiden (igraph, resolution 1.0, seed 0). Clusters under 20 cells leave the reference.
+- **Panels.** Written from canonical rodent markers before clustering, 3–6 genes each, organised as
+  top-level classes (each with a compartment) and optional sub-classes. Symbols resolve to the reference's
+  gene IDs through Ensembl 115, the corpus gene universe, then RGD; panels with fewer than 2 genes found
+  are not scored (listed in `panel_genes.tsv`).
+- **Score.** Each panel gene's mean log-normalised expression per cluster, min-max scaled across clusters;
+  a panel's score is the mean over its genes.
+- **Rule.** Top-level: the best class is accepted if its score is ≥ **0.5** and ≥ **0.15** above the
+  runner-up; if another class from a different compartment also scores ≥ 0.5 the cluster is a possible
+  doublet. An accepted class descends into its sub-classes by the same 0.5 / 0.15 test among siblings and
+  stops at the parent when none passes. A cluster failing at top level, or flagged as a doublet, goes to
+  REVIEW.
+- **Review.** Decided from the cluster's markers (top 25 genes by log2 fold change of pooled CPM against
+  all other cells, among genes detected in ≥ 25% of the cluster), its panel scores, per-sample counts and
+  median genes per cell; recorded in `deconvolution/joint_reannotation_review.tsv`, one row per cluster,
+  with the decision and the genes that decided it. Allowed decisions: a panel label; a name not in the
+  panels, supported by at least 3 markers with a literature basis; or DROP (doublet, low quality: few
+  genes and no specific markers, or not decidable). The reviewer (Claude) has seen the audit's marker
+  lists for the old labels (§9); that is disclosed, not a reason to depart from the markers.
+- **Cell states.** The joint cluster replaces `{sample}_c{leiden}` as BayesPrism's `cell.state`, so states
+  are shared across samples.
+
+### 10.4 Checks, run on the final labels and reported in full
+
+- **K1, consistency.** §4's profile metric on the new (sample, label) groups: per-label r_self, and the
+  metric check (median r_self > median r between different labels). Pass: every multi-sample reference
+  passes the check. **HIPPOC** additionally needs a median r_self ≥ 0.5 (other references ranged 0.51–0.97
+  on the old labels; HIPPOC had 0.12); if it fails, HIPPOC's labels are not used and HIPPOC is reported as
+  without a usable reference.
+- **K2, coverage.** Labels present in only one sample, and clusters with ≥ 90% of their cells from one
+  sample in a multi-sample reference, are listed with their markers and a reason (biology or batch).
+- **K3, old against new.** The cross-tabulation of old and new labels per reference, and where the cells of
+  the audit's single-sample pairs went (KIDNEY "Renal interstitial fibroblasts" and "Renal vesicle cells";
+  WATSC "Pre-B cells" and "Naive B cells"). Expected, registered here: each pair lands mostly in one joint
+  label (Injured proximal tubule cells; B cells). Reported whichever way it falls.
+- **K4, losses.** Cells dropped (doublet, low quality, under 20) per reference, and their share.
+
+### 10.5 What follows, not started without the user
+
+`build_reference.py` takes the per-cell labels (`cells_final.tsv.gz`) in place of the consensus join; the
+eight references are rebuilt into new directories and must pass `reference_qc.py`; then §6 and §8 apply as
+registered. Nothing is deconvolved before that is agreed.
+
+### 10.6 Seen before registration
+
+The audit (§9) and everything in `REFERENCE_LABEL_AUDIT.md`; the consensus annotation table rows for
+these references (§10.1); the panel symbols' presence in the rat gene annotations (to fix rat names, not
+expression). No joint clustering, panel score or marker of a joint cluster.

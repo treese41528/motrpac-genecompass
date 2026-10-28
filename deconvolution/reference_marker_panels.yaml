@@ -1,0 +1,278 @@
+# Marker panels for the joint re-annotation of the deconvolution references
+# (REFERENCE_RELABEL_PREREG.md §10). Written 2026-10-27 from canonical rodent markers, before any joint
+# clustering was run. Symbols are rat gene names, resolved to the reference's gene IDs through Ensembl 115
+# (rat_gene_info.tsv), the corpus gene universe, then RGD (GENES_RAT.txt); rat names differ from mouse for a
+# few (Myl11 = Mylpf, Drc12 = Ccdc153, Car7 = Ca7, Tp63 = Trp63, Ly6c = Ly6c1). Rat has no Lyz1.
+#
+# Structure: each reference lists top-level classes. A class has
+#   compartment  epithelial | parenchymal | neural | glial | vascular | stromal | immune | other
+#                (two top-level classes from different compartments both scoring high flags a doublet)
+#   genes        3-6 markers
+#   sub          optional child classes, scored among siblings only inside clusters assigned the parent
+# Shared panels (the `_shared` block) are pulled in by name with `use: [...]`.
+#
+# The rule that turns panel scores into labels is in REFERENCE_RELABEL_PREREG.md §10 and
+# deconvolution/joint_reannotate.py; nothing here is tuned to the data.
+
+_shared:
+  Endothelial cells:
+    compartment: vascular
+    genes: [Pecam1, Cdh5, Emcn, Flt1, Kdr, Ptprb]
+  Lymphatic endothelial cells:
+    compartment: vascular
+    genes: [Prox1, Mmrn1, Ccl21, Lyve1, Flt4]
+  Fibroblasts:
+    compartment: stromal
+    genes: [Col1a1, Col1a2, Dcn, Lum, Pdgfra]
+  Mural cells:                          # pericytes + vascular smooth muscle
+    compartment: stromal
+    genes: [Pdgfrb, Rgs5, Notch3, Acta2, Myh11]
+    sub:
+      Pericytes:
+        genes: [Rgs5, Kcnj8, Abcc9, Higd1b]
+      Vascular smooth muscle cells:
+        genes: [Myh11, Acta2, Cnn1, Tagln]
+  Mesothelial cells:
+    compartment: stromal
+    genes: [Msln, Upk3b, Lrrn4, Wt1]
+  Schwann cells:
+    compartment: glial
+    genes: [Mpz, Pmp22, S100b, Plp1, Sox10]
+  Erythroid cells:
+    compartment: other
+    genes: [Hba-a1, Hbb, Alas2, Slc4a1]
+  Immune cells:
+    compartment: immune
+    genes: [Ptprc, Coro1a, Lcp1, Laptm5, Cd53]
+    sub:
+      Macrophages:
+        genes: [Cd68, C1qa, C1qb, Adgre1, Mrc1]
+      Monocytes:
+        genes: [Ccr2, Cd14, Sell, Fcnb, S100a4]
+      Dendritic cells:
+        genes: [Flt3, Xcr1, Clec9a, Ccr7, Cd209a]
+      Neutrophils:
+        genes: [S100a8, S100a9, Csf3r, Cxcr2, Mmp8]
+      Mast cells:
+        genes: [Cpa3, Cma1, Tpsb2, Kit, Fcer1a]
+      T cells:
+        genes: [Cd3e, Cd3g, Cd3d, Cd2, Lck]
+        sub:
+          CD4+ T cells:
+            genes: [Cd4, Cd40lg, Il7r, Cd28]
+          CD8+ T cells:
+            genes: [Cd8a, Cd8b, Gzmk, Cd160]
+      NK cells:
+        genes: [Nkg7, Klrd1, Gzma, Ncr1, Klrb1a]
+      B cells:
+        genes: [Cd79a, Cd79b, Ms4a1, Cd19, Pax5]
+      Plasma cells:
+        genes: [Jchain, Mzb1, Xbp1, Sdc1, Prdm1]
+
+KIDNEY:
+  Proximal tubule cells:
+    compartment: epithelial
+    genes: [Lrp2, Cubn, Slc34a1, Slc5a12, Slc22a6, Slc13a3]
+  Injured proximal tubule cells:       # adaptive / failed-repair PT (Kirita 2020; Kim-1 = Havcr1)
+    compartment: epithelial
+    genes: [Havcr1, Vcam1, Sox9, Krt20]
+  Thin limb cells:
+    compartment: epithelial
+    genes: [Slc14a2, Cryab, Akr1b1, Sh3gl3, Fst]
+  Thick ascending limb cells:
+    compartment: epithelial
+    genes: [Umod, Slc12a1, Cldn16, Kcnj1, Ptger3]
+  Distal convoluted tubule cells:
+    compartment: epithelial
+    genes: [Slc12a3, Pvalb, Trpm6, Tmem52b]
+  Connecting tubule cells:
+    compartment: epithelial
+    genes: [Calb1, Slc8a1, Scnn1g, Trpv5]
+  Principal cells:
+    compartment: epithelial
+    genes: [Aqp2, Aqp3, Fxyd4, Scnn1b, Hsd11b2]
+  Intercalated cells:
+    compartment: epithelial
+    genes: [Atp6v1g3, Atp6v0d2, Foxi1, Atp6v1b1]
+    sub:
+      Type A intercalated cells:
+        genes: [Slc4a1, Kit, Aqp6, Adgrf5]
+      Type B intercalated cells:
+        genes: [Slc26a4, Insrr, Hmx2]
+  Podocytes:
+    compartment: epithelial
+    genes: [Nphs1, Nphs2, Podxl, Wt1, Ptpro]
+  Mesangial cells:
+    compartment: stromal
+    genes: [Itga8, Pdgfrb, Gata3, Ren]
+  use: [Endothelial cells, Fibroblasts, Mural cells, Immune cells]
+
+LIVER:
+  Hepatocytes:
+    compartment: parenchymal
+    genes: [Alb, Apoh, Fgb, Ttr, Ahsg]
+  Cholangiocytes:
+    compartment: epithelial
+    genes: [Krt19, Krt7, Epcam, Sox9, Hnf1b]
+  Hepatic stellate cells:
+    compartment: stromal
+    genes: [Lrat, Reln, Hgf, Pdgfrb, Dcn]
+  Endothelial cells:
+    compartment: vascular
+    genes: [Pecam1, Cdh5, Emcn, Flt1, Kdr, Ptprb]
+    sub:
+      Liver sinusoidal endothelial cells:
+        genes: [Stab2, Clec4g, Fcgr2b, Lyve1]
+      Vascular endothelial cells:
+        genes: [Vwf, Efnb2, Gja5, Sele]
+  Kupffer cells:
+    compartment: immune
+    genes: [Clec4f, Vsig4, Cd5l, Marco, C1qa]
+  use: [Fibroblasts, Mural cells, Immune cells]
+
+CORTEX: &brain
+  Excitatory neurons:
+    compartment: neural
+    genes: [Slc17a7, Satb2, Neurod6, Tbr1, Camk2a]
+  Inhibitory neurons:
+    compartment: neural
+    genes: [Gad1, Gad2, Slc32a1, Erbb4]
+  Astrocytes:
+    compartment: glial
+    genes: [Aqp4, Gja1, Slc1a2, Aldh1l1, Gfap]
+  Oligodendrocytes:
+    compartment: glial
+    genes: [Mbp, Plp1, Mog, Mobp, St18]
+  Oligodendrocyte precursor cells:
+    compartment: glial
+    genes: [Pdgfra, Cspg4, Vcan, Gpr17]
+  Microglia:
+    compartment: immune
+    genes: [Cx3cr1, P2ry12, Tmem119, Csf1r, Hexb]
+  Border-associated macrophages:
+    compartment: immune
+    genes: [Mrc1, Lyve1, Cd163, F13a1]
+  Endothelial cells:
+    compartment: vascular
+    genes: [Cldn5, Flt1, Pecam1, Slc2a1, Ly6c]
+  Mural cells:
+    compartment: vascular
+    genes: [Pdgfrb, Rgs5, Kcnj8, Vtn, Myh11]
+  Vascular leptomeningeal cells:
+    compartment: stromal
+    genes: [Dcn, Col1a2, Slc6a13, Ptgds, Lum]
+  Choroid plexus epithelial cells:
+    compartment: epithelial
+    genes: [Ttr, Kl, Folr1, Clic6]
+  Ependymal cells:
+    compartment: glial
+    genes: [Foxj1, Dynlrb2, Drc12, Rarres2]
+  T cells:
+    compartment: immune
+    genes: [Cd3e, Cd3g, Cd3d, Cd2, Lck]
+
+HIPPOC:
+  <<: *brain
+  Excitatory neurons:
+    compartment: neural
+    genes: [Slc17a7, Neurod6, Camk2a, Satb2, Tbr1]
+    sub:
+      Dentate gyrus granule cells:
+        genes: [Prox1, C1ql2, Dsp, Stxbp6]
+      Pyramidal neurons:
+        genes: [Fibcd1, Spink8, Mpped1, Wfs1]
+
+WATSC:
+  Adipose stromal progenitor cells:
+    compartment: stromal
+    genes: [Pdgfra, Dcn, Cd34, Col1a2, Lum]
+  use: [Endothelial cells, Lymphatic endothelial cells, Mural cells, Mesothelial cells, Schwann cells,
+        Erythroid cells, Immune cells]
+
+MUSCLE:
+  Skeletal muscle cells:
+    compartment: parenchymal
+    genes: [Acta1, Ckm, Ttn, Des, Myl11]
+  Satellite cells:
+    compartment: parenchymal
+    genes: [Pax7, Myf5, Cdh15, Chodl]
+  Fibro-adipogenic progenitors:
+    compartment: stromal
+    genes: [Pdgfra, Dcn, Col1a1, Lum, Cd34]
+  Tenocytes:
+    compartment: stromal
+    genes: [Tnmd, Scx, Mkx, Thbs4]
+  use: [Endothelial cells, Lymphatic endothelial cells, Mural cells, Schwann cells, Erythroid cells,
+        Immune cells]
+
+SMLINT:
+  Epithelial cells:
+    compartment: epithelial
+    genes: [Epcam, Cdh1, Cldn7, Krt8, Krt19]
+    sub:
+      Enterocytes:
+        genes: [Fabp2, Apoa4, Alpi, Rbp2, Fabp1]
+      Goblet cells:
+        genes: [Muc2, Tff3, Clca1, Fcgbp, Zg16]
+      Paneth cells:
+        genes: [Pla2g2a, Defa5, Mmp7, Itln1]
+      Enteroendocrine cells:
+        genes: [Chga, Chgb, Neurod1, Scgn, Pcsk1]
+      Tuft cells:
+        genes: [Dclk1, Pou2f3, Trpm5, Avil, Gfi1b]
+      BEST4+ enterocytes:
+        genes: [Best4, Otop2, Car7, Spib]
+      Stem cells:
+        genes: [Lgr5, Olfm4, Ascl2, Smoc2]
+      Transit-amplifying cells:
+        genes: [Mki67, Top2a, Cenpf, Ccnb1, Pcna]
+  use: [Endothelial cells, Fibroblasts, Mural cells, Immune cells]
+
+LUNG:
+  Epithelial cells:
+    compartment: epithelial
+    genes: [Epcam, Cdh1, Nkx2-1, Krt8, Cldn18]
+    sub:
+      Alveolar type I cells:
+        genes: [Ager, Hopx, Rtkn2, Emp2, Aqp5]
+      Alveolar type II cells:
+        genes: [Sftpc, Sftpb, Lamp3, Abca3, Napsa]
+      Club cells:
+        genes: [Scgb1a1, Scgb3a2, Cyp2f4, Bpifa1]
+      Ciliated cells:
+        genes: [Foxj1, Dynlrb2, Drc12, Tppp3, Rsph1]
+      Basal cells:
+        genes: [Krt5, Tp63, Krt14, Krt17]
+      Pulmonary neuroendocrine cells:
+        genes: [Calca, Ascl1, Chga, Resp18]
+  Immune cells:
+    compartment: immune
+    genes: [Ptprc, Coro1a, Lcp1, Laptm5, Cd53]
+    sub:
+      Alveolar macrophages:
+        genes: [Marco, Msr1, Mrc1, Pparg, Itgax]
+      Interstitial macrophages:
+        genes: [C1qa, C1qb, Cd163, Mafb, Lyve1]
+      Monocytes:
+        genes: [Ccr2, Cd14, Sell, Fcnb, S100a4]
+      Dendritic cells:
+        genes: [Flt3, Xcr1, Clec9a, Ccr7, Cd209a]
+      Neutrophils:
+        genes: [S100a8, S100a9, Csf3r, Cxcr2, Mmp8]
+      Mast cells:
+        genes: [Cpa3, Cma1, Tpsb2, Kit, Fcer1a]
+      T cells:
+        genes: [Cd3e, Cd3g, Cd3d, Cd2, Lck]
+        sub:
+          CD4+ T cells:
+            genes: [Cd4, Cd40lg, Il7r, Cd28]
+          CD8+ T cells:
+            genes: [Cd8a, Cd8b, Gzmk, Cd160]
+      NK cells:
+        genes: [Nkg7, Klrd1, Gzma, Ncr1, Klrb1a]
+      B cells:
+        genes: [Cd79a, Cd79b, Ms4a1, Cd19, Pax5]
+      Plasma cells:
+        genes: [Jchain, Mzb1, Xbp1, Sdc1, Prdm1]
+  use: [Endothelial cells, Lymphatic endothelial cells, Fibroblasts, Mural cells, Mesothelial cells,
+        Erythroid cells]
