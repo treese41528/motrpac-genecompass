@@ -51,6 +51,11 @@
 # (estimated_fractions.csv) trends with dose (sex-adjusted). A gene flagged in a block whose
 # fraction also shifts with dose may be a composition artifact -> read RELATIVE/differential.
 #
+# Analysable blocks (REFERENCE_RELABEL_PREREG.md §6): a block whose median per-sample library (the sum
+# of Z over genes) is under MIN_MEDIAN_LIBSIZE (1,000; env DE_MIN_MEDIAN_LIBSIZE overrides it for the
+# registered sensitivities, 100 and 0 = no threshold) stops with status "SKIP: degenerate (...)", keeps
+# its median_libsize and frac_zero in de_summary.tsv, and stays out of the global IHW and repfdr fits.
+#
 # Args:  run_pseudobulk_de.R <results_root> <bulk_root> <pheno_tsv> <hotspots_tsv> <out_dir> [TISSUE ...]
 #   (see deconvolution/R/run_pseudobulk_de.sh). Reads pred_z already on disk -- no deconv rerun.
 suppressWarnings(suppressPackageStartupMessages({
@@ -81,6 +86,9 @@ ALPHA     <- 0.05
 MIN_SAMPLES_BLOCK   <- 12   # combined fit needs sex + 5 week levels estimable + residual df
 MIN_SAMPLES_PER_SEX <- 8    # per-sex factor(week) (up to 5 levels) needs residual df
 MIN_GENES           <- 50   # eBayes mean-variance trend needs a reasonable gene set
+MIN_MEDIAN_LIBSIZE  <- as.numeric(Sys.getenv("DE_MIN_MEDIAN_LIBSIZE", "1000"))   # §6 analysable-block rule
+if (is.na(MIN_MEDIAN_LIBSIZE)) stop("DE_MIN_MEDIAN_LIBSIZE is not a number")
+cat(sprintf("analysable blocks: median per-sample library >= %g\n", MIN_MEDIAN_LIBSIZE))
 
 # ---- phenotype (all-character so 11-digit viallabels never go scientific) ----
 ph <- read.delim(pheno_tsv, stringsAsFactors = FALSE, colClasses = "character")
@@ -182,6 +190,11 @@ for (TIS in tissues) {
       libsize   <- colSums(counts)
       mean_frac <- if (!is.null(fracs) && ct %in% colnames(fracs)) mean(fracs[m$mix, ct], na.rm = TRUE) else NA_real_
       block_zero <- mean(counts == 0)
+      if (median(libsize) < MIN_MEDIAN_LIBSIZE)
+        stop(structure(class = c("degenerate_block", "error", "condition"), list(
+          message = sprintf("degenerate (median libsize %.1f < %g)", median(libsize), MIN_MEDIAN_LIBSIZE),
+          call = NULL, n_samples = nrow(m), mean_fraction = mean_frac,
+          median_libsize = median(libsize), frac_zero = block_zero)))
 
       dge    <- DGEList(counts = counts)
       logcpm <- edgeR::cpm(dge, log = TRUE, prior.count = 1)
@@ -285,11 +298,14 @@ for (TIS in tissues) {
            n_sig_sex = sum(out$FDR_sex < ALPHA, na.rm = TRUE),
            frac_week_slope = frac_slope, frac_week_p = frac_p, status = "ok")
     }, error = function(e) {
+      dg <- inherits(e, "degenerate_block")   # §6: keep the numbers that decided the skip
       list(tissue = TIS, cell_type = ct, is_hotspot = is_hot,
            sup_trained_auc = if (is_hot) unname(hot_auc[key]) else NA_real_,
-           n_samples = NA_integer_, n_male = NA_integer_, n_female = NA_integer_,
+           n_samples = if (dg) e$n_samples else NA_integer_, n_male = NA_integer_, n_female = NA_integer_,
            n_genes_tested = NA_integer_, n_genes_dropped_allzero = NA_integer_,
-           mean_fraction = NA_real_, median_libsize = NA_real_, frac_zero = NA_real_,
+           mean_fraction = if (dg) e$mean_fraction else NA_real_,
+           median_libsize = if (dg) e$median_libsize else NA_real_,
+           frac_zero = if (dg) e$frac_zero else NA_real_,
            n_sig_dose_fisher_BHblock = NA_integer_, n_sig_interaction = NA_integer_,
            n_sig_sex = NA_integer_, frac_week_slope = NA_real_, frac_week_p = NA_real_,
            status = paste0("SKIP: ", conditionMessage(e)))
@@ -434,6 +450,8 @@ writeLines(c(
           if (length(repfdr_warnings)) paste(unique(repfdr_warnings), collapse = " | ") else "none"),
   sprintf("alpha\t%s", ALPHA),
   sprintf("n_blocks_ok\t%d", sum(summ$status == "ok")),
+  sprintf("min_median_libsize\t%g", MIN_MEDIAN_LIBSIZE),
+  sprintf("n_blocks_skipped_degenerate\t%d", sum(startsWith(summ$status, "SKIP: degenerate"))),
   sprintf("n_fisher_tests\t%d", length(G_p)),
   sprintf("design\tlimma-trend(robust) on log2CPM of continuous Z; combined ~sex*factor(week) + ordinal ~sex+week_num; per-sex ~factor(week); Fisher sex-combine; IHW~tissue; 8w sex-consistency as in sex_consistency"),
   sprintf("deviations\tcontinuous-Z not DESeq2-NB; no RIN/globin/PCRdup covariates (absent + post-deconvolution)")

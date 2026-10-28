@@ -331,3 +331,27 @@ unless check 6 fails for it and not for the other).
   because BayesPrism's outlier filter (`outlier.cut = 0.01`) removes the globins in both. BLOOD in
   `tissue_references.yaml` now points at `references_v4/BLOOD_composite`; the PBMC reference is kept as
   `previous_reference_dir`. BLOOD has not been deconvolved with it.
+- 2026-10-28 — §8 rerun started (user, 2026-10-28), before any result with the new references was seen.
+  Ten tissues: the eight rebuilt references cover nine (SKMGN and SKMVL share MUSCLE), plus BLOOD with the
+  composite. Profile `config/profiles/refs_v4.yaml`; every output goes to a `_refs4` folder
+  (`results_refs4/`, `genecompass_input_v2_refs4/` + `_human/`, `augur_input_v2_refs4/`, `grn_v2_refs4/`,
+  `grn_v2_refs4_human/`), so the July-reference v2 results stay as the comparison. BAT, HEART, HYPOTH and
+  TESTES are linked in unchanged so the gate's BH and the pooled IHW see all 14 tissues. Stage 9 uses the v2
+  model folder (`.../rat_phase2_mixed_species/models`) and target sum 6,400, as the v2 runs did. §6 is now
+  code: `run_pseudobulk_de.R` (threshold from `DE_MIN_MEDIAN_LIBSIZE`, default 1,000) and
+  `corroborate_summary.py --min-libsize` (default 1,000; the median per-sample sum of Z read from
+  `pred_z`). The registered sensitivities (100; 0 = none) are run for both and written beside the primary
+  with a `_minlib100` / `_minlib0` suffix; hotspots, Stage 10's ordering and everything downstream use the
+  primary. `validate_selection.py` skips the corpus-resolution checks for a reference built by its own
+  `builder` (the BLOOD composite) and keeps the post-build sample check. The 100 review decisions are
+  being checked against the published marker literature at the same time; if that check changes any
+  label, the change is logged here, the reference is rebuilt, and the affected tissues are rerun.
+- 2026-10-28 — Literature check of the review decisions (`JOINT_REANNOTATION_LITCHECK.md`,
+  `joint_reannotation_litcheck.tsv`). Of 100 tissue-reference decisions, 3 were QUESTIONABLE; each was
+  re-checked in the pooled CPM and changed before its tissue was deconvolved with the new reference:
+  LUNG j37 Mesothelial cells → DROP (mesothelial–macrophage/AT2 doublets, 444 cells); CORTEX j24.5
+  Monocytes → Neutrophils (29 cells); HIPPOC j24 Inhibitory neurons → Thalamic neurons (598 cells, a
+  dissection carry-over kept as its own type). LUNG, CORTEX and HIPPOC are rebuilt in `references_v4/`
+  (the pre-check builds kept in `tmp/` until the rerun is reported) and their Stage 8 runs wait for the
+  rebuild; the other seven tissues ran on references this check did not change. Label refinements that move
+  no cells between types are listed for an expert and not applied.

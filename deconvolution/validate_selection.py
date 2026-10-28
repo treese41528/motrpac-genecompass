@@ -112,8 +112,11 @@ def check_tissue(code, cfg, inv, built_only=False):
 
     fails, warns = [], []
 
-    # --- resolution-based checks (skipped with --built-only) ---
-    if not built_only:
+    # --- resolution-based checks (skipped with --built-only, and for references built outside the
+    # corpus by their own builder, e.g. the BLOOD composite: those get the post-build check only) ---
+    if cfg.get("builder"):
+        L.append(f"built outside the corpus by builder '{cfg['builder']}': post-build sample check only")
+    if not built_only and not cfg.get("builder"):
         try:
             if cfg.get("pooled"):
                 final = _resolve_pooled(cfg, keep_nonnative=bool(cfg.get("allow_nonnative")))
