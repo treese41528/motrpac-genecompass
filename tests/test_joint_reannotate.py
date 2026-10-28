@@ -116,3 +116,22 @@ def test_every_reference_panel_file_entry_is_well_formed():
                     assert n.get("compartment"), (ref, name)
                 walk(n.get("sub", {}), False)
         walk(spec, True)
+
+
+def test_split_reclusters_only_the_named_cluster(tmp_path):
+    import anndata as ad
+    import scanpy as sc
+    rng = np.random.default_rng(0)
+    # two well-separated groups inside j1, one blob as j0
+    X = np.vstack([rng.normal(0, 1, (100, 20)), rng.normal(8, 1, (60, 20)), rng.normal(-8, 1, (60, 20))])
+    a = ad.AnnData(X.astype(np.float32))
+    sc.pp.neighbors(a, n_neighbors=10, use_rep="X")
+    a.obs["joint_cluster"] = ["j0"] * 100 + ["j1"] * 120
+    f = tmp_path / "splits.tsv"
+    f.write_text("reference\tcluster\treason\nX\tj1\ttwo groups\nY\tj0\tother reference\n")
+    jr.split_clusters(a, "X", f)
+    cl = a.obs["joint_cluster"]
+    assert (cl[:100] == "j0").all()
+    parts = cl[100:]
+    assert parts.str.startswith("j1.").all() and parts.nunique() >= 2
+    assert parts[:60].nunique() < parts.nunique()      # the two groups are not mixed into every part

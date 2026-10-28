@@ -45,6 +45,7 @@ sys.path.insert(0, str(ROOT / "deconvolution"))
 
 PANELS = ROOT / "deconvolution/reference_marker_panels.yaml"
 REVIEW = ROOT / "deconvolution/joint_reannotation_review.tsv"
+SPLITS = ROOT / "deconvolution/joint_reannotation_splits.tsv"
 OUT = ROOT / "data/deconvolution/joint_labels"
 
 # reference key -> tissue_references.yaml key whose spec selects the samples
@@ -148,7 +149,7 @@ def load_cells(ref):
     return adata
 
 
-def cluster(adata):
+def cluster(adata, ref=None):
     """Normalise, HVGs per sample, PCA, Harmony on sample, kNN, Leiden. Adds obs['joint_cluster']."""
     import scanpy as sc
     adata.layers["counts"] = adata.X.copy()
@@ -170,7 +171,28 @@ def cluster(adata):
     sc.tl.leiden(adata, resolution=RESOLUTION, key_added="joint_cluster", flavor="igraph",
                  n_iterations=2, directed=False, random_state=SEED)
     adata.obs["joint_cluster"] = "j" + adata.obs["joint_cluster"].astype(str)
+    split_clusters(adata, ref)
     return rep
+
+
+def split_clusters(adata, ref, path=SPLITS):
+    """§9 amendment: a cluster the review found to hold two distinct populations is re-clustered on its own
+    (Leiden, same resolution and seed, on the same kNN graph restricted to its cells); its parts are named
+    j<N>.<k> and go through the rule like any other cluster. The first clustering is unchanged (same seed),
+    so every other cluster keeps its cells and name."""
+    import scanpy as sc
+    if not Path(path).exists():
+        return
+    sp_ = pd.read_csv(path, sep="\t", dtype=str, comment="#")
+    for c in sp_.loc[sp_["reference"] == ref, "cluster"]:
+        assert c in set(adata.obs["joint_cluster"]), f"{ref}: split names unknown cluster {c}"
+        adata.obs["joint_cluster"] = adata.obs["joint_cluster"].astype("category")   # restrict_to needs it
+        sc.tl.leiden(adata, resolution=RESOLUTION, key_added="_split", flavor="igraph", n_iterations=2,
+                     directed=False, random_state=SEED, restrict_to=("joint_cluster", [c]))
+        adata.obs["joint_cluster"] = adata.obs["_split"].astype(str).str.replace(",", ".", regex=False)
+        del adata.obs["_split"]
+        print(f"  split {c} -> {sorted(x for x in adata.obs['joint_cluster'].unique() if x.startswith(c + '.'))}")
+    adata.obs["joint_cluster"] = adata.obs["joint_cluster"].astype(str)
 
 
 def onehot(labels):
@@ -253,7 +275,7 @@ def run(ref):
     idx = symbol_index(adata.var_names)
     tree, prow = resolve(load_panels(ref), idx)
     pd.DataFrame(prow).to_csv(out / "panel_genes.tsv", sep="\t", index=False)
-    rep = cluster(adata)
+    rep = cluster(adata, ref)
 
     cl = adata.obs["joint_cluster"].astype(str).values
     cats, M = onehot(cl)
@@ -310,7 +332,7 @@ def run(ref):
     key = (adata.obs["sample"].astype(str) + "\t" + adata.obs["joint_cluster"].astype(str)).values
     gcats, G = onehot(key)
     np.savez_compressed(out / "group_sums.npz", sums=np.asarray((G @ C).todense()),
-                        groups=np.array(gcats), genes=np.asarray(adata.var_names),
+                        groups=np.asarray(gcats, dtype=str), genes=np.asarray(adata.var_names, dtype=str),
                         n_cells=np.asarray(G.sum(1)).ravel())
     try:
         import scanpy as sc
@@ -388,7 +410,7 @@ def finalize(ref):
     cells["cell_type"] = cells["joint_cluster"].map(lab)
     cells.to_csv(out / "cells_final.tsv.gz", sep="\t", index=False)
 
-    z = np.load(out / "group_sums.npz", allow_pickle=False)
+    z = np.load(out / "group_sums.npz", allow_pickle=True)    # files from before the dtype=str fix hold object arrays
     gt, r_self, (med_self, med_diff) = label_profile_checks(ref, z["sums"], z["groups"], lab.to_dict())
     n_samples = cells["sample"].nunique()
     kept = cells[cells["cell_type"] != "DROP"]

@@ -145,6 +145,29 @@ The retrain-v2 C5 comparison (April vs v2 on the July references) stays as score
   consensus-labelled references, replacing §4–5's merge rule for them; registered in §10 below, before any
   joint clustering was run. The annotation procedure was checked as part of this decision (§10.1): its
   wrong names come from the procedure itself, not from chance.
+- 2026-10-27 — **Deviation from §10.3, logged while reviewing, before the checks (§10.4) were read for
+  CORTEX, SMLINT, LUNG and HIPPOC.** Reading the accepted clusters' markers showed that the rule can accept
+  wrong labels. The doublet flag only fires across compartments when both panels score ≥ 0.5, and
+  min-max scaling lets one extreme small cluster set the scale (MUSCLE: a 40-cell ambient cluster held
+  the muscle panel's maximum). Six accepted labels contradicted their markers: KIDNEY j12 (PT–distal
+  doublets), WATSC j15 and j16 (stromal–T and stromal–macrophage doublets), WATSC j18 and j21 (glandular
+  and milk-protein mammary epithelium accepted as "Mesothelial cells"), and MUSCLE j13 (mitochondrial
+  ambient). Change: every accepted label is also checked against its markers. An override is allowed
+  only where the markers contradict the label; it is recorded in `joint_reannotation_review.tsv` as
+  "OVERRIDE of the accepted label …" with the genes, and the overrides are counted per reference in the
+  results. KIDNEY, LIVER, WATSC and MUSCLE had already been finalized once, before this check; their checks
+  are rerun after it.
+- 2026-10-27 — Two further review rules, same day, after LUNG's clusters were read (HIPPOC not yet
+  run). (a) **Under-calls.** A cluster accepted at a parent label ("Immune cells", "Epithelial cells")
+  because its sub-panels tied is given the specific type when its markers name it clearly (≥ 3 genes);
+  otherwise distinct clusters would be pooled under one uninformative label. Recorded as "Under-call made
+  specific". (b) **CD4/CD8.** Cd4 and Il7r are absent from every reference's gene space, and rat NK cells
+  carry CD8α, so the CD4/CD8 sub-panel is unreliable. A T cluster keeps "CD4+" or "CD8+" only where the
+  CPM of Cd40lg against Cd8a/Cd8b is lopsided; otherwise it is "T cells". (c) **Splits.** A cluster whose
+  markers and old labels show two distinct, non-doublet populations (CORTEX j24: T cells and vascular
+  cells, median 749 genes) is re-clustered alone (`joint_reannotation_splits.tsv`; Leiden at the same
+  resolution and seed on the kNN graph restricted to its cells); its parts go through the rule and the
+  review like any other cluster.
 
 ## 10. Joint re-annotation (registered 2026-10-27)
 
@@ -239,3 +262,12 @@ registered. Nothing is deconvolved before that is agreed.
 The audit (§9) and everything in `REFERENCE_LABEL_AUDIT.md`; the consensus annotation table rows for
 these references (§10.1); the panel symbols' presence in the rat gene annotations (to fix rat names, not
 expression). No joint clustering, panel score or marker of a joint cluster.
+
+## 11. Change log after §10 (continued from §9)
+- 2026-10-27 — Joint re-annotation run and reviewed for all eight references (jobs 12035670, 12035671,
+  12035758, 12035779); results in `JOINT_REANNOTATION_RESULTS.md`. K1 passes for every reference; no label
+  is confined to one sample; the K3 expectation held (both single-sample pairs land in one joint label).
+  HIPPOC: 255,303 of 279,195 barcodes are low-quality nuclei (≈ 250 genes) and are dropped; the remaining
+  23,892 pass with median r_self 0.89 (criterion ≥ 0.5). 100 review decisions (70 reviews, 18 overrides,
+  12 under-calls) are in `joint_reannotation_review.tsv` and should be read by someone with tissue
+  knowledge before §10.5's rebuild. Nothing has been rebuilt or deconvolved.
