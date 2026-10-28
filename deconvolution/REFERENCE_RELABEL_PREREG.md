@@ -325,3 +325,9 @@ unless check 6 fails for it and not for the other).
   rat V4); as registered, erythroid cells come only from GSE306764, so the PBMC erythroid label is left
   out of the composite. (c) GSE306764 Blood-CFA has no eosinophil or basophil cluster; Bone-CFA has both,
   but §12 allows only Blood-CFA, so the composite has neither (they remain inside other types).
+- 2026-10-27 — §12 run (jobs 12036211, 12036261): checks 1, 2, 4, 5 and 6 pass; check 3 reported (53% of
+  neutrophils interferon-high relative to PBMC monocytes). Check 6 per-type r 0.91–0.96; erythroid
+  under- and neutrophils over-estimated in absolute terms. The with- and without-globin arms are identical
+  because BayesPrism's outlier filter (`outlier.cut = 0.01`) removes the globins in both. BLOOD in
+  `tissue_references.yaml` now points at `references_v4/BLOOD_composite`; the PBMC reference is kept as
+  `previous_reference_dir`. BLOOD has not been deconvolved with it.

@@ -86,30 +86,25 @@ LIVER:
 
 BLOOD:
   status: ready
-  reference_dir: data/deconvolution/references_v3/BLOOD_GSE285476
-  study: GSE285476
-  tissue: peripheral blood mononuclear cells
+  reference_dir: data/deconvolution/references_v4/BLOOD_composite
+  previous_reference_dir: data/deconvolution/references_v3/BLOOD_GSE285476   # one-rat PBMC (Geyu's choice); sensitivity arm
+  builder: blood_composite              # built by deconvolution/build_blood_composite.py, not build_reference.py
   organism: Rattus norvegicus
-  conditions: ["healthy control group"]
-  title_include: null
-  title_exclude: null
-  sample_ids: null
-  dedup_gsm: true
-  label_scheme: none
-  gene_join: inner
   assay: scRNA
   expect:
-    n_samples: 1
-    sample_ids: [GSE285476_sample15]
+    n_samples: 6
+    sample_ids: [GSE306764_BloodCtrl, GSE335156_V1, GSE335156_V2, GSE335156_V3, GSE335156_V4, GSE335156_V5]
     qc_dropped: []
     organism: Rattus norvegicus
   build: >
-    python deconvolution/build_reference.py --study GSE285476 --tissue "peripheral blood mononuclear cells"
-    --conditions "healthy control group" --out data/deconvolution/references_v3/BLOOD_GSE285476
+    python deconvolution/build_blood_composite.py build --out data/deconvolution/references_v4/BLOOD_composite
   notes: >
-    PBMC = field-standard whole-blood basis (Geyu). Control arm ONLY (drops the transplant rejection + syngeneic
-    arms of this liver-allograft study); single donor. Immune-composition / differential; CDSeq cross-check.
-
+    Option B of BLOOD_REFERENCE_PROPOSAL.md (user, 2026-10-27; REFERENCE_RELABEL_PREREG.md §12): PBMC types
+    from the five venous GSE335156 rats (10x, mRatBN7.2), neutrophils and erythroid cells from GSE306764
+    Blood-CFA (Lewis, adjuvant control, RBC-lysed whole blood; Rnor_6.0 IDs lifted with the bulk's map).
+    §12 checks 1-6 passed (data/deconvolution/blood_option_b/checks.json, validation/BLOOD_composite_check6).
+    No eosinophils/basophils. Erythroid fractions run low and neutrophils high in absolute terms; read
+    BLOOD differentially. Not yet put to Geyu.
 # ============================ NEEDS-BUILD (rebuild from corpus) ============================
 CORTEX:
   status: needs-build

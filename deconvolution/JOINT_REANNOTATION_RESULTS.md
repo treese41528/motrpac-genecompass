@@ -180,10 +180,33 @@ Full cross-tabulations: `old_vs_new.tsv` per reference.
 - The **training corpus** keeps its consensus labels. Only the deconvolution references, reports and
   `make_pseudobulk.py` read them; GeneCompass training and tokenization do not.
 
-## 6. Next steps (each needs the user's go-ahead)
+## 6. Rebuild (done 2026-10-27, on the user's go-ahead)
 
-1. Someone with tissue knowledge reads `joint_reannotation_review.tsv`.
-2. `build_reference.py` takes `cells_final.tsv.gz` (cell type plus the joint cluster as cell state) in
-   place of the consensus join. The eight references are rebuilt into new directories and must pass
-   `reference_qc.py`.
-3. Then §6 (analysable-block rule) and §8 (rerun list) of the pre-registration, as registered.
+The joint labels are now part of the reference build:
+- **Builders.** `build_reference.py` and `build_lung_pooled.py` take `--joint-labels <cells_final.tsv.gz>`:
+  - cell type comes from the joint re-annotation;
+  - the joint cluster becomes the cell state, shared across samples;
+  - cells the re-annotation dropped leave the reference;
+  - the build stops if the label file and the loaded cells differ by even one cell.
+- **Config.** `tissue_references.yaml` points the eight references at `references_v4/` with a
+  `joint_labels:` entry, and keeps the old directory as `previous_reference_dir`.
+  `build_references_from_config.py` passes the option through, so `run_deconv_all.py --build` uses it.
+- **Tests.** In `tests/test_joint_reannotate.py`.
+
+All eight were rebuilt in job 12036196 and passed the post-build selection check and `reference_qc.py`.
+Cell counts equal the joint labels' kept cells:
+
+| Reference | Cells (old v3) | Cell types (old) | Cell states (old) |
+|---|---|---|---|
+| KIDNEY | 24,479 (28,626) | 15 (17) | 20 (74) |
+| LIVER | 27,059 (27,041) | 8 (6) | 18 (44) |
+| CORTEX | 12,936 (12,933) | 12 (11) | 29 (44) |
+| WATSC | 11,984 (12,223) | 13 (13) | 20 (32) |
+| MUSCLE | 10,740 (10,763) | 9 (5) | 17 (22) |
+| SMLINT | 16,193 (18,950) | 13 (14) | 23 (41) |
+| LUNG | 44,602 (46,653) | 21 (28) | 30 (87) |
+| HIPPOC | 23,892 (278,549) | 10 (18) | 20 (454) |
+
+Nothing has been deconvolved with them. The next run of Stage 8 for these tissues will use them, and
+§6 and §8 of the pre-registration then apply. The review file has still not been read by someone with
+tissue knowledge.

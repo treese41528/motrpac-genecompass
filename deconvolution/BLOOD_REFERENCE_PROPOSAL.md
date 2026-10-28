@@ -4,6 +4,42 @@ For Geyu. Written 2026-10-27. Nothing here has been built or run. The current BL
 PBMC) was Geyu's choice, so this note sets out the problem, what single-cell data exist, the options, and
 what would have to be checked before any of them is used. The decision is Geyu's.
 
+## Outcome (added 2026-10-27, after the user chose option B)
+
+The user went ahead with option B before this note reached Geyu; it can still be reversed (the PBMC
+reference is kept as `previous_reference_dir`). Registered in `REFERENCE_RELABEL_PREREG.md` §12 before
+any data were downloaded; built in `references_v4/BLOOD_composite`. Nothing has been deconvolved on the
+MoTrPAC blood samples yet.
+
+- **Draw site.** MoTrPAC bled rats by cardiac puncture (Schenk et al. 2024, *Function*), so the GSE335156
+  venous libraries (V1–V5) were used. That cardiac puncture samples venous blood is an inference.
+- **Labels.** All three libraries were labelled with one blood panel written before download. The PBMC
+  libraries held many doublets and platelet–lymphocyte aggregates (dropped, 13%), plus reticulocytes
+  (1,775, mostly from one rat; not used, since erythroid cells come from whole blood by design).
+- **Checks (§4 above, as registered):**
+  - 1, composition: 2,168 neutrophils in Blood-CFA. Pass.
+  - 2, erythroid cells are real: one cluster, 90 cells, median 358 genes; non-globin erythroid genes
+    (Alas2, Car2, Slc4a1, Ahsp) far above every other cluster. Pass, but it is a small cluster.
+  - 3, neutrophil activation: 53% of the CFA-control neutrophils score above the 95th percentile of the
+    PBMC monocytes on interferon genes (Ifit1/3, Isg15, Rsad2), and 19% on Il1b/Cxcl2/Nfkbia. The control
+    neutrophils are interferon-primed, as feared. This is a limitation; there was no threshold.
+  - 4, PBMC types: all 12 present in all five rats (median cross-rat r 0.74). Pass.
+  - 5, gene space: 18,260 genes shared, all in the bulk's space. Pass.
+  - 6, recovery on simulated mixtures (reference from 3 rats + half the whole-blood cells; mixtures from
+    the other 2 rats and half): per-type Pearson r between true and estimated fractions: erythroid 0.95,
+    neutrophils 0.95, monocytes 0.96, T 0.91, B 0.95, NK 0.96. Pass.
+  - **Absolute levels are biased.** Erythroid fractions are underestimated (mean −0.24, or −0.12 against
+    a globin-free truth) and neutrophils overestimated (+0.10).
+- **Globins.** BayesPrism's own outlier filter drops genes above 1% of reads in more than 10% of samples,
+  so globins are removed whether or not the exclusion list keeps them. The "with globin" arm was
+  therefore identical to the primary one, and the question in §4.6 is moot for this pipeline.
+- **Not in the reference:** eosinophils and basophils. The marrow library has both, but the
+  pre-registration allowed only the whole-blood library.
+
+For Geyu: decisions 2 (strain) and 3 (adjuvant controls) in §5 were taken by going ahead. Check 3
+suggests the CFA neutrophils are interferon-primed, which matters if BLOOD neutrophil Z is ever
+interpreted.
+
 ## 1. The question
 
 MoTrPAC's rat blood samples are **PAXgene whole blood**: RNA is stabilised from the whole draw, with no

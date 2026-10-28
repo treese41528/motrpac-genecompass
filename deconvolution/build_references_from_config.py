@@ -29,6 +29,8 @@ BUILDABLE = {"ready", "needs-build", "proposed"}
 def build_cmd(cfg):
     """The exact command that builds this tissue's reference into cfg['reference_dir']."""
     out = cfg["reference_dir"]
+    if cfg.get("builder") == "blood_composite":      # BLOOD option B: two GEO datasets, its own builder
+        return [PY, "deconvolution/build_blood_composite.py", "build", "--out", out]
     jl = ["--joint-labels", cfg["joint_labels"]] if cfg.get("joint_labels") else []
     if cfg.get("pooled"):
         return [PY, "deconvolution/build_lung_pooled.py", "--out", out] + jl
