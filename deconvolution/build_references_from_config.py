@@ -29,8 +29,9 @@ BUILDABLE = {"ready", "needs-build", "proposed"}
 def build_cmd(cfg):
     """The exact command that builds this tissue's reference into cfg['reference_dir']."""
     out = cfg["reference_dir"]
+    jl = ["--joint-labels", cfg["joint_labels"]] if cfg.get("joint_labels") else []
     if cfg.get("pooled"):
-        return [PY, "deconvolution/build_lung_pooled.py", "--out", out]
+        return [PY, "deconvolution/build_lung_pooled.py", "--out", out] + jl
     c = [PY, "deconvolution/build_reference.py",
          "--study", cfg["study"], "--tissue", cfg["tissue"],
          "--organism", cfg.get("organism", "Rattus norvegicus"),
@@ -51,7 +52,7 @@ def build_cmd(cfg):
         c += ["--no-dedup-gsm"]
     if cfg.get("gene_map"):
         c += ["--gene-map", cfg["gene_map"]]
-    return c
+    return c + jl
 
 
 def main():

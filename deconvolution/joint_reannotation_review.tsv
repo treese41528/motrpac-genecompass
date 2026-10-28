@@ -102,3 +102,38 @@ HIPPOC	j13.5	Mural cells	Part of the split j13: Atp13a5, Abcc9, Rbpms, Irag1, Eg
 HIPPOC	j13.6	Vascular leptomeningeal cells	Part of the split j13: Aldh1a2, Slc6a13, Tbx18, Tbx15, C7, Slc13a4 (meningeal fibroblasts).
 HIPPOC	j13.7	Endothelial cells	Part of the split j13: Flt1, Epas1, Cxcl12, Igfbp7, Hip1 (endothelium); median 487 genes.
 HIPPOC	j13.9	Vascular leptomeningeal cells	Part of the split j13: Slc47a1, Bnc2, Prrx2, Alx1, Col8a2, Slco2a1 (arachnoid/meningeal fibroblasts).
+BLOOD_PBMC	j0	CD8+ T cells	Under-call made specific (accepted as "T cells"): Cd8a 625, Cd8b, Ctsw, Runx3 against Cd40lg 26 CPM.
+BLOOD_PBMC	j2	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 258 against Cd8a 4 CPM; Il6st, Tox.
+BLOOD_PBMC	j3	Regulatory T cells	Under-call made specific (accepted as "T cells"): Foxp3, Il2ra, Ikzf2, Ctla4, Icos, Gata3.
+BLOOD_PBMC	j4	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 247 against Cd8a 5 CPM; Lat, Gimap9.
+BLOOD_PBMC	j5	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 229 against Cd8a 0, with interferon genes (Mx2, Usp18, Ifi44, Isg20): an interferon-stimulated CD4 state, 177 cells.
+BLOOD_PBMC	j8	DROP	OVERRIDE of the accepted label "B cells": B-cell genes (Cd79a 3,520) with platelet genes (Pf4 4,587, Itga2b, Gp9, Treml1, Clec1b): platelet-B cell aggregates.
+BLOOD_PBMC	j12	Cycling cells	OVERRIDE of the accepted label "NK cells": Mki67 311, Top2a, Cdk1, Rrm2 with mixed T/NK/B genes (Cd3e 243, Nkg7 1,335, Cd79a 146): cycling lymphocytes.
+BLOOD_PBMC	j15	DROP	OVERRIDE of the accepted label "T cells": T-cell genes (Cd3e 655, Cd40lg 239) with platelet genes (Pf4 1,737, Gp9, Treml1, Clec1b): platelet-T cell aggregates.
+BLOOD_PBMC	j16	DROP	OVERRIDE of the accepted label "Non-classical monocytes": monocyte genes (Adgre4 465, Treml4 240) with B-cell genes (Cd79a 1,768, Ms4a1 279); median 2,845 genes. Monocyte-B doublets.
+BLOOD_PBMC	j17	DROP	B-cell genes (Cd79a 995, Pax5, Ebf1) with T-cell genes (Cd3e 384, Cd40lg 89); median 3,032 genes against ~1,500 for B clusters. B-T doublets.
+BLOOD_PBMC	j18	DROP	OVERRIDE of the accepted label "Basophils": median 778 genes, Hba-a2 21,637 and Pf4 1,191 CPM with low levels of every lineage; no basophil genes (Fcer1a 1, Hdc 46). Low-quality ambient cluster.
+BLOOD_PBMC	j20	DROP	Non-classical monocyte genes (Adgre4 360, Treml4 208) with T/NK genes (Cd3e 344, Nkg7 117) and Hba-a2 4,122; median 3,234 genes. Doublets.
+BLOOD_PBMC	j22	DROP	Erythroid genes (Hba-a2 190,012, Alas2 1,095) with non-classical monocyte genes (Adgre4 436, Treml4 357). Reticulocyte-monocyte doublets.
+BLOOD_PBMC	j24	DROP	NK genes (Nkg7 846, Ncr1) with B (Cd79a 425) and T (Cd3e 220) genes; median 3,370 genes against 2,049 for NK j11. Doublets.
+BLOOD_PBMC	j25	DROP	Erythroid genes (Alas2 880, Slc4a1 876, Kel, Gypa) with T-cell genes (Cd3e 295, Cd40lg 110); median 2,247 genes against 229 for the reticulocyte cluster j26. Reticulocyte-T doublets; 74% from rat V4.
+BLOOD_PBMC	j27	DROP	OVERRIDE of the accepted label "Erythroid cells": erythroid genes with B-cell genes (Cd79a 574, Ms4a1 235); median 1,890 genes. Reticulocyte-B doublets.
+BLOOD_PBMC	j28	DROP	Erythroid genes (Alas2 851, Slc4a1 882) with NK genes (Nkg7 348, Klrd1 634). Reticulocyte-NK doublets.
+BLOOD_WB	j0	T cells	Ptprc 6,388, Cd3e 530, Themis, Tcf12, Bach2; median 584 genes (low-depth T cells).
+BLOOD_WB	j1	T cells	Cd3e 998, Cd247, Cd27, Lef1, Il7r, Grap (naive T cells).
+BLOOD_WB	j7	Non-classical monocytes	Adgre4 976, Treml4, Zeb2, Aoah, Tcf7l2.
+BLOOD_WB	j12	Neutrophils	OVERRIDE of the accepted label "Basophils": S100a9 35,091, S100a8 13,889, Cxcr2, Csf3r, Nlrp12, Ccr1 (neutrophils, with interferon genes Ifit3, Isg15, Oas1b); Fcer1a 8, Hdc 31.
+BLOOD_WB	j17	B cells	Pax5, Ebf1, Bank1, Mef2c with Cd79a 834, Ms4a1 447; median 496 genes.
+BLOOD_WB	j19	Cycling cells	Under-call made specific (accepted as "Immune cells"): Mki67 1,011, Top2a, Cdk1, Ube2c; NK/T genes (Nkg7 4,078, Cd3e 776).
+BLOOD_BM	j1	Neutrophil progenitors	Under-call made specific (accepted as "Immune cells"): Camp 29,345, Np4, RatNP-3b, Defa5, Retn, Olfm4 (secondary-granule myelocytes); S100a8/9 high. Marrow is used only for the §12 fallbacks, not the composite.
+BLOOD_BM	j3	Myeloid progenitors	Under-call made specific (accepted as "Immune cells"): Mpo 23,067, Ctsg, Prss57, Ms4a3 (promyelocytes/GMP).
+BLOOD_BM	j4	Pro-B and pre-B cells	Rag1, Polm, Lig4, Fcrla, Cd79a 3,697 (B-cell precursors).
+BLOOD_BM	j5	Classical monocytes	Fcnb 4,193, S100a4, S100a6, Fn1, Ifi30; median 439 genes.
+BLOOD_BM	j8	Monocyte progenitors	Under-call made specific (accepted as "Immune cells"): Irf8, Ms4a6a, Fcnb 7,738, Mnda, Tifab, Mpo 4,423 (monocyte progenitors).
+BLOOD_BM	j11	Pro-B and pre-B cells	Under-call made specific (accepted as "Immune cells"): Igll1, Vpreb1a, Vpreb1b, Dntt-negative, Cd24, Il7r.
+BLOOD_BM	j14	Erythroblasts	Car1, Klf1, Car2 7,631, Alad, Hmbs, Blvrb (erythroblasts).
+BLOOD_BM	j16	Erythroblasts	Car1, Tfr2, Pklr, Cited4, Car2 8,204, Kit 80 (early erythroblasts); median 3,821 genes.
+BLOOD_BM	j17	Macrophages	C1qa, C1qb, C1qc, Cd163, Vcam1, Spic, Folr2 (marrow macrophages).
+BLOOD_BM	j18	Pro-B and pre-B cells	Rag2, Blnk, Cd24, Dlk1, Cd79a 2,077 with Mki67/Top2a (cycling pre-B cells).
+BLOOD_BM	j21	Eosinophils	Prg2 159,600, Epx 32,636, Prg3, Ear1, Il5ra.
+BLOOD_BM	j22	Plasma cells	Jchain, Mzb1, Ighm, Prdm1, Sdc1, Txndc5.

@@ -22,6 +22,9 @@
 #   sample_ids     explicit pin | null (take everything that survives the filters)
 #   dedup_gsm      collapse duplicate GSMs (the _RAW double-ingest) -- default true
 #   label_scheme   none | brain | muscle | lung ;  gene_join inner|outer ; min_gene_cells
+#   joint_labels   cells_final.tsv.gz of the joint re-annotation (2026-10-27); when set, its cell types and
+#                  joint clusters replace the consensus labels and label_scheme is not applied
+#   previous_reference_dir  the consensus-label build this reference replaced (kept on disk, not used)
 #   allow_nonnative  bypass the reference_qc FAIL gate when a sort/isolation is INTRINSIC + intended (SPLEEN)
 #   expect         the VALIDATION contract: n_samples, sample_ids (post-QC, exact), qc_dropped (intended drops), organism
 #   build          the exact reproducible command
@@ -31,7 +34,9 @@ version: v3-2026-07-15
 # ============================ READY (deployed & correct) ============================
 KIDNEY:
   status: ready
-  reference_dir: data/deconvolution/references_v3/KIDNEY_GSE240658
+  reference_dir: data/deconvolution/references_v4/KIDNEY_GSE240658
+  previous_reference_dir: data/deconvolution/references_v3/KIDNEY_GSE240658   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/KIDNEY/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE240658
   tissue: kidney
   organism: Rattus norvegicus
@@ -50,12 +55,14 @@ KIDNEY:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE240658 --tissue kidney
-    --conditions "No treatment" --out data/deconvolution/references_v3/KIDNEY_GSE240658
+    --conditions "No treatment" --out data/deconvolution/references_v4/KIDNEY_GSE240658 --joint-labels data/deconvolution/joint_labels/KIDNEY/cells_final.tsv.gz
   notes: Control (No treatment) arm; snRNA captures the ~80% proximal-tubule parenchyma. Kept over Ma scRNA.
 
 LIVER:
   status: ready
-  reference_dir: data/deconvolution/references_v3/LIVER_GSE220075
+  reference_dir: data/deconvolution/references_v4/LIVER_GSE220075
+  previous_reference_dir: data/deconvolution/references_v3/LIVER_GSE220075   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/LIVER/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE220075
   tissue: liver
   organism: Rattus norvegicus
@@ -74,7 +81,7 @@ LIVER:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE220075 --tissue liver
-    --out data/deconvolution/references_v3/LIVER_GSE220075
+    --out data/deconvolution/references_v4/LIVER_GSE220075 --joint-labels data/deconvolution/joint_labels/LIVER/cells_final.tsv.gz
   notes: 4 snRNA sham samples; reference_qc drops the 2 Visium (Rat_A1/B1_VIS). Only cross-validated tissue.
 
 BLOOD:
@@ -106,7 +113,9 @@ BLOOD:
 # ============================ NEEDS-BUILD (rebuild from corpus) ============================
 CORTEX:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/CORTEX_GSE303115
+  reference_dir: data/deconvolution/references_v4/CORTEX_GSE303115
+  previous_reference_dir: data/deconvolution/references_v3/CORTEX_GSE303115   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/CORTEX/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE303115
   tissue: cortex
   organism: Rattus norvegicus            # KEYSTONE: drops the 5 non-rat species (was ~85% of the old ref)
@@ -125,7 +134,7 @@ CORTEX:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE303115 --tissue cortex
-    --label-scheme brain --out data/deconvolution/references_v3/CORTEX_GSE303115
+    --label-scheme brain --out data/deconvolution/references_v4/CORTEX_GSE303115 --joint-labels data/deconvolution/joint_labels/CORTEX/cells_final.tsv.gz
   notes: Rat-only rebuild of the 9-mammal multiome; replaces the invalid deployed union_merged ref.
 
 HEART:
@@ -186,7 +195,9 @@ VENACV:
 
 WATSC:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/WATSC_GSE137869_Y
+  reference_dir: data/deconvolution/references_v4/WATSC_GSE137869_Y
+  previous_reference_dir: data/deconvolution/references_v3/WATSC_GSE137869_Y   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/WATSC/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE137869
   tissue: white adipose tissue
   organism: Rattus norvegicus
@@ -205,12 +216,14 @@ WATSC:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE137869 --tissue "white adipose tissue"
-    --title-include '[-]Y($|\b|_)' --out data/deconvolution/references_v3/WATSC_GSE137869_Y
+    --title-include '[-]Y($|\b|_)' --out data/deconvolution/references_v4/WATSC_GSE137869_Y --joint-labels data/deconvolution/joint_labels/WATSC/cells_final.tsv.gz
   notes: Young-arm-only (stops the deployed build pooling 61% geriatric/CR). Adipocyte hole -> differential-only.
 
 SKMGN:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # SHARED with SKMVL (identical build)
+  reference_dir: data/deconvolution/references_v4/MUSCLE_GSE137869_Y   # SHARED with SKMVL (identical build)
+  previous_reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE137869
   tissue: skeletal muscle
   organism: Rattus norvegicus
@@ -229,12 +242,14 @@ SKMGN:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE137869 --tissue "skeletal muscle"
-    --title-include '[-]Y($|\b|_)' --label-scheme muscle --out data/deconvolution/references_v3/MUSCLE_GSE137869_Y
+    --title-include '[-]Y($|\b|_)' --label-scheme muscle --out data/deconvolution/references_v4/MUSCLE_GSE137869_Y --joint-labels data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz
   notes: Unified muscle on shared Ma -Y (Geyu). Replaces deployed GSE184413; head-to-head vs F344 gastroc pending.
 
 SKMVL:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # SHARED with SKMGN (one build serves both)
+  reference_dir: data/deconvolution/references_v4/MUSCLE_GSE137869_Y   # SHARED with SKMGN (one build serves both)
+  previous_reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE137869
   tissue: skeletal muscle
   organism: Rattus norvegicus
@@ -253,7 +268,7 @@ SKMVL:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE137869 --tissue "skeletal muscle"
-    --title-include '[-]Y($|\b|_)' --label-scheme muscle --out data/deconvolution/references_v3/MUSCLE_GSE137869_Y
+    --title-include '[-]Y($|\b|_)' --label-scheme muscle --out data/deconvolution/references_v4/MUSCLE_GSE137869_Y --joint-labels data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz
   notes: Replaces the indefensible GSE254371 chimera; shares SKMGN's build (identical).
 
 BAT:
@@ -306,7 +321,9 @@ HYPOTH:
 
 SMLINT:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/SMLINT_GSE272055
+  reference_dir: data/deconvolution/references_v4/SMLINT_GSE272055
+  previous_reference_dir: data/deconvolution/references_v3/SMLINT_GSE272055   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/SMLINT/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE272055
   tissue: proximal jejunum
   organism: Rattus norvegicus
@@ -325,12 +342,14 @@ SMLINT:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE272055 --tissue "proximal jejunum"
-    --out data/deconvolution/references_v3/SMLINT_GSE272055
+    --out data/deconvolution/references_v4/SMLINT_GSE272055 --joint-labels data/deconvolution/joint_labels/SMLINT/cells_final.tsv.gz
   notes: Healthy adult SD; epithelium-only isolation (no immune/muscularis) -> differential.
 
 LUNG:
   status: needs-build
-  reference_dir: data/deconvolution/references_v3/LUNG_native_pooled
+  reference_dir: data/deconvolution/references_v4/LUNG_native_pooled
+  previous_reference_dir: data/deconvolution/references_v3/LUNG_native_pooled   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/LUNG/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   pooled: true
   organism: Rattus norvegicus
   label_scheme: lung
@@ -343,7 +362,7 @@ LUNG:
     sample_ids: [GSE252844_sample0, GSE273062_sample0, GSE273062_sample2]
     qc_dropped: []
     organism: Rattus norvegicus
-  build: python deconvolution/build_lung_pooled.py --out data/deconvolution/references_v3/LUNG_native_pooled
+  build: python deconvolution/build_lung_pooled.py --out data/deconvolution/references_v4/LUNG_native_pooled --joint-labels data/deconvolution/joint_labels/LUNG/cells_final.tsv.gz
   notes: >
     Native pooled disease-model CONTROL arms; replaced the engineered in-vitro GSE178405. DROP ALL of GSE242310
     (both NOX/HOX arms are P10 neonates). AT1 absent; weakest tissue -- read cautiously.
@@ -351,7 +370,9 @@ LUNG:
 # ============================ ADOPTED 2026-07-15 (A/B decisive) ============================
 HIPPOC:
   status: ready
-  reference_dir: data/deconvolution/references_v3/HIPPOC_GSE295314
+  reference_dir: data/deconvolution/references_v4/HIPPOC_GSE295314
+  previous_reference_dir: data/deconvolution/references_v3/HIPPOC_GSE295314   # consensus labels (before the joint re-annotation)
+  joint_labels: data/deconvolution/joint_labels/HIPPOC/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE295314
   tissue: brain
   organism: Rattus norvegicus
@@ -371,7 +392,7 @@ HIPPOC:
     organism: Rattus norvegicus
   build: >
     python deconvolution/build_reference.py --study GSE295314 --tissue brain --conditions "Fed"
-    --label-scheme brain --out data/deconvolution/references_v3/HIPPOC_GSE295314
+    --label-scheme brain --out data/deconvolution/references_v4/HIPPOC_GSE295314 --joint-labels data/deconvolution/joint_labels/HIPPOC/cells_final.tsv.gz
   notes: >
     ADOPTED (2026-07-15) — replaces GSE305314. A/B on the same HIPPOC bulk was decisive: old GSE305314 gave
     63.6% debris "Intermediate monocytes" / 0.2% neurons; GSE295314 gives 73.9% excitatory neurons / 0% debris.

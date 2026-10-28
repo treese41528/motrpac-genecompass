@@ -51,6 +51,16 @@ OUT = ROOT / "data/deconvolution/joint_labels"
 # reference key -> tissue_references.yaml key whose spec selects the samples
 REFS = {"KIDNEY": "KIDNEY", "LIVER": "LIVER", "CORTEX": "CORTEX", "WATSC": "WATSC", "MUSCLE": "SKMGN",
         "SMLINT": "SMLINT", "LUNG": "LUNG", "HIPPOC": "HIPPOC"}
+# BLOOD option B (REFERENCE_RELABEL_PREREG.md §12): external GEO libraries, not corpus samples; all three
+# are labelled with the BLOOD panel. Paths are under data/raw/geo/blood_option_b/.
+BLOOD_RAW = ROOT / "data/raw/geo/blood_option_b"
+BLOOD_SETS = {
+    "BLOOD_PBMC": [(f"GSE335156_V{i}", BLOOD_RAW / "GSE335156", f"GSM98068{32 + i}_V{i}_", False) for i in range(1, 6)],
+    "BLOOD_WB": [("GSE306764_BloodCtrl", BLOOD_RAW / "GSE306764/blood/Blood-Ctrl", "", True)],
+    "BLOOD_BM": [("GSE306764_BoneCtrl", BLOOD_RAW / "GSE306764/bone/Bone-Ctrl", "", True)],
+}
+PANEL_KEY = {k: "BLOOD" for k in BLOOD_SETS}
+ALL_REFS = sorted(REFS) + sorted(BLOOD_SETS)
 
 N_HVG, N_PCS, N_NEIGHBORS, RESOLUTION, SEED = 3000, 30, 15, 1.0, 0
 ACCEPT, MARGIN, DOUBLET, MIN_PANEL_GENES = 0.5, 0.15, 0.5, 2
@@ -120,12 +130,54 @@ def resolve(spec, idx, parent=None, rows=None):
 
 
 # ----------------------------------------------------------------------------- data
+def load_blood(ref):
+    """One BLOOD_SETS entry as raw counts in the bulk's gene-ID space, with the corpus QC applied (>= 200
+    genes, mitochondrial fraction <= 0.15, as config/pipeline_config.yaml sets for the corpus). GSE306764 ships the Rnor_6.0
+    IDs the MoTrPAC bulk was released in, so it goes through the bulk's own liftover map (as TESTES);
+    GSE335156 (Cell Ranger, mRatBN7.2) is already in the lifted ID space."""
+    import anndata as ad
+    import scipy.io as sio
+    import build_reference as br
+    min_genes, max_mito = 200, 0.15        # the corpus QC: min_genes_per_cell / max_mito_fraction in the config
+    parts = []
+    for sample, d, prefix, lift in BLOOD_SETS[ref]:
+        def f(name):
+            for cand in (d / f"{prefix}{name}.gz", d / f"{prefix}{name}"):
+                if cand.exists():
+                    return cand
+            raise FileNotFoundError(d / f"{prefix}{name}")
+        feat = pd.read_csv(f("features.tsv" if not lift else "genes.tsv"), sep="\t", header=None, dtype=str)
+        bc = pd.read_csv(f("barcodes.tsv"), header=None, dtype=str)[0]
+        X = sp.csr_matrix(sio.mmread(str(f("matrix.mtx"))).T, dtype=np.float32)      # cells x genes
+        mito = feat[1].str.lower().str.startswith("mt-").values
+        n_genes = np.asarray((X > 0).sum(1)).ravel()
+        frac_mt = np.asarray(X[:, mito].sum(1)).ravel() / np.maximum(np.asarray(X.sum(1)).ravel(), 1)
+        keep = (n_genes >= min_genes) & (frac_mt <= max_mito)
+        print(f"  {sample}: {X.shape[0]} barcodes -> {int(keep.sum())} after QC (>= {min_genes} genes, "
+              f"mito <= {max_mito}); {int(mito.sum())} mito genes")
+        a = ad.AnnData(X=X[keep], obs=pd.DataFrame({"sample": sample, "barcode": bc[keep].values,
+                                                     "leiden": "", "cell_type": ""}))
+        a.var_names = feat[0].values
+        a.var_names_make_unique()
+        if lift:
+            a = br.lift_genes(a, ROOT / "deconvolution/reference/motrpac_bulk_liftover.tsv")
+        parts.append(a)
+    adata = ad.concat(parts, join="inner", merge="same", fill_value=0) if len(parts) > 1 else parts[0]
+    return adata
+
+
 def load_cells(ref):
     """Every QC cell of the reference's samples, with the old per-sample labels, in the gene space the
     production build uses (same loader, same gene join)."""
     import anndata as ad
     import scanpy as sc
     import build_reference as br
+    if ref in BLOOD_SETS:
+        adata = load_blood(ref)
+        adata.obs = adata.obs.rename(columns={"cell_type": "old_label", "leiden": "old_cluster"})
+        adata.obs_names = (adata.obs["sample"].astype(str) + ":" + adata.obs["barcode"].astype(str)).values
+        adata.X = sp.csr_matrix(adata.X, dtype=np.float32)
+        return adata
     spec = yaml.safe_load(open(ROOT / "deconvolution/tissue_references.yaml"))[REFS[ref]]
     if spec.get("pooled"):                 # LUNG: per-study outer join, then the union trimmed (build_lung_pooled)
         parts = []
@@ -273,7 +325,7 @@ def run(ref):
     print(f"[{ref}] {adata.n_obs} cells x {adata.n_vars} genes, samples "
           f"{adata.obs['sample'].value_counts().to_dict()}", flush=True)
     idx = symbol_index(adata.var_names)
-    tree, prow = resolve(load_panels(ref), idx)
+    tree, prow = resolve(load_panels(PANEL_KEY.get(ref, ref)), idx)
     pd.DataFrame(prow).to_csv(out / "panel_genes.tsv", sep="\t", index=False)
     rep = cluster(adata, ref)
 
@@ -442,7 +494,7 @@ def finalize(ref):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["run", "finalize"])
-    ap.add_argument("--ref", required=True, choices=sorted(REFS))
+    ap.add_argument("--ref", required=True, choices=ALL_REFS)
     a = ap.parse_args()
     (run if a.command == "run" else finalize)(a.ref)
 

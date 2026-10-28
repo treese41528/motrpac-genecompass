@@ -317,3 +317,11 @@ recorded; doublets, low quality and clusters under 20 cells dropped).
 **Composite.** Cell types and joint clusters (cell states) from both datasets, one reference; the source is
 kept per cell. Built with and without the Hba/Hbb paralogs (both reported; the with-globin build is primary
 unless check 6 fails for it and not for the other).
+- 2026-10-27 — §12 amendment, before any check result was read. (a) Stage 8's runner
+  (`run_deconvolution.R`) already removes the hemoglobin genes (`rat_exclude_genes.tsv`, category
+  "hemoglobin") for every tissue, so the **no-globin build is primary** (it is what a BLOOD rerun would use)
+  and the with-globin build is the sensitivity arm, run by pointing `RAT_EXCLUDE_GENES` at the list without
+  that category. (b) The PBMC libraries contain reticulocytes (an erythroid cluster, 1,775 cells, 80% from
+  rat V4); as registered, erythroid cells come only from GSE306764, so the PBMC erythroid label is left
+  out of the composite. (c) GSE306764 Blood-CFA has no eosinophil or basophil cluster; Bone-CFA has both,
+  but §12 allows only Blood-CFA, so the composite has neither (they remain inside other types).

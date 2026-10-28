@@ -135,3 +135,32 @@ def test_split_reclusters_only_the_named_cluster(tmp_path):
     parts = cl[100:]
     assert parts.str.startswith("j1.").all() and parts.nunique() >= 2
     assert parts[:60].nunique() < parts.nunique()      # the two groups are not mixed into every part
+
+
+def test_build_reference_applies_joint_labels(tmp_path):
+    import anndata as ad
+    import scipy.sparse as sp
+    import build_reference as br
+    obs = pd.DataFrame({"sample": ["s1", "s1", "s2"], "barcode": ["A", "B", "A"],
+                        "cell_type": ["old1", "old2", "old3"], "cell_state": ["s1_c0", "s1_c1", "s2_c0"]})
+    a = ad.AnnData(sp.csr_matrix(np.ones((3, 2), dtype=np.float32)), obs=obs)
+    f = tmp_path / "cells_final.tsv.gz"
+    pd.DataFrame({"sample": ["s2", "s1", "s1"], "barcode": ["A", "A", "B"], "joint_cluster": ["j0", "j0", "j1"],
+                  "cell_type": ["Hep", "Hep", "DROP"]}).to_csv(f, sep="\t", index=False)
+    out = br.apply_joint_labels(a, f)
+    assert out.obs["cell_type"].tolist() == ["Hep", "Hep"]
+    assert out.obs["cell_state"].tolist() == ["j0", "j0"]           # one state shared by both samples
+    assert out.obs["sample"].tolist() == ["s1", "s2"]
+
+
+def test_build_reference_refuses_mismatched_joint_labels(tmp_path):
+    import anndata as ad
+    import scipy.sparse as sp
+    import build_reference as br
+    obs = pd.DataFrame({"sample": ["s1", "s1"], "barcode": ["A", "B"], "cell_type": ["x", "y"]})
+    a = ad.AnnData(sp.csr_matrix(np.ones((2, 2), dtype=np.float32)), obs=obs)
+    f = tmp_path / "cells_final.tsv.gz"
+    pd.DataFrame({"sample": ["s1"], "barcode": ["A"], "joint_cluster": ["j0"],
+                  "cell_type": ["Hep"]}).to_csv(f, sep="\t", index=False)
+    with pytest.raises(SystemExit, match="do not match"):
+        br.apply_joint_labels(a, f)

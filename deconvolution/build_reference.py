@@ -9,6 +9,8 @@ multiple studies into one reference.
 
 Join: barcode -> leiden (per-cell) -> consensus_label (per-cluster)
       cell.type = consensus_label ; cell.state = "{sample}_c{leiden}"
+  or, with --joint-labels (the joint re-annotation, REFERENCE_RELABEL_PREREG.md §10):
+      cell.type = joint label ; cell.state = joint cluster (shared across samples)
 
 Output (read by run_deconvolution.R; project-local, never /tmp):
   deconvolution/reference/{TISSUE}_{STUDY}/
@@ -318,6 +320,28 @@ def load_study(study, tissue, conditions=None, sex=None, sample_ids=None,
     return adata
 
 
+def apply_joint_labels(adata, labels_path):
+    """Replace the per-sample consensus labels with the joint re-annotation (REFERENCE_RELABEL_PREREG.md §10):
+    cell_type from cells_final.tsv.gz, cell_state = the joint cluster (shared across samples). Cells the
+    re-annotation dropped (doublets, low quality, clusters under 20 cells) leave the reference. Every
+    loaded cell must be in the labels file, and the file must not name cells that were not loaded."""
+    lab = pd.read_csv(labels_path, sep="\t", dtype=str, keep_default_na=False,
+                      usecols=["sample", "barcode", "joint_cluster", "cell_type"])
+    lab.index = lab["sample"] + ":" + lab["barcode"]
+    key = adata.obs["sample"].astype(str) + ":" + adata.obs["barcode"].astype(str)
+    missing = int((~key.isin(lab.index)).sum())
+    extra = int((~lab.index.isin(key)).sum())
+    if missing or extra or lab.index.duplicated().any():
+        sys.exit(f"ERROR: joint labels {labels_path} do not match the loaded cells "
+                 f"({missing} loaded cells unlabelled, {extra} labelled cells not loaded)")
+    adata.obs["cell_type"] = lab.loc[key, "cell_type"].values
+    adata.obs["cell_state"] = lab.loc[key, "joint_cluster"].values
+    keep = (adata.obs["cell_type"] != "DROP").values
+    print(f"joint labels {labels_path}: {adata.n_obs} cells, {int((~keep).sum())} dropped by the "
+          f"re-annotation, {adata.obs.loc[keep, 'cell_type'].nunique()} cell types")
+    return adata[keep].copy()
+
+
 def clean_cells(adata, min_state_cells=20, drop_unknown=True):
     """Drop unannotated/Unknown cells and cell states (clusters) with < min_state_cells."""
     keep = adata.obs["cell_type"].notna()
@@ -381,6 +405,9 @@ def main():
                     help="merge collinear consensus-label fragments before building the GEP "
                     "(e.g. 'brain' merges pyramidal/glutamatergic neuron synonyms into "
                     "'Excitatory neurons'); apply the SAME scheme to the cross source")
+    ap.add_argument("--joint-labels", help="cells_final.tsv.gz from joint_reannotate.py finalize: use its "
+                    "cell types and joint clusters (as cell states) instead of the per-sample consensus "
+                    "labels; --label-scheme is then not applied")
     ap.add_argument("--out", help="output dir (default deconvolution/reference/{tissue}_{study}); "
                     "set explicitly to avoid clobbering when tissue+study collide, e.g. a WT subset")
     ap.add_argument("--gene-join", choices=["inner", "outer"], default="inner",
@@ -401,12 +428,15 @@ def main():
                        organism=args.organism, title_include=args.title_include,
                        title_exclude=args.title_exclude, dedup_gsm=not args.no_dedup_gsm,
                        gene_map=args.gene_map)
-    adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
+    if args.joint_labels:
+        adata = apply_joint_labels(adata, args.joint_labels)
+    else:
+        adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
     adata = clean_cells(adata, args.min_state_cells)
     out = Path(args.out) if args.out else Path(resolve_path(_CFG, _DC["built_reference_dir"])) / f"{args.tissue}_{args.study}"
     export_reference(adata, out)
     obs = adata.obs
-    write_provenance(out, inputs=[INVENTORY] + ([args.gene_map] if args.gene_map else []), params={
+    write_provenance(out, inputs=[INVENTORY] + [p for p in (args.gene_map, args.joint_labels) if p], params={
         **vars(args), "n_cells": int(adata.n_obs), "n_genes": int(adata.n_vars),
         "samples": sorted(obs["sample"].astype(str).unique()) if "sample" in obs else None,
         "cell_types": sorted(obs["cell_type"].astype(str).unique())})

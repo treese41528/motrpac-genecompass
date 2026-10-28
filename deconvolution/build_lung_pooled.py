@@ -26,9 +26,9 @@ HEALTHY = [
     ("GSE273062", ["GSE273062_sample0", "GSE273062_sample2"]),   # VeNx normoxia controls (adult)
     ("GSE252844", ["GSE252844_sample0"]),                        # C3 control (adult)
 ]
-OUT = "data/deconvolution/references_v3/LUNG_native_pooled"
+OUT = "data/deconvolution/references_v4/LUNG_native_pooled"
 
-def build_pooled_lung():
+def build_pooled_lung(joint_labels=None):
     """Assemble the 3-study pooled native-lung AnnData (the production recipe) and RETURN it
     (no export). Importable so make_purity_sweep.py --pooled-lung can run a within-pool purity
     sweep on the exact production reference."""
@@ -45,7 +45,10 @@ def build_pooled_lung():
     sc.pp.filter_genes(adata, min_cells=10)           # trim the outer-join union's long tail
     print(f"min-gene-cells=10: {before} -> {adata.n_vars} genes")
 
-    adata.obs["cell_type"] = br.canonicalize_labels(adata.obs["cell_type"], "lung")
+    if joint_labels:                                  # joint re-annotation replaces the consensus labels
+        adata = br.apply_joint_labels(adata, joint_labels)
+    else:
+        adata.obs["cell_type"] = br.canonicalize_labels(adata.obs["cell_type"], "lung")
     adata = br.clean_cells(adata, 20)                 # >=20 cells per (sample x state)
     print(f"\nafter clean_cells: {adata.n_obs} cells, {adata.obs['cell_type'].nunique()} cell types")
     print("cell-type counts:")
@@ -58,8 +61,10 @@ def build_pooled_lung():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=OUT, help=f"output reference dir (default {OUT})")
+    ap.add_argument("--joint-labels", help="cells_final.tsv.gz from joint_reannotate.py finalize "
+                    "(cell types + joint clusters as states) instead of the consensus labels")
     args = ap.parse_args()
-    adata = build_pooled_lung()
+    adata = build_pooled_lung(args.joint_labels)
     br.export_reference(adata, args.out)
     print(f"\nwrote pooled native lung reference -> {args.out}")
 
