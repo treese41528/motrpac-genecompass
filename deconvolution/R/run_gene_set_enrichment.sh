@@ -9,6 +9,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export PROJECT_ROOT PIPELINE_ROOT="$PROJECT_ROOT"
 command -v python3 >/dev/null 2>&1 && \
   eval "$(python3 "${PROJECT_ROOT}/deconvolution/_config_sh.py" 2>/dev/null || true)"
+export CFG_RESULTS_DIR CFG_GENECOMPASS_INPUT_DIR   # the R script reads these (an eval alone does not export)
 export R_LIBS_USER="${PROJECT_ROOT}/R_libs"
 export TMPDIR="${PROJECT_ROOT}/tmp"
 export R_PROFILE=/dev/null R_PROFILE_USER=/dev/null R_ENVIRON=/dev/null R_ENVIRON_USER=/dev/null

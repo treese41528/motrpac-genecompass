@@ -367,3 +367,45 @@ unless check 6 fails for it and not for the other).
   `run_stage10.py` reads the spec from `deconvolution.posctrl_prereg` when a profile sets it.
   `validate_parenchyma_dataanchored.py` accepts "Skeletal muscle cells" and now stops when a tissue
   matches no parenchyma block; before, it skipped silently.
+- 2026-10-29 — Two failures in the first downstream pass, fixed without reading any DE result. (1) Stage 10
+  stopped at the positive-control step. Every BLOOD T- and B-cell block (CD4+, CD8+, T, Treg, B) is
+  degenerate under §6, with median library 3–55, so it is skipped in DE. `compare_posctrl.py` lists only
+  the blocks that ran, so it reported the targets as stale labels. It now separates a target that is absent
+  from `de_summary.tsv`, which still stops the run, from one whose block exists but was skipped. Controls
+  of a skipped block score `not_testable` with a warning, as §6 implies. Stage 10 was resumed from step 2.
+  (2) Stage 12 crashed writing `subspace_probe.tsv`, because the new human root had no `gate_rcv10/`.
+  The transfer and embeddings had finished. `run_stage12.py` now creates the folder, and Stage 12 was
+  resumed from step 3.
+- 2026-10-29 — A third failure, found while checking the Stage 14 output. `de_technical_covariate_robustness.R`
+  hardcoded `data/deconvolution/results/motrpac`, so the first refs4 pass of the RIN/globin check scored the
+  July Z matrices. Five hotspots whose names exist in both arms were scored on July Z; six renamed hotspots
+  gave "no input". The script now reads `CFG_RESULTS_DIR`, as the DE wrapper does. The invalid table is kept
+  in `tmp/refs4_rin_globin_robustness_WRONG_julyZ.tsv` until this is reported, and Stage 14 step 3 was
+  rerun. The July-arm table is unaffected, since the default profile reads that folder.
+- 2026-10-29 — The rerun of that step still read the July Z. `_config_sh.py` prints plain `CFG_X=...`
+  lines, and the wrappers `eval` them without `export`, so the R process never saw `CFG_RESULTS_DIR`.
+  This had been true for every non-default profile. Other steps were unaffected, because the DE wrapper
+  uses the values in bash and Stage 13/14 pass `DE_DIR` explicitly. `de_technical_covariate_robustness.sh`
+  and `run_gene_set_enrichment.sh` now export the two values their R scripts read. The third pass logs
+  `Z from: .../results_refs4/motrpac` and scores all 11 hotspots.
+- 2026-10-29 — §11 RESULT. The full comparison against the July-reference v2 results is in
+  `REFS4_RERUN_RESULTS.md`.
+  - Blocks: 124 of 165 analysable.
+  - Hotspots: 11 under §6 (11 at a cut of 100, 9 with no rule), against 13 for July and 19 for July + §6.
+    The fall comes from the references, not the rule.
+  - Kept from July: BLOOD classical monocytes, HYPOTH OPC and LUNG endothelial cells; BLOOD megakaryocytes
+    as megakaryocytes and platelets.
+  - New: BLOOD erythroid cells and neutrophils; LUNG mesothelial and VSMC; SKMGN tenocytes; SKMVL satellite
+    cells and VSMC.
+  - Lost: the BLOOD lymphocyte hotspots (blocks now degenerate), muscle myocytes (q 0.061 / 0.089), LUNG
+    macrophages (degenerate) and KIDNEY fibroblasts (degenerate in both arms).
+  - Transfer: 11/11 preserved.
+  - Positive controls: 5 of 81 gene-level outcomes changed. Recovered 12 + 1 confounded → 14; wrong
+    direction 2 → 3 (SKMVL Plin4). BLOOD Tier C: cytotoxicity recovered in NK cells (p 0.028); the naive
+    and ISG programs are not testable.
+  - Enrichment: 5,906 pathways in 106 blocks, against 4,724 in 98.
+  - RIN/globin: 11/11 ROBUST.
+  - Composition flags on 2 hotspots (LUNG mesothelial, SKMVL VSMC).
+  - GRN conservation: median 0.310, against 0.292.
+  - Implausible fractions, reported and not adjusted: HIPPOC (endothelial 0.50, excitatory neurons 0.003),
+    KIDNEY monocytes 0.16, WATSC pDC 0.05, BLOOD lymphocytes < 0.01.

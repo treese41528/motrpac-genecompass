@@ -230,6 +230,8 @@ def main() -> None:
     logger.info(f"  rat gate = {rat_gate}  -> human gate = {human_gate}  "
                 f"({args.repeats} splits x {args.perms:,} perms)")
     logger.info(f"  steps from {args.from_step}: 1-2 per-tissue (transfer+embed), 3-4 whole-experiment (probe+compare)")
+    if not args.dry_run:
+        human_gate.mkdir(parents=True, exist_ok=True)  # a fresh human root has no gate folder yet
 
     if args.from_step <= 2 and not (ctx['model_dir'] / 'config.json').exists():
         msg = f"model config.json not found under {ctx['model_dir']} (needed for the embed step)  -> pass --model-dir"

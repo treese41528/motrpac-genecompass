@@ -12,14 +12,14 @@
 suppressWarnings(suppressMessages({ library(limma); library(edgeR); library(data.table) }))
 
 ROOT     <- Sys.getenv("PIPELINE_ROOT", ".")
-RESULTS  <- file.path(ROOT, "data/deconvolution/results/motrpac")
+RESULTS  <- file.path(Sys.getenv("CFG_RESULTS_DIR", unset = file.path(ROOT, "data/deconvolution/results")), "motrpac")
 BULK     <- file.path(ROOT, "data/deconvolution/motrpac_bulk")
 PHENO    <- file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv")
 GC_DIR   <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2"))
 DE_DIR   <- Sys.getenv("DE_DIR", unset = file.path(GC_DIR, "pseudobulk_de"))
 HOT      <- file.path(DE_DIR, "de_hotspots.tsv")
 OUT      <- file.path(DE_DIR, "rin_globin_robustness.tsv")
-cat(sprintf("DE folder: %s\n", DE_DIR))
+cat(sprintf("DE folder: %s\nZ from:    %s\n", DE_DIR, RESULTS))
 META_RDA <- "/depot/reese18/apps/MotrpacRatTraining6moData/data/TRNSCRPT_META.rda"
 
 # Shared cell-type -> filename contract (see deconvolution/R/celltype_names.R).
