@@ -476,7 +476,35 @@ dropped barcodes, which include low-quality nuclei as well as ambient RNA.
   also listed every refs4/v2 file it points to (size and mtime). The last job compares that listing again,
   to catch any write through a link. Jobs: build 12058463 → Stage 8/9 + check 12058464 → gate 12058465 →
   Stage 10 12058466 and Stage 12 12058467 → follow-up 12058468.
+  Resubmitted: build 12058507 → 12058508 → gate 12058509 → Stage 10 12058510, Stage 12 12058511 → follow-up 12058512.
 - 2026-10-29 — The §13 build (12058463) stopped on a check that every refs4 nucleus exists in the July build.
   Six of 23,892 do not; the diagnosis's script 5 had already matched only 23,886. They have no bearing on
   the soup, which is built from July barcodes absent from refs4, so the check now logs the count. No output
   had been produced. The chain was cancelled and resubmitted.
+- 2026-10-29 — §13 primary RESULT (job 12058508, `diagnostics/hippoc_refs4/6_refs4h_check.txt`): **FAILS.**
+  - SoupX `autoEstCont` gave rho 0.047–0.167 per sample and removed 7.3% of UMI overall, but only 7.9% of
+    the endothelial cluster's UMI (the diagnosis estimated about 55%).
+  - BayesPrism mean over 50 samples: Vascular cells 0.504, Neurons 0.402, Astrocytes 0.073 (refs4 with the
+    merged names: 0.501 / 0.393 / 0.085). The NNLS proxy agrees: neurons 0.15, against 0.13 uncorrected.
+  - The script-5 ambient estimate falls (vascular 0.38 → 0.27, astrocytes 0.40 → 0.20) but stays high.
+  - The registered downstream chain (gate 12058509 onward) is left to run as registered.
+
+## 13b. Per-nucleus ambient correction (registered 2026-10-29, after the §13 failure, before this build)
+
+**Why.** SoupX applies one contamination fraction to every nucleus in a sample. Ambient RNA is closer to a
+fixed number of UMI per droplet, so its share is largest in shallow nuclei, which is exactly the endothelial
+cluster (median 967 UMI). The diagnosis's per-type estimate (endothelial 0.55, neurons 0.07) reflects that.
+
+**Method** (`soupx_correct_reference.R`, `SOUPX_MODE=percell`; everything else as §13: same soup, same
+merges, same nuclei).
+1. For each refs4 cell type t, a non-expressed gene set G_t: up to 100 of the 2,000 most soup-abundant
+   genes that are specific to another type. This is the script-5 rule: another type's CPM ≥ 20 × (t's CPM + 1),
+   or another type > 200 CPM while t < 5% of it.
+2. Per nucleus c of type t: ambient UMI a_c = Σ_{G_t} counts / Σ_{G_t} soup fraction (an upper bound).
+3. Per sample: A_s = median a_c over its nuclei. Per nucleus: rho_c = min(0.9, A_s / UMI_c).
+4. `setContaminationFraction(rho_c)` and `adjustCounts(roundToInt = TRUE)` as before.
+
+Output: `references_v4/HIPPOC_GSE295314_ambcorr_percell`, profile `refs_v4h2.yaml`, `_refs4h2` folders.
+Same criteria as §13. **The downstream chain runs only if the composition is at least PARTIAL** (Neurons ≥ 0.30
+and no non-neuronal type > 0.40). Otherwise the attempt stops here and HIPPOC stays flagged unreliable.
+Seen before registration: the §13 result above.

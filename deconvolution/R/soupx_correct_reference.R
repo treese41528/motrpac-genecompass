@@ -62,8 +62,36 @@ if (!is.finite(med)) stop("FATAL: autoEstCont failed for every sample")
 rt$rho_used <- ifelse(is.na(rt$rho_autoEstCont), med, rt$rho_autoEstCont)
 rt$rho_source <- ifelse(is.na(rt$rho_autoEstCont), "median of other samples", "autoEstCont")
 
+# SOUPX_MODE=percell (REFERENCE_RELABEL_PREREG.md §13b): ambient as a fixed number of UMI per droplet.
+# Per type, non-expressed genes = soup-abundant genes specific to another type; per nucleus, ambient UMI =
+# counts on those genes / their soup fraction; per sample A_s = median; rho_c = min(0.9, A_s / UMI_c).
+mode <- Sys.getenv("SOUPX_MODE", "global"); stopifnot(mode %in% c("global", "percell"))
+if (mode == "percell") {
+  types <- sort(unique(ref$meta$cell_type))
+  cpm <- sapply(types, function(t) { v <- Matrix::rowSums(ref$X[, ref$meta$cell_type == t, drop = FALSE]); 1e6 * v / sum(v) })
+  rownames(cpm) <- ref$genes
+  soup_all <- Matrix::rowSums(src$X[, dropped, drop = FALSE]); soup_all <- soup_all / sum(soup_all)
+  top <- order(-soup_all)[1:2000]
+  G <- lapply(setNames(types, types), function(t) {
+    oth <- apply(cpm[, setdiff(types, t), drop = FALSE], 1, max)
+    keep <- top[oth[top] >= 20 * (cpm[top, t] + 1) | (oth[top] > 200 & cpm[top, t] < 0.05 * oth[top])]
+    head(keep, 100)
+  })
+  message("non-expressed genes per type: ", paste(sprintf("%s %d", types, lengths(G)), collapse = "; "))
+  umi <- Matrix::colSums(ref$X); a <- numeric(ncol(ref$X))
+  for (t in types) { ci <- which(ref$meta$cell_type == t); g <- G[[t]]
+    a[ci] <- Matrix::colSums(ref$X[g, ci, drop = FALSE]) / sum(soup_all[g]) }
+  rho_cell <- numeric(ncol(ref$X))
+  for (s in samples) { ci <- which(ref$meta$sample == s); A <- median(a[ci])
+    rt$ambient_umi_per_droplet[rt$sample == s] <- A; rho_cell[ci] <- pmin(0.9, A / pmax(umi[ci], 1)) }
+  rt$rho_source <- "percell: min(0.9, A_s / UMI)"
+  ty <- aggregate(rho_cell, list(cell_type = ref$meta$cell_type), median); names(ty)[2] <- "median_rho_cell"
+  print(ty, row.names = FALSE)
+}
 adjs <- lapply(samples, function(s) {
-  f <- fits[[s]]; sc <- setContaminationFraction(f$sc, rt$rho_used[rt$sample == s], forceAccept = TRUE)
+  f <- fits[[s]]
+  r <- if (mode == "percell") setNames(rho_cell[f$ci], colnames(f$sc$toc)) else rt$rho_used[rt$sample == s]
+  sc <- setContaminationFraction(f$sc, r, forceAccept = TRUE)
   adj <- adjustCounts(sc, roundToInt = TRUE, verbose = 0)
   stopifnot(identical(colnames(adj), colnames(f$sc$toc)))
   as(adj, "CsparseMatrix")
@@ -104,7 +132,7 @@ writeLines(c(sprintf("cells=%d genes=%d cell_types=%d cell_states=%d", ncol(Y), 
 git <- function(...) tryCatch(system2("git", c(...), stdout = TRUE), error = function(e) NA)
 write_json(list(script = "deconvolution/R/soupx_correct_reference.R", created = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
                 git_commit = git("rev-parse", "HEAD"), git_modified_tracked_files = git("diff", "--name-only", "HEAD"),
-                ref_dir = ref_dir, soup_source_dir = soup_dir, merges = merges, soupx_version = as.character(packageVersion("SoupX")),
+                ref_dir = ref_dir, soup_source_dir = soup_dir, merges = merges, mode = mode, soupx_version = as.character(packageVersion("SoupX")),
                 r_version = R.version.string, n_soup_barcodes = sum(dropped), umi_removed = 1 - sum(umi1) / sum(umi0),
                 host = Sys.info()[["nodename"]]), file.path(out_dir, "provenance_soupx.json"), auto_unbox = TRUE, pretty = TRUE)
 message("wrote ", out_dir)

@@ -1,6 +1,7 @@
 """HIPPOC refs4h (REFERENCE_RELABEL_PREREG.md §13): BayesPrism composition with the SoupX-corrected reference
 against the registered criteria, the NNLS proxy on the same reference, and the script-5 ambient estimator and
 soup/bulk correlations per type, before (refs4) and after correction."""
+import os
 from pathlib import Path
 
 import numpy as np
@@ -9,9 +10,11 @@ import scipy.io as sio
 from scipy.optimize import nnls
 
 D = Path("/depot/reese18/apps/motrpac-genecompass/data/deconvolution")
-R4, R3, RH = (D / "references_v4/HIPPOC_GSE295314", D / "references_v3/HIPPOC_GSE295314",
-              D / "references_v4/HIPPOC_GSE295314_ambcorr")
-RES4, RESH, BU = D / "results_refs4/motrpac/HIPPOC", D / "results_refs4h/motrpac/HIPPOC", D / "motrpac_bulk/HIPPOC"
+ARM = os.environ.get("HIPPOC_ARM", "refs4h")   # refs4h (§13, SoupX global) or refs4h2 (§13b, per nucleus)
+REFNAME = {"refs4h": "HIPPOC_GSE295314_ambcorr", "refs4h2": "HIPPOC_GSE295314_ambcorr_percell"}[ARM]
+R4, R3, RH = (D / "references_v4/HIPPOC_GSE295314", D / "references_v3/HIPPOC_GSE295314", D / "references_v4" / REFNAME)
+RES4, RESH, BU = D / "results_refs4/motrpac/HIPPOC", D / f"results_{ARM}/motrpac/HIPPOC", D / "motrpac_bulk/HIPPOC"
+print(f"arm {ARM}: {RH.name}")
 pd.set_option("display.width", 250)
 
 
@@ -38,8 +41,8 @@ fh = pd.read_csv(RESH / "estimated_fractions.csv", index_col=0)
 f4 = pd.read_csv(RES4 / "estimated_fractions.csv", index_col=0)
 mg = dict(zip(mh.cell_type_refs4, mh.cell_type))
 f4m = f4.T.groupby(lambda t: mg.get(t, t)).sum().T
-comp = pd.DataFrame({"refs4 (merged names)": f4m.mean(), "refs4h": fh.mean(), "refs4h sd": fh.std()}).fillna(0).round(3)
-print(f"\n(1) BayesPrism mean fraction over {len(fh)} HIPPOC samples\n" + comp.sort_values("refs4h", ascending=False).to_string())
+comp = pd.DataFrame({"refs4 (merged names)": f4m.mean(), ARM: fh.mean(), f"{ARM} sd": fh.std()}).fillna(0).round(3)
+print(f"\n(1) BayesPrism mean fraction over {len(fh)} HIPPOC samples\n" + comp.sort_values(ARM), ascending=False).to_string())
 neu = fh.mean().get("Neurons", 0.0); other = fh.mean().drop("Neurons", errors="ignore").max()
 verdict = ("WORKS" if neu >= 0.50 and other <= 0.30 else
            "FAILS" if neu < 0.30 or other > 0.40 else "PARTIAL")
@@ -70,7 +73,7 @@ def fit(P):
 
 PH = prof(XH, mh.cell_type.values); P4m = prof(X4, mh.cell_type.values)
 print("\n(2) NNLS proxy (sqrt scale, BayesPrism gene set):\n" +
-      pd.DataFrame({"refs4 merged, uncorrected": fit(P4m), "refs4h corrected": fit(PH)}).round(3).to_string())
+      pd.DataFrame({"refs4 merged, uncorrected": fit(P4m), f"{ARM} corrected": fit(PH)}).round(3).to_string())
 
 # (3) ambient estimator (script 5) and correlations, before and after
 soup = pd.Series(np.asarray(X3[junk][:, gi].sum(0)).ravel(), index=common); soup = soup / soup.sum() * 1e6
