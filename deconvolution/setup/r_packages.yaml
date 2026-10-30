@@ -24,6 +24,7 @@ packages:
   - {name: limSolve,   version: "2.0.1",  source: cran}   # Bisque needs it; back on CRAN 2025-06-24
   - {name: reticulate, version: "1.46.0", source: cran}
   - {name: anndata,    version: "0.8.0",  source: cran}
+  - {name: SoupX,      version: "1.6.2",  source: cran}   # HIPPOC ambient correction (REFERENCE_RELABEL_PREREG.md §13)
 
   # ---- Bioconductor ----
   - {name: DESeq2,     version: "1.46.0", source: bioc}    # VST metric (paper-faithful scoring)

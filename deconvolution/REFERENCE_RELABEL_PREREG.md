@@ -417,3 +417,57 @@ unless check 6 fails for it and not for the other).
   - An NNLS proxy (validated on CORTEX) with ambient-corrected profiles and merged vascular types gives
     neurons about two thirds. The neuron subtype split stays unidentifiable.
   - A corrected HIPPOC reference would be a reference change and needs its own entry before any rerun.
+
+## 13. HIPPOC ambient-corrected reference (registered 2026-10-29, before the corrected reference was built)
+
+**Decision.** The user asked on 2026-10-29 to attempt the fix proposed in `HIPPOC_REFS4_DIAGNOSIS.md`
+even though it is expected to change little: MoTrPAC itself finds only 244 training-regulated HIPPOC
+genes (15th of 19 tissues; Cell Genomics 2024: fewest exercise-responsive genes of 8 tissues), and refs4
+HIPPOC has no hotspots and no dose-significant genes. **The refs4 run (§8, §11 RESULT) stays the
+registered result.** This is a separate arm, `refs4h`, which differs from refs4 only in the HIPPOC
+reference; it is reported beside refs4 and replaces nothing unless the user decides so after reading it.
+
+**What was seen before registration.** Everything in `HIPPOC_REFS4_DIAGNOSIS.md`, including the NNLS-proxy
+prediction (neurons ≈ 0.66, vascular 0.13, microglia 0.11 with SoupX-style profile correction and
+vascular types merged). No corrected reference has been built and BayesPrism has not been run on one.
+
+**Method** (`deconvolution/R/soupx_correct_reference.R`; SoupX 1.6.2 from CRAN, added to `R_libs/` and the
+R manifest).
+1. *Soup profile per sample.* No raw (unfiltered) matrices exist for GSE295314, so the soup is estimated
+   from the barcodes the authors' matrices contain and refs4 dropped (`references_v3` barcodes absent from
+   `references_v4`): per sample, their summed counts, as the diagnosis did for the pool. Passed to SoupX
+   with `setSoupProfile`.
+2. *Contamination per sample:* `autoEstCont` with the refs4 cell types as clusters (default settings,
+   `forceAccept = TRUE` so a high estimate is recorded rather than stopping). The estimates are reported.
+   If `autoEstCont` fails for a sample, that sample gets the median rho of the others, recorded.
+3. *Correction:* `adjustCounts(roundToInt = TRUE)` with the cell types as clusters.
+4. *Labels.* Endothelial cells + Mural cells + Vascular leptomeningeal cells → **Vascular cells**.
+   Excitatory, Inhibitory, Thalamic neurons and Dentate gyrus granule cells → **Neurons** (their profiles are
+   near-collinear, log-CPM r 0.96–0.99, so their split is not identifiable). The joint clusters stay as
+   BayesPrism cell states, so neuronal and vascular subtypes still shape the model; only the reported types
+   merge. No other change: same nuclei, genes and samples as refs4.
+5. Built to `data/deconvolution/references_v4/HIPPOC_GSE295314_ambcorr` (provenance JSON beside it).
+
+**Rerun (profile `config/profiles/refs_v4h.yaml`; every output in `_refs4h` folders).** The 13 other
+tissues are linked from refs4. HIPPOC: Stage 8 from step 2 and Stage 9. Then, because the gate BH and the
+pooled DE fit are cross-tissue, the whole gate (10 splits × 10,000 permutations, §6 primary plus 100/0),
+Stage 10 (DE, positive controls, sensitivities), Stage 12 (HIPPOC transfer, then the human probe and the
+transfer comparison). GRNs are built only for hotspots: if the refs4h hotspot set equals refs4's, the
+refs4 networks are linked and only the steps reading DE are rerun (Stage 13 steps 3–4, Stage 14 steps
+2–3); otherwise Stage 13 is rerun in full.
+
+**Readouts and criteria (fixed now).**
+- *Composition (primary).* Mean BayesPrism fraction over the 50 HIPPOC samples. **The fix works** if
+  Neurons ≥ 0.50 and no non-neuronal type exceeds 0.30. Partial: Neurons 0.30–0.50. Fails: Neurons < 0.30
+  or a non-neuronal type > 0.40. The NNLS proxy is rerun on the built reference and reported beside it.
+- *Ambient check.* Per-type ambient fraction (the diagnosis's script-5 estimator) on the corrected
+  reference; correlation of each type with the soup and with the bulk.
+- *Downstream (reported, no criterion).* HIPPOC analysable blocks, hotspots, dose-significant genes and
+  positive controls (Gpr37l1, Ldlr; cell type ANY); all-tissue hotspot list, compared with refs4. Any
+  change outside HIPPOC can only come from the cross-tissue BH/IHW and is reported as such.
+- *Expectation stated in advance:* composition improves; HIPPOC hotspots and dose-significant genes stay at
+  or near zero, in line with MoTrPAC's weak hippocampal transcriptomic response.
+
+**Known limits not addressed.** Choroid plexus is in the bulk but not in the reference (a few percent);
+19 bulk genes are near zero in the reference (Eno2); without empty droplets the soup is a proxy built from
+dropped barcodes, which include low-quality nuclei as well as ambient RNA.
