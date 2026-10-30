@@ -471,3 +471,8 @@ refs4 networks are linked and only the steps reading DE are rerun (Stage 13 step
 **Known limits not addressed.** Choroid plexus is in the bulk but not in the reference (a few percent);
 19 bulk genes are near zero in the reference (Eno2); without empty droplets the soup is a proxy built from
 dropped barcodes, which include low-quality nuclei as well as ambient RNA.
+- 2026-10-29 — §13 run started, before any output was read. SoupX 1.6.2 was installed into `R_libs/` from
+  CRAN and added to `setup/r_packages.yaml`. The links were made by `slurm/analysis/refs4h_setup.sh`, which
+  also listed every refs4/v2 file it points to (size and mtime). The last job compares that listing again,
+  to catch any write through a link. Jobs: build 12058463 → Stage 8/9 + check 12058464 → gate 12058465 →
+  Stage 10 12058466 and Stage 12 12058467 → follow-up 12058468.

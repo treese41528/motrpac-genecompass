@@ -178,3 +178,35 @@ Logged in `REFERENCE_RELABEL_PREREG.md` (2026-10-28, 2026-10-29).
   hotspot. Claims about those cell types should not be carried forward from the July run.
 - **What remains unreliable under either reference.** Rat blood lymphocytes, hippocampal composition, and
   DE in the dominant parenchyma.
+
+## Comparison with MoTrPAC's own tissue-level results (added 2026-10-29)
+
+MoTrPAC works on bulk tissue, so its papers have no cell-type hotspots. Their per-tissue counts of
+training-regulated genes still show where to expect signal. Counts below are unique transcript features in
+`MotrpacRatTraining6moData::TRAINING_REGULATED_FEATURES`; the package agrees with the Nature 2024 Fig. 2
+numbers.
+
+| Tissue | MoTrPAC training-regulated genes (rank of 19) | refs4 hotspots | refs4 dose-significant genes |
+|---|---|---|---|
+| ADRNL | 4,493 (1) | not analysed | |
+| BLOOD | 1,582 (5) | 4 | 20,029 |
+| LUNG | 961 (6) | 3 | |
+| SKMVL | 766 (7) | 2 | |
+| SKMGN | 566 (10) | 1 | |
+| HIPPOC | 244 (15) | 0 | 0 |
+| TESTES | 107 (16) | 0 | 0 |
+| CORTEX | 105 (17) | 0 | 10 |
+| HYPOTH | 16 (19) | 1 (OPC) | 1 |
+
+- **Brain and testes are weak in both.** The Cell Genomics 2024 companion paper (8 tissues, week 8) gives
+  hippocampus the fewest exercise-responsive genes (124) but one of the strongest female DNA-methylation
+  responses. The authors suggest the hippocampal response is partly non-transcriptional. Our zero HIPPOC
+  hotspots and genes fit this, so the broken HIPPOC composition is unlikely to hide a strong signal. A
+  weak response is still not none: bulk finds 244 genes where we find 0.
+- **Our hotspot tissues rank high in MoTrPAC** (BLOOD, LUNG, both muscles).
+- **One tension: HYPOTH.** Its OPC block is a hotspot in July and refs4, yet MoTrPAC finds the fewest
+  training-regulated genes there (16). The gate measures how well the embedding separates trained from
+  sedentary samples, not DE counts, so it can see signal bulk DE misses. Still, this hotspot should be read
+  sceptically: it has one dose-significant gene.
+- The ambient-corrected HIPPOC arm (`REFERENCE_RELABEL_PREREG.md` §13) was run anyway at the user's
+  request; see `HIPPOC_REFS4_DIAGNOSIS.md`.

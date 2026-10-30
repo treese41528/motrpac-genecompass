@@ -99,7 +99,25 @@ then carries the most soup and wins.
   The NNLS proxy predicts neurons at about two thirds, with vascular cells at 0.13 and microglia at 0.11.
   It does not predict a correct excitatory/inhibitory split. Reporting merged "Neurons" for HIPPOC, or
   accepting the subtype split as unidentifiable, would be part of that decision.
+- **What MoTrPAC itself found for hippocampus (checked 2026-10-29).** The MoTrPAC papers are bulk-only, so
+  there are no cell-type hotspots to compare with. At tissue level, HIPPOC has 244 training-regulated genes,
+  15th of 19 tissues (`MotrpacRatTraining6moData`). The Cell Genomics 2024 companion paper gives
+  hippocampus the fewest exercise-responsive genes of 8 tissues (124 at week 8) but a strong female
+  DNA-methylation response, which it links to neurogenesis. A correct HIPPOC composition is therefore not
+  expected to produce hotspots. The fix was attempted anyway (user, 2026-10-29); see "The fix: refs4h" below.
 - **Wider lesson:** the ambient fraction of a nuclei reference should be part of reference QC. A
   low-quality cluster with a high ambient share is a deconvolution sink. LIVER, HEART and KIDNEY are also
   snRNA references and have not been checked this way. KIDNEY's "Monocytes" at 0.16 (101 nuclei) fits the
   same pattern and is the first one to check.
+
+## The fix: refs4h (REFERENCE_RELABEL_PREREG.md §13)
+
+Pre-registered (6fae0bf) before the build. `deconvolution/R/soupx_correct_reference.R` runs SoupX 1.6.2 per
+sample, with the soup from that sample's dropped barcodes, `autoEstCont` on the refs4 cell types, and
+`adjustCounts`. It merges Endothelial + Mural + VLMC into Vascular cells and the four neuron types into
+Neurons, keeping the joint clusters as cell states. The output is
+`references_v4/HIPPOC_GSE295314_ambcorr`. The whole downstream chain reruns in `_refs4h` folders,
+with the other 13 tissues linked from refs4. Jobs 12058463 (build), 12058464 (Stage 8/9 and
+`6_refs4h_check.py`), 12058465 (gate), 12058466 (Stage 10), 12058467 (Stage 12) and 12058468 (follow-up).
+
+Results: pending.
