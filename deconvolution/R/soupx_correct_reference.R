@@ -31,7 +31,8 @@ read_ref <- function(d) {
 ref <- read_ref(ref_dir); src <- read_ref(soup_dir)
 stopifnot(identical(ref$genes, src$genes))
 key_ref <- paste(ref$meta$barcode, ref$meta$sample); key_src <- paste(src$meta$barcode, src$meta$sample)
-stopifnot(!anyDuplicated(key_ref), all(key_ref %in% key_src))
+stopifnot(!anyDuplicated(key_ref))
+message(sprintf("reference nuclei absent from the source build: %d (no effect on the soup)", sum(!(key_ref %in% key_src))))
 dropped <- !(key_src %in% key_ref)
 message(sprintf("soup barcodes: %d of %d in the source build", sum(dropped), length(key_src)))
 

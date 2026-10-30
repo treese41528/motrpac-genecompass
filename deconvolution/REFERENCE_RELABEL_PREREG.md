@@ -476,3 +476,7 @@ dropped barcodes, which include low-quality nuclei as well as ambient RNA.
   also listed every refs4/v2 file it points to (size and mtime). The last job compares that listing again,
   to catch any write through a link. Jobs: build 12058463 → Stage 8/9 + check 12058464 → gate 12058465 →
   Stage 10 12058466 and Stage 12 12058467 → follow-up 12058468.
+- 2026-10-29 — The §13 build (12058463) stopped on a check that every refs4 nucleus exists in the July build.
+  Six of 23,892 do not; the diagnosis's script 5 had already matched only 23,886. They have no bearing on
+  the soup, which is built from July barcodes absent from refs4, so the check now logs the count. No output
+  had been produced. The chain was cancelled and resubmitted.
