@@ -42,7 +42,7 @@ f4 = pd.read_csv(RES4 / "estimated_fractions.csv", index_col=0)
 mg = dict(zip(mh.cell_type_refs4, mh.cell_type))
 f4m = f4.T.groupby(lambda t: mg.get(t, t)).sum().T
 comp = pd.DataFrame({"refs4 (merged names)": f4m.mean(), ARM: fh.mean(), f"{ARM} sd": fh.std()}).fillna(0).round(3)
-print(f"\n(1) BayesPrism mean fraction over {len(fh)} HIPPOC samples\n" + comp.sort_values(ARM), ascending=False).to_string())
+print(f"\n(1) BayesPrism mean fraction over {len(fh)} HIPPOC samples\n" + comp.sort_values(ARM, ascending=False).to_string())
 neu = fh.mean().get("Neurons", 0.0); other = fh.mean().drop("Neurons", errors="ignore").max()
 verdict = ("WORKS" if neu >= 0.50 and other <= 0.30 else
            "FAILS" if neu < 0.30 or other > 0.40 else "PARTIAL")

@@ -120,4 +120,36 @@ Neurons, keeping the joint clusters as cell states. The output is
 with the other 13 tissues linked from refs4. Jobs 12058463 (build), 12058464 (Stage 8/9 and
 `6_refs4h_check.py`), 12058465 (gate), 12058466 (Stage 10), 12058467 (Stage 12) and 12058468 (follow-up).
 
-Results: pending.
+Jobs 12058507–12058512 were resubmitted after a too-strict input check stopped the first build.
+
+**Result: neither registered correction works.**
+
+| HIPPOC mean BayesPrism fraction (50 samples) | refs4 (merged names) | §13: SoupX, one rho per sample | §13b: SoupX, rho per nucleus |
+|---|---|---|---|
+| Vascular cells | 0.501 | 0.504 | 0.465 |
+| Neurons | 0.393 | 0.402 | 0.443 |
+| Astrocytes | 0.085 | 0.073 | 0.075 |
+| UMI removed (overall / endothelial) | – | 7.3% / 7.9% | 8.8% / 23% |
+| NNLS proxy, neurons | 0.13 | 0.15 | 0.26 |
+| Verdict (Neurons ≥ 0.50 and nothing else > 0.30) | | FAILS | FAILS |
+
+- **§13.** SoupX's `autoEstCont` estimated 5–17% contamination per sample and applied it evenly. That
+  barely touched the shallow vascular nuclei, so the merged vascular type absorbed the bulk as endothelial
+  had.
+- **§13b,** registered after §13 failed, with ambient taken as a fixed UMI count per droplet. It removed
+  more from shallow nuclei and moved neurons up by 5 points, but vascular cells stay at 0.47.
+  `adjustCounts` removed less than the per-nucleus rho implied (23% of endothelial UMI, against about
+  40–50% expected at 967 UMI).
+- **Why the NNLS prediction did not hold.** The diagnosis corrected whole-type *profiles* with the soup
+  and got neurons at 0.66. SoupX subtracts counts nucleus by nucleus and gene by gene, and it cannot remove
+  more than a nucleus holds on soup genes. Most of the cytoplasmic and dendritic RNA that makes the
+  vascular profile bulk-like stays. Profile-level subtraction is not a reference BayesPrism can use, since
+  it needs nuclei.
+- **What is left untried.** CellBender on the raw droplets would be the proper fix, but GSE295314 has no
+  raw (unfiltered) matrices. Other options: a different HIPPOC reference with deeper nuclei or whole cells,
+  or excluding the vascular type, which the diagnosis showed moves the mass to astrocytes and mural cells.
+  None is registered.
+- **Conclusion.** HIPPOC composition remains unreliable and stays flagged. MoTrPAC's weak hippocampal
+  response (244 genes) means little is likely being lost. The §13 downstream chain (gate 12058509 onward)
+  was registered before the composition result and is left to finish. Its HIPPOC composition equals
+  refs4's, so it is expected to reproduce the refs4 HIPPOC results.

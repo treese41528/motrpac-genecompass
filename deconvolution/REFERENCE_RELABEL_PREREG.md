@@ -508,3 +508,11 @@ Output: `references_v4/HIPPOC_GSE295314_ambcorr_percell`, profile `refs_v4h2.yam
 Same criteria as §13. **The downstream chain runs only if the composition is at least PARTIAL** (Neurons ≥ 0.30
 and no non-neuronal type > 0.40). Otherwise the attempt stops here and HIPPOC stays flagged unreliable.
 Seen before registration: the §13 result above.
+- 2026-10-30 — §13b RESULT (build 12058880, Stage 8/9 12058881; check rerun alone as 12059461 after a
+  syntax error in the check script, `6_refs4h2_check.txt`): **FAILS.**
+  - Ambient UMI per droplet A_s was 370–515. The correction removed 8.8% of UMI overall and 23% of the
+    endothelial cluster's UMI. SoupX's `adjustCounts` removed less than the per-nucleus rho implied.
+  - BayesPrism mean: Vascular cells 0.465, Neurons 0.443, Astrocytes 0.075 (refs4: 0.501 / 0.393 / 0.085).
+    The NNLS proxy gives neurons 0.26, against 0.13 uncorrected.
+  - By the registered rule, no downstream run follows and the attempt stops. HIPPOC composition stays
+    flagged unreliable. The refs4h2 Stage 8/9 outputs are kept as the record.
