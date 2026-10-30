@@ -141,7 +141,7 @@ neither muscle hotspot is a myocyte block.
 
 | Tissue | Observation | Reading |
 |---|---|---|
-| **HIPPOC** | Endothelial cells 0.498, Inhibitory neurons 0.358, Excitatory neurons **0.003**, DG granule 0.028 | Not plausible for hippocampus. The reference has 3,049 excitatory and 4,803 DG granule cells but only 341 endothelial cells, so the problem is the deconvolution's split, not a missing type. July (microglia 0.19) was not plausible either. HIPPOC has no hotspots and no dose-significant genes. Needs diagnosis before HIPPOC is used for anything. |
+| **HIPPOC** | Endothelial cells 0.498, Inhibitory neurons 0.358, Excitatory neurons **0.003**, DG granule 0.028 | Diagnosed in `HIPPOC_REFS4_DIAGNOSIS.md`. The cause is ambient RNA in the nuclei reference: the soup matches whole-tissue bulk better than any nucleus profile, and the endothelial cluster (about 55% ambient) absorbs it. July's 74% excitatory was the same artefact (91% of those barcodes were ambient). Ambient correction plus merged vascular types brings neurons to about two thirds in an NNLS proxy, but the neuron subtype split stays unidentifiable. No hotspots or dose-significant genes; mark HIPPOC composition unreliable. |
 | **KIDNEY** | "Monocytes" 0.161 (j22, non-classical: Adgre4, Treml4, Spn; 101 reference cells) | Far too high for kidney. Either a sink profile or blood carried with the tissue. Not a hotspot. |
 | **BLOOD** | Erythroid 0.70, platelets 0.15, neutrophils 0.07, lymphocytes < 0.01 | Erythroid and platelet dominance is expected for whole-blood RNA. The lymphocyte total is too low (above). |
 | **WATSC** | Plasmacytoid dendritic cells 0.048 | High for adipose. Not a hotspot. |

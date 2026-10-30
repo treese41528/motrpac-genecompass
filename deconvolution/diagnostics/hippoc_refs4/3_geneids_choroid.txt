@@ -1,0 +1,47 @@
+ref genes 17895, bulk genes 22050, shared IDs 17895, BayesPrism 15313
+
+(a) BayesPrism genes with bulk CPM >= 50 but reference CPM < 1: 19 (bulk CPM mass 0.4%)
+                          sym  bulk_cpm  ref_cpm
+ENSRNOG00000013141       Eno2    1066.1      0.2
+ENSRNOG00000034093  Hsc70-ps1     295.0      0.2
+ENSRNOG00000056248      Marf1     242.2      0.0
+ENSRNOG00000010302    Rasl10b     231.4      0.1
+ENSRNOG00000000461       Brd2     192.6      0.4
+ENSRNOG00000033143      Timp2     192.1      0.8
+ENSRNOG00000050994       Cttn     188.8      0.4
+ENSRNOG00000031244      Rpl7a     149.9      0.9
+ENSRNOG00000015447   Calcoco1     132.3      0.4
+ENSRNOG00000001092         Kl     105.3      0.2
+ENSRNOG00000026870      Clic6     102.7      0.1
+ENSRNOG00000039107       Mfrp      96.1      0.4
+ENSRNOG00000009022       Rtkn      94.2      0.2
+ENSRNOG00000005505      Wbp11      92.0      0.2
+ENSRNOG00000050805    Tsc22d4      89.8      0.2
+ENSRNOG00000030180    Lrrc10b      68.0      0.5
+ENSRNOG00000057855         F5      61.6      0.6
+ENSRNOG00000039876    Hnrnpa0      56.7      0.6
+ENSRNOG00000005770    Sostdc1      50.7      0.2
+
+  of those, symbol also present in the reference under another ID: 0
+  reference genes with zero counts in all nuclei: 1155
+
+(b) choroid plexus / other markers
+     sym                 id  bulk_cpm  ref_cpm  in_BP
+    Ttr ENSRNOG00000016275    1799.1      1.1   True
+     Kl ENSRNOG00000001092     105.3      0.2   True
+  Folr1 ENSRNOG00000019902      13.2      0.1   True
+  Clic6 ENSRNOG00000026870     102.7      0.1   True
+ Kcnj13 ENSRNOG00000016057      19.0     20.1   True
+   Otx2 ENSRNOG00000065063       4.7      NaN  False
+Sostdc1 ENSRNOG00000005770      50.7      0.2   True
+   Prlr ENSRNOG00000057557       9.3     16.7   True
+   Aqp1 ENSRNOG00000011648      16.6      0.2   True
+     F5 ENSRNOG00000057855      61.6      0.6   True
+  Enpp2 ENSRNOG00000004089     354.8    165.9   True
+Rarres2 ENSRNOG00000024705       6.1      7.3   True
+   Pmch ENSRNOG00000066777      18.1      NaN  False
+   Hcrt ENSRNOG00000018892       2.3      0.4   True
+    Avp ENSRNOG00000021229      15.7      0.5   True
+    Oxt ENSRNOG00000021225      18.5      0.1   True
+    Hbb ENSRNOG00000081310       2.2      NaN  False
+  Ptgds ENSRNOG00000015550     499.9    358.4   True

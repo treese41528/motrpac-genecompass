@@ -409,3 +409,11 @@ unless check 6 fails for it and not for the other).
   - GRN conservation: median 0.310, against 0.292.
   - Implausible fractions, reported and not adjusted: HIPPOC (endothelial 0.50, excitatory neurons 0.003),
     KIDNEY monocytes 0.16, WATSC pDC 0.05, BLOOD lymphocytes < 0.01.
+- 2026-10-29 — HIPPOC diagnosed (`HIPPOC_REFS4_DIAGNOSIS.md`, `diagnostics/hippoc_refs4/`); diagnostic only,
+  nothing in the registered run changed. The cause is ambient RNA in the snRNA reference.
+  - The soup (the 254,663 dropped barcodes) correlates with the bulk at 0.87, more than any type does
+    (≤ 0.82). The endothelial cluster is about 55% ambient and absorbs the bulk.
+  - July's "Excitatory neurons" was 91% ambient barcodes, so the July composition was the same artefact.
+  - An NNLS proxy (validated on CORTEX) with ambient-corrected profiles and merged vascular types gives
+    neurons about two thirds. The neuron subtype split stays unidentifiable.
+  - A corrected HIPPOC reference would be a reference change and needs its own entry before any rerun.

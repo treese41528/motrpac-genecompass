@@ -1,0 +1,129 @@
+reference: 23892 cells x 17895 genes, 11 types
+bulk: 50 samples x 22050 genes (bulk_samples.tsv lists 50)
+BayesPrism gene set: 15313
+
+=== 1. per-type quality
+                                  cells  median_umi  median_genes
+ct                                                              
+Astrocytes                        1631        3146          1765
+Dentate gyrus granule cells       4803        7205          3186
+Endothelial cells                  341         967           709
+Excitatory neurons                3049        6211          2905
+Inhibitory neurons                4145        4161          2239
+Microglia                         2139        1661          1156
+Mural cells                         40        1098           858
+Oligodendrocyte precursor cells   2146        2771          1684
+Oligodendrocytes                  4815        1916          1215
+Thalamic neurons                   598        6116          3006
+Vascular leptomeningeal cells      185        3749          2070
+
+=== 2. marker CPM per reference type and in the bulk (mean)
+        group    gene                 id    Ast     DG   Endo    Exc    Inh    Mic    Mur    OPC    Olig   Thal   VLMC    BULK  in_BP
+      neuron  Snap25 ENSRNOG00000006037  378.0 1777.0  664.0 2012.0 1337.0  234.0  563.0  535.0   337.0 1563.0  152.0  1440.0   True
+      neuron    Syt1 ENSRNOG00000006426  687.0 4896.0  917.0 4684.0 6835.0  515.0  375.0 1124.0   747.0 3910.0  314.0  1492.0   True
+      neuron  Rbfox3 ENSRNOG00000003386   26.0   42.0   44.0   38.0   34.0   13.0   34.0   15.0    21.0   37.0   13.0   166.0   True
+      neuron  Camk2a ENSRNOG00000018712  116.0  804.0  146.0  527.0  250.0   48.0   85.0   50.0   111.0  227.0   55.0  1144.0   True
+      neuron Slc17a7 ENSRNOG00000020650  233.0  480.0  364.0  478.0   97.0  195.0  188.0  140.0   186.0   59.0  122.0  1975.0   True
+      neuron Neurod6 ENSRNOG00000026055   19.0   65.0   40.0   94.0    6.0   14.0    0.0   11.0    21.0   14.0   23.0   156.0   True
+      neuron   Prox1 ENSRNOG00000003694   38.0  188.0   21.0    5.0   79.0   51.0    0.0   39.0   198.0   22.0   27.0   103.0   True
+      neuron    Gad1 ENSRNOG00000000007   66.0   53.0  121.0   16.0  722.0   40.0  188.0   37.0    56.0  281.0   24.0   202.0   True
+      neuron    Gad2 ENSRNOG00000017803   25.0   18.0   23.0    7.0   10.0 1192.0   17.0  196.0     9.0    3.0   16.0    11.0   True
+ endothelial   Cldn5 ENSRNOG00000077978    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN    59.0  False
+ endothelial    Flt1 ENSRNOG00000000940   16.0    3.0 2957.0    3.0    3.0   15.0   17.0    4.0     6.0    4.0   67.0    79.0   True
+ endothelial Slco1a4 ENSRNOG00000047493    9.0    1.0  958.0    2.0    2.0    4.0  256.0    3.0     5.0    5.0  379.0    55.0   True
+ endothelial   Itm2a ENSRNOG00000002365    4.0    2.0  353.0    4.0    4.0    7.0   51.0    4.0     4.0    5.0   36.0    34.0  False
+ endothelial    Ly6a               None    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN     NaN  False
+       astro    Gfap ENSRNOG00000002919  737.0   15.0  402.0   15.0   23.0   80.0  426.0   52.0    94.0   30.0   92.0   653.0   True
+       astro    Aqp4 ENSRNOG00000016043  807.0   16.0  279.0   15.0   15.0   51.0  307.0   37.0    53.0   21.0   47.0   468.0   True
+       astro  Slc1a3 ENSRNOG00000016163 3055.0   46.0  583.0   37.0   54.0  875.0  870.0  652.0   285.0   41.0 1276.0   737.0   True
+       oligo     Mbp ENSRNOG00000016516 2085.0  210.0 2467.0  214.0  218.0 1101.0 1791.0 1464.0  7996.0  440.0  915.0  5370.0   True
+       oligo    Plp1 ENSRNOG00000002419 1035.0  268.0 1501.0  285.0  383.0 1438.0 1109.0 1531.0 12642.0  665.0 1087.0  1971.0  False
+       oligo     Mog               None    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN     NaN  False
+   microglia  Cx3cr1 ENSRNOG00000018509   18.0   14.0   28.0    5.0    5.0 1075.0    0.0   24.0     5.0    1.0   19.0    23.0   True
+   microglia  P2ry12 ENSRNOG00000013902    5.0    3.0    4.0    2.0    2.0  154.0    0.0    7.0     3.0    2.0    1.0    12.0   True
+   microglia   Csf1r ENSRNOG00000018414   46.0   28.0   77.0   15.0   14.0 1826.0   17.0   50.0    23.0    8.0   33.0   112.0   True
+nuclear/mito  Malat1               None    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN     NaN  False
+nuclear/mito    Meg3               None    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN     NaN  False
+nuclear/mito  Mt-co1 ENSRNOG00000034234 7113.0  737.0 9601.0 1220.0 1292.0 3004.0 7914.0 2020.0  3107.0  914.0 2474.0 35441.0  False
+nuclear/mito  Mt-nd1 ENSRNOG00000030644 4465.0  543.0 5087.0 1134.0 1042.0 2154.0 4162.0 1341.0  1846.0  513.0 1521.0  8784.0  False
+nuclear/mito Mt-cytb               None    NaN    NaN    NaN    NaN    NaN    NaN    NaN    NaN     NaN    NaN    NaN     NaN  False
+
+=== 3. fractions: BayesPrism vs independent NNLS (15313 genes; markers 550)
+                                  BayesPrism  NNLS_lin  NNLS_sqrt  NNLS_markers
+Endothelial cells                     0.498     0.689      0.594         0.127
+Inhibitory neurons                    0.358     0.000      0.063         0.000
+Astrocytes                            0.085     0.034      0.210         0.207
+Dentate gyrus granule cells           0.028     0.004      0.024         0.073
+Oligodendrocytes                      0.019     0.155      0.106         0.543
+Thalamic neurons                      0.004     0.039      0.000         0.000
+Excitatory neurons                    0.003     0.000      0.000         0.000
+Mural cells                           0.002     0.078      0.003         0.000
+Microglia                             0.001     0.000      0.000         0.050
+Vascular leptomeningeal cells         0.001     0.000      0.000         0.000
+Oligodendrocyte precursor cells       0.000     0.000      0.000         0.000
+
+  Spearman(bulk mean, profile) per type: {'Ast': np.float64(0.803), 'DG': np.float64(0.752), 'Endo': np.float64(0.804), 'Exc': np.float64(0.744), 'Inh': np.float64(0.764), 'Mic': np.float64(0.71), 'Mur': np.float64(0.663), 'OPC': np.float64(0.751), 'Olig': np.float64(0.78), 'Thal': np.float64(0.75), 'VLMC': np.float64(0.707)}
+
+=== 4. per-sample: endothelial min 0.377 median 0.501 max 0.529; corr(endo, Exc+Inh+DG) = -0.390
+  per-sample fraction SD per type: {'Inhibitory neurons': 0.017, 'Excitatory neurons': 0.004, 'Dentate gyrus granule cells': 0.013, 'Oligodendrocyte precursor cells': 0.001, 'Oligodendrocytes': 0.012, 'Microglia': 0.001, 'Astrocytes': 0.008, 'Endothelial cells': 0.024, 'Thalamic neurons': 0.022, 'Vascular leptomeningeal cells': 0.002, 'Mural cells': 0.002}
+
+  celltype_files columns: ['tissue', 'cell_type', 'file']
+  share of total Z mass per type: {'Astrocytes': 0.088, 'Dentate_gyrus_granule_cells': 0.03, 'Endothelial_cells': 0.501, 'Excitatory_neurons': 0.0, 'Inhibitory_neurons': 0.358, 'Microglia': 0.001, 'Mural_cells': 0.002, 'Oligodendrocyte_precursor_cells': 0.0, 'Oligodendrocytes': 0.02, 'Thalamic_neurons': 0.0, 'Vascular_leptomeningeal_cells': 0.0}
+
+=== 5. top 40 genes by endothelial Z mass
+                         sym  Zendo_share_of_gene  Zendo_mass_pct  ref_Endo_cpm  ref_max_neuron_cpm
+ENSRNOG00000016516      mbp                 0.79            1.05          2467                 218
+ENSRNOG00000046005     scd2                 0.72            0.59          1870                 258
+ENSRNOG00000018454     apoe                 0.71            0.44          7828                 574
+ENSRNOG00000014230    map1a                 0.63            0.41           796                 193
+ENSRNOG00000011841     map2                 0.65            0.36          1095                1338
+ENSRNOG00000017428    map1b                 0.48            0.35          1226                1287
+ENSRNOG00000059605      ddn                 0.76            0.31           309                  39
+ENSRNOG00000025584    agap2                 0.73            0.30           308                  82
+ENSRNOG00000007290   atp1a2                 0.68            0.30          1046                  52
+ENSRNOG00000011751     ncdn                 0.43            0.29           306                 109
+ENSRNOG00000016770    calm3                 0.53            0.28           385                 124
+ENSRNOG00000019207   shank1                 0.74            0.28           153                 132
+ENSRNOG00000058842   sptbn2                 0.71            0.27           322                 192
+ENSRNOG00000015396   sptan1                 0.60            0.25           729                 485
+ENSRNOG00000016156    nptxr                 0.54            0.25           329                 227
+ENSRNOG00000034254    potef                 0.44            0.25           865                 277
+ENSRNOG00000020650  slc17a7                 0.51            0.25           364                 480
+ENSRNOG00000005195     cst3                 0.60            0.24          3555                 674
+ENSRNOG00000009439   eef1a1                 0.59            0.24            58                  11
+ENSRNOG00000052113  ppp1r9b                 0.73            0.24           216                  36
+ENSRNOG00000010688     nrgn                 0.58            0.23           828                 341
+ENSRNOG00000015093  sparcl1                 0.40            0.22          1984                 699
+ENSRNOG00000054775     arf3                 0.64            0.22           257                 226
+ENSRNOG00000048682    zwint                 0.38            0.22           561                 356
+ENSRNOG00000006557   cyfip2                 0.53            0.21           293                 401
+ENSRNOG00000049560     glul                 0.66            0.21           306                  31
+ENSRNOG00000010389    ndrg2                 0.76            0.21           852                  78
+ENSRNOG00000005434   sptbn1                 0.70            0.21          1914                 499
+ENSRNOG00000005299    kif5a                 0.47            0.20           334                 294
+ENSRNOG00000020266     eef2                 0.66            0.20           374                  58
+ENSRNOG00000030714      bsn                 0.66            0.20           281                 506
+ENSRNOG00000043387      cpe                 0.49            0.20          1782                 961
+ENSRNOG00000052080   camk2b                 0.52            0.20           306                 412
+ENSRNOG00000006979     hpca                 0.56            0.19           141                  43
+ENSRNOG00000047505   tubb4a                 0.49            0.18           213                 108
+ENSRNOG00000008810     nsmf                 0.70            0.18           311                  78
+ENSRNOG00000006989    vamp2                 0.58            0.17           290                  93
+ENSRNOG00000001295    s100b                 0.76            0.17          1007                  84
+ENSRNOG00000058561    srrm2                 0.59            0.17           394                 358
+ENSRNOG00000018712   camk2a                 0.59            0.17           146                 804
+
+  endothelial profile CPM mass on genes where Endo is the max type: 29.5%
+  correlation (log CPM) between reference profiles:
+       Ast    DG  Endo   Exc   Inh   Mic   Mur   OPC  Olig  Thal  VLMC
+Ast   1.00  0.88  0.89  0.87  0.88  0.84  0.77  0.91  0.90  0.88  0.87
+DG    0.88  1.00  0.82  0.99  0.96  0.81  0.71  0.91  0.89  0.95  0.81
+Endo  0.89  0.82  1.00  0.82  0.83  0.83  0.79  0.85  0.85  0.83  0.87
+Exc   0.87  0.99  0.82  1.00  0.96  0.79  0.70  0.91  0.88  0.96  0.80
+Inh   0.88  0.96  0.83  0.96  1.00  0.80  0.72  0.92  0.89  0.97  0.80
+Mic   0.84  0.81  0.83  0.79  0.80  1.00  0.70  0.85  0.85  0.79  0.81
+Mur   0.77  0.71  0.79  0.70  0.72  0.70  1.00  0.74  0.74  0.72  0.83
+OPC   0.91  0.91  0.85  0.91  0.92  0.85  0.74  1.00  0.92  0.91  0.84
+Olig  0.90  0.89  0.85  0.88  0.89  0.85  0.74  0.92  1.00  0.89  0.83
+Thal  0.88  0.95  0.83  0.96  0.97  0.79  0.72  0.91  0.89  1.00  0.81
+VLMC  0.87  0.81  0.87  0.80  0.80  0.81  0.83  0.84  0.83  0.81  1.00
