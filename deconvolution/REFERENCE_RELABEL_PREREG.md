@@ -516,3 +516,18 @@ Seen before registration: the §13 result above.
     The NNLS proxy gives neurons 0.26, against 0.13 uncorrected.
   - By the registered rule, no downstream run follows and the attempt stops. HIPPOC composition stays
     flagged unreliable. The refs4h2 Stage 8/9 outputs are kept as the record.
+- 2026-10-31 — §13 downstream RESULT (gate 12058509, Stage 10 12058510, Stage 12 12058511, follow-up
+  12058512; all completed). The HIPPOC composition equals refs4's, and so do the results.
+  - Hotspots: 11 under §6 (100 → 11, 0 → 9), the **same set as refs4**. No HIPPOC block reaches q < 0.05;
+    the best is Neurons, AUC 0.650, q 0.27. Outside HIPPOC, AUCs are identical; q moves by at most 0.012,
+    from the cross-tissue BH.
+  - DE: 122/160 blocks run (refs4 124/165; merging labels changes the count). HIPPOC has 0 dose-significant
+    genes in every block. All tissues: 48,586 dose-significant genes, against 48,522; the pooled IHW refit
+    moves non-HIPPOC blocks by a few genes.
+  - Positive controls: HIPPOC Gpr37l1 and Ldlr are not significant, as before. One outcome changes
+    elsewhere: SKMGN Mfn1 goes from not significant to recovered (FDR_IHW 0.058 → 0.046). It sits on the
+    threshold and moved only through the pooled refit, so it is not a real gain.
+  - Transfer 11/11 preserved; RIN/globin 11/11 ok. The GRNs were linked from refs4 (hotspot set unchanged),
+    and conservation is identical (median 0.297).
+  - Link check: none of the 1,840 refs4/v2 files changed in size or mtime. The follow-up job reported a
+    change only because the before-listing used absolute paths and the after-listing relative ones.

@@ -151,5 +151,8 @@ Jobs 12058507–12058512 were resubmitted after a too-strict input check stopped
   None is registered.
 - **Conclusion.** HIPPOC composition remains unreliable and stays flagged. MoTrPAC's weak hippocampal
   response (244 genes) means little is likely being lost. The §13 downstream chain (gate 12058509 onward)
-  was registered before the composition result and is left to finish. Its HIPPOC composition equals
-  refs4's, so it is expected to reproduce the refs4 HIPPOC results.
+  was registered before the composition result and has finished. As expected, it reproduces refs4:
+  - The same 11 hotspots. No HIPPOC block is significant (best: Neurons, AUC 0.650, q 0.27).
+  - HIPPOC has 0 dose-significant genes; its positive controls are unchanged.
+  - Transfer is 11/11; RIN/globin is 11/11 ok; conservation is identical.
+  - The only change elsewhere is SKMGN Mfn1 crossing FDR 0.05 (0.058 → 0.046) through the pooled IHW refit.
