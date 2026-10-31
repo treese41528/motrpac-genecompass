@@ -1,0 +1,12 @@
+cell_type_refs4	umi_before	umi_after	fraction_removed	n_cells	median_umi_after	cell_type
+Astrocytes	5850847	5185509	0.1137	1631	2759	Astrocytes
+Dentate gyrus granule cells	36728391	34815232	0.0521	4803	6782	Neurons
+Endothelial cells	569102	435737	0.2343	341	637	Vascular cells
+Excitatory neurons	20392732	19243835	0.0563	3049	5827	Neurons
+Inhibitory neurons	19236053	17604884	0.0848	4145	3774	Neurons
+Microglia	4125583	3289151	0.2027	2139	1296	Microglia
+Mural cells	58629	41796	0.2871	40	772	Vascular cells
+Oligodendrocyte precursor cells	7032467	6192904	0.1194	2146	2405	Oligodendrocyte precursor cells
+Oligodendrocytes	10869018	8852343	0.1855	4815	1532	Oligodendrocytes
+Thalamic neurons	3719705	3435496	0.0764	598	5590.5	Neurons
+Vascular leptomeningeal cells	748710	663715	0.1135	185	3365	Vascular cells

@@ -1,0 +1,7 @@
+sample	n_cells	n_soup_barcodes	soup_umi	median_cell_umi	rho_autoEstCont	rho_used	rho_source	ambient_umi_per_droplet
+GSE295314_sample0	2096	16459	5135680	6893	0.047	0.047	percell: min(0.9, A_s / UMI)	383.598307686336
+GSE295314_sample1	3980	75711	28227175	2916	0.167	0.167	percell: min(0.9, A_s / UMI)	515.184147447617
+GSE295314_sample10	2815	67540	24331777	3652	0.079	0.079	percell: min(0.9, A_s / UMI)	438.470606788686
+GSE295314_sample2	9230	26371	10054375	3330	0.051	0.051	percell: min(0.9, A_s / UMI)	369.393676044048
+GSE295314_sample7	2988	52556	16386374	3920	0.083	0.083	percell: min(0.9, A_s / UMI)	369.623364987281
+GSE295314_sample8	2783	16026	6457433	3726	0.048	0.048	percell: min(0.9, A_s / UMI)	369.623364987281

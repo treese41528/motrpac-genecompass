@@ -531,3 +531,10 @@ Seen before registration: the §13 result above.
     and conservation is identical (median 0.297).
   - Link check: none of the 1,840 refs4/v2 files changed in size or mtime. The follow-up job reported a
     change only because the before-listing used absolute paths and the after-listing relative ones.
+- 2026-10-31 — Cleanup (user). The refs4h and refs4h2 output folders and both corrected HIPPOC references
+  were deleted; they reproduce refs4 or failed, and `soupx_correct_reference.R` rebuilds a reference in
+  about 2 minutes. Kept in `diagnostics/hippoc_refs4/refs4h_record/`: the SoupX rho and per-type tables,
+  the provenance, the HIPPOC fractions for both arms, and the refs4h gate, DE summary and positive-control
+  tables. This supersedes "the refs4h2 Stage 8/9 outputs are kept" above. Also deleted: the
+  pre-literature-check reference backups in `tmp/`. The profiles `refs_v4h.yaml` and `refs_v4h2.yaml` are
+  kept as the record of the arms.

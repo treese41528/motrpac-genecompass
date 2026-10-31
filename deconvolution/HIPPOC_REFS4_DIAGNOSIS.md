@@ -156,3 +156,6 @@ Jobs 12058507–12058512 were resubmitted after a too-strict input check stopped
   - HIPPOC has 0 dose-significant genes; its positive controls are unchanged.
   - Transfer is 11/11; RIN/globin is 11/11 ok; conservation is identical.
   - The only change elsewhere is SKMGN Mfn1 crossing FDR 0.05 (0.058 → 0.046) through the pooled IHW refit.
+
+The refs4h/refs4h2 outputs were deleted on 2026-10-31. The record tables are in
+`diagnostics/hippoc_refs4/refs4h_record/`, and the checks are in `6_refs4h_check.txt` and `6_refs4h2_check.txt`.

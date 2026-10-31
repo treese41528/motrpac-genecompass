@@ -1,0 +1,82 @@
+tier	group	symbol	ensembl	tissue	sex	expected_dir	cell_type	outcome	present	n_nonzero	mean_fraction	FDR_IHW	lfc_8w	frac_week_p	powered	significant	direction_match
+A	muscle_mito_biogenesis	Sod2	ENSRNOG00000086727	SKMVL	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	muscle_mito_biogenesis	Slc2a4	ENSRNOG00000017226	SKMVL	any	up	Skeletal muscle cells	recovered	True	50.0	0.952333100210182	0.0220308284287769	0.198856149103369	0.762350582982396	True	True	True
+A	muscle_mito_biogenesis	Mef2c	ENSRNOG00000033134	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.577613033761326	0.004048171926504	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Mef2a	ENSRNOG00000047756	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.369326102847579	-0.0506352801450705	0.762350582982396	True	False	False
+A	muscle_mito_biogenesis	Mef2d	ENSRNOG00000031778	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.465883192544123	-0.0717058792656637	0.762350582982396	True	False	False
+A	muscle_mito_biogenesis	Opa1	ENSRNOG00000001717	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.0786416654607102	0.0566607330619707	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Mfn1	ENSRNOG00000011057	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.192113408416652	0.116964461546182	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Prkab1	ENSRNOG00000001142	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.865767270719176	0.0191075889769607	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Tbc1d1	ENSRNOG00000002180	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.192954047597054	0.28788689298077	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Plin2	ENSRNOG00000007060	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.270059285349258	0.202323786316593	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Plin4	ENSRNOG00000047046	SKMVL	any	up	Skeletal muscle cells	wrong_direction	True	50.0	0.952333100210182	0.0359695644233843	-0.0283577889433103	0.762350582982396	True	True	False
+A	muscle_mito_biogenesis	Plin5	ENSRNOG00000047860	SKMVL	any	up	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.949051980164353	0.0215881822819531	0.762350582982396	True	False	True
+A	muscle_mito_biogenesis	Hspa1b	ENSRNOG00000045654	SKMVL	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	muscle_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	SKMVL	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	muscle_mito_biogenesis	Sod2	ENSRNOG00000086727	SKMGN	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	muscle_mito_biogenesis	Slc2a4	ENSRNOG00000017226	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.478831854191987	0.0948299084135421	0.715619175256828	True	False	True
+A	muscle_mito_biogenesis	Mef2c	ENSRNOG00000033134	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.705871147273614	0.0516456383356022	0.715619175256828	True	False	True
+A	muscle_mito_biogenesis	Mef2a	ENSRNOG00000047756	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.496646485046394	0.042849485286086	0.715619175256828	True	False	True
+A	muscle_mito_biogenesis	Mef2d	ENSRNOG00000031778	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.540701612070842	0.0500247429771914	0.715619175256828	True	False	True
+A	muscle_mito_biogenesis	Opa1	ENSRNOG00000001717	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.193841458388523	0.0608632457411904	0.715619175256828	True	False	True
+A	muscle_mito_biogenesis	Mfn1	ENSRNOG00000011057	SKMGN	any	up	Skeletal muscle cells	recovered	True	50.0	0.956302452221589	0.0464164394494566	0.0573609501426273	0.715619175256828	True	True	True
+A	muscle_mito_biogenesis	Prkab1	ENSRNOG00000001142	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.14000884437401	-0.0031990708122719	0.715619175256828	True	False	False
+A	muscle_mito_biogenesis	Tbc1d1	ENSRNOG00000002180	SKMGN	any	up	Skeletal muscle cells	recovered	True	50.0	0.956302452221589	0.0052040732576427	0.17262835310312	0.715619175256828	True	True	True
+A	muscle_mito_biogenesis	Plin2	ENSRNOG00000007060	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.566283364894757	-0.0238623949347353	0.715619175256828	True	False	False
+A	muscle_mito_biogenesis	Plin4	ENSRNOG00000047046	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.0881935080721675	-0.0520745478358943	0.715619175256828	True	False	False
+A	muscle_mito_biogenesis	Plin5	ENSRNOG00000047860	SKMGN	any	up	Skeletal muscle cells	not_significant	True	50.0	0.956302452221589	0.483630821972083	-0.13396293526478	0.715619175256828	True	False	False
+A	muscle_mito_biogenesis	Hspa1b	ENSRNOG00000045654	SKMGN	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	muscle_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	SKMGN	any	up	Skeletal muscle cells	not_testable	False						False	False	
+A	heart_mito_biogenesis	Sod2	ENSRNOG00000086727	HEART	any	up	Cardiomyocytes	not_significant	True	50.0	0.720353230034406	0.860733751062288	-0.0298177372076678	0.150542785972558	True	False	False
+A	heart_mito_biogenesis	Mef2c	ENSRNOG00000033134	HEART	any	up	Cardiomyocytes	not_significant	True	50.0	0.720353230034406	1.0	0.0370084922092595	0.150542785972558	True	False	True
+A	heart_mito_biogenesis	Opa1	ENSRNOG00000001717	HEART	any	up	Cardiomyocytes	recovered	True	50.0	0.720353230034406	0.0091308436921099	0.0080505391966479	0.150542785972558	True	True	True
+A	heart_mito_biogenesis	Mfn1	ENSRNOG00000011057	HEART	any	up	Cardiomyocytes	recovered	True	50.0	0.720353230034406	0.0277592624592214	0.107553860401942	0.150542785972558	True	True	True
+A	heart_mito_biogenesis	Hspa1b	ENSRNOG00000045654	HEART	any	up	Cardiomyocytes	not_testable	False						False	False	
+A	heart_mito_biogenesis	Hsp90aa1	ENSRNOG00000059714	HEART	any	up	Cardiomyocytes	not_testable	False						False	False	
+A	liver_metabolic	Stat3	ENSRNOG00000019742	LIVER	any	up	Hepatocytes	not_significant	True	50.0	0.897875844571636	1.0	-0.0606839562628875	0.948596481643226	True	False	False
+A	liver_metabolic	Pxn	ENSRNOG00000001149	LIVER	any	up	Hepatocytes	not_significant	True	50.0	0.897875844571636	1.0	-0.0073620481084059	0.948596481643226	True	False	False
+A	liver_metabolic	Hsp90aa1	ENSRNOG00000059714	LIVER	any	up	Hepatocytes	not_significant	True	50.0	0.897875844571636	0.0801913229988037	-0.439124837019856	0.948596481643226	True	False	False
+A	blood_hematopoietic_TF	Gabpa	ENSRNOG00000053205	BLOOD	any	up	Megakaryocytes and platelets	wrong_direction	True	50.0	0.145364718408435	0.0148240738339994	-0.30226321304704	0.556983747020976	True	True	False
+A	blood_hematopoietic_TF	Ets1	ENSRNOG00000008941	BLOOD	any	up	Megakaryocytes and platelets	wrong_direction	True	50.0	0.145364718408435	0.0007254545092398	-0.563730115541172	0.556983747020976	True	True	False
+A	blood_hematopoietic_TF	Klf3	ENSRNOG00000002163	BLOOD	any	up	Erythroid cells	recovered	True	50.0	0.699446631810959	0.0213208792601352	0.0358529239288744	0.436243006906911	True	True	True
+A	blood_hematopoietic_TF	Znf143		BLOOD	any	up		not_testable_prior	False						False	False	
+A	wat_adrenergic	Adra1b	ENSRNOG00000060087	WATSC	any	down	Adipose stromal progenitor cells	not_significant	True	50.0	0.357417951787089	0.17094799361118	0.0828281370095284	0.0669757263279784	True	False	False
+A	wat_adrenergic	Adra1d	ENSRNOG00000021256	WATSC	any	down	Adipose stromal progenitor cells	not_significant	True	50.0	0.357417951787089	1.0	0.0716508320230368	0.0669757263279784	True	False	False
+A	wat_adrenergic	Adra2b	ENSRNOG00000013887	WATSC	any	down	Endothelial cells|Mammary luminal epithelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Cycling cells|Mural cells|B cells|NK and cytotoxic T cells|Non-classical monocytes|Macrophages	not_testable	False						False	False	
+A	wat_adrenergic	Adrb1	ENSRNOG00000017002	WATSC	any	down	Endothelial cells|Mammary luminal epithelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Cycling cells|Mural cells|B cells|NK and cytotoxic T cells|Non-classical monocytes|Macrophages	not_testable	False						False	False	
+Ai	heart_structural	Gja1	ENSRNOG00000000805	HEART	any	none	Cardiomyocytes	not_significant	True	50.0	0.720353230034406	0.20827346922159	-0.077538994294414	0.150542785972558	True	False	
+Ai	heart_structural	Cdh2	ENSRNOG00000015602	HEART	any	none	Cardiomyocytes	recovered	True	50.0	0.720353230034406	0.0176958211834745	0.0309475943489723	0.150542785972558	True	True	
+Ai	kidney_signalling	Akt1	ENSRNOG00000028629	KIDNEY	any	none	Proximal tubule cells	not_significant	True	50.0	0.584145301388079	1.0	0.0168655560113189	0.132898299300932	True	False	
+Ai	kidney_signalling	Mtor	ENSRNOG00000009615	KIDNEY	any	none	Proximal tubule cells	not_significant	True	50.0	0.584145301388079	1.0	-0.0269672677500311	0.132898299300932	True	False	
+Ai	kidney_signalling	Hnf4a	ENSRNOG00000008895	KIDNEY	any	none	Proximal tubule cells	not_significant	True	50.0	0.584145301388079	1.0	0.0680446207434143	0.132898299300932	True	False	
+Ai	kidney_signalling	Hnf1b	ENSRNOG00000002598	KIDNEY	any	none	Proximal tubule cells	not_significant	True	50.0	0.584145301388079	1.0	0.195782499169314	0.132898299300932	True	False	
+Ai	liver_tf	Hnf4a	ENSRNOG00000008895	LIVER	any	none	Hepatocytes	not_significant	True	50.0	0.897875844571636	0.420627136699504	-0.0855869246412504	0.948596481643226	True	False	
+Ai	liver_tf	Hnf1b	ENSRNOG00000002598	LIVER	any	none	Hepatocytes	not_significant	True	50.0	0.897875844571636	0.564327154520845	0.0540406643610671	0.948596481643226	True	False	
+Ai	lung_prkaca_substrates	Dsp	ENSRNOG00000013928	LUNG	male	none	Endothelial cells	not_significant	True	50.0	0.534442337629982	0.156820126735986	-0.0287703260366534	0.517620949614548	True	False	
+Ai	lung_prkaca_substrates	Mylk	ENSRNOG00000002215	LUNG	male	none	Endothelial cells	recovered	True	50.0	0.534442337629982	0.0018262476755935	0.119504017526065	0.517620949614548	True	True	
+Ai	lung_prkaca_substrates	Stmn1	ENSRNOG00000016810	LUNG	male	none	Endothelial cells	not_significant	True	50.0	0.534442337629982	0.107399438803519	-0.132356691853251	0.517620949614548	True	False	
+Ai	lung_prkaca_substrates	Syne1	ENSRNOG00000018960	LUNG	male	none	Endothelial cells	not_significant	True	50.0	0.534442337629982	0.242640432674616	0.0518176162593946	0.517620949614548	True	False	
+Ai	lung_prkaca_substrates	Prkaca	ENSRNOG00000005257	LUNG	male	none	Endothelial cells	not_significant	True	50.0	0.534442337629982	0.414157552794703	-0.0318009449207771	0.517620949614548	True	False	
+Ai	hippoc_neuro	Gpr37l1	ENSRNOG00000006237	HIPPOC	any	none	Vascular cells	not_significant	True	50.0	0.504393393995621	0.703473014111552	0.137698684529861	0.731120547419336	True	False	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	CORTEX	any	none	Excitatory neurons	not_significant	True	50.0	0.591562353396858	1.0	0.187845124576276	0.679689619828284	True	False	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	HIPPOC	any	none	Vascular cells	not_significant	True	50.0	0.504393393995621	1.0	0.251630961201468	0.731120547419336	True	False	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	SKMGN	any	none	Skeletal muscle cells	recovered	True	50.0	0.956302452221589	0.0064250498142635	-0.392758778995991	0.715619175256828	True	True	
+B	vetr_disease_gene	Ldlr	ENSRNOG00000009946	SKMVL	any	none	Skeletal muscle cells	recovered	True	50.0	0.952333100210182	0.0351850708244656	-0.514431818707485	0.762350582982396	True	True	
+B	vetr_disease_gene	Apob	ENSRNOG00000005542	LUNG	male	none	Vascular smooth muscle cells|Endothelial cells|Mesothelial cells|Ciliated cells|Fibroblasts|Alveolar type II cells|Basal cells	not_testable	False						False	False	
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	HEART	any	none	Monocytes|T cells|Cardiomyocytes|Endothelial cells|Cardiac fibroblasts|Vascular smooth muscle cells|Macrophages|Lymphatic endothelial cells|Dendritic cells|NK cells|Mesothelial cells|Cardiac neurons	not_testable	False						False	False	
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	LIVER	any	none	Hepatocytes|Hepatic stellate cells|Kupffer cells|Mesothelial cells|Liver sinusoidal endothelial cells|Vascular endothelial cells|Cholangiocytes|NK cells	not_testable	False						False	False	
+B	vetr_disease_gene	Slc6a8	ENSRNOG00000057620	LUNG	any	none	Vascular smooth muscle cells|Endothelial cells|Mesothelial cells|Ciliated cells|Fibroblasts|Alveolar type II cells|Basal cells	not_testable	False						False	False	
+B	vetr_disease_gene	Foxp3	ENSRNOG00000011702	HEART	any	none		not_testable_prior	False						False	False	
+B	vetr_skmvl_male	Tmbim1	ENSRNOG00000014797	SKMVL	male	none	Skeletal muscle cells	not_significant	True	50.0	0.952333100210182	0.0848378173950988	0.902242297847457	0.762350582982396	True	False	
+B	vetr_skmvl_female	Atp6v1g2	ENSRNOG00000000840	SKMVL	female	none	Satellite cells|Vascular smooth muscle cells|Skeletal muscle cells|Endothelial cells|Tenocytes|Macrophages|Fibro-adipogenic progenitors|Schwann cells	not_testable	False						False	False	
+B	vetr_blood_chol_male	Fads2	ENSRNOG00000020440	BLOOD	male	none	Erythroid cells	recovered	True	50.0	0.699446631810959	0.0238824830563478	0.936804946898894	0.436243006906911	True	True	
+B	vetr_blood_chol_male	Pnkd	ENSRNOG00000014806	BLOOD	male	none	Erythroid cells	not_significant	True	50.0	0.699446631810959	0.200607211684417	-0.101109465094252	0.436243006906911	True	False	
+B	vetr_blood_chol_male	Aamp	ENSRNOG00000014399	BLOOD	male	none	Erythroid cells	not_significant	True	50.0	0.699446631810959	0.0522585901496142	0.145984803004726	0.436243006906911	True	False	
+B	vetr_blood_chol_male	Ogdh	ENSRNOG00000005130	BLOOD	male	none	Erythroid cells	not_significant	True	50.0	0.699446631810959	0.0467534270527935	0.274209423311834	0.436243006906911	True	False	
+B	vetr_blood_chol_male	Ndufa13		BLOOD	male	none		not_testable_prior	False						False	False	
+B	vetr_blood_asthma_male	Bag6	ENSRNOG00000000851	BLOOD	male	none	Erythroid cells	recovered	True	50.0	0.699446631810959	0.114928537210371	0.259112693042245	0.436243006906911	True	True	
+B	vetr_blood_asthma_male	Ccnf	ENSRNOG00000007483	BLOOD	male	none	Erythroid cells	not_significant	True	50.0	0.699446631810959	0.083195569902874	0.147847237241805	0.436243006906911	True	False	
+B	vetr_blood_asthma_male	Crat	ENSRNOG00000018145	BLOOD	male	none	Erythroid cells	recovered	True	50.0	0.699446631810959	0.256110742994443	0.251580725317779	0.436243006906911	True	True	
+B	vetr_blood_asthma_male	Fam89b	ENSRNOG00000024239	BLOOD	male	none	Erythroid cells	recovered	True	50.0	0.699446631810959	0.0010128401064412	0.522327400644104	0.436243006906911	True	True	
+B	vetr_wat_female	Endou	ENSRNOG00000056446	WATSC	female	none	Adipose stromal progenitor cells	recovered	True	50.0	0.357417951787089	0.0316398792484221	1.00573782294437	0.0669757263279784	True	True	
+B	vetr_liver_female	Abcg8	ENSRNOG00000005420	LIVER	female	none	Hepatocytes	not_significant	True	50.0	0.897875844571636	0.0188862166267395	2.27898949679335	0.948596481643226	True	False	
