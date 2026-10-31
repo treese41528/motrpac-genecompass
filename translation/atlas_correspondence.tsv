@@ -1,0 +1,130 @@
+tissue_label	rat_cell_type	ts_cell_types
+blood	B cells	B cell
+blood	CD4+ T cells	CD4-positive, alpha-beta T cell; naive thymus-derived CD4-positive, alpha-beta T cell
+blood	CD8+ T cells	CD8-positive, alpha-beta T cell
+blood	Classical monocytes	classical monocyte; monocyte
+blood	Cycling cells	
+blood	Erythroid cells	erythrocyte
+blood	Megakaryocytes and platelets	platelet
+blood	NK cells	natural killer cell
+blood	Neutrophils	neutrophil
+blood	Non-classical monocytes	non-classical monocyte
+blood	Plasmacytoid dendritic cells	
+blood	Regulatory T cells	regulatory T cell
+blood	T cells	CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell; naive thymus-derived CD4-positive, alpha-beta T cell; regulatory T cell; mature NK T cell
+lung	Alveolar macrophages	macrophage
+lung	Alveolar type II cells	pulmonary alveolar type 2 cell
+lung	B cells	B cell
+lung	Basal cells	basal cell
+lung	CD4+ T cells	CD4-positive, alpha-beta T cell
+lung	Ciliated cells	lung multiciliated epithelial cell
+lung	Club cells	club cell
+lung	Dendritic cells	
+lung	Endothelial cells	capillary endothelial cell; vein endothelial cell; endothelial cell of artery
+lung	Fibroblasts	alveolar adventitial fibroblast; adventitial cell
+lung	Goblet cells	respiratory tract goblet cell
+lung	Interstitial macrophages	macrophage
+lung	Mesothelial cells	
+lung	Monocytes	classical monocyte; monocyte; intermediate monocyte
+lung	NK cells	natural killer cell
+lung	Neutrophils	neutrophil
+lung	Non-classical monocytes	non-classical monocyte
+lung	Plasmacytoid dendritic cells	
+lung	T cells	CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell; mature NK T cell
+lung	Tuft cells	
+lung	Vascular smooth muscle cells	vascular associated smooth muscle cell
+heart	B cells	
+heart	CD8+ T cells	CD8-positive, alpha-beta T cell
+heart	Cardiac fibroblasts	fibroblast of cardiac tissue
+heart	Cardiac neurons	neuron
+heart	Cardiomyocytes	ventricular cardiac muscle cell; regular atrial cardiac myocyte
+heart	Dendritic cells	
+heart	Endothelial cells	cardiac endothelial cell
+heart	Lymphatic endothelial cells	
+heart	Macrophages	macrophage
+heart	Mast cells	
+heart	Mesothelial cells	mesothelial cell
+heart	Monocytes	monocyte
+heart	NK cells	natural killer cell
+heart	Pericytes	pericyte
+heart	T cells	CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell
+heart	Vascular smooth muscle cells	smooth muscle cell
+liver	Cholangiocytes	intrahepatic cholangiocyte
+liver	Hepatic stellate cells	hepatic stellate cell
+liver	Hepatocytes	hepatocyte
+liver	Kupffer cells	macrophage
+liver	Liver sinusoidal endothelial cells	endothelial cell
+liver	Mesothelial cells	
+liver	NK cells	natural killer cell
+liver	Vascular endothelial cells	endothelial cell
+kidney	Connecting tubule cells	kidney epithelial cell
+kidney	Cycling cells	
+kidney	Distal convoluted tubule cells	kidney epithelial cell
+kidney	Endothelial cells	endothelial cell
+kidney	Fibroblasts	
+kidney	Immune cells	macrophage; B cell; monocyte; natural killer cell; CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell; neutrophil; non-classical monocyte
+kidney	Injured proximal tubule cells	kidney epithelial cell
+kidney	Monocytes	monocyte; non-classical monocyte
+kidney	Podocytes	
+kidney	Principal cells	kidney epithelial cell
+kidney	Proximal tubule cells	kidney epithelial cell
+kidney	Thick ascending limb cells	kidney epithelial cell
+kidney	Thin limb cells	kidney epithelial cell
+kidney	Type A intercalated cells	kidney epithelial cell
+kidney	Type B intercalated cells	kidney epithelial cell
+watsc	Adipose stromal progenitor cells	mesenchymal stem cell of adipose tissue; fibroblast
+watsc	B cells	B cell
+watsc	Cycling cells	
+watsc	Dendritic cells	
+watsc	Endothelial cells	endothelial cell
+watsc	Glandular epithelial cells	
+watsc	Macrophages	macrophage
+watsc	Mammary luminal epithelial cells	
+watsc	Mural cells	pericyte; smooth muscle cell
+watsc	NK and cytotoxic T cells	natural killer cell; CD8-positive, alpha-beta T cell; mature NK T cell
+watsc	Non-classical monocytes	monocyte
+watsc	Plasmacytoid dendritic cells	
+watsc	T cells	T cell; CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell
+bat	ASPC	mesenchymal stem cell of adipose tissue; fibroblast
+bat	Brown adipocytes	
+bat	Endothelial cells	endothelial cell
+bat	Immune cells	T cell; mast cell; macrophage; B cell; monocyte; natural killer cell; CD4-positive, alpha-beta T cell; CD8-positive, alpha-beta T cell; neutrophil; plasma cell; mature NK T cell
+bat	Neuronal-like cells	
+bat	SMCs & Pericytes	smooth muscle cell; pericyte
+smlint	B cells	B cell
+smlint	BEST4+ enterocytes	BEST4+ enterocyte
+smlint	CD8+ T cells	CD8-positive, alpha-beta T cell; activated CD8-positive, alpha-beta T cell
+smlint	Enterocytes	enterocyte of epithelium proper of small intestine; enterocyte of epithelium proper of duodenum; enterocyte of epithelium proper of jejunum; enterocyte of epithelium proper of ileum
+smlint	Enteroendocrine cells	enteroendocrine cell of small intestine
+smlint	Epithelial cells	
+smlint	Erythroid cells	
+smlint	Goblet cells	small intestine goblet cell
+smlint	Macrophages	macrophage
+smlint	NK cells	natural killer cell
+smlint	Stem cells	intestinal crypt stem cell of small intestine
+smlint	Transit-amplifying cells	transit amplifying cell of small intestine
+smlint	Tuft cells	intestinal tuft cell
+testes	Condensed spermatids	spermatid
+testes	Elongating spermatids	spermatid
+testes	Round spermatids	spermatid
+testes	Sertoli cells	
+testes	Spermatocytes	spermatocyte
+testes	Spermatogonia	spermatogonium
+skmgn	Endothelial cells	endothelial cell; capillary endothelial cell; endothelial cell of artery
+skmgn	Fibro-adipogenic progenitors	mesenchymal stem cell
+skmgn	Macrophages	macrophage
+skmgn	Pericytes	pericyte
+skmgn	Satellite cells	skeletal muscle satellite stem cell
+skmgn	Schwann cells	
+skmgn	Skeletal muscle cells	fast muscle cell; slow muscle cell
+skmgn	Tenocytes	tendon cell
+skmgn	Vascular smooth muscle cells	smooth muscle cell
+skmvl	Endothelial cells	endothelial cell; capillary endothelial cell; endothelial cell of artery
+skmvl	Fibro-adipogenic progenitors	mesenchymal stem cell
+skmvl	Macrophages	macrophage
+skmvl	Pericytes	pericyte
+skmvl	Satellite cells	skeletal muscle satellite stem cell
+skmvl	Schwann cells	
+skmvl	Skeletal muscle cells	fast muscle cell; slow muscle cell
+skmvl	Tenocytes	tendon cell
+skmvl	Vascular smooth muscle cells	smooth muscle cell
