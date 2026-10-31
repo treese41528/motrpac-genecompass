@@ -14,7 +14,7 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| **Data pipeline** | `pipeline/` | 9-stage orchestrated pipeline: corpus assembly → GeneCompass-ready reference files (Stages 1–7), then the deconvolution bridge (Stages 8–9) |
+| **Data pipeline** | `pipeline/` | Staged orchestrators (`run_stageN.py`, see `pipeline/README.md`): corpus → tokens → fine-tuning (Stages 1–7), the deconvolution bridge (8–9), per-cell-type DE (10), rat→human transfer (12), GRN/mechanism (13) and hardening (14) |
 | **GeneCompass** | `vendor/GeneCompass/` | Foundation model (upstream git submodule, used as a library; rat adaptations live in `finetune/` + `data/`) |
 | **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus |
 | **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration: **BayesPrism** (vendored) + the **omnideconv** panel are the implemented Stage 8–9 stack; UniCell/scDEAL/Scissor are secondary/planned methods |
@@ -56,23 +56,12 @@ python -c "from lib.gene_utils import load_config, validate_config; c = load_con
 The pipeline runs in numbered stages. Each stage reads from the previous stage's output directory and writes a JSON manifest for reproducibility.
 
 ```bash
-# Stage 2: Gene inventory + BioMart gate
-python pipeline/02_gene_inventory.py
-
-# Stage 3: Vocabulary pruning (singleton + biotype filtering)
-python pipeline/03_vocabulary_pruning.py
-
-# Stage 4: Ortholog mapping (cross-species token assignment)
-python pipeline/04_ortholog_mapping.py
-
-# Stage 5: Gene median computation (SLURM recommended)
-sbatch slurm/pipeline/05_compute_gene_medians.slurm
-
-# Stage 6: Create GeneCompass reference files
-python pipeline/06_create_reference_files.py
-
-# Stage 7: Export tokenized training corpus (SLURM recommended)
-sbatch slurm/pipeline/07_export_training_corpus.slurm
+python pipeline/run_stage2.py --dry-run   # gene universe & cell QC
+python pipeline/run_stage3.py             # ortholog mapping (cross-species token assignment)
+python pipeline/run_stage4.py             # gene medians (scatter / gather; SLURM recommended)
+python pipeline/run_stage5.py             # reference assembly & tokenization (SLURM recommended)
+python pipeline/run_stage6.py             # prior-knowledge embeddings
+python pipeline/run_stage7.py             # fine-tuning (GPU)
 ```
 
 See `pipeline/README.md` for detailed stage descriptions, expected outputs, and troubleshooting.
@@ -80,7 +69,7 @@ See `pipeline/README.md` for detailed stage descriptions, expected outputs, and 
 ### Running deconvolution (Stages 8–9, Aim-2 bridge)
 
 ```bash
-# All 10 tissues, correct-by-construction: reads deconvolution/tissue_references.yaml (the canonical
+# Every tissue with a reference, correct-by-construction: reads deconvolution/tissue_references.yaml (the canonical
 # tissue→reference map), QC-gates every reference, submits Stage-8+9 with the right --ref-dir.
 python pipeline/run_deconv_all.py --dry-run      # validate refs + print the plan
 python pipeline/run_deconv_all.py --submit       # sbatch per tissue
@@ -125,7 +114,7 @@ python pipeline/01_data_harvesting/harvest_geo.py
 
 ### Canonical gene universe
 
-All pipeline outputs are indexed by canonical Ensembl rat gene IDs from **BioMart release 113, assembly mRatBN7.2**. Noncanonical identifiers (symbols, retired IDs, RGD numbers) are resolved via deterministic mapping rules in `lib/gene_utils.py`. Unresolved identifiers are excluded with audit logs. See `docs/ARCHITECTURE.md` for details.
+All pipeline outputs are indexed by canonical Ensembl rat gene IDs from the project's BioMart files. The config and manifests label them release 113 / mRatBN7.2, but they are **Ensembl release 115, GRCr8** (byte-identical to `sep2025.archive.ensembl.org`; 43,360 genes; identified 2026-10-05). The pipeline is internally consistent on those files; never re-fetch from the release-113 archive. Noncanonical identifiers (symbols, retired IDs, RGD numbers) are resolved via deterministic mapping rules in `lib/gene_utils.py`. Unresolved identifiers are excluded with audit logs. See `docs/ARCHITECTURE.md` for details.
 
 ---
 
@@ -151,6 +140,11 @@ See `config/pipeline_config.yaml` for full documentation of each parameter.
 export PIPELINE_PROFILE=config/profiles/april.yaml
 ```
 
+**Which references.** Since 2026-10-31 the default deconvolution references are the jointly re-annotated
+ones (`references_v4/`, listed per tissue in `deconvolution/tissue_references.yaml`; BLOOD is a whole-blood
+composite), and every Stage 8–14 output lives in a `_refs4` folder (`deconvolution/REFS4_RERUN_RESULTS.md`).
+The July consensus-label references and their v2 results are `config/profiles/july_refs.yaml`.
+
 ---
 
 ## Project structure
@@ -165,14 +159,13 @@ motrpac-genecompass/
 │   └── manifest.py             #   Stage manifest creation
 ├── vendor/
 │   └── GeneCompass/            # Git submodule (tracks upstream xCompass-AI/GeneCompass)
-├── pipeline/                   # Aim 1: Data preprocessing (Stages 1–7)
-│   ├── 01_data_harvesting/
-│   ├── 02_gene_inventory.py
-│   ├── 03_vocabulary_pruning.py
-│   ├── 04_ortholog_mapping.py
-│   ├── 05_compute_gene_medians.py
-│   ├── 06_create_reference_files.py
-│   └── 07_export_training_corpus.py
+├── pipeline/                   # Stage orchestrators run_stage1..14.py (no Stage 11) + run_deconv_all.py
+│   ├── 01_data_harvesting/     #   Stage 1 workers (harvest + QC)
+│   ├── 02_gene_universe/       #   Stage 2
+│   ├── 03_ortholog_mapping/    #   Stage 3
+│   ├── 04_gene_medians/        #   Stage 4
+│   ├── 05_tokenization/        #   Stage 5
+│   └── 06_prior_knowledge/     #   Stage 6
 ├── finetune/                   # Aim 1: Model fine-tuning
 ├── deconvolution/              # Aim 1: Bulk-SC integration
 ├── analysis/                   # Aim 2: Downstream analysis
