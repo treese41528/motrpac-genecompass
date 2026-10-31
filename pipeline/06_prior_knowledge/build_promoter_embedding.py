@@ -6,7 +6,7 @@ Pipeline position:
     Stage 6, Step 1: build_coexp_embedding.py
     Stage 6, Step 2: build_family_embedding.py
     Stage 6, Step 3: build_promoter_embedding.py   ← THIS SCRIPT
-    Stage 6, Step 4: build_grn_embedding.py
+    Stage 6, Step 4: build_grn_transfer.py
 
 Status: IN DEVELOPMENT — test mode available.
 

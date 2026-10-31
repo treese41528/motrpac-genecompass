@@ -139,7 +139,7 @@ STEPS = [
     {
         'num':         4,
         'name':        'GRN embedding',
-        'script':      'build_grn_embedding.py',
+        'script':      'build_grn_transfer.py',
         'config_key':  ('prior_knowledge', 'grn', 'enabled'),
         'description': (
             'PECA2vec cross-species transfer from GeneCompass human/mouse GRNs → '
@@ -429,7 +429,7 @@ Steps:
   1  build_coexp_embedding.py    Nonzero PCC over QC corpus → gene2vec 768-dim
   2  build_family_embedding.py   HGNC gene families → gene2vec 768-dim
   3  build_promoter_embedding.py DNABert on TSS sequences → 768-dim  [requires enabled]
-  4  build_grn_embedding.py      TF→TG GRN pairs → gene2vec 768-dim  [requires enabled]
+  4  build_grn_transfer.py       TF→TG GRN pairs → gene2vec 768-dim  [requires enabled]
 
 Enable Steps 3 and 4 in pipeline_config.yaml:
   prior_knowledge:
