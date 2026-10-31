@@ -538,3 +538,62 @@ Seen before registration: the §13 result above.
   tables. This supersedes "the refs4h2 Stage 8/9 outputs are kept" above. Also deleted: the
   pre-literature-check reference backups in `tmp/`. The profiles `refs_v4h.yaml` and `refs_v4h2.yaml` are
   kept as the record of the arms.
+
+## 14. SPLEEN and OVARY references (registered 2026-10-31, before either dataset was downloaded)
+
+**Decision.** The user adopted refs4 as the default on 2026-10-31 and asked for references for the MoTrPAC
+tissues still without one. A re-search on 2026-10-31 (all accessions checked against the GEO FTP family SOFT
+files) found:
+- **SPLEEN: GSE306764 Spleen-CFA** (GSM9207348, `GSM9207348_Spl-Ctrl.tar.gz`). Whole spleen, RBC-lysed and not
+  sorted, Singleron GEXSCOPE, mapped to GRCr8 (our gene space); 8-week-old female Lewis rats. The controls
+  received complete Freund's adjuvant, as did the Blood-CFA library the BLOOD composite already uses (§12).
+  The July candidate (GSE186158 GSM5639495) is the alternative: sorted live immune cells only, 6-week SD
+  males, Rnor_6.0. It is not used unless SPLEEN fails S1 below.
+- **OVARY: GSE343214 "Normal rat"** (GSM9947804, saline control of a PCOS model). 10x scRNA, rat ENSRNOG gene
+  IDs. One rat, strain and age not stated, no linked paper, and the GEO text is partly copied from another
+  series ("lung", "mice"). Used only if it passes O1–O2 below.
+- Not added: **COLON** (GSE326856 sorted for endothelial, immune and stromal cells, 2.3k control cells, no
+  epithelium), **ADRNL** and **VENACV** (no rat sc/snRNA found). They stay without a reference.
+
+**Annotation.** As §12: the library is clustered as in §10.3 (one library, so no Harmony) and labelled by a
+SPLEEN or OVARY panel added to `reference_marker_panels.yaml` and committed **before** clustering, with the
+§10.3 rule and §9/§10.3 review rules (decisions in `joint_reannotation_review.tsv` with the deciding genes;
+DROP for doublets, low quality and clusters under 20 cells). Genes are put in the bulk's ID space (§12 check 5).
+
+**Checks (all must pass before a reference is used; reported in full either way):**
+- **S1 (SPLEEN).** B cells, T cells and a myeloid class (monocytes/macrophages or neutrophils) each have at
+  least 100 cells. Red-pulp macrophages (Vcam1, Hmox1, Spic) and erythroid cells are reported, not required.
+- **O1 (OVARY).** Granulosa cells (Cyp19a1, Amh, Inha, Fshr) and theca/stroma cells (Cyp17a1, Star,
+  Lhcgr, Dcn) each have at least 100 cells; otherwise OVARY has no usable reference.
+- **O2 (OVARY).** No more than 5% of cells carry a non-ovarian identity (lung epithelium Sftpc/Scgb1a1,
+  hepatocyte Alb/Apoa1); this guards against a mislabelled library.
+- **R1 (both).** `reference_qc.py` passes (no `allow_nonnative` bypass).
+- **R2 (both).** Holdout recovery: the cells are split in half by a seeded draw within each type; a
+  reference is built from one half and 20 mixtures with known mRNA fractions (Dirichlet, α = 1 over the
+  types with ≥ 20 cells per half) from the other; BayesPrism as in Stage 8. Pass: Pearson r ≥ 0.9 between
+  true and estimated fractions for every type at ≥ 5% mean fraction (one library, so this is a within-library
+  check, not a cross-study one; stated as such).
+
+**What follows.** Each passing tissue is deconvolved (Stage 8) and embedded (Stage 9) and joins the default
+run. The cross-tissue steps are rerun over all tissues with a reference: the Aim-2 gate (one BH family), the
+pooled DE fit, transfer, GRNs for new abundant hotspots, and Stage 14. The default headline becomes the
+all-tissue result. The 14-tissue refs4 result stays the registered comparison; any of its 11 hotspots that
+crosses q = 0.05 because the BH family grows is listed by name, with both q values.
+
+## 15. Second heart reference: cross-study check of the HEART deconvolution (registered 2026-10-31)
+
+**Why.** HEART cardiomyocytes have holdout-only validation (GSE280111 split against itself, CM r ≈ 0.995).
+**Data.** GSE307551 (Purdy et al., PNAS 2026): snRNA (10x 3′ v3.1) of uninjured ventricles, 8-week-old female
+rats, independent of GSE280111; the two **F344** libraries (GSM9226643, GSM9226644) are used, F344 being the
+MoTrPAC strain. BN-Lx and M520 libraries are not used.
+**Labels.** No labels are deposited. The two libraries are clustered jointly as §10.3 and labelled with a
+coarse HEART panel committed before clustering: cardiomyocytes, fibroblasts, endothelial cells, mural cells
+(pericytes + smooth muscle), macrophages/myeloid, lymphocytes, adipocytes, neural/Schwann, epicardial/
+mesothelial. The production reference's 16 types are summed into the same coarse classes (map committed with
+the panel).
+**Test.** 20 mixtures with known coarse mRNA fractions (Dirichlet α = 1 over coarse classes with ≥ 50 cells)
+summed from GSE307551 cells, deconvolved by Stage 8 with the production HEART reference
+(`references_v3/HEART_GSE280111_LV`); estimated fractions summed to coarse classes.
+**Reading.** PASS if cardiomyocyte Pearson r ≥ 0.9 (the Chu 2022 bar) and the mean absolute CM error ≤ 0.10;
+per-class r and bias reported for every class. A FAIL is reported as a limitation of the HEART results; it
+changes no reference.
