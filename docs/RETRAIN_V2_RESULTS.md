@@ -626,3 +626,34 @@ model, init and inputs it was given (30b69f2). The v2 report was regenerated fro
 
 Outputs: `reports/aim1_validation_v2/` (`AIM1_VALIDATION_REPORT.md`, `metrics.json`, `figures/`); inputs
 and embeddings in `data/validation/aim1_v2/`.
+
+### Aim-1 per-tier loss: which kinds of rat gene did training teach? (2026-10-31, job 12103793)
+
+The C1 probe and masks, with the rat gene-ID loss split by the ortholog tier of the masked token
+(`eval_mlm.py --by-tier`; tiers from `rat_token_mapping.tsv`). Descriptive, not a criterion. The probe is drawn
+from the training mix (there is no held-out set), so this measures what each model learned, not how it
+generalises. The totals equal C1's.
+
+| Tier (masked tokens) | v2 init | April | v2 phase 1 | **v2** | v2 top-1 (init) |
+|---|---|---|---|---|---|
+| T1 tri-species one-to-one (235,467) | 4.23 | 3.54 | 3.33 | **3.26** | 21.7% (15.5%) |
+| T2a human-only one-to-one (11,185) | 4.54 | 3.47 | 3.01 | **2.89** | 28.2% (16.4%) |
+| T2b mouse-only one-to-one (43,842) | 19.97 | 13.77 | 2.58 | **2.41** | 38.4% (8.1%) |
+| T3a human one-to-many (11,989) | 4.47 | 3.22 | 2.86 | **2.76** | 29.3% (4.6%) |
+| T3b mouse one-to-many (4,495) | 19.18 | 12.22 | 2.49 | **2.25** | 42.4% (2.7%) |
+| T4 new rat-only token (10,641) | 19.20 | 11.00 | 2.50 | **2.20** | 43.0% (0.0%) |
+| All (317,619) | 7.13 | 5.31 | 3.16 | **3.06** | 25.5% (13.4%) |
+
+(Gene-ID cross-entropy, nats.)
+
+- **Where v2's gain over its init comes from.** It comes almost entirely from the tokens the init could not
+  predict: mouse-ortholog (T2b, T3b) and new rat-only (T4) tokens fall from ~19–20 to 2.2–2.4. Tokens with a
+  human ortholog start near 4.3–4.5 and fall by about a quarter.
+- **April never learned these tokens.** Its loss on T2b, T3b and T4 stays at 11–14, against 2.2–2.4 for v2
+  after phase 1 alone. That is a difference in what the model can predict, not only in value scale (April was
+  trained on scheme-A values and the probe holds scheme-B, as C1 notes, but its human-ortholog tiers are within
+  0.3–0.5 of v2's).
+- **Read with V3.** v2 predicts its T4 tokens well in context (43% top-1), yet V3 finds no family structure in
+  their input embeddings. The model uses them; it has not placed them near their human/mouse family peers.
+
+Outputs: `data/results/retrain_v2/mlm_by_tier/` (one JSON per model).
