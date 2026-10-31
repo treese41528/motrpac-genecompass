@@ -18,6 +18,20 @@ Bulk source to match: **MoTrPAC PASS1B = Fischer 344 (F344), adult ~6 mo, sedent
 > **6 clean types**; the shared muscle (SKMGN+SKMVL) myofiber over-split was **merged → 5 clean types**;
 > **VENACV was DROPPED** (moved to BLOCKED) — the pulmonary-vein proxy build is irreducibly lung-contaminated,
 > so it was not deconvolved. **14 tissues deconvolved, VENACV excluded.**
+>
+> **UPDATE 2026-10-31 (refs4 is the default, `904dfb2`).** The study and arm choices in §2 stand, with two
+> changes. (1) Eight references were rebuilt in `data/deconvolution/references_v4/` with labels from one joint
+> re-annotation (`REFERENCE_RELABEL_PREREG.md`; KIDNEY, LIVER, CORTEX, HIPPOC, LUNG, WATSC, SMLINT and the
+> shared SKMGN/SKMVL muscle build), so with BLOOD ten tissues were re-deconvolved. The muscle reference now has 9 types (Skeletal muscle cells, Fibro-adipogenic
+> progenitors, Endothelial cells, Tenocytes, Macrophages, Vascular smooth muscle cells, Satellite cells, Schwann
+> cells, Pericytes), not the merged 5. (2) BLOOD no longer uses the GSE285476 PBMC reference: it uses a
+> whole-blood composite (`references_v4/BLOOD_composite`; PBMC types from five GSE335156 rats, neutrophils and
+> erythroid cells from GSE306764; option B of `BLOOD_REFERENCE_PROPOSAL.md`). BAT, HEART, HYPOTH and TESTES keep
+> their `references_v3/` builds. The July references remain on disk as each tissue's `previous_reference_dir`
+> and as `config/profiles/july_refs.yaml`. Results on refs4 (165 blocks, 124 analysable, 11 hotspots):
+> `REFS4_RERUN_RESULTS.md`. The per-tissue map with cell counts is at the top of
+> `TISSUE_REFERENCE_AND_PROPORTIONS.md`. SPLEEN and OVARY candidates are being checked under
+> `REFERENCE_RELABEL_PREREG.md` §14; ADRNL and VENACV still have no usable rat reference.
 
 ---
 
@@ -67,7 +81,7 @@ Confidence and shared-source are folded into "Why chosen / replaced"; the full s
 | WATSC | [GSE137869] | `--title-include '-Y…'` → 10,35 (young arm) | scRNA · SD | NEEDS-BUILD | Only rat WAT in corpus; **rebuilt young-arm-only** to stop the deployed build pooling 61% geriatric/CR tissue. Adipocyte hole → differential-only. |
 | SKMGN | [GSE137869] (muscle -Y) — **shared w/ SKMVL** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced deployed [GSE184413]** to unify muscle on one shared study (Geyu); snRNA captures myonuclei. Cost: drops the only F344 ref → head-to-head pending. **Myofiber over-split merged → 5 clean types (Skeletal myocytes / Fibroblasts / Endothelial cells / Vascular smooth muscle cells / Macrophages).** |
 | SKMVL | [GSE137869] (muscle -Y) — **shared w/ SKMGN** | `--title-include '-Y…'` → 16,30; `--label-scheme muscle` | snRNA · SD | NEEDS-BUILD | **Replaced the indefensible [GSE254371]** (52% rat-mouse chimera, iPSC study) under 4 top hotspots; unified with SKMGN on shared Ma -Y. **Same merged 5-type roster as SKMGN.** |
-| BLOOD | [GSE285476] (PBMC) | deployed 1-donor PBMC; immune-composition/differential | scRNA · BN+Lewis | **READY** | **Kept** — Geyu: PBMC is the field-standard whole-blood deconvolution basis (immune composition). CDSeq = cross-check; erythroid/granulocyte omission is a documented absolute-fraction caveat. |
+| BLOOD | [GSE285476] (PBMC) — **replaced 2026-10-31 by the whole-blood composite** (GSE335156 PBMC + GSE306764 neutrophils/erythroid; `references_v4/BLOOD_composite`) | deployed 1-donor PBMC; immune-composition/differential | scRNA · BN+Lewis | **READY** (July) | **Kept** (July) — Geyu: PBMC is the field-standard whole-blood deconvolution basis (immune composition). CDSeq = cross-check; erythroid/granulocyte omission is a documented absolute-fraction caveat. |
 | BAT | [GSE244451] | subscapular BAT snRNA (sample1,3); **authors' deposited labels** | snRNA · Dahl SS | NEEDS-BUILD | **Chosen over Ma** — subscapular-BAT snRNA recovers brown adipocytes; overrides the Ma-2020 shared source, whose scRNA has the adipocyte hole. **Now uses the authors' deposited SCP-annotated labels (GSE244451 h5ad) → 6 clean types (Brown adipocytes / Endothelial cells / ASPC / Immune cells / SMCs & Pericytes / Neuronal-like cells).** |
 | HYPOTH | [GSE248413] | `--title-include 'Y'` → sample0 (young) | snRNA · Brown Norway | NEEDS-BUILD | **Chosen** as the only rat hypothalamus in corpus; young control arm (title 'Y'). Rejected Ma whole-brain (not region-specific). |
 | SMLINT | [GSE272055] | proximal jejunum (sample0,1) | scRNA · SD | NEEDS-BUILD | **Chosen** as the only clean rat small-intestine scRNA. Epithelium-only isolation (no immune/muscularis) → differential. |

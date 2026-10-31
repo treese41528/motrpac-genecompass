@@ -1,12 +1,19 @@
 # Rerun on the jointly re-annotated references (refs4): results (2026-10-29)
 
+> **2026-10-31: refs4 is now the default configuration** (`904dfb2`). `config/pipeline_config.yaml` points at
+> the `_refs4` folders, so the profile line below (`config/profiles/refs_v4.yaml`) is now just the default and
+> the profile is a no-op. The July-reference arm is `config/profiles/july_refs.yaml`. Since this report: the GRN
+> decoy null is negative (`GRN_DECOY_NULL_RESULTS.md`: FDR(2) = 1.03, 0/981 TFs beat expression-matched decoys)
+> and the E.3 atlas projection passes (`translation/ATLAS_PROJECTION_RESULTS.md`: 0.404 vs null 0.084).
+
 **Question.** Do the Aim-2 and Aim-3 results hold once the deconvolution references carry labels assigned by
 one joint procedure (and BLOOD has a whole-blood reference) instead of the July labels? This is the rerun
 registered in `REFERENCE_RELABEL_PREREG.md` §8, reported against the July-reference v2 results.
 
 **What changed between the arms.**
-- Ten tissues were re-deconvolved: the eight relabelled references, BLOOD with the option-B composite, and
-  LUNG/CORTEX/HIPPOC after the literature check (`JOINT_REANNOTATION_LITCHECK.md`).
+- Ten tissues were re-deconvolved: the eight relabelled references (SKMGN and SKMVL share one, so nine
+  tissues), with LUNG, CORTEX and HIPPOC rebuilt once more after the literature check
+  (`JOINT_REANNOTATION_LITCHECK.md`), plus BLOOD with the option-B composite.
 - BAT, HEART, HYPOTH and TESTES are unchanged and carried over. Their Stage 9 embedding QC reproduces v2
   exactly.
 - The §6 rule applies to every refs4 table: a block is analysed only if its median per-sample library is

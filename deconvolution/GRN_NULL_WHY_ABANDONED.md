@@ -1,5 +1,9 @@
 # The permutation null was ABANDONED (2026-07-13) — it cannot work for this design
 
+> **2026-10-31 note.** The null this document could not build was done another way, with expression-matched
+> decoy genes, and it is negative: FDR(2) = 1.03 and 0/981 TFs beat their decoys, so `|z| ≥ 2` edges are no longer
+> called "confident" (`GRN_DECOY_NULL_RESULTS.md`). The text below is kept as written.
+
 **Goal:** calibrate the `|z| >= 2` "confident edge" threshold with an empirical FDR,
 `FDR(t) = P_null(|z|>=t) / P_obs(|z|>=t)`, by shuffling the trained/control labels.
 

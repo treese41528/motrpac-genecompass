@@ -1,5 +1,12 @@
 # Downstream GeneCompass modules -- detailed build plan
 
+> **2026-10-31 status.** Plan kept as written. Since then: Modules A, B, E.1–E.2 and the Aim-3b human-space GRN are
+> built and rerun on refs4 (11 hotspots, 8 GRNs; `REFS4_RERUN_RESULTS.md`); E.3 atlas anchoring PASSES (0.404 vs
+> null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`); the GRN decoy null is negative (FDR(2) = 1.03, 0/981 TFs
+> beat expression-matched decoys; `GRN_DECOY_NULL_RESULTS.md`), so Module B's hubs are expression-driven model
+> readouts, not regulators, and Module F's "conserved regulators" cannot rest on the GRN stream. Current status:
+> `docs/OPEN_FRONTIER.md`.
+
 _v1, 2026-06-22. Covers the proposal's UNBUILT downstream-GeneCompass tasks:
 Aim 2b (GRN), Aim 2c (dose), Aim 3a/3b/3c (cross-species). Grounded in a read-only
 inventory of `vendor/GeneCompass/` + the project + the interface of

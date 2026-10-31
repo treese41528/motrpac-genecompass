@@ -6,6 +6,61 @@ against — an exact, locked sample selection *before* any bulk is deconvolved. 
 runbook + the verification record. It exists because the old build path let a ~85%-non-rat cortex reference and
 a rat-mouse-chimera muscle reference reach production; that class of bug is now structurally impossible.
 
+## 0. Current default: refs4 (2026-10-31)
+
+**What changed since this runbook was written.** The production references are now the jointly re-annotated
+set, refs4 (default since `904dfb2`, 2026-10-31; registered in `REFERENCE_RELABEL_PREREG.md`, results in
+`REFS4_RERUN_RESULTS.md`). The build path below is unchanged; `tissue_references.yaml` now points each tissue's
+`reference_dir` at the refs4 build and keeps the July build as `previous_reference_dir`:
+
+| Reference set | Tissues | Built by |
+|---|---|---|
+| `references_v4/` (joint labels) | KIDNEY, LIVER, CORTEX, HIPPOC, LUNG, WATSC, SMLINT, SKMGN + SKMVL (shared `MUSCLE_GSE137869_Y`) | `build_references_from_config.py` (passes each tissue's `joint_labels` to `build_reference.py` / `build_lung_pooled.py`) |
+| `references_v4/BLOOD_composite` | BLOOD (GSE335156 PBMC + GSE306764 neutrophils/erythroid) | `build_blood_composite.py build` (the YAML's `builder: blood_composite`) |
+| `references_v3/` (unchanged) | BAT, HEART, HYPOTH, TESTES | as in §5 |
+
+**Profiles.**
+
+| Arm | How to select it | Stage 8 results | Pseudo-cells / embeddings | Gate + hotspots |
+|---|---|---|---|---|
+| **v2 + refs4 (default)** | nothing: `config/pipeline_config.yaml` | `data/deconvolution/results_refs4/` | `genecompass_input_v2_refs4/` (+ `_human/`) | `genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv` |
+| v2 + July refs | `export PIPELINE_PROFILE=config/profiles/july_refs.yaml` | `results/` | `genecompass_input_v2/` (+ `_human/`) | `genecompass_input_v2/gate_rcv10/` |
+| April model | `export PIPELINE_PROFILE=config/profiles/april.yaml` | `results/` | `genecompass_input/` (+ `_human/`) | |
+
+`config/profiles/refs_v4.yaml` is now a no-op (its values are the default's); it is kept because the refs4 jobs set
+it. Other refs4 outputs: `augur_input_v2_refs4/`, `grn_v2_refs4/`, `grn_v2_refs4_human/`; the positive-control spec
+is `deconvolution/reference/posctrl_prereg_refs4.tsv` (targets renamed to the joint labels; genes, directions
+and thresholds unchanged). Comparison printout: `data/results/refs4/compare_refs4.txt`.
+
+**Rebuild the default run.** Under the default config:
+
+```bash
+python deconvolution/validate_selection.py                       # GATE 1 (skips corpus checks for BLOOD_composite)
+python deconvolution/build_references_from_config.py --submit    # builds references_v4/ (+ BLOOD composite)
+python pipeline/run_deconv_all.py --submit                       # Stage 8 + 9 per tissue -> results_refs4/, genecompass_input_v2_refs4/
+# cross-tissue layer, once all 14 tissues are done (gate BH and pooled IHW span all tissues):
+G=data/deconvolution/genecompass_input_v2_refs4; R=$G/gate_rcv10
+python deconvolution/subspace_probe.py --gc-root $G --perms 10000 --folds 5 --repeats 10 --out $R/subspace_probe.tsv
+python deconvolution/augur_prep.py --gc-root $G --pca 50 --perms 10000 --folds 5 --repeats 10 \
+    --out data/deconvolution/augur_input_v2_refs4 --ctl-out $R/pca_control.tsv
+Rscript deconvolution/run_augur.R data/deconvolution/augur_input_v2_refs4 $R/augur_results.tsv
+python deconvolution/corroborate_summary.py --gc-root $R         # §6 rule: --min-libsize default 1,000 -> 11 hotspots
+python pipeline/run_stage10.py                                   # DE (DE_MIN_MEDIAN_LIBSIZE default 1,000) + positive controls
+python pipeline/run_stage12.py                                   # human transfer + 10-split probe -> <human>/gate_rcv10/
+python pipeline/run_stage13.py                                   # GRNs (hotspots with mean fraction >= 0.01), conservation, enrichment
+python pipeline/run_stage14.py --from 2                          # composition confound + RIN/globin
+```
+
+The refs4 run itself linked BAT, HEART, HYPOTH and TESTES into the `_refs4` folders from the July v2 ones
+(`slurm/analysis/refs4_setup.sh`, local) instead of re-running them; their Stage 9 QC reproduces v2 exactly.
+The registered sensitivities (`--min-libsize 100` / `0`, and `DE_MIN_MEDIAN_LIBSIZE` 100 / 0) write beside the
+primary with `_minlib100` / `_minlib0` suffixes. Expected totals: 14 tissues, 8,100 pseudo-cells (8,082 embedded),
+165 blocks, 124 analysable, 11 hotspots, 48,522 dose-significant genes, 11/11 hotspots preserved in human
+transfer, 8 GRNs.
+
+The rest of this document is the 2026-07-15 build of `references_v3/` and its verification record (BLOOD then
+used GSE285476 PBMC).
+
 ## 1. Data flow
 
 ```
@@ -116,5 +171,8 @@ proxy was dropped — irreducibly lung-contaminated — so it is not deconvolved
 - **BLOCKED:** ADRNL, OVARY — no rat reference exists; **VENACV** — the only proxy (GSE280111 pulmonary vein) is
   irreducibly lung-contaminated, so the built reference was **dropped, not deconvolved**. Reference-free CDSeq if
   a composition is required.
-- **Downstream:** any reference change perturbs the globally-pooled IHW/repfdr fit across all 172 pseudobulk-DE
-  blocks → re-run Stage 10 → 12 (and re-execute the per-stage notebooks) **together** after the deconv wave.
+- **Downstream:** any reference change perturbs the globally-pooled IHW/repfdr fit across all pseudobulk-DE
+  blocks (172 on the July references, 165 on refs4) → re-run Stage 10 → 12 (and re-execute the per-stage
+  notebooks) **together** after the deconv wave.
+- **2026-10-31:** refs4 adopted as the default (§0). SPLEEN and OVARY candidates are being checked under
+  `REFERENCE_RELABEL_PREREG.md` §14; COLON's candidate was rejected (sorted cells, no epithelium).

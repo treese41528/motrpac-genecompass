@@ -5,6 +5,38 @@ provenance list). Supersedes the tissue/reference/proportion sections of
 `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md` and `deconvolution/AIM2_DECONV_RESULTS.md`, both of which
 are stale and contain errors corrected here (§6.11).
 
+> **CURRENT REFERENCES: refs4 (default since 2026-10-31, `904dfb2`).** The production references are now
+> the jointly re-annotated set (`references_v4/`, one labelling procedure across tissues, BLOOD replaced by a
+> whole-blood composite), as specified in `tissue_references.yaml` and registered in
+> `REFERENCE_RELABEL_PREREG.md`. Everything from Stage 8 on was rerun on them
+> (`REFS4_RERUN_RESULTS.md`). The body of this document (2026-07-14) audits the references deployed before the
+> 2026-07-16 rebuild and the July consensus labels; read its per-tissue sections as history. The current
+> per-tissue map is:
+>
+> | Tissue | Reference (directory) | Study | Ref cells / types | Dominant cell type (mean θ, refs4) | Composition note (from `REFS4_RERUN_RESULTS.md`) |
+> |---|---|---|---:|---|---|
+> | LIVER | `references_v4/LIVER_GSE220075` | GSE220075 | 27,059 / 8 | Hepatocytes 0.898 | |
+> | KIDNEY | `references_v4/KIDNEY_GSE240658` | GSE240658 | 24,479 / 15 | Proximal tubule cells 0.584 | "Monocytes" 0.161 is far too high for kidney (sink profile or carried blood) |
+> | SKMGN | `references_v4/MUSCLE_GSE137869_Y` (shared) | GSE137869 young | 10,740 / 9 | Skeletal muscle cells 0.956 | dominant-parenchyma DE problem unchanged |
+> | SKMVL | `references_v4/MUSCLE_GSE137869_Y` (shared) | GSE137869 young | 10,740 / 9 | Skeletal muscle cells 0.952 | as SKMGN; still no tissue-matched validation |
+> | HEART | `references_v3/HEART_GSE280111_LV` (unchanged) | GSE280111 LV | 135,288 / 16 | Cardiomyocytes 0.720 | |
+> | LUNG | `references_v4/LUNG_native_pooled` | GSE273062 + GSE252844 control arms | 44,158 / 21 | Endothelial cells 0.534 | macrophage blocks near-empty; 18 goblet pseudo-cells below 200 genes |
+> | CORTEX | `references_v4/CORTEX_GSE303115` | GSE303115 (rat only) | 12,936 / 12 | Excitatory neurons 0.592 | |
+> | HIPPOC | `references_v4/HIPPOC_GSE295314` | GSE295314 (Fed) | 23,892 / 11 | Endothelial cells 0.498 | **unreliable**: ambient-RNA sink, excitatory neurons 0.003 (`HIPPOC_REFS4_DIAGNOSIS.md`) |
+> | HYPOTH | `references_v3/HYPOTH_GSE248413_Y` (unchanged) | GSE248413 young | 8,471 / 13 | Glutamatergic neurons 0.606 | |
+> | BLOOD | `references_v4/BLOOD_composite` | GSE335156 PBMC + GSE306764 neutrophils/erythroid | 67,147 / 13 | Erythroid cells 0.699 | erythroid/platelet dominance expected; lymphocytes < 0.01 implausibly low; read differentially |
+> | WATSC | `references_v4/WATSC_GSE137869_Y` | GSE137869 young | 11,984 / 13 | Adipose stromal progenitor cells 0.357 | still no adipocytes; plasmacytoid DCs 0.048 high for adipose |
+> | BAT | `references_v3/BAT_GSE244451` (unchanged) | GSE244451 | 28,246 / 6 | Endothelial cells 0.270 | |
+> | SMLINT | `references_v4/SMLINT_GSE272055` | GSE272055 | 16,193 / 13 | Enterocytes 0.542 | |
+> | TESTES | `references_v3/TESTES_OMIX767_lifted` (unchanged) | OMIX767 | 5,836 / 6 | Sertoli cells 0.372 | differential only |
+>
+> Cell and type counts are from each reference's `summary.txt`; θ from `results_refs4/motrpac/<TISSUE>/estimated_fractions.csv`
+> (changed tissues as printed in `data/results/refs4/compare_refs4.txt`). The CLEAN / CAUTION / BROKEN verdicts in §1
+> were assigned to the pre-rebuild references and have not been re-assigned for refs4. Downstream on refs4:
+> 165 blocks, 124 analysable under the §6 rule (median per-sample library ≥ 1,000), **11 hotspots**, 48,522
+> dose-significant genes. Rat blood lymphocytes, hippocampal composition and dominant-parenchyma DE stay
+> unreliable under either reference set.
+
 > ⚠️ **SUPERSEDED IN PART — 2026-07-16 rebuild.** This document audits the **pre-rebuild deployed
 > references**. Four tissues were rebuilt on 2026-07-16; the per-tissue verdicts, rosters, cell counts and θ
 > tables **below** for these four now describe **retired references** and should be read against the new
@@ -29,7 +61,8 @@ are stale and contain errors corrected here (§6.11).
 > 31,870). Their §3/§4/§6 analyses below therefore also describe retired references. Only **KIDNEY, LIVER and
 > BLOOD** are byte-for-byte the production references this audit was written against. Downstream also moved:
 > the rebuilt DE run yields **172 DE blocks / 15 hotspots** (was 185 blocks / 21 hotspots), and with the
-> retrained **v2** model (2026-10-25) **13 hotspots** (`docs/RETRAIN_V2_RESULTS.md`), so the block and
+> retrained **v2** model (2026-10-25) **13 hotspots** (`docs/RETRAIN_V2_RESULTS.md`), and on refs4 (current)
+> **165 blocks / 11 hotspots** (`REFS4_RERUN_RESULTS.md`), so the block and
 > hotspot counts and tables throughout the body (e.g. §2.1-canonical-trees, §5.2, §5.4 and §8) are
 > superseded. The reference, θ and basis findings do not depend on the model. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
 > canonical on-disk results.
@@ -82,6 +115,9 @@ itself a finding — see §5.4 and §6.9.
 ---
 
 ## 1. One-page verdict
+
+> _Historical (pre-2026-07-16 references). For the current refs4 references see the table at the top of this
+> document; these verdicts have not been re-assigned for refs4._
 
 Verdict scale: **CLEAN** = absolute composition and differential claims both usable. **CAUTION** =
 differential claims usable, absolute composition unreliable. **BROKEN** = the basis or the output is
@@ -255,6 +291,8 @@ conclusion is UNKNOWN — it requires a rerun.**
 ---
 
 ## 3. The reference studies, tissue by tissue
+
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
 
 Provenance is from `reports/annotations/annotation_inventory.tsv` (`sample_id` → `gsm` / `geo_title` /
 `geo_organism`) and study-level facts from `/depot/reese18/data/catalog/master_catalog.json` (`studies[]`).
@@ -531,6 +569,8 @@ If the depot is visceral, WATSC is matched to the wrong depot entirely.
 
 ## 4. The deconvolved proportions
 
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+
 All θ from `data/deconvolution/results/motrpac/<TIS>/estimated_fractions.csv`. n = 50 bulk samples per
 tissue; rows sum to exactly 1.0. **All values below are percent of bulk mRNA mass, not percent of cells.**
 
@@ -799,6 +839,8 @@ ways (BLOOD).
 
 ## 5. Validation and QC
 
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+
 ### 5.1 Purity sweeps (Z-matrix recovery)
 
 The purity sweep is the project's pre-registered expression-recovery test, following Chu 2022: simulate
@@ -979,6 +1021,8 @@ already found, not a forward-looking QC.**
 ---
 
 ## 6. Known defects, ranked
+
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
 
 ### 6.1 BLOOD — omitted component (SOLVED diagnosis; the tissue is not usable as composition)
 
@@ -1248,6 +1292,10 @@ diagnostic and, notably, **no QC in this project can currently detect it**: `ref
   the Tier-A parenchyma anchors were never even testable (§5.5).
 
 ### The 21 hotspots, triaged
+
+> _Historical (185-block / 21-hotspot run, pre-2026-07-16 references). The current hotspot set is the 11 refs4
+> hotspots in `REFS4_RERUN_RESULTS.md`; LUNG myeloid dendritic cells is not among them, and the §6 rule now
+> skips near-empty blocks like the one flagged below._
 
 | Risk | Hotspots | Why |
 |---|---|---|

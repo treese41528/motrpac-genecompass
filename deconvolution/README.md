@@ -5,11 +5,23 @@ MoTrPAC bulk RNA-seq → **BayesPrism** per-cell-type deconvolution → per-cell
 `AIM2_DECONV_RESULTS.md` for the science and `MOTRPAC_BULK_LIFTOVER.md` for the
 bulk gene-ID prep.
 
+**Current default (2026-10-31): v2 model + refs4 references.** The references are the jointly re-annotated
+set (`data/deconvolution/references_v4/`, with BLOOD as a whole-blood composite; BAT, HEART, HYPOTH and TESTES
+keep their `references_v3/` builds), selected by `config/pipeline_config.yaml` with no profile. Outputs:
+`data/deconvolution/results_refs4/` (Stage 8), `genecompass_input_v2_refs4/` and `_human/` (Stages 9, 10, 12;
+gate in `gate_rcv10/`), `augur_input_v2_refs4/`, `grn_v2_refs4/` and `grn_v2_refs4_human/` (Stage 13).
+Current figures: 14 tissues, 8,100 pseudo-cells (8,082 embedded), 165 blocks (124 analysable under the §6
+rule, median per-sample library ≥ 1,000), **11 exercise hotspots**, 48,522 dose-significant genes, 11 of 11
+hotspots preserved in human transfer and RIN/globin-robust, 8 GRNs. The GRNs carry no TF-specific signal
+(`GRN_DECOY_NULL_RESULTS.md`). Results: `REFS4_RERUN_RESULTS.md`. The July references (172 blocks, 13
+hotspots) are `config/profiles/july_refs.yaml`; April's model is `config/profiles/april.yaml`. Rebuild:
+`DECONV_REBUILD_RUNBOOK.md` §0.
+
 **Reference integrity — start here.** `tissue_references.yaml` is the canonical tissue→reference map
 (single source of truth). `REFERENCE_QC.md` documents the build-time QC gate (`reference_qc.py`) and the
 two reference bugs it now prevents: the **liver** Visium-spatial contamination (removed) and the
 **engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`, which gave lung a real
-0→3 exercise-hotspot signal). Cross-method validation, the full **mRNA-bias analysis**, and **which
+exercise-hotspot signal; 3 LUNG hotspots on refs4). Cross-method validation, the full **mRNA-bias analysis**, and **which
 downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. Analysis notebooks
 (`../notebooks/pipeline8–12`) still need re-executing per `../notebooks/RERUN_EDITS.md`.
 
@@ -30,7 +42,7 @@ Both are per-tissue; each prints its plan with `--dry-run` and supports `--from 
 # one tissue, end to end (step 2 of stage 8 is CPU-heavy -> compute node;
 # stage 9 embed -> GPU node):
 python pipeline/run_stage8.py --tissue SKM-GN \
-    --ref-dir "data/deconvolution/references_v3/MUSCLE_GSE137869_Y"
+    --ref-dir "data/deconvolution/references_v4/MUSCLE_GSE137869_Y"
 python pipeline/run_stage9.py --label skmgn
 ```
 
@@ -38,7 +50,8 @@ You supply `--tissue` (MoTrPAC bulk code, matches `TRNSCRPT_<TISSUE>_RAW_COUNTS.
 and `--ref-dir` (the per-tissue SC reference). The tissue→reference mapping is
 **`tissue_references.yaml`** — the canonical single source of truth (each tissue's correct reference +
 study + build command). The bulk code differs from the reference dir name (e.g. `LUNG` →
-`lung_native_pooled`, `LIVER` → `liver_GSE220075`, `BLOOD` → `peripheral blood mononuclear cells_GSE285476`).
+`references_v4/LUNG_native_pooled`, `LIVER` → `references_v4/LIVER_GSE220075`, `BLOOD` →
+`references_v4/BLOOD_composite`).
 
 **Recommended — from-scratch, correct-by-construction:** `pipeline/run_deconv_all.py` reads that
 manifest, runs the QC gate (`reference_qc.py --fail`) on every reference — refusing a missing or
@@ -48,14 +61,14 @@ tissues with the right `--ref-dir`:
 ```bash
 python pipeline/run_deconv_all.py --dry-run     # validate every reference + print the plan
 python pipeline/run_deconv_all.py --submit      # sbatch one job per tissue (refs from the manifest)
-# then the cross-tissue layer (once all tissues finish):
-sbatch slurm/analysis/redetect_redE.slurm       # Stage 11 probe + Augur + hotspots + Stage 10 DE
-sbatch slurm/analysis/run_stage12.slurm         # Stage 12 cross-species transfer
+# then the cross-tissue layer (once all tissues finish): gate (subspace_probe + Augur +
+# corroborate_summary -> hotspots), Stage 10 DE, Stage 12 transfer, Stage 13, Stage 14.
+# Exact commands: DECONV_REBUILD_RUNBOOK.md §0. (Local SLURM wrappers: slurm/analysis/.)
 ```
 
-References are **built, not shipped** — `build_references_v2.sh` + `build_lung_pooled.py` (native lung),
-and liver via `build_reference.py --study GSE220075 --tissue liver` (its QC gate auto-drops the Visium
-samples). So a fresh clone must set up data first — see [`setup/SETUP.md`](setup/SETUP.md) (Data & config).
+References are **built, not shipped** — `build_references_from_config.py` builds every reference in
+`tissue_references.yaml` (joint labels for the `references_v4/` builds; `build_blood_composite.py` for BLOOD;
+`build_lung_pooled.py` for the native lung pool; the liver QC gate auto-drops the Visium samples). So a fresh clone must set up data first — see [`setup/SETUP.md`](setup/SETUP.md) (Data & config).
 Other paths default from `config/pipeline_config.yaml` `[deconvolution]`; outputs land under
 `data/deconvolution/` (gitignored).
 
@@ -64,7 +77,7 @@ Other paths default from `config/pipeline_config.yaml` `[deconvolution]`; output
 These are run on demand, separately from the pipeline:
 
 - **Aim-2 analysis:** `pheno_merge_test.py` (gate), `subspace_probe.py`,
-  `augur_prep.py` + `R/run_augur.R` + `corroborate_summary.py`, `embed_qc.py`,
+  `augur_prep.py` + `run_augur.R` + `corroborate_summary.py`, `embed_qc.py`,
   `build_umap_viewer.py` (+ `umap_viewer_template.html`, `umap_embeddings.py`).
 - **Deconvolution validation:** `make_pseudobulk.py`, `make_purity_sweep.py`,
   `score_purity_sweep.py`, `score_validation.py`, `score_z.py`, `compute_true_z.py`,

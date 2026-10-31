@@ -97,15 +97,18 @@ Ranked by how established:
   rules them all,"** arXiv 2410.13956 **[✓web]**: across perturbation benchmarks, simple PCA matches
   foundation-model embeddings. Our PCA control reproduces the spirit — GeneCompass beats PCA-50 only
   modestly and ties a full-gene probe, so the *supervised signal*, not the representation, carries the
-  exercise effect.
+  exercise effect. On refs4 the embedding is higher than PCA-50 in 71 of the 124 analysable blocks (median Δ AUC
+  +0.019, Wilcoxon p 0.013); over all 165 blocks, including the near-empty ones, 90 (p 0.11).
 
 ---
 
 ## Bottom line for Aim 2
 
 1. The gate (PERMANOVA R²) and the supervised probe (Augur) are both standard; we ran **canonical Augur**
-   and it corroborates the probe (Spearman r = 0.83, 19–22/22 hotspots; under v2 and the 10-split gate,
-   r = 0.822 and 13/13 hotspots at AUC ≥ 0.65).
+   and it corroborates the probe (Spearman r = 0.83, 19–22/22 hotspots in June). On the current default
+   (v2 model, refs4 references, 10-split gate): r = 0.788 over the 118 analysable blocks with an Augur score (0.801 over all 158), and all
+   11 hotspots at Augur AUC ≥ 0.70 (lowest 0.730). On the July references it was r = 0.822 and 13/13
+   hotspots at AUC ≥ 0.65 (`REFS4_RERUN_RESULTS.md`).
 2. Do the DE in **gene space, per cell type, pseudobulk-style** (Squair) on `Z` —
    `expression ~ ordinal_dose + sex` — **not** on the embedding. Optionally CPA for latent dose modeling.
 3. Value-add over PCA was sanity-checked (modest), per the "one PCA" caution.

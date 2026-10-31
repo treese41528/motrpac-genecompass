@@ -1,5 +1,10 @@
 # BLOOD deconvolution reference: options for review
 
+> **2026-10-31 note.** Option B (the composite) was adopted and is the default BLOOD reference in refs4
+> (`references_v4/BLOOD_composite`; `REFERENCE_RELABEL_PREREG.md` §12). On it BLOOD has 4 hotspots (classical
+> monocytes, erythroid cells, megakaryocytes and platelets, neutrophils); the July v2 hotspots named below do not
+> carry over. Results: `REFS4_RERUN_RESULTS.md`. The proposal is kept as written.
+
 For Geyu. Written 2026-10-27. Nothing here has been built or run. The current BLOOD reference (GSE285476
 PBMC) was Geyu's choice, so this note sets out the problem, what single-cell data exist, the options, and
 what would have to be checked before any of them is used. The decision is Geyu's.

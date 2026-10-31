@@ -1,5 +1,12 @@
 # Retrain v2 — results
 
+> **2026-10-31 note.** The downstream (C5 and rerun) figures here are v2 on the **July** references (172 blocks,
+> 13 hotspots). The default is now v2 on the refs4 references (165 blocks, 124 analysable, 11 hotspots,
+> 11/11 preserved in transfer, GRN self-consistency median ρ 0.310): `deconvolution/REFS4_RERUN_RESULTS.md`.
+> The GRN decoy null (`deconvolution/GRN_DECOY_NULL_RESULTS.md`) finds no TF-specific signal, so the regulator
+> lists in "Stage 13 steps 1–3" are expression-driven model readouts, not regulators. The C1–C4 results and the
+> per-tier loss section (last) do not depend on the references.
+
 Scored against `docs/RETRAIN_V2_PREREGISTRATION.md` (registered 2026-10-08; its §6 logs every change
 since). C1–C2 ask whether the retrained model learned rat expression without losing what GeneCompass
 knew about human and mouse (pass/fail). C3–C5 ask whether the analyses built on it hold up at least as

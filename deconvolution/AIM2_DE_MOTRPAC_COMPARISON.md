@@ -4,11 +4,60 @@ _2026-06-22. Companion to `AIM2_DECONV_RESULTS.md` §4a. Compares our per-(tissu
 pseudobulk DE on the deconvolved BayesPrism `Z` against the published MoTrPAC findings, tissue by
 tissue. Sources: **MoTrPAC PASS1B** — #21 Nature 2024 (temporal multi-omic atlas), #22 Cell Genomics
 2024 (tissue-specific transcriptomic/epigenomic); **Vetr 2024** (Nat Commun, same-data disease
-genetics); **Yu 2023** (iScience, human PBMC scRNA, acute). Our numbers are from
-`genecompass_input/pseudobulk_de/{de_summary,de_hotspots,posctrl_*}`._
+genetics); **Yu 2023** (iScience, human PBMC scRNA, acute). The §0–§3 numbers are from
+`genecompass_input/pseudobulk_de/{de_summary,de_hotspots,posctrl_*}` (June references); the current ones (§0a)
+from `genecompass_input_v2_refs4/pseudobulk_de/`._
 
-> **v2 (2026-10-25).** The DE does not use the model, so the gene-level numbers below stand; only the hotspot
-> flags changed (v2: 13 hotspots, `genecompass_input_v2/pseudobulk_de/`). See `AIM2_DECONV_RESULTS.md` §4a.
+> **Current figures: v2 model + refs4 references (default since 2026-10-31).** The DE does not use the model,
+> but it does depend on the references, and the refs4 rerun (jointly re-annotated references, BLOOD whole-blood
+> composite, §6 near-empty-block rule) changes the cell types and the gene counts. The table in §0a below is the
+> current per-tissue result (`genecompass_input_v2_refs4/pseudobulk_de/de_summary.tsv`); §0–§3 are the
+> 2026-06-22 analysis on the earlier references and are kept as written. Their cell-type names (ISG-expressing
+> T cells, Memory T, Skeletal myocytes, Pulmonary fibroblasts, Luminal epithelial) do not all exist in refs4.
+> Full comparison: `REFS4_RERUN_RESULTS.md`.
+
+## 0a. Current per-tissue DE (refs4, §6 rule)
+
+Question: where does the dose response sit at cell-type resolution, and does it follow MoTrPAC's tissue
+ranking? Dose-significant = FDR_IHW < 0.05 on the ordinal-dose test. "Analysable" = median per-sample library
+≥ 1,000. MoTrPAC counts are unique training-regulated transcript features in
+`MotrpacRatTraining6moData::TRAINING_REGULATED_FEATURES` (rank of 19 tissues), from `REFS4_RERUN_RESULTS.md`.
+
+| Tissue | Analysable / blocks | Dose-sig genes | Largest blocks (dose-sig genes) | refs4 hotspots | MoTrPAC genes (rank) |
+|---|---|---|---|---|---|
+| BLOOD | 8 / 13 | 20,029 | NK cells 2,904; Megakaryocytes and platelets 2,654; Classical monocytes 2,600; Erythroid cells 2,520 | 4 | 1,582 (5) |
+| LUNG | 7 / 21 | 9,901 | Ciliated cells 2,213; Endothelial cells 1,503; Fibroblasts 1,486; Vascular smooth muscle cells 1,434 | 3 | 961 (6) |
+| BAT | 6 / 6 | 7,530 | Endothelial cells 1,745; Immune cells 1,473; SMCs & Pericytes 1,377 | 0 | |
+| HEART | 12 / 16 | 3,786 | Monocytes 580; T cells 479; Cardiomyocytes 475 | 0 | |
+| SKMVL | 8 / 9 | 2,366 | Skeletal muscle cells 474; Endothelial cells 430; Tenocytes 317 | 2 | 766 (7) |
+| SKMGN | 8 / 9 | 1,816 | Skeletal muscle cells 376; Fibro-adipogenic progenitors 365; Endothelial cells 267 | 1 | 566 (10) |
+| WATSC | 12 / 13 | 1,662 | Endothelial cells 206; Adipose stromal progenitor cells 196; Mammary luminal epithelial cells 194 | 0 | |
+| LIVER | 8 / 8 | 1,008 | Hepatocytes 202; Hepatic stellate cells 154; Kupffer cells 154 | 0 | |
+| SMLINT | 13 / 13 | 304 | B cells 33; CD8+ T cells 31 | 0 | |
+| KIDNEY | 11 / 15 | 109 | Connecting tubule cells 14; Type A intercalated cells 13 | 0 | |
+| CORTEX | 10 / 12 | 10 | Oligodendrocytes 4 | 0 | 105 (17) |
+| HYPOTH | 8 / 13 | 1 | Ependymal cells 1 | 1 (OPC) | 16 (19) |
+| HIPPOC | 7 / 11 | 0 | — | 0 | 244 (15) |
+| TESTES | 6 / 6 | 0 | — | 0 | 107 (16) |
+| **Total** | **124 / 165** | **48,522** | | **11** | |
+
+What holds from the June reading below:
+- **The tissue ranking.** BLOOD, LUNG and both muscles carry the hotspots and rank high in MoTrPAC; brain and
+  testes are quiet in both. HYPOTH is the one tension: its OPC block is a hotspot with one dose-significant gene,
+  where MoTrPAC finds the fewest training-regulated genes; read it sceptically.
+- **LUNG sex divergence.** The largest sex × dose interaction is still in LUNG (Ciliated cells 1,476,
+  Endothelial cells 444, Fibroblasts 422, Vascular smooth muscle cells 410 interaction genes).
+- **Dominant parenchyma.** Bulk-mover recovery is unchanged in kind (SKMGN 0.394, SKMVL 0.582, HEART 0.917).
+
+What changed:
+- **BLOOD.** The signal now sits in erythroid, platelet, neutrophil, monocyte and NK blocks. Every BLOOD T- and
+  B-cell block is near-empty and skipped, so the June claims about ISG-expressing and Memory T cells, and the
+  naive program, are not carried forward. Cytotoxicity still recovers, in NK cells. Neither reference measures
+  rat blood lymphocytes reliably (`REFS4_RERUN_RESULTS.md`).
+- **WATSC.** The epithelial composition flag carries over: the Mammary luminal and Glandular epithelial blocks
+  are both `FLAG_COMPOSITION` (`frac_week_p` 0.005 each; `composition_confound_table.tsv`). Whether the WAT
+  immune-recruitment reading in §1 holds block by block has not been re-derived for refs4.
+- **Composition flags on hotspots.** LUNG mesothelial and SKMVL vascular smooth muscle cells are flagged.
 
 Read directionally: the MoTrPAC papers report **bulk-tissue** transcriptomics; **our contribution is
 cell-type resolution** — so the goal is (a) do we *confirm* the bulk tissue-level signal, and (b) what
