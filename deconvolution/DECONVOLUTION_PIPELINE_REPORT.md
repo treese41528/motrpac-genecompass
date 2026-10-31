@@ -38,7 +38,7 @@ their references. A block now enters the gate's BH family and the DE only if its
 |---|---|---|---|
 | Tissues | 14 (VENACV, ADRNL, COLON, OVARY, SPLEEN not deconvolved) | 14 | `tissue_references.yaml` |
 | Pseudo-cells / embedded | **8,100 / 8,082** (18 LUNG goblet pseudo-cells below the tokenizer's 200-gene minimum) | 8,450 / 8,450 | `genecompass_input_v2_refs4/*/tokenize_summary.json` |
-| Cell-type separation (Stage 9 silhouette, median of 14) | 0.810 (derived from the per-tissue values in `REFS4_RERUN_RESULTS.md`) | 0.731 | `REFS4_RERUN_RESULTS.md` |
+| Cell-type separation (Stage 9 silhouette, median of 14) | 0.810 (computed on the refs4 embeddings; per tissue in `AIM2_DECONV_RESULTS.md`) | 0.731 | `REFS4_RERUN_RESULTS.md` |
 | Cell-type blocks / analysable (§6) | **165 / 124** | 172 / 172 (no rule; 107 under §6) | `data/results/refs4/compare_refs4.txt` |
 | Exercise hotspots (10 splits × 10,000 permutations, BH q < 0.05) | **11** (11 at ≥ 100; 9 with no rule) | 13 (19 under §6) | `genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv` |
 | Held-out trained AUC, median / max (analysable blocks) | 0.604 / 0.887 (SKMVL satellite cells) | 0.561 / 0.887 | same |

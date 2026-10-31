@@ -28,9 +28,10 @@ _Status 2026-06-15 (supervised re-measurement + cross-method corroboration in §
 > | Hotspots RIN/globin ROBUST | 11 of 11 | 11 of 13 |
 > | Does a transferred rat cell land on its Tabula Sapiens counterpart? (E.3, macro top-1 accuracy) | 0.404 vs null 0.084, PASS ([`translation/ATLAS_PROJECTION_RESULTS.md`](../translation/ATLAS_PROJECTION_RESULTS.md)) | not run |
 >
-> ¹ Derived from the per-tissue silhouettes in `REFS4_RERUN_RESULTS.md` (seven tissues changed, four unchanged,
-> SKMGN/SKMVL/WATSC within 0.01 of v2-July); the median is the mean of KIDNEY 0.768 and LIVER 0.852 for any
-> values in that range.
+> ¹ Computed 2026-10-31 on the refs4 embeddings (cosine silhouette by cell type over each tissue's embedded
+> pseudo-cells; the same code gives 0.731 on the July embeddings). Per tissue: BAT 0.382, BLOOD 0.553, CORTEX
+> 0.912, HEART 0.876, HIPPOC 0.738, HYPOTH 0.765, KIDNEY 0.768, LIVER 0.852, LUNG 0.520, SKMGN 0.923, SKMVL 0.870,
+> SMLINT 0.851, TESTES 0.988, WATSC 0.692.
 >
 > The 11 refs4 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets,
 > neutrophils; LUNG endothelial, mesothelial and vascular smooth muscle cells; SKMGN tenocytes; SKMVL

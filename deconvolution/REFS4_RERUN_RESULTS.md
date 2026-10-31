@@ -162,6 +162,10 @@ and WATSC are within 0.01. LUNG has 1,032 pseudocells, not 1,050. 18 of the 50 G
 
 ## Fixes made during the rerun (none changes a frozen threshold)
 
+- Provenance note (2026-10-31): `gate_rcv10/provenance_corroborate_summary.json` records the last run, the
+  no-rule sensitivity (`min_libsize 0`). The default `corroboration_merged.tsv` is the §6 table (124 analysable
+  blocks flagged); only the JSON was overwritten.
+
 Logged in `REFERENCE_RELABEL_PREREG.md` (2026-10-28, 2026-10-29).
 - `compare_posctrl.py`: a target whose block exists but was skipped under §6 now scores `not_testable` with
   a warning. Before, it was treated as a stale label.
@@ -214,6 +218,6 @@ numbers.
 - **One tension: HYPOTH.** Its OPC block is a hotspot in July and refs4, yet MoTrPAC finds the fewest
   training-regulated genes there (16). The gate measures how well the embedding separates trained from
   sedentary samples, not DE counts, so it can see signal bulk DE misses. Still, this hotspot should be read
-  sceptically: it has one dose-significant gene.
+  sceptically: it has no dose-significant gene (HYPOTH's one gene is in ependymal cells).
 - The ambient-corrected HIPPOC arm (`REFERENCE_RELABEL_PREREG.md` §13) was run anyway at the user's
   request; see `HIPPOC_REFS4_DIAGNOSIS.md`.

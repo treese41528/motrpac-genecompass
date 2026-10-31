@@ -1,3 +1,8 @@
+> **Superseded 2026-10-31.** Notebooks 8–12 now show the refs4 references (default since 904dfb2) with the v2
+> model, re-executed on the refs4 outputs. The refs4 rerun changed paths only (`genecompass_input_v2` →
+> `genecompass_input_v2_refs4`, `results/` → `results_refs4/`), restricted Stage 11 to the 124 blocks analysable
+> under the §6 rule, and rewrote the prose figures from `deconvolution/REFS4_RERUN_RESULTS.md`.
+>
 > **Superseded 2026-10-25.** Notebooks 4–7 and 9–12 now show the retrained v2 model and were re-executed on
 > v2's outputs (e833c15, cef2394); the edit map below is the July April-model refresh, kept for the record.
 > v2 figures: `docs/RETRAIN_V2_RESULTS.md`.

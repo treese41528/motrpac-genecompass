@@ -43,7 +43,7 @@ ranking? Dose-significant = FDR_IHW < 0.05 on the ordinal-dose test. "Analysable
 
 What holds from the June reading below:
 - **The tissue ranking.** BLOOD, LUNG and both muscles carry the hotspots and rank high in MoTrPAC; brain and
-  testes are quiet in both. HYPOTH is the one tension: its OPC block is a hotspot with one dose-significant gene,
+  testes are quiet in both. HYPOTH is the one tension: its OPC block is a hotspot with no dose-significant gene (the tissue's one gene is in ependymal cells),
   where MoTrPAC finds the fewest training-regulated genes; read it sceptically.
 - **LUNG sex divergence.** The largest sex × dose interaction is still in LUNG (Ciliated cells 1,476,
   Endothelial cells 444, Fibroblasts 422, Vascular smooth muscle cells 410 interaction genes).
