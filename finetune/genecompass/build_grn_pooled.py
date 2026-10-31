@@ -104,6 +104,35 @@ def load_arm_sex(dataset_path, meta_path, cell_type):
     return np.array(arms["control"]), np.array(arms["trained"])
 
 
+def match_decoys(tfs, pbc, pbt, tok, invert, tf_file, seed):
+    """Expressed TFs -> expression-matched non-TF decoys. Expression = mean of the token's value in the two arm
+    profiles (absent = 0); a TF is expressed if present in either profile (the same test that makes its
+    differential non-empty). Each TF, in a seeded random order, takes the unused non-TF token nearest in
+    log1p(expression). Returns (decoy ENSRNOG list, {decoy: TF})."""
+    val = defaultdict(float)
+    for pid, pvl in (pbc, pbt):
+        for t, v in zip(pid.tolist(), pvl.tolist()):
+            if t != 0:
+                val[t] += v / 2.0
+    all_tf = {tok[l.split("\t")[0].strip()] for i, l in enumerate(open(tf_file))
+              if i > 0 and l.strip() and l.split("\t")[0].strip() in tok}
+    expressed = [g for g in tfs if tok[g] in val]
+    pool = sorted((t for t in val if t not in all_tf and t in invert), key=lambda t: val[t])
+    x = np.log1p(np.array([val[t] for t in pool]))
+    used = np.zeros(len(pool), dtype=bool)
+    order = np.random.default_rng(seed).permutation(len(expressed))
+    out = {}
+    for i in order:
+        g = expressed[i]
+        d = np.abs(x - np.log1p(val[tok[g]]))
+        d[used] = np.inf
+        j = int(np.argmin(d))
+        used[j] = True
+        out[invert[pool[j]]] = g
+    decoys = [k for k in sorted(out, key=lambda k: expressed.index(out[k]))]
+    return decoys, out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model-dir", required=True)
@@ -129,6 +158,13 @@ def main():
                          "distribution is the null, and is what calibrates the |z|>=2 'confident' threshold: "
                          "empirical FDR(t) = P_null(|z|>=t) / P_observed(|z|>=t). Without this, |z|>=2 is a "
                          "relative ranking dressed up as a significance claim.")
+    ap.add_argument("--decoy-seed", type=int, default=-1,
+                    help="DECOY NULL (GRN_DECOY_NULL_PREREG.md). >=0 replaces every expressed TF with a non-TF gene "
+                         "of the nearest pseudobulk expression (mean of the two arm profiles; drawn without "
+                         "replacement, TFs matched in a seeded random order), then runs the identical pipeline. "
+                         "Labels, arms, bootstrap and z are untouched, so under H0 'this TF acts like a random "
+                         "gene of the same expression' decoy and TF z are identically distributed: "
+                         "FDR(t) = P_decoy(|z|>=t) / P_TF(|z|>=t). Writes tf = the decoy gene and decoy_for = the TF.")
     args = ap.parse_args()
 
     tok = pc.load_token_dict()
@@ -179,6 +215,11 @@ def main():
 
     # point estimate on the full-arm pseudobulks
     pbc, pbt = pseudobulk(idc, vlc), pseudobulk(idt, vlt)
+    decoy_for = {}
+    if args.decoy_seed >= 0:
+        tfs, decoy_for = match_decoys(tfs, pbc, pbt, tok, invert, args.tf_file, args.decoy_seed)
+        print(f"[{args.cell_type}] *** DECOY NULL (seed={args.decoy_seed}) *** {len(tfs)} expressed TFs replaced "
+              f"by expression-matched non-TF genes", flush=True)
     point, cand, cidx = {}, {}, {}
     expressed = []
     for g in tfs:
@@ -232,13 +273,14 @@ def main():
             d = point[g][k]
             sd = float(sds[i])
             z = d / sd if sd > 0 else 0.0
-            edges.append((g, sym.get(g, ""), k, sym.get(k, ""), round(d, 6), round(sd, 6), round(z, 2)))
+            edges.append((g, sym.get(g, ""), k, sym.get(k, ""), round(d, 6), round(sd, 6), round(z, 2))
+                         + ((decoy_for[g],) if decoy_for else ()))
     edges.sort(key=lambda e: -abs(e[6]))
     conf = [e for e in edges if abs(e[6]) >= 2]
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w") as f:
-        f.write("tf\ttf_symbol\ttarget\ttarget_symbol\tdelta\tboot_sd\tz\n")
+        f.write("tf\ttf_symbol\ttarget\ttarget_symbol\tdelta\tboot_sd\tz" + ("\tdecoy_for" if decoy_for else "") + "\n")
         for e in edges:
             f.write("\t".join(str(x) for x in e) + "\n")
     print(f"wrote {len(edges)} candidate edges ({len(conf)} confident |z|>=2) from {len(expressed)} TFs "
