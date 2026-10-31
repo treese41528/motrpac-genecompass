@@ -1,0 +1,207 @@
+variant	tissue	ts_tissue	rat_cell_type	n	n_ts_types	n_match	top1_acc	chance	top1_mode
+centered	blood	Blood	B cells	50	18	1	0.2	0.05555555555555555	classical monocyte
+centered	blood	Blood	CD4+ T cells	50	18	2	0.1	0.1111111111111111	intermediate monocyte
+centered	blood	Blood	CD8+ T cells	50	18	1	0.3	0.05555555555555555	CD4-positive, alpha-beta T cell
+centered	blood	Blood	Classical monocytes	50	18	2	0.48	0.1111111111111111	monocyte
+centered	blood	Blood	Erythroid cells	50	18	1	0.0	0.05555555555555555	classical monocyte
+centered	blood	Blood	Megakaryocytes and platelets	50	18	1	0.74	0.05555555555555555	platelet
+centered	blood	Blood	NK cells	50	18	1	0.14	0.05555555555555555	hematopoietic precursor cell
+centered	blood	Blood	Neutrophils	50	18	1	0.66	0.05555555555555555	neutrophil
+centered	blood	Blood	Non-classical monocytes	50	18	1	0.02	0.05555555555555555	monocyte
+centered	blood	Blood	Regulatory T cells	50	18	1	0.0	0.05555555555555555	CD4-positive, alpha-beta T cell
+centered	blood	Blood	T cells	50	18	5	0.88	0.2777777777777778	CD4-positive, alpha-beta T cell
+raw	blood	Blood	B cells	50	18	1	0.0	0.05555555555555555	basophil
+raw	blood	Blood	CD4+ T cells	50	18	2	0.0	0.1111111111111111	basophil
+raw	blood	Blood	CD8+ T cells	50	18	1	0.0	0.05555555555555555	basophil
+raw	blood	Blood	Classical monocytes	50	18	2	0.0	0.1111111111111111	platelet
+raw	blood	Blood	Erythroid cells	50	18	1	0.0	0.05555555555555555	platelet
+raw	blood	Blood	Megakaryocytes and platelets	50	18	1	1.0	0.05555555555555555	platelet
+raw	blood	Blood	NK cells	50	18	1	0.0	0.05555555555555555	basophil
+raw	blood	Blood	Neutrophils	50	18	1	0.0	0.05555555555555555	platelet
+raw	blood	Blood	Non-classical monocytes	50	18	1	0.0	0.05555555555555555	platelet
+raw	blood	Blood	Regulatory T cells	50	18	1	0.02	0.05555555555555555	basophil
+raw	blood	Blood	T cells	50	18	5	0.08	0.2777777777777778	basophil
+centered	lung	Lung	Alveolar macrophages	50	28	1	1.0	0.03571428571428571	macrophage
+centered	lung	Lung	Alveolar type II cells	50	28	1	0.54	0.03571428571428571	pulmonary alveolar type 2 cell
+centered	lung	Lung	B cells	50	28	1	0.7	0.03571428571428571	B cell
+centered	lung	Lung	Basal cells	50	28	1	0.0	0.03571428571428571	classical monocyte
+centered	lung	Lung	CD4+ T cells	50	28	1	0.04	0.03571428571428571	CD8-positive, alpha-beta T cell
+centered	lung	Lung	Ciliated cells	50	28	1	1.0	0.03571428571428571	lung multiciliated epithelial cell
+centered	lung	Lung	Club cells	50	28	1	0.32	0.03571428571428571	basophil
+centered	lung	Lung	Endothelial cells	50	28	3	1.0	0.10714285714285714	endothelial cell of artery
+centered	lung	Lung	Fibroblasts	50	28	2	1.0	0.07142857142857142	alveolar adventitial fibroblast
+centered	lung	Lung	Goblet cells	12	28	1	0.08333333333333333	0.03571428571428571	basophil
+centered	lung	Lung	Interstitial macrophages	50	28	1	0.86	0.03571428571428571	macrophage
+centered	lung	Lung	Monocytes	50	28	3	0.0	0.10714285714285714	macrophage
+centered	lung	Lung	NK cells	50	28	1	0.16	0.03571428571428571	mature NK T cell
+centered	lung	Lung	Neutrophils	50	28	1	0.16	0.03571428571428571	basophil
+centered	lung	Lung	Non-classical monocytes	50	28	1	0.1	0.03571428571428571	basophil
+centered	lung	Lung	T cells	50	28	3	0.38	0.10714285714285714	basophil
+centered	lung	Lung	Vascular smooth muscle cells	50	28	1	0.0	0.03571428571428571	alveolar adventitial fibroblast
+raw	lung	Lung	Alveolar macrophages	50	28	1	1.0	0.03571428571428571	macrophage
+raw	lung	Lung	Alveolar type II cells	50	28	1	0.0	0.03571428571428571	classical monocyte
+raw	lung	Lung	B cells	50	28	1	0.0	0.03571428571428571	non-classical monocyte
+raw	lung	Lung	Basal cells	50	28	1	0.0	0.03571428571428571	classical monocyte
+raw	lung	Lung	CD4+ T cells	50	28	1	0.0	0.03571428571428571	macrophage
+raw	lung	Lung	Ciliated cells	50	28	1	0.0	0.03571428571428571	non-classical monocyte
+raw	lung	Lung	Club cells	50	28	1	0.8	0.03571428571428571	club cell
+raw	lung	Lung	Endothelial cells	50	28	3	0.0	0.10714285714285714	non-classical monocyte
+raw	lung	Lung	Fibroblasts	50	28	2	0.0	0.07142857142857142	classical monocyte
+raw	lung	Lung	Goblet cells	12	28	1	0.0	0.03571428571428571	club cell
+raw	lung	Lung	Interstitial macrophages	50	28	1	0.94	0.03571428571428571	macrophage
+raw	lung	Lung	Monocytes	50	28	3	0.0	0.10714285714285714	macrophage
+raw	lung	Lung	NK cells	50	28	1	0.04	0.03571428571428571	macrophage
+raw	lung	Lung	Neutrophils	50	28	1	0.0	0.03571428571428571	non-classical monocyte
+raw	lung	Lung	Non-classical monocytes	50	28	1	0.8	0.03571428571428571	non-classical monocyte
+raw	lung	Lung	T cells	50	28	3	0.0	0.10714285714285714	non-classical monocyte
+raw	lung	Lung	Vascular smooth muscle cells	50	28	1	0.0	0.03571428571428571	non-classical monocyte
+centered	skmgn	Muscle	Endothelial cells	50	22	3	1.0	0.13636363636363635	endothelial cell of artery
+centered	skmgn	Muscle	Fibro-adipogenic progenitors	50	22	1	0.14	0.045454545454545456	natural killer cell
+centered	skmgn	Muscle	Macrophages	50	22	1	0.0	0.045454545454545456	mast cell
+centered	skmgn	Muscle	Pericytes	50	22	1	0.0	0.045454545454545456	tendon cell
+centered	skmgn	Muscle	Satellite cells	50	22	1	0.4	0.045454545454545456	slow muscle cell
+centered	skmgn	Muscle	Skeletal muscle cells	50	22	2	0.76	0.09090909090909091	slow muscle cell
+centered	skmgn	Muscle	Tenocytes	50	22	1	0.02	0.045454545454545456	erythrocyte
+centered	skmgn	Muscle	Vascular smooth muscle cells	50	22	1	1.0	0.045454545454545456	smooth muscle cell
+raw	skmgn	Muscle	Endothelial cells	50	22	3	0.0	0.13636363636363635	slow muscle cell
+raw	skmgn	Muscle	Fibro-adipogenic progenitors	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmgn	Muscle	Macrophages	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmgn	Muscle	Pericytes	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmgn	Muscle	Satellite cells	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmgn	Muscle	Skeletal muscle cells	50	22	2	1.0	0.09090909090909091	slow muscle cell
+raw	skmgn	Muscle	Tenocytes	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmgn	Muscle	Vascular smooth muscle cells	50	22	1	0.0	0.045454545454545456	slow muscle cell
+centered	skmvl	Muscle	Endothelial cells	50	22	3	1.0	0.13636363636363635	endothelial cell of artery
+centered	skmvl	Muscle	Fibro-adipogenic progenitors	50	22	1	0.58	0.045454545454545456	mesenchymal stem cell
+centered	skmvl	Muscle	Macrophages	50	22	1	0.02	0.045454545454545456	mast cell
+centered	skmvl	Muscle	Pericytes	50	22	1	0.02	0.045454545454545456	erythrocyte
+centered	skmvl	Muscle	Satellite cells	50	22	1	0.46	0.045454545454545456	slow muscle cell
+centered	skmvl	Muscle	Skeletal muscle cells	50	22	2	0.88	0.09090909090909091	slow muscle cell
+centered	skmvl	Muscle	Tenocytes	50	22	1	0.44	0.045454545454545456	erythrocyte
+centered	skmvl	Muscle	Vascular smooth muscle cells	50	22	1	1.0	0.045454545454545456	smooth muscle cell
+raw	skmvl	Muscle	Endothelial cells	50	22	3	0.0	0.13636363636363635	slow muscle cell
+raw	skmvl	Muscle	Fibro-adipogenic progenitors	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmvl	Muscle	Macrophages	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmvl	Muscle	Pericytes	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmvl	Muscle	Satellite cells	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmvl	Muscle	Skeletal muscle cells	50	22	2	1.0	0.09090909090909091	slow muscle cell
+raw	skmvl	Muscle	Tenocytes	50	22	1	0.0	0.045454545454545456	slow muscle cell
+raw	skmvl	Muscle	Vascular smooth muscle cells	50	22	1	0.0	0.045454545454545456	slow muscle cell
+centered	heart	Heart	CD8+ T cells	50	15	1	0.0	0.06666666666666667	CD4-positive, alpha-beta T cell
+centered	heart	Heart	Cardiac fibroblasts	50	15	1	0.02	0.06666666666666667	macrophage
+centered	heart	Heart	Cardiac neurons	50	15	1	0.96	0.06666666666666667	neuron
+centered	heart	Heart	Cardiomyocytes	50	15	2	1.0	0.13333333333333333	ventricular cardiac muscle cell
+centered	heart	Heart	Endothelial cells	50	15	1	1.0	0.06666666666666667	cardiac endothelial cell
+centered	heart	Heart	Macrophages	50	15	1	1.0	0.06666666666666667	macrophage
+centered	heart	Heart	Mesothelial cells	50	15	1	0.02	0.06666666666666667	ventricular cardiac muscle cell
+centered	heart	Heart	Monocytes	50	15	1	0.98	0.06666666666666667	monocyte
+centered	heart	Heart	NK cells	50	15	1	0.0	0.06666666666666667	erythrocyte
+centered	heart	Heart	Pericytes	50	15	1	1.0	0.06666666666666667	pericyte
+centered	heart	Heart	T cells	50	15	2	0.16	0.13333333333333333	erythrocyte
+centered	heart	Heart	Vascular smooth muscle cells	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	CD8+ T cells	50	15	1	0.0	0.06666666666666667	regular atrial cardiac myocyte
+raw	heart	Heart	Cardiac fibroblasts	50	15	1	0.0	0.06666666666666667	macrophage
+raw	heart	Heart	Cardiac neurons	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	Cardiomyocytes	50	15	2	1.0	0.13333333333333333	ventricular cardiac muscle cell
+raw	heart	Heart	Endothelial cells	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	Macrophages	50	15	1	1.0	0.06666666666666667	macrophage
+raw	heart	Heart	Mesothelial cells	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	Monocytes	50	15	1	0.0	0.06666666666666667	macrophage
+raw	heart	Heart	NK cells	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	Pericytes	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+raw	heart	Heart	T cells	50	15	2	0.0	0.13333333333333333	ventricular cardiac muscle cell
+raw	heart	Heart	Vascular smooth muscle cells	50	15	1	0.0	0.06666666666666667	ventricular cardiac muscle cell
+centered	liver	Liver	Cholangiocytes	50	20	1	1.0	0.05	intrahepatic cholangiocyte
+centered	liver	Liver	Hepatic stellate cells	50	20	1	0.0	0.05	monocyte
+centered	liver	Liver	Hepatocytes	50	20	1	0.02	0.05	macrophage
+centered	liver	Liver	Kupffer cells	50	20	1	0.6	0.05	macrophage
+centered	liver	Liver	Liver sinusoidal endothelial cells	50	20	1	0.94	0.05	endothelial cell
+centered	liver	Liver	NK cells	50	20	1	0.94	0.05	natural killer cell
+centered	liver	Liver	Vascular endothelial cells	50	20	1	0.2	0.05	hepatic stellate cell
+raw	liver	Liver	Cholangiocytes	50	20	1	0.0	0.05	hepatocyte
+raw	liver	Liver	Hepatic stellate cells	50	20	1	0.0	0.05	macrophage
+raw	liver	Liver	Hepatocytes	50	20	1	0.12	0.05	macrophage
+raw	liver	Liver	Kupffer cells	50	20	1	1.0	0.05	macrophage
+raw	liver	Liver	Liver sinusoidal endothelial cells	50	20	1	0.0	0.05	macrophage
+raw	liver	Liver	NK cells	50	20	1	0.0	0.05	hepatocyte
+raw	liver	Liver	Vascular endothelial cells	50	20	1	0.0	0.05	hepatocyte
+centered	kidney	Kidney	Connecting tubule cells	50	10	1	0.0	0.1	monocyte
+centered	kidney	Kidney	Distal convoluted tubule cells	50	10	1	0.32	0.1	monocyte
+centered	kidney	Kidney	Endothelial cells	50	10	1	1.0	0.1	endothelial cell
+centered	kidney	Kidney	Immune cells	50	10	8	0.76	0.8	B cell
+centered	kidney	Kidney	Injured proximal tubule cells	50	10	1	0.0	0.1	B cell
+centered	kidney	Kidney	Monocytes	50	10	2	0.0	0.2	macrophage
+centered	kidney	Kidney	Principal cells	50	10	1	0.0	0.1	B cell
+centered	kidney	Kidney	Proximal tubule cells	50	10	1	1.0	0.1	kidney epithelial cell
+centered	kidney	Kidney	Thick ascending limb cells	50	10	1	0.0	0.1	monocyte
+centered	kidney	Kidney	Thin limb cells	50	10	1	0.0	0.1	CD4-positive, alpha-beta T cell
+centered	kidney	Kidney	Type A intercalated cells	50	10	1	0.12	0.1	neutrophil
+centered	kidney	Kidney	Type B intercalated cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Connecting tubule cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Distal convoluted tubule cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Endothelial cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Immune cells	50	10	8	1.0	0.8	monocyte
+raw	kidney	Kidney	Injured proximal tubule cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Monocytes	50	10	2	1.0	0.2	monocyte
+raw	kidney	Kidney	Principal cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Proximal tubule cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Thick ascending limb cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Thin limb cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Type A intercalated cells	50	10	1	0.0	0.1	monocyte
+raw	kidney	Kidney	Type B intercalated cells	50	10	1	0.0	0.1	monocyte
+centered	watsc	Fat	Adipose stromal progenitor cells	50	20	2	0.0	0.1	hematopoietic precursor cell
+centered	watsc	Fat	B cells	50	20	1	0.0	0.05	mast cell
+centered	watsc	Fat	Endothelial cells	50	20	1	0.88	0.05	endothelial cell
+centered	watsc	Fat	Macrophages	50	20	1	0.8	0.05	macrophage
+centered	watsc	Fat	Mural cells	50	20	2	0.44	0.1	muscle cell
+centered	watsc	Fat	NK and cytotoxic T cells	50	20	3	0.02	0.15	mast cell
+centered	watsc	Fat	Non-classical monocytes	50	20	1	0.0	0.05	neutrophil
+centered	watsc	Fat	T cells	50	20	3	0.18	0.15	plasma cell
+raw	watsc	Fat	Adipose stromal progenitor cells	50	20	2	0.0	0.1	hematopoietic precursor cell
+raw	watsc	Fat	B cells	50	20	1	0.0	0.05	macrophage
+raw	watsc	Fat	Endothelial cells	50	20	1	0.0	0.05	hematopoietic precursor cell
+raw	watsc	Fat	Macrophages	50	20	1	0.0	0.05	muscle cell
+raw	watsc	Fat	Mural cells	50	20	2	0.0	0.1	muscle cell
+raw	watsc	Fat	NK and cytotoxic T cells	50	20	3	0.0	0.15	hematopoietic precursor cell
+raw	watsc	Fat	Non-classical monocytes	50	20	1	0.0	0.05	hematopoietic precursor cell
+raw	watsc	Fat	T cells	50	20	3	0.0	0.15	hematopoietic precursor cell
+centered	bat	Fat	ASPC	50	20	2	0.62	0.1	fibroblast
+centered	bat	Fat	Endothelial cells	50	20	1	0.48	0.05	endothelial cell
+centered	bat	Fat	Immune cells	50	20	11	0.28	0.55	muscle cell
+centered	bat	Fat	SMCs & Pericytes	50	20	2	0.2	0.1	hematopoietic precursor cell
+raw	bat	Fat	ASPC	50	20	2	0.0	0.1	muscle cell
+raw	bat	Fat	Endothelial cells	50	20	1	0.0	0.05	muscle cell
+raw	bat	Fat	Immune cells	50	20	11	0.0	0.55	muscle cell
+raw	bat	Fat	SMCs & Pericytes	50	20	2	0.0	0.1	muscle cell
+centered	smlint	Small_Intestine	B cells	50	31	1	0.0	0.03225806451612903	plasma cell
+centered	smlint	Small_Intestine	BEST4+ enterocytes	50	31	1	1.0	0.03225806451612903	BEST4+ enterocyte
+centered	smlint	Small_Intestine	CD8+ T cells	50	31	2	0.0	0.06451612903225806	plasma cell
+centered	smlint	Small_Intestine	Enterocytes	50	31	4	1.0	0.12903225806451613	enterocyte of epithelium proper of ileum
+centered	smlint	Small_Intestine	Enteroendocrine cells	50	31	1	0.04	0.03225806451612903	intestinal tuft cell
+centered	smlint	Small_Intestine	Goblet cells	50	31	1	1.0	0.03225806451612903	small intestine goblet cell
+centered	smlint	Small_Intestine	Macrophages	50	31	1	0.02	0.03225806451612903	fibroblast
+centered	smlint	Small_Intestine	NK cells	50	31	1	0.0	0.03225806451612903	fibroblast
+centered	smlint	Small_Intestine	Stem cells	50	31	1	0.0	0.03225806451612903	monocyte
+centered	smlint	Small_Intestine	Transit-amplifying cells	50	31	1	0.0	0.03225806451612903	paneth cell of epithelium of small intestine
+centered	smlint	Small_Intestine	Tuft cells	50	31	1	1.0	0.03225806451612903	intestinal tuft cell
+raw	smlint	Small_Intestine	B cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	BEST4+ enterocytes	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	CD8+ T cells	50	31	2	0.0	0.06451612903225806	monocyte
+raw	smlint	Small_Intestine	Enterocytes	50	31	4	0.0	0.12903225806451613	monocyte
+raw	smlint	Small_Intestine	Enteroendocrine cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	Goblet cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	Macrophages	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	NK cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	Stem cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	Transit-amplifying cells	50	31	1	0.0	0.03225806451612903	monocyte
+raw	smlint	Small_Intestine	Tuft cells	50	31	1	0.0	0.03225806451612903	monocyte
+centered	testes	Testis	Condensed spermatids	25	8	1	1.0	0.125	spermatid
+centered	testes	Testis	Elongating spermatids	25	8	1	0.0	0.125	endothelial cell
+centered	testes	Testis	Round spermatids	25	8	1	0.0	0.125	spermatocyte
+centered	testes	Testis	Spermatocytes	25	8	1	0.0	0.125	spermatogonium
+centered	testes	Testis	Spermatogonia	25	8	1	1.0	0.125	spermatogonium
+raw	testes	Testis	Condensed spermatids	25	8	1	1.0	0.125	spermatid
+raw	testes	Testis	Elongating spermatids	25	8	1	1.0	0.125	spermatid
+raw	testes	Testis	Round spermatids	25	8	1	0.0	0.125	spermatocyte
+raw	testes	Testis	Spermatocytes	25	8	1	0.0	0.125	spermatogonium
+raw	testes	Testis	Spermatogonia	25	8	1	1.0	0.125	spermatogonium
