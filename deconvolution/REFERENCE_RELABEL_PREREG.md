@@ -597,3 +597,18 @@ summed from GSE307551 cells, deconvolved by Stage 8 with the production HEART re
 **Reading.** PASS if cardiomyocyte Pearson r ≥ 0.9 (the Chu 2022 bar) and the mean absolute CM error ≤ 0.10;
 per-class r and bias reported for every class. A FAIL is reported as a limitation of the HEART results; it
 changes no reference.
+
+## 16. Change log for §14 and §15
+- 2026-10-31 — §14/§15 panels and operational details, committed before any of the three datasets was
+  downloaded. Panels SPLEEN, OVARY and HEART_COARSE and the production-to-coarse HEART map are in
+  `reference_marker_panels.yaml`. Details §14/§15 left open, fixed now:
+  - S1: T cells include every T-cell sub-class or review name; the myeloid class is monocytes + macrophages
+    (with sub-classes) together, or neutrophils, either at 100 cells.
+  - O1: theca/stroma = "Theca and stromal cells" and its sub-classes. O2: share of QC cells whose final
+    label is a guard class (lung epithelium, hepatocytes; panels in the OVARY block); those cells never
+    enter the reference. The per-cell share with any Sftpc/Scgb1a1/Alb/Apoa1 count is reported, not used.
+  - R2 and §15 mixtures as §12 check 6: 5 × 10⁶ reads per mixture, cells drawn with replacement up to each
+    type's target reads, the realised read shares are the true fractions; seed 0. R2's "mean fraction" is
+    the mean true fraction over the 20 mixtures; types under 20 cells per half stay in the half-reference
+    but not in the mixtures. §15 uses all QC cells of both F344 libraries; the CM error is the mean over
+    mixtures of |estimated − true|. Genes are in the tissue's bulk ID space throughout (§12 check 5).
