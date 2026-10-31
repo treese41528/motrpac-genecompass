@@ -99,7 +99,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
             override = yaml.safe_load(f) or {}
         _deep_merge(config, override)
 
-    # Optional profile overlay, merged last, e.g. April's model and its folders:
+    # Optional profile overlay, merged last, e.g. the July references or April's model:
     #   export PIPELINE_PROFILE=config/profiles/april.yaml
     # A relative path is taken from the repository root (the parent of config/).
     profile = os.environ.get("PIPELINE_PROFILE")

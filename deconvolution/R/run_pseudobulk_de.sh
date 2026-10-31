@@ -26,8 +26,8 @@ mkdir -p "${TMPDIR}"
 source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 
 # Paths default to the config-driven (or repo-relative) deconvolution layout; overridable via env.
-GC_DIR="${CFG_GENECOMPASS_INPUT_DIR:-${PROJECT_ROOT}/data/deconvolution/genecompass_input_v2}"
-RESULTS_ROOT="${RESULTS_ROOT:-${CFG_RESULTS_DIR:-${PROJECT_ROOT}/data/deconvolution/results}/motrpac}"
+GC_DIR="${CFG_GENECOMPASS_INPUT_DIR:-${PROJECT_ROOT}/data/deconvolution/genecompass_input_v2_refs4}"
+RESULTS_ROOT="${RESULTS_ROOT:-${CFG_RESULTS_DIR:-${PROJECT_ROOT}/data/deconvolution/results_refs4}/motrpac}"
 BULK_ROOT="${BULK_ROOT:-${CFG_MOTRPAC_BULK_OUT:-${PROJECT_ROOT}/data/deconvolution/motrpac_bulk}}"
 PHENO="${PHENO:-${PROJECT_ROOT}/deconvolution/reference/motrpac_sample_pheno.tsv}"
 HOTSPOTS="${HOTSPOTS:-${CFG_HOTSPOTS_TABLE:-${GC_DIR}/gate_rcv10/corroboration_merged.tsv}}"

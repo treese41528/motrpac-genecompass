@@ -25,7 +25,7 @@ Usage:
   python pipeline/run_stage10.py                      # full experiment (all tissues)
   python pipeline/run_stage10.py --tissues BLOOD SKMVL # debug subset (DE only; comparison still global)
   python pipeline/run_stage10.py --from 2             # re-run only the comparison
-  python pipeline/run_stage10.py --hotspots data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
+  python pipeline/run_stage10.py --hotspots data/deconvolution/genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv
   python pipeline/run_stage10.py --dry-run
 
 HPC: step 1 is an R job (limma/IHW/repfdr on existing pred_z; NO run.prism, NO GPU compute,

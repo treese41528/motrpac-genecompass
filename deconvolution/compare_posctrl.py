@@ -218,8 +218,8 @@ def classify_identity(evals, tier, expected_dir):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input_v2/pseudobulk_de'))
-    ap.add_argument('--prereg', default=str(_PROJECT_ROOT / 'deconvolution/reference/posctrl_prereg.tsv'))
+    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input_v2_refs4/pseudobulk_de'))
+    ap.add_argument('--prereg', default=str(_PROJECT_ROOT / 'deconvolution/reference/posctrl_prereg_refs4.tsv'))
     ap.add_argument('--out', default=None, help='output dir (default: --de-dir)')
     ap.add_argument('--alpha', type=float, default=0.05)
     ap.add_argument('--min-fraction', type=float, default=0.01)
