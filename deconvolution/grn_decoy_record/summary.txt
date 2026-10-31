@@ -1,0 +1,23 @@
+                           network  n_tf  n_decoy  tf_edges  decoy_edges  tf_frac_z2  decoy_frac_z2  fdr_z2
+         blood_classical_monocytes   105      105    223105       223105    0.144995       0.148656  1.0253
+             blood_erythroid_cells   123      123    261457       261457    0.118654       0.123699  1.0425
+blood_megakaryocytes_and_platelets   110      110    235472       235574    0.140271       0.142049  1.0127
+                 blood_neutrophils   117      117    247787       247861    0.106438       0.102993  0.9676
+            lung_endothelial_cells   140      140    291612       291612    0.088638       0.088998  1.0041
+            lung_mesothelial_cells   118      118    245571       245571    0.082917       0.089648  1.0812
+ lung_vascular_smooth_muscle_cells   149      149    309899       309899    0.074285       0.077580  1.0444
+                   skmgn_tenocytes   119      119    249356       249356    0.093930       0.101409  1.0796
+
+pooled FDR(2) = 1.030  (215,429 TF / 221,796 decoy edges at |z|>=2)
+t* (pooled FDR <= 0.10, >= 100 TF edges): none on the grid 2..50
+registered reading: FDR(2) > 0.50: |z|>=2 edges not distinguishable from random-gene deletion
+
+hub level (TF sum|delta| vs same-network decoys, BH within network):
+  blood_classical_monocytes: 0/105 TFs q<0.10; anchors: Nr4a1 q=0.960
+  blood_erythroid_cells: 0/123 TFs q<0.10; anchors: Tfeb q=0.983
+  blood_megakaryocytes_and_platelets: 0/110 TFs q<0.10; anchors: none present
+  blood_neutrophils: 0/117 TFs q<0.10; anchors: none present
+  lung_endothelial_cells: 0/140 TFs q<0.10; anchors: Epas1 q=0.923
+  lung_mesothelial_cells: 0/118 TFs q<0.10; anchors: Epas1 q=0.969
+  lung_vascular_smooth_muscle_cells: 0/149 TFs q<0.10; anchors: Epas1 q=0.917
+  skmgn_tenocytes: 0/119 TFs q<0.10; anchors: Tfeb q=0.974, Epas1 q=0.895

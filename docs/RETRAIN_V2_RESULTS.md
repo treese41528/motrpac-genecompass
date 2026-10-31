@@ -418,7 +418,7 @@ Method as in April's production run. Each hotspot that makes up at least 1% of i
   the control arm. A TF's hub strength is the sum of |Δ| over its edges.
 - The human-space network repeats this on the same cells re-expressed as human (`build_grn_human.py`).
 - Conservation (`compare_grn_conservation.py`) is, per TF, the Spearman between its rat and human Δ over
-  its confident rat targets (|z| ≥ 2). Both networks are the same cells through the same model. So
+  its rat targets with |z| ≥ 2. Both networks are the same cells through the same model. So
   conservation measures how consistent the model is across the two token sets of the same cells. It is
   not evidence about human biology.
 
@@ -460,7 +460,7 @@ the differences there come from the weights alone:
 | Hub strength, Spearman | 0.783–0.950 | 0.991–0.997 |
 | Top-10 hubs shared | 4–9 | 8–10 |
 | Edge Δ, Spearman over the edges both have | 0.075–0.207 | 0.414–0.565 |
-| Confident edges (\|z\| ≥ 2), Jaccard | 0.075–0.145 | 0.265–0.452 |
+| Edges with \|z\| ≥ 2, Jaccard | 0.075–0.145 | 0.265–0.452 |
 
 Hub strength mostly follows the TF's own value in the profile, its expression relative to the gene's
 corpus median. The Spearman between the two has a median of 0.83 over April's networks in both spaces,
@@ -513,7 +513,7 @@ What this shows:
   space). Most of that agreement comes from the inputs. Hub strength largely follows each TF's value
   in the profile, and on the same tokens the two models rank hubs almost identically.
 - **Edges.** The two models disagree on most individual edges. Even on the same tokens, only 27–45% of
-  the edges confident in either model are confident in both, and Δ agrees at Spearman 0.41–0.57.
+  the edges with |z| ≥ 2 in either model reach it in both, and Δ agrees at Spearman 0.41–0.57.
 - **Self-consistency.** v2's networks agree less between the rat and the human tokens. Per TF the median
   ρ is 0.292 against April's 0.451, and 49% of TF scores reach ρ ≥ 0.3 against 76%.
   - The drop is largest in BLOOD classical and non-classical monocytes and ISG-expressing T cells, to

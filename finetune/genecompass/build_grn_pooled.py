@@ -146,7 +146,7 @@ def main():
     ap.add_argument("--top-edges", type=int, default=0,
                     help="candidate edges per TF, by |point delta|. 0 = NO CAP (keep every surviving "
                          "target; the default). A cap selects edges on the same statistic that z then "
-                         "tests (winner's curse) and makes 'hub strength = #confident edges' meaningless, "
+                         "tests (winner's curse) and makes 'hub strength = #edges with |z|>=2' meaningless, "
                          "since every TF would carry exactly `cap` candidates. Costs nothing to disable: "
                          "perturb_profile already computes every target's shift on every bootstrap pass.")
     ap.add_argument("--device", default="cuda")
@@ -155,7 +155,7 @@ def main():
                     help="PERMUTATION NULL. >=0 shuffles the trained/control labels among the cell type's "
                          "pseudo-cells (preserving the arm SIZES) before anything else, so there is no real "
                          "exercise contrast left. Everything downstream is identical. The resulting |z| "
-                         "distribution is the null, and is what calibrates the |z|>=2 'confident' threshold: "
+                         "distribution is the null, and is what would calibrate the |z|>=2 threshold: "
                          "empirical FDR(t) = P_null(|z|>=t) / P_observed(|z|>=t). Without this, |z|>=2 is a "
                          "relative ranking dressed up as a significance claim.")
     ap.add_argument("--decoy-seed", type=int, default=-1,
@@ -283,7 +283,7 @@ def main():
         f.write("tf\ttf_symbol\ttarget\ttarget_symbol\tdelta\tboot_sd\tz" + ("\tdecoy_for" if decoy_for else "") + "\n")
         for e in edges:
             f.write("\t".join(str(x) for x in e) + "\n")
-    print(f"wrote {len(edges)} candidate edges ({len(conf)} confident |z|>=2) from {len(expressed)} TFs "
+    print(f"wrote {len(edges)} candidate edges ({len(conf)} with |z|>=2) from {len(expressed)} TFs "
           f"-> {args.out}")
 
 

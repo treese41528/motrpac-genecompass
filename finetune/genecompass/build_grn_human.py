@@ -194,7 +194,7 @@ def main():
         f.write("tf\ttf_symbol\ttf_human_ensg\ttarget_human_ensg\tdelta\tboot_sd\tz\n")
         for e in edges:
             f.write("\t".join(str(x) for x in e) + "\n")
-    print(f"wrote {len(edges)} human-space edges ({len(conf)} confident |z|>=2) from {len(expressed)} TFs -> {args.out}")
+    print(f"wrote {len(edges)} human-space edges ({len(conf)} with |z|>=2) from {len(expressed)} TFs -> {args.out}")
 
 
 if __name__ == "__main__":
