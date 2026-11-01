@@ -1,3 +1,15 @@
+> **Superseded 2026-11-01.** Notebooks 8–12 now show all 16 tissues (refs4 plus SPLEEN and OVARY; default since
+> c3b27c7) with the v2 model, re-executed on the `_refs4all` outputs (SLURM 12114610, 12114613, 12114617, 12114627; all
+> clean). Paths `genecompass_input_v2_refs4[_human]` → `genecompass_input_v2_refs4all[_human]`, `results_refs4/` →
+> `results_refs4all/`; SPLEEN/OVARY added to every tissue list and colour dict. Hand constants were re-sourced from
+> logs/JSON: nb8 run.prism minutes (refs4 array 12041931, CORTEX 12042040_3, SPLEEN/OVARY 12107800), nb9 minimum token
+> length (same logs), nb12 transfer stats (from `_refs4all_human/<tissue>/{transfer,tokenize}_summary.json`; the old
+> dict held July values). Code fixes: nb8 fraction grid 3×5 → 4×4; nb9 dropped-cell count read from JSON (LUNG 18);
+> nb12 rat–human Spearman with `nan_policy="omit"` (LUNG goblet has no human block). Prose from the executed outputs
+> and `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`: 197 blocks / 151 analysable, 9 hotspots, 53,084 dose genes, Augur–PLS
+> 0.785 (130), embedding > PCA 82/151 p 0.15, transfer 9/9, sex 0.743 → 0.745. The silhouette (0.810) and the
+> rat–human cosine (0.969) are not computed in the notebooks and are marked "(14 tissues, refs4)".
+>
 > **Superseded 2026-10-31.** Notebooks 8–12 now show the refs4 references (default since 904dfb2) with the v2
 > model, re-executed on the refs4 outputs. The refs4 rerun changed paths only (`genecompass_input_v2` →
 > `genecompass_input_v2_refs4`, `results/` → `results_refs4/`), restricted Stage 11 to the 124 blocks analysable
