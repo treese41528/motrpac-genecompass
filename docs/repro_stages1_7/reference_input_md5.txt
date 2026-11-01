@@ -1,0 +1,9 @@
+aa206a030b06c5cfe376c1cd211e5a53  data/references/biomart/rat_gene_info.tsv
+88d44d064f6a89e3f4fd81ce6064bb19  data/references/biomart/rat_human_orthologs.tsv
+1e14155079d42a197e8d97de61050f64  data/references/biomart/rat_mouse_orthologs.tsv
+4b03df71fe88430e49c4c53a493c2ba1  data/references/biomart/mouse_human_orthologs.tsv
+5e1e18fea6f3b34dca80758c5322a9e6  data/references/hgnc/hgnc_complete_set.txt
+95e86206934cc7ba507bb79b933e04ea  vendor/GeneCompass/prior_knowledge/human_mouse_tokens.pickle
+da950ff95e2305db5b512dddfef0375d  vendor/GeneCompass/prior_knowledge/homologous_hm_token.pickle
+1caa6bda23b0e83a5c28902392c50de4  data/training/gene_universe/pruned_gene_universe.tsv
+33a0303055bd0b1689db085b2c26e3c7  vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle

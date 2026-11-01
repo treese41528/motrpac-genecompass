@@ -1,0 +1,7 @@
+# Reproducibility check 2026-10-31: Stages 3-6 outputs to scratch (inputs: canonical gene universe + QC h5ad)
+paths:
+  ortholog_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s3/ortholog_mappings
+  median_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s4/gene_medians_v2
+  hybrid_medians: /scratch/gilbreth/reese18/motrpac_repro_20261031/s4/gene_medians_v2/hybrid_gene_medians.pickle
+  tokenized_corpus_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s5/tokenized_corpus_v2
+  prior_knowledge_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s6/prior_knowledge

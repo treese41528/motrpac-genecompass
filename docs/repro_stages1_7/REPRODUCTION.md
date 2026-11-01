@@ -37,12 +37,34 @@ the rerun, 31 only in the canonical file).
 - The task counts behind Stage 4 (16) and Stage 5 (50) are recorded only in the manifests and in gitignored
   SLURM scripts, and Stage 5's row order depends on them.
 
+## Stages 1, 3–7 data: results (job 12103832, 8 h 11 min, 2026-10-31 20:09 to 11-01 03:20)
+
+Chained run: Stage 3 reads the canonical `pruned_gene_universe.tsv` (Stage 2's rebuilt universe differs, above);
+Stages 4–5 read the canonical QC h5ads (checked by Stage 1 below) and the **rerun's** Stage 3 output; the mix reads
+the rerun's Stage 5 corpus; the probe reads the rerun's mix. Task counts as recorded in the manifests (Stage 4: 16,
+Stage 5: 50). Every file of every output folder was compared, md5 first, then by content where md5 differed.
+
+| Stage | What was rerun | Result | Detail (table in this folder) |
+|---|---|---|---|
+| 1 | md5 + cell count of all 868 `corpus_v2_plan.tsv` files (584 kept) | **IDENTICAL** | 868/868 match the plan's md5 and `n_cells`; kept cells 6,803,206 (`stage1_qc_inputs.tsv`) |
+| 3 | `run_stage3.py` + `build_rat_token_dictionary.py` | **IDENTICAL** | All 10 outputs incl. `rat_tokens.pickle`, `rat_token_mapping.tsv`, `rat_human_mouse_tokens.pickle` byte-identical; the 2 JSON manifests differ only in timestamp/path (`stage3_ortholog_mappings.tsv`) |
+| 6 | GRN transfer; family embedding | GRN **IDENTICAL**; family **DIFFERS (no effect on v2)** | `grn_embeddings.pkl`, coverage TSV identical. Family: same 8.86 M gene pairs (`family_gene_pairs.txt` identical), same 26,019 keys, but vectors differ (mean per-gene correlation 0.77): gensim word2vec with `workers: 8` is not deterministic. 0 of 2,474 T4 genes get a non-zero family vector in either, so v2's init takes nothing from it (`stage6_prior_knowledge.tsv`) |
+| 7 step 1 | `rat_model_init.py` from the rerun's token dict + Stage 6, built **twice** | **DIFFERS only in the random rows** | 231/234 tensors identical, including all four prior-knowledge buffers. The 3 that differ are exactly the unseeded draws: word embeddings / tied decoder rows of the 2,243 T3 (noise, max abs diff 0.008) and 2,474 T4 tokens (N(0, 0.02) rows), and the rat row of `cls_embedding`. Two rebuilds differ from each other in the same 3 tensors (`stage7_init_tensors.tsv`, `stage7_init_repro_vs_repro2.tsv`) |
+| 4 | 16 scatter tasks, gather, `build_hybrid_medians.py` | **IDENTICAL** | `rat_gene_medians.pickle`, `hybrid_gene_medians.pickle`, stats TSV/NPZ, summaries byte-identical; 48/48 scatter npz identical; scatter `cells.tsv.gz` differ only in the `elapsed_s` column (`stage4_*.tsv`) |
+| 5 | 50 tokenize tasks + assemble (209 GB on disk) | **IDENTICAL** | 607/607 shards and all 225 dataset arrow files + `sorted_length.pickle` + `dataset_info.json` byte-identical; `state.json` differs only in the HF `_fingerprint`; manifests differ only in the median-dir path (`stage5_*.tsv`) |
+| 7 mix | `build_mixed_species_dataset.py` (seed 42) | **IDENTICAL** | 1,093/1,093 arrow files (546 GB) + `sorted_length.pickle` + `dataset_info.json` byte-identical; `state.json` fingerprint-only; provenance differs only in paths/host/time (`stage7_mix.tsv`) |
+| 7 probe | `eval_mlm.py build-probe` (seed 20261008) | **CONTENT-IDENTICAL** | `data-00000-of-00001.arrow` 90aa2d90 and `dataset_info.json` c6b1b65c match the registered md5s; `state.json` 9a9f80e7 vs registered 76fbde1f differs only in `_fingerprint` (`stage7_probe_md5_repro.txt`) |
+
+Also confirmed: `run_stage6.py --dry-run --from 2` fails on a missing `coexp_embeddings.pkl` (the orchestrator
+requires Step 1's output even when Step 1 is skipped), so on a fresh tree Steps 2–4 must be run directly.
+Not rerun: Stage 6 co-expression and promoter (neither enters v2; see above). Wall times per step:
+`timings_s1to7data.tsv`. Scripts, SLURM files and profiles used: `scripts/`.
+
 ## Pending (queued SLURM jobs)
 
 | Job | What | Compared against |
 |---|---|---|
 | 12103827 (running) | Stage 2 step 2 cell QC (~23 h), step 3 pruning, OMIX767 QC | Canonical QC h5ads and expression stats: how far the step-1 difference spreads |
-| 12103832 | Stage 1 md5 + cell counts for all 868 `corpus_v2_plan` files; Stage 3; token dictionary; Stage 6 family + GRN; init built twice; Stage 4 + hybrid medians; Stage 5 (418 GB); training mix (546 GB) | Manifests and recorded md5s; the C1 probe md5s 90aa2d90 / c6b1b65c / 76fbde1f |
 | 12103825 (4 GPUs) | 2,000 steps of phase 1 restarted from the canonical v2 init on the canonical mix | v2's `log_history`, step by step |
 
 This file will be updated with each job's result.

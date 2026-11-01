@@ -1,0 +1,3 @@
+file	md5_repro	md5_canonical	result	detail
+corpus_stats.tsv	71a47924aad3bce2c89da506a36d73ec	71a47924aad3bce2c89da506a36d73ec	IDENTICAL	
+stage5_manifest.json	8117c6be4a783326f7b666869e655cd6	312653e68c13b4fdd82f2c5943b5e035	DIFFERS	1 diffs: /config_snapshot/median_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s4/gene_medians_v2 != /depot/reese18/apps/motrpac-genecompass/data/training/gene_medians_v2
