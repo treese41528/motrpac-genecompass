@@ -288,20 +288,23 @@ def validate_inputs(config: dict, from_step: int) -> bool:
                 "build_family_embedding.py will auto-download"
             )
 
-    # ── Step 2 only: check Step 1 outputs ─────────────────────────────────────
-    if from_step == 2:
+    # ── Skipping Step 1: its output is not an input of Steps 2–4 ──────────────
+    # Family, promoter and GRN read only Stage 3 outputs and references, so a run that starts
+    # at Step 2+ does not need coexp_embeddings.pkl (it used to be required here, which made
+    # `--from 2` fail on a fresh tree). Stage 7's prerequisite check still wants all four files;
+    # this only reports whether Step 1's output exists.
+    if from_step >= 2:
         pk_dir   = resolve_path(config, paths['prior_knowledge_dir'])
         coexp_emb = pk_dir / 'coexp_embeddings.pkl'
-        if not coexp_emb.exists():
-            errors.append(
-                f"coexp_embeddings.pkl not found: {coexp_emb}\n"
-                f"  → Run Step 1 first (python run_stage6.py --from 1)\n"
-                f"     or:  python run_stage6.py  (runs both steps)"
-            )
-        else:
+        if coexp_emb.exists():
             logger.info(
                 f"  coexp_embeddings.pkl: "
-                f"{coexp_emb.stat().st_size / 1e6:.1f} MB [OK]"
+                f"{coexp_emb.stat().st_size / 1e6:.1f} MB [present; Step 1 skipped]"
+            )
+        else:
+            logger.warning(
+                f"  coexp_embeddings.pkl not found ({coexp_emb}); Steps 2–4 do not need it, "
+                f"but Stage 7 does (run Step 1, or use the deposited file)"
             )
 
     if errors:

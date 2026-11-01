@@ -37,9 +37,10 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 git clone --recurse-submodules https://github.com/treese41528/motrpac-genecompass.git
 cd motrpac-genecompass
 
-# Create the Python environment (a venv, not conda)
+# Create the Python environment (a venv, not conda) from the EXACT lock (--no-deps: every
+# transitive dependency is pinned there; requirements.txt is only the ranged, human-readable list)
 python3.12 -m venv motrpac-env && source motrpac-env/bin/activate
-pip install -U pip && pip install -r requirements.txt
+pip install -U pip && pip install --no-deps -r requirements.lock.txt
 
 # Set project root = your clone (NOT a data root); all config paths resolve under it
 export PIPELINE_ROOT=$PWD
@@ -51,20 +52,96 @@ cp config/pipeline_config.local.yaml.example config/pipeline_config.local.yaml
 python -c "from lib.gene_utils import load_config, validate_config; c = load_config(); validate_config(c); print('Config OK')"
 ```
 
-### Running the data pipeline
+### Rebuilding the v2 model (Stages 0–7), in order
 
-The pipeline runs in numbered stages. Each stage reads from the previous stage's output directory and writes a JSON manifest for reproducibility.
+Every stage reads the previous stage's output under `data/` (paths in `config/pipeline_config.yaml`) and
+writes a manifest or a `provenance_*.json` (git commit, config, input sizes and md5s). Runtimes are from the
+2026-10-31 reproduction (`docs/repro_stages1_7/REPRODUCTION.md`, which also says what reproduces byte for
+byte and what does not). "Deposited" marks the outputs that are deposited with v2 because a rerun cannot
+give the same bytes; to reproduce v2 exactly, restore those and start from the next step.
 
 ```bash
-python pipeline/run_stage2.py --dry-run   # gene universe & cell QC
-python pipeline/run_stage3.py             # ortholog mapping (cross-species token assignment)
-python pipeline/run_stage4.py             # gene medians (scatter / gather; SLURM recommended)
-python pipeline/run_stage5.py             # reference assembly & tokenization (SLURM recommended)
-python pipeline/run_stage6.py             # prior-knowledge embeddings
-python pipeline/run_stage7.py             # fine-tuning (GPU)
+# ── 0. Clone + environment ────────────────────────────────────────────────────────────────────────────
+git clone --recurse-submodules https://github.com/treese41528/motrpac-genecompass.git && cd motrpac-genecompass
+python3.12 -m venv motrpac-env && source motrpac-env/bin/activate
+pip install --no-deps -r requirements.lock.txt          # or the container: deconvolution/setup/Dockerfile
+export PIPELINE_ROOT=$PWD
+bash scripts/stage_genecompass_assets.sh                # GeneCompass_Base, prior_knowledge, randsel_500w_human/mouse:
+                                                        # prints the manual download links, applies the mouse
+                                                        # state.json edit v2 used, checks config/genecompass_assets_md5.tsv
+
+# ── Stage 0. Reference files (data/references/biomart/, ~170 MB, minutes) ──────────────────────────────
+python pipeline/01_data_harvesting/fetch_biomart_reference_data.py -v
+#   BioMart: the Ensembl 115 / GRCr8 archive (sep2025.archive.ensembl.org). RGD GENES_RAT.txt has no archive:
+#   a fetch today gets a newer file. DEPOSITED: the reference folder (md5s: config/reference_md5sums.tsv;
+#   Stage 2 refuses other files unless --allow-reference-drift). HGNC (Stage 6) is the dated 2026-03-06
+#   archive if absent; v2's local copy (2026-03-17) is not in the archive and is deposited.
+
+# ── Stage 1. Harvest (data/raw/, ~27 GB of matrices; network-bound, many hours) ────────────────────────
+python pipeline/01_data_harvesting/geo_harvester.py --mode both --download --resume --batch-esummary 400 \
+    --workers 8 --accessions config/stage2_step1_accessions.txt --output_dir data/raw/geo
+mkdir -p data/raw/geo/single_cell data/raw/geo/bulk     # Stage 2 reads both config source paths; as for v2,
+ln -s ../geo_datasets data/raw/geo/single_cell/geo_datasets   # both point at the one harvest folder
+ln -s ../geo_datasets data/raw/geo/bulk/geo_datasets
+#   Replay mode (--mode both, as the February 2026 harvest): exactly the 733 GEO series Stage 2 step 1
+#   scanned (config/corpus_v2_accessions.txt = the 80 that v2's corpus keeps). md5s are recorded by default.
+#   GEO files can change after the February 2026 harvest, so a replay is not guaranteed byte-identical.
+#   OMIX767 (rat testis, NGDC) has no downloader: download the 10x matrices by hand from
+#   https://ngdc.cncb.ac.cn/omix/release/OMIX767 (files under https://download.cncb.ac.cn/OMIX/OMIX767/)
+#   into data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/.
+python pipeline/run_stage1.py --from 4                  # metadata, matrix analysis, LLM study analysis, catalog
+#   -> data/catalog/unified_studies.json (the study list Stage 2 reads). The LLM step (Claude Haiku) is not
+#   deterministic: DEPOSITED: data/catalog/.
+
+# ── Stage 2. Gene universe + cell QC (data/training/gene_universe/, qc_h5ad/; ~23 h, 16 CPUs, 200 GB) ──
+python pipeline/run_stage2.py                           # step 1 universe, step 2 QC h5ads, step 3 pruning
+python pipeline/02_gene_universe/qc_external_mtx.py \
+    --mtx-dir data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/C_gene_bc_matrices --sample-id OMIX767_grcr8_sampleC
+python pipeline/02_gene_universe/qc_external_mtx.py \
+    --mtx-dir data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/E7W_gene_bc_matrices --sample-id OMIX767_grcr8_sampleE7W
+#   -> 868 QC h5ads (config/corpus_v2_plan.tsv: one row each with md5 and n_cells; 584 kept) and
+#   pruned_gene_universe.tsv (22,213 genes). DEPOSITED: both. A rerun differs (187 of the kept files and
+#   the universe by a few genes; the 27 keep_raw_slot files come from a cancelled February run and are not
+#   produced at all). Check a restored set: md5s in config/corpus_v2_plan.tsv.
+
+# ── Stage 3. Ortholog mapping + token dictionary (data/training/ortholog_mappings/; seconds) ───────────
+python pipeline/run_stage3.py
+python finetune/genecompass/build_rat_token_dictionary.py     # -> rat_human_mouse_tokens.pickle (55,275)
+#   Reproduces byte for byte from the deposited pruned universe.
+
+# ── Stage 4. Gene medians (data/training/gene_medians_v2/; scatter 5 min x 16 tasks in parallel, gather 47 min)
+python pipeline/run_stage4.py                           # runs medians.n_scatter_tasks = 16 tasks, then gather
+python pipeline/05_tokenization/build_hybrid_medians.py # -> hybrid_gene_medians.pickle (seconds)
+#   On a cluster, run compute_gene_medians.py --task-id $i (i = 0..15) as an array, then gather_gene_medians.py.
+
+# ── Stage 5. Tokenized corpus (data/training/tokenized_corpus_v2/, 209 GB; 50 tasks ~21 min on 16 CPUs + assemble 22 min)
+python pipeline/run_stage5.py                           # reference_assembly.n_tokenize_tasks = 50 tasks, then assemble
+#   The task count fixes the row order of the corpus: keep 50. Reproduces byte for byte.
+
+# ── Stage 6. Prior knowledge (data/training/prior_knowledge/) ───────────────────────────────────────────
+python pipeline/run_stage6.py --from 2                  # family (8 min; deterministic since 2026-11-01),
+                                                        # promoter (GPU, ~7 min; GRCr8 FASTA + DNABERT pinned;
+                                                        #   needs `pip install pyfaidx`, not in the lock),
+                                                        # GRN transfer (seconds)
+python pipeline/run_stage6.py --from 1                  # + co-expression (~49 h; refuses the default config)
+#   v2's init takes only 36 T4 GRN rows from Stage 6 (GRN reproduces byte for byte). DEPOSITED: the whole folder
+#   (the family vectors were built with 8 gensim threads and cannot be regenerated).
+
+# ── Stage 7. Init, mix, probe, training (data/models/, data/training/) ─────────────────────────────────
+python pipeline/run_stage7.py --from 1 --to 1           # init (seconds): rat_model_init.py --seed 0 (initialization.seed)
+#   DEPOSITED: data/models/rat_genecompass_init_v2 (built unseeded: 231/234 tensors reproduce, the 3 random ones do not)
+python pipeline/run_stage7.py --from 2 --to 2           # training mix (4.7 h, 546 GB; seed 42; 40/45/15 rat/human/mouse)
+python pipeline/run_stage7.py --from 3 --to 3           # evaluation probe (1.6 h; seed 20261008; md5s: data/training/eval_probe_v2.md5)
+#   Both reproduce byte for byte (state.json differs only in the HF fingerprint).
+PHASE=1 bash scripts/train_stage7.sh                    # phase 1: 517,793 steps on 4 x A100-40GB (about a week); rerun to resume
+PHASE=2 bash scripts/train_stage7.sh                    # phase 2: 591,763 steps
+#   (= python pipeline/run_stage7.py --from 4 --phase N). GPU kernels are nondeterministic: a restart tracks
+#   v2's loss to 4 decimals but is not bit-identical. DEPOSITED: the phase 1 and phase 2 checkpoints.
 ```
 
-See `pipeline/README.md` for detailed stage descriptions, expected outputs, and troubleshooting.
+`pipeline/README.md` describes each stage. SLURM wrappers for this cluster are kept locally (`slurm/`, not in
+git); `scripts/train_stage7.sh` is a scheduler-free copy of the training launch v2 used (wrap it in your own
+batch script). `run_stage7.py` checks that all four Stage 6 files and the Stage 5 corpus exist before any step.
 
 ### Running deconvolution (Stages 8–9, Aim-2 bridge)
 
@@ -95,26 +172,21 @@ Raw data is not committed to this repository. All datasets are publicly availabl
 
 | Dataset | Size | Source | Notes |
 |---------|------|--------|-------|
-| Rat scRNA-seq corpus | ~27 GB | GEO, ArrayExpress | 895 studies, ~10.2M cells |
+| Rat scRNA-seq corpus | ~27 GB | GEO (+ OMIX767 from NGDC) | v2: 584 QC files from 81 studies, 6,803,206 cells (`config/corpus_v2_plan.tsv`, 868 files listed) |
 | Rat bulk RNA-seq (MoTrPAC) | ~26 GB | [MotrpacRatTraining6moData](https://github.com/MoTrPAC/MotrpacRatTraining6moData) | 18 tissues, 8 timepoints |
-| BioMart reference | ~5 MB | [Ensembl BioMart](https://www.ensembl.org/biomart) | Gene annotations, orthologs |
-| GeneCompass pretrained | ~2 GB | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Human + mouse weights |
+| BioMart + RGD reference | ~170 MB | [Ensembl 115 archive](https://sep2025.archive.ensembl.org/biomart), [RGD](https://download.rgd.mcw.edu/data_release/) | Gene annotations, orthologs, symbols (md5s: `config/reference_md5sums.tsv`) |
+| GeneCompass base assets | ~2 GB + 0.5M-cell sets | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Weights, prior knowledge, human/mouse cells (`scripts/stage_genecompass_assets.sh`) |
 
 ### Obtaining data
 
-```bash
-# Download BioMart reference files
-python pipeline/01_data_harvesting/fetch_biomart_reference_data.py
-
-# Download and preprocess rat scRNA-seq from GEO
-python pipeline/01_data_harvesting/harvest_geo.py
-
-# Stage 1 output: data/training/qc_h5ad/
-```
+See "Rebuilding the v2 model" above: Stage 0 (`fetch_biomart_reference_data.py`), Stage 1
+(`geo_harvester.py --accessions ...`, plus the manual OMIX767 download) and the GeneCompass assets
+(`scripts/stage_genecompass_assets.sh`). Stage 1 writes raw matrices to `data/raw/`; the QC h5ads in
+`data/training/qc_h5ad/` are Stage 2 outputs.
 
 ### Canonical gene universe
 
-All pipeline outputs are indexed by canonical Ensembl rat gene IDs from the project's BioMart files. The config and manifests label them release 113 / mRatBN7.2, but they are **Ensembl release 115, GRCr8** (byte-identical to `sep2025.archive.ensembl.org`; 43,360 genes; identified 2026-10-05). The pipeline is internally consistent on those files; never re-fetch from the release-113 archive. Noncanonical identifiers (symbols, retired IDs, RGD numbers) are resolved via deterministic mapping rules in `lib/gene_utils.py`. Unresolved identifiers are excluded with audit logs. See `docs/ARCHITECTURE.md` for details.
+All pipeline outputs are indexed by canonical Ensembl rat gene IDs from the project's BioMart files: **Ensembl release 115, GRCr8** (byte-identical to `sep2025.archive.ensembl.org`; 43,360 genes; identified 2026-10-05). Manifests written before 2026-11-01 label them release 113 / mRatBN7.2, which was wrong; the config now says 115 / GRCr8 and the fetcher uses the 115 archive. Never re-fetch from the release-113 archive or the live host. Noncanonical identifiers (symbols, retired IDs, RGD numbers) are resolved via deterministic mapping rules in `lib/gene_utils.py`. Unresolved identifiers are excluded with audit logs. See `docs/ARCHITECTURE.md` for details.
 
 ---
 
@@ -153,11 +225,14 @@ refs4 arm (`_refs4` folders, `deconvolution/REFS4_RERUN_RESULTS.md`) is `config/
 ```
 motrpac-genecompass/
 ├── config/                     # Pipeline configuration
-│   └── pipeline_config.yaml
+│   ├── pipeline_config.yaml
+│   ├── corpus_v2_plan.tsv      #   the v2 corpus file list (keep/drop, md5, n_cells)
+│   ├── corpus_v2_accessions.txt, stage2_step1_accessions.txt   # Stage 1 replay lists
+│   ├── reference_md5sums.tsv, genecompass_assets_md5.tsv      # pinned inputs
+│   └── profiles/               #   April / reference-arm overlays
 ├── lib/                        # Shared Python utilities
-│   ├── gene_utils.py           #   Gene normalization, BioMart loader
-│   ├── io_utils.py             #   h5ad/sparse matrix helpers
-│   └── manifest.py             #   Stage manifest creation
+│   ├── gene_utils.py           #   Config loading, gene normalization, BioMart loader, reference md5 checks
+│   └── provenance.py           #   provenance_<script>.json writer (git, config, input md5s)
 ├── vendor/
 │   └── GeneCompass/            # Git submodule (tracks upstream xCompass-AI/GeneCompass)
 ├── pipeline/                   # Stage orchestrators run_stage1..14.py (no Stage 11) + run_deconv_all.py
@@ -171,7 +246,8 @@ motrpac-genecompass/
 ├── deconvolution/              # Aim 1: Bulk-SC integration
 ├── analysis/                   # Aim 2: Downstream analysis
 ├── translation/                # Aim 3: Cross-species translation
-├── slurm/                      # SLURM job scripts
+├── scripts/                    # train_stage7.sh (training launch), stage_genecompass_assets.sh
+├── slurm/                      # local SLURM wrappers (gitignored, site-specific)
 ├── tests/                      # pytest suite (see Tests)
 ├── notebooks/                  # Jupyter notebooks
 ├── docs/                       # Architecture docs, bug tracker

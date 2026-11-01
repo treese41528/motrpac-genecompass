@@ -182,7 +182,7 @@ def validate_inputs(config: dict, from_step: int) -> bool:
 
 
 def run_step(step: dict, config: dict, dry_run: bool = False,
-             verbose: bool = False) -> bool:
+             verbose: bool = False, allow_reference_drift: bool = False) -> bool:
     """Run a single pipeline step as a subprocess."""
     script_path = STAGE_DIR / step['script']
 
@@ -191,6 +191,8 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
         return False
 
     cmd = [sys.executable, str(script_path)]
+    if allow_reference_drift and step['script'] == 'build_gene_universe.py':
+        cmd.append('--allow-reference-drift')
     if dry_run:
         cmd.append('--dry-run')
     if verbose:
@@ -254,6 +256,9 @@ Examples:
                         help='Validate config and inputs, pass --dry-run to steps')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Verbose (DEBUG) logging')
+    parser.add_argument('--allow-reference-drift', action='store_true',
+                        help='Step 1: proceed even if the reference files differ from '
+                             'config/reference_md5sums.tsv')
     args = parser.parse_args()
 
     if args.verbose:
@@ -295,7 +300,8 @@ Examples:
         logger.info(f"Starting from Step {args.from_step} (skipping earlier steps)")
 
     for step in steps_to_run:
-        ok = run_step(step, config, dry_run=args.dry_run, verbose=args.verbose)
+        ok = run_step(step, config, dry_run=args.dry_run, verbose=args.verbose,
+                      allow_reference_drift=args.allow_reference_drift)
         if not ok:
             logger.error(f"Stage 2 aborted at Step {step['num']}")
             sys.exit(1)

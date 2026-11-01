@@ -3,7 +3,7 @@
 """
 build_rat_token_dictionary.py — Merge human/mouse and T4 rat token dicts.
 
-Produces a single 53,032-entry dictionary for Stage 7 fine-tuning:
+Produces a single merged dictionary (55,275 entries for v2; 53,032 for April) for Stage 7 fine-tuning:
 
   human_mouse_tokens.pickle (50,558 entries)
     <pad>      → 0
@@ -14,7 +14,7 @@ Produces a single 53,032-entry dictionary for Stage 7 fine-tuning:
   + T4 entries from rat_tokens.pickle (2,474 entries)
     ENSRNOG... → 50558–53031 (rat-specific genes, no human/mouse ortholog)
 
-  = rat_human_mouse_tokens.pickle (53,032 entries)
+  = rat_human_mouse_tokens.pickle (50,558 + number of T4 tokens; v2: 55,275)
 
 T1-T3 rat genes are intentionally excluded — they reuse existing human/mouse
 token IDs, so adding them would create duplicate values and inflate len().
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 ORIGINAL_VOCAB_SIZE = 50_558
 T4_START = ORIGINAL_VOCAB_SIZE
-EXPECTED_MERGED_SIZE = 53_032
+EXPECTED_MERGED_SIZE = 53_032   # April's vocabulary (unused; v2 = 55,275)
 
 
 def build_merged_dictionary(
@@ -130,16 +130,21 @@ def main():
     parser.add_argument(
         '--rat-tokens',
         default=str(_PROJECT_ROOT / 'data' / 'training' / 'ortholog_mappings' / 'rat_tokens.pickle'),
-        help='Path to rat_tokens.pickle (22,213 entries)',
+        help='Path to rat_tokens.pickle (one entry per pruned-universe gene; v2: 22,213)',
     )
     parser.add_argument(
         '--output',
         default=str(_PROJECT_ROOT / 'data' / 'training' / 'ortholog_mappings' / 'rat_human_mouse_tokens.pickle'),
-        help='Output path for merged dictionary (53,032 entries)',
+        help='Output path for merged dictionary (v2: 55,275 entries)',
     )
 
     args = parser.parse_args()
     build_merged_dictionary(args.hm_tokens, args.rat_tokens, args.output)
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'lib'))
+    from provenance import write_provenance
+    write_provenance(Path(args.output).parent, inputs=[args.hm_tokens, args.rat_tokens, args.output],
+                     md5=True, params=vars(args))
 
 
 if __name__ == '__main__':

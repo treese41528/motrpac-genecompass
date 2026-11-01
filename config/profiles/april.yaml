@@ -11,6 +11,8 @@ paths:
   median_dir: data/training/gene_medians
   hybrid_medians: data/training/gene_medians/hybrid_gene_medians.pickle
   tokenized_corpus_dir: data/training/tokenized_corpus
+medians:
+  n_scatter_tasks: 50          # April's Stage 4 ran 50 scatter tasks (v2: 16); Stage 5 used 50 in both
 deconvolution:
   # April ran on the July references (the default moved to the joint re-annotation on 2026-10-31).
   results_dir: data/deconvolution/results

@@ -60,7 +60,8 @@ from typing import Dict, List, Optional, Set, Tuple
 import h5py
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import (load_config, resolve_path, verify_reference_md5s,
+                        ReferenceDriftError)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -147,8 +148,14 @@ class RGDSynonymResolver:
     RGD never creates new IDs, provides biotypes, or overrides BioMart.
     """
 
-    def __init__(self, genes_file: Path, gate: BioMartGate):
+    def __init__(self, genes_file: Path, gate: BioMartGate,
+                 config: Optional[dict] = None, allow_drift: Optional[bool] = None):
         self.synonym_to_ensembl: Dict[str, str] = {}
+        self.md5: Optional[str] = None
+        # Pinned-reference check (config/reference_md5sums.tsv): the RGD file is not
+        # re-downloadable, so a different one silently changes which raw IDs resolve.
+        if config is not None and Path(genes_file).exists():
+            self.md5 = verify_reference_md5s(config, [genes_file], allow_drift)[str(genes_file)]
         self._load(genes_file, gate)
 
     def _load(self, path: Path, gate: BioMartGate):
@@ -602,7 +609,8 @@ def _md5(path: Path) -> str:
 def _git_hash() -> str:
     try:
         import subprocess
-        r = subprocess.run(['git', 'rev-parse', 'HEAD'],
+        repo = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
+        r = subprocess.run(['git', '-C', repo, 'rev-parse', 'HEAD'],
                            capture_output=True, text=True, timeout=5)
         return r.stdout.strip() if r.returncode == 0 else 'unknown'
     except Exception:
@@ -637,7 +645,8 @@ def _resolve_source_dirs(config: dict) -> List[Path]:
     return dirs
 
 
-def build_gene_universe(config: dict, dry_run: bool = False):
+def build_gene_universe(config: dict, dry_run: bool = False,
+                        allow_reference_drift: Optional[bool] = None):
     """Main pipeline: scan raw matrices → resolve → prune → output."""
     t_start = time.time()
 
@@ -663,6 +672,14 @@ def build_gene_universe(config: dict, dry_run: bool = False):
         logger.error(f"BioMart gene info not found: {gene_info_path}")
         sys.exit(1)
 
+    # Pinned references: the files this step reads must be the ones v2 was built from
+    # (config/reference_md5sums.tsv), unless drift is explicitly allowed.
+    try:
+        verify_reference_md5s(config, [gene_info_path], allow_reference_drift)
+    except ReferenceDriftError as e:
+        logger.error(str(e))
+        sys.exit(1)
+
     # Resolve raw source directories
     source_dirs = _resolve_source_dirs(config)
     logger.info(f"Source directories: {[str(d) for d in source_dirs]}")
@@ -680,7 +697,12 @@ def build_gene_universe(config: dict, dry_run: bool = False):
     if rgd_cfg.get('use_for_symbol_synonyms', False):
         rgd_path = resolve_path(config, rgd_cfg['genes_file'])
         if rgd_path.exists():
-            rgd_resolver = RGDSynonymResolver(rgd_path, gate)
+            try:
+                rgd_resolver = RGDSynonymResolver(rgd_path, gate, config=config,
+                                                  allow_drift=allow_reference_drift)
+            except ReferenceDriftError as e:
+                logger.error(str(e))
+                sys.exit(1)
 
     # ── Phase A: Discover & Scan ──
     logger.info("=" * 60)
@@ -937,6 +959,17 @@ def build_gene_universe(config: dict, dry_run: bool = False):
             'n_matrix_files': len(matrix_files),
             'gene_info': str(gene_info_path),
             'gene_info_md5': _md5(gene_info_path),
+            'rgd_genes_file': str(rgd_path) if rgd_resolver is not None else None,
+            'rgd_genes_file_md5': rgd_resolver.md5 if rgd_resolver is not None else None,
+            # every file in the reference folder (read or not by this step), so the exact
+            # reference set behind this universe can be checked later
+            'reference_dir': str(gene_info_path.parent),
+            'reference_files_md5': {p.name: _md5(p) for p in sorted(gene_info_path.parent.iterdir())
+                                    if p.is_file()},
+            'reference_md5sums_table': config['biomart'].get('reference_md5sums',
+                                                             'config/reference_md5sums.tsv'),
+            'allow_reference_drift': bool(allow_reference_drift if allow_reference_drift is not None
+                                          else config['biomart'].get('allow_reference_drift', False)),
         },
         'pipeline': {
             'n_usable_studies': len(usable_studies),
@@ -994,6 +1027,10 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('--dry-run', action='store_true',
                         help='Validate config/inputs, then exit')
+    parser.add_argument('--allow-reference-drift', action='store_true', default=None,
+                        help='Proceed even if rat_gene_info.tsv / GENES_RAT.txt differ from the md5s '
+                             'pinned in config/reference_md5sums.tsv (default: fail; or set '
+                             'biomart.allow_reference_drift: true)')
     args = parser.parse_args()
 
     if args.verbose:
@@ -1016,7 +1053,8 @@ def main():
             logger.error(f"Config missing gene_universe.{key}")
             sys.exit(1)
 
-    build_gene_universe(config, dry_run=args.dry_run)
+    build_gene_universe(config, dry_run=args.dry_run,
+                        allow_reference_drift=args.allow_reference_drift)
 
 
 if __name__ == '__main__':

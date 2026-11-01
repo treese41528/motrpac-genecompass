@@ -727,6 +727,70 @@ def compute_file_checksum(filepath: str, algorithm: str = "md5") -> str:
 
 
 # ============================================================
+# REFERENCE PINNING (config/reference_md5sums.tsv)
+# ============================================================
+
+class ReferenceDriftError(RuntimeError):
+    """A reference file's md5 differs from the pinned value in config/reference_md5sums.tsv."""
+
+
+def load_reference_md5s(config: dict) -> Dict[str, dict]:
+    """Read the pinned reference table: {file basename: {'md5', 'bytes', 'path'}}.
+
+    The table path is biomart.reference_md5sums (default config/reference_md5sums.tsv). Lines
+    starting with '#' are comments. Returns {} when the table is missing.
+    """
+    rel = config.get("biomart", {}).get("reference_md5sums", "config/reference_md5sums.tsv")
+    table = resolve_path(config, rel)
+    if not table.is_file():
+        return {}
+    pinned = {}
+    with open(table) as f:
+        rows = [line for line in f if line.strip() and not line.startswith("#")]
+    for row in csv.DictReader(rows, delimiter="\t"):
+        pinned[os.path.basename(row["path"])] = {
+            "md5": row["md5"], "bytes": int(row["bytes"]), "path": row["path"]}
+    return pinned
+
+
+def verify_reference_md5s(config: dict, paths, allow_drift: Optional[bool] = None) -> Dict[str, str]:
+    """Check reference files against config/reference_md5sums.tsv; return {path: actual md5}.
+
+    Files are matched to the table by basename. A file the table does not list is recorded but
+    not checked. On any mismatch (or a missing file) this raises ReferenceDriftError naming every
+    differing file, unless ``allow_drift`` is true; when ``allow_drift`` is None it comes from
+    the config flag biomart.allow_reference_drift (default false). With drift allowed the
+    mismatches are only printed as warnings, and the returned md5s say what was actually read,
+    so the step's manifest records it.
+    """
+    import sys as _sys
+    if allow_drift is None:
+        allow_drift = bool(config.get("biomart", {}).get("allow_reference_drift", False))
+    pinned = load_reference_md5s(config)
+    actual, problems = {}, []
+    for p in paths:
+        p = Path(p)
+        if not p.is_file():
+            problems.append(f"  {p}: file not found")
+            continue
+        md5 = compute_file_checksum(str(p))
+        actual[str(p)] = md5
+        want = pinned.get(p.name)
+        if want is not None and md5 != want["md5"]:
+            problems.append(f"  {p}: md5 {md5}, pinned {want['md5']} ({want['path']})")
+    if problems:
+        msg = ("Reference files differ from config/reference_md5sums.tsv (the files the v2 build "
+               "read):\n" + "\n".join(problems) +
+               "\nOutputs built from them will not match v2. Restore the deposited reference "
+               "files, or rerun with --allow-reference-drift (or set "
+               "biomart.allow_reference_drift: true) to proceed anyway.")
+        if not allow_drift:
+            raise ReferenceDriftError(msg)
+        print(f"WARNING (reference drift allowed): {msg}", file=_sys.stderr)
+    return actual
+
+
+# ============================================================
 # STAGE MANIFEST
 # ============================================================
 

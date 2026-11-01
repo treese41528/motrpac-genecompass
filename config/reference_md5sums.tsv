@@ -1,0 +1,28 @@
+# Reference files read by Stages 2-3 (data/references/biomart/), as on disk for the v2 build.
+# Ensembl 115 / GRCr8 BioMart exports (fetched 2026-02-24; byte-identical to the sep2025.archive.ensembl.org
+# archive) plus RGD GENES_RAT.txt, whose header reads '# GENERATED-ON: 2026/02/21' (RGD serves only the
+# current release, so this file cannot be re-downloaded: it is deposited with the v2 data).
+# lib/gene_utils.verify_reference_md5s() checks files against this table; Stage 2 step 1 fails on a
+# mismatch unless --allow-reference-drift (or biomart.allow_reference_drift: true) is given.
+# Regenerate after a deliberate re-fetch:  (cd data/references/biomart && md5sum *)
+md5	bytes	path
+e0bb5949fa41122f4793b116ce8bff2a	633	data/references/biomart/fetch_metadata.json
+340a119128c990852b7628eedcc40eb3	39288058	data/references/biomart/GENES_RAT.txt
+4f0122fbb4270089a04c3aeceb851a2c	2869768	data/references/biomart/human_all_genes.tsv
+4f0122fbb4270089a04c3aeceb851a2c	2869768	data/references/biomart/human_gene_annotations.tsv
+4a4c4b9b5a122b1a4f9c68f06c787134	3278713	data/references/biomart/human_gene_synonyms.tsv
+1177803207d511fc4e679eadf64b3648	2401883	data/references/biomart/human_symbol_lookup.pickle
+d1d581c4456a7ce96c006158785857d0	2040148	data/references/biomart/human_uniprot.tsv
+5158ff44dd7d9440d50b8fe512f54524	3033084	data/references/biomart/mouse_all_genes.tsv
+5158ff44dd7d9440d50b8fe512f54524	3033084	data/references/biomart/mouse_gene_annotations.tsv
+700dc451226737c839bb7056cd76f759	3417317	data/references/biomart/mouse_gene_synonyms.tsv
+4b03df71fe88430e49c4c53a493c2ba1	3297518	data/references/biomart/mouse_human_orthologs.tsv
+813a04dd216e87d08320ad36971d0dd6	3711811	data/references/biomart/mouse_symbol_lookup.pickle
+ce005800880ce4a6a4affe817a552039	2319466	data/references/biomart/mouse_uniprot.tsv
+1d86891c744f76b32399f32f305952c1	1508143	data/references/biomart/rat_all_genes.tsv
+aa206a030b06c5cfe376c1cd211e5a53	3274314	data/references/biomart/rat_gene_info.tsv
+828c764c230a777289fd0b6d40aaacea	1962086	data/references/biomart/rat_gene_synonyms.tsv
+88d44d064f6a89e3f4fd81ce6064bb19	2342184	data/references/biomart/rat_human_orthologs.tsv
+1e14155079d42a197e8d97de61050f64	3488853	data/references/biomart/rat_mouse_orthologs.tsv
+7f788deb8b9ec8408c84a67f76e54ee1	2396249	data/references/biomart/rat_symbol_lookup.pickle
+042f72359fb979ea1589cf1c3258843c	1192267	data/references/biomart/rat_uniprot.tsv

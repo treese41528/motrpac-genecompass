@@ -105,12 +105,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# HGNC primary download URL (Google Cloud Storage — stable)
+# HGNC primary download URL: a DATED monthly archive snapshot, so a rerun gets the same file.
+# The local data/references/hgnc/hgnc_complete_set.txt (md5 5e1e18fea6f3b34dca80758c5322a9e6, fetched
+# 2026-03-17 from the then-current file) is not itself in the archive (it falls between the 2026-03-06
+# and 2026-04-01 snapshots); it is deposited with the v2 data. Overridden by
+# prior_knowledge.gene_family.hgnc_url.
+_HGNC_ARCHIVE_URL = (
+    'https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/'
+    'hgnc_complete_set_2026-03-06.txt'
+)
+# Current (moving) file, used only if the archive URL fails
 _HGNC_GCS_URL = (
     'https://storage.googleapis.com/public-download-files/hgnc/tsv/tsv/'
     'hgnc_complete_set.txt'
 )
-# HGNC FTP fallback (EBI — more stable long-term than CGI endpoint)
+# HGNC FTP fallback (EBI — more stable long-term than CGI endpoint; also the moving current file)
 _HGNC_FTP_URL = (
     'https://ftp.ebi.ac.uk/pub/databases/genenames/hgnc/tsv/'
     'hgnc_complete_set.txt'
@@ -242,7 +251,8 @@ def load_mouse_orthologs(tsv_path: Path) -> Dict[str, Set[str]]:
 # SECTION 2: HGNC DOWNLOAD & PARSE
 # ═════════════════════════════════════════════════════════════════════════════
 
-def ensure_hgnc_data(hgnc_path: Path, skip_download: bool = False) -> Optional[Path]:
+def ensure_hgnc_data(hgnc_path: Path, skip_download: bool = False,
+                     archive_url: str = _HGNC_ARCHIVE_URL) -> Optional[Path]:
     """Verify HGNC file exists and is non-trivial. Download if missing."""
     if hgnc_path.exists() and hgnc_path.stat().st_size > 10_000:
         logger.info(f"HGNC data: {hgnc_path} ({hgnc_path.stat().st_size / 1024:.0f} KB)")
@@ -259,6 +269,7 @@ def ensure_hgnc_data(hgnc_path: Path, skip_download: bool = False) -> Optional[P
     logger.info("Downloading HGNC gene family data...")
 
     for source_label, url in [
+        ('HGNC dated archive',   archive_url),
         ('Google Cloud Storage', _HGNC_GCS_URL),
         ('EBI FTP',              _HGNC_FTP_URL),
     ]:
@@ -271,6 +282,9 @@ def ensure_hgnc_data(hgnc_path: Path, skip_download: bool = False) -> Optional[P
                 logger.warning(f"  File too small ({size} bytes), trying next source")
                 continue
             logger.info(f"  Downloaded: {size / 1024:.0f} KB")
+            if url != archive_url:
+                logger.warning("  This is the CURRENT HGNC file, not the dated archive: the family "
+                               "pairs will differ from a pinned run.")
             return hgnc_path
         except Exception as exc:
             logger.warning(f"  Failed ({exc})")
@@ -569,6 +583,9 @@ def train_gene2vec(
     logger.info(f"  Workers:                    {workers}")
 
     t0 = time.time()
+    if workers != 1:
+        logger.warning(f"  workers={workers}: gensim word2vec is NOT deterministic with >1 worker "
+                       f"thread; use workers: 1 for a reproducible family embedding")
     model = Word2Vec(
         sentences=sentences,
         vector_size=vector_size,
@@ -688,7 +705,9 @@ def write_manifest(
             'window': gf.get('window', 1),
             'sg': gf.get('sg', 1),
             'epochs': gf.get('epochs', 30),
-            'workers': gf.get('workers', 8),
+            'workers': gf.get('workers', 1),
+            'seed': gf.get('seed', 42),
+            'pythonhashseed': os.environ.get('PYTHONHASHSEED'),
         },
         'inputs': {
             name: {
@@ -724,7 +743,21 @@ def write_manifest(
 # SECTION 8: MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 
+def _pin_hash_seed(hash_seed: str) -> None:
+    """Re-exec this script under PYTHONHASHSEED=hash_seed unless already set to it.
+
+    gensim seeds each word's initial vector from hash(word + str(seed)); Python's str hash is
+    randomised per process unless PYTHONHASHSEED is fixed, so without this the family vectors
+    differ run to run even with workers=1 and a fixed seed.
+    """
+    if os.environ.get('PYTHONHASHSEED') != hash_seed:
+        os.environ['PYTHONHASHSEED'] = hash_seed
+        os.execv(sys.executable, [sys.executable, *sys.argv])
+
+
 def main() -> None:
+    _pin_hash_seed(str(load_config(_PROJECT_ROOT / 'config' / 'pipeline_config.yaml')
+                       .get('prior_knowledge', {}).get('gene_family', {}).get('hash_seed', 0)))
     parser = argparse.ArgumentParser(
         description='Stage 6 Step 2: Gene Family Embedding',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -772,7 +805,13 @@ def main() -> None:
     window          = int(gf_cfg.get('window', 1))
     sg              = int(gf_cfg.get('sg', 1))
     epochs          = int(gf_cfg.get('epochs', 30))
-    workers         = int(gf_cfg.get('workers', 8))
+    # Deterministic by default (2026-11-01): one worker thread, a fixed seed and PYTHONHASHSEED
+    # (_pin_hash_seed). The on-disk family_embeddings.pkl was trained with workers: 8 and is not
+    # reproducible; a rerun gives different vectors (v2's init takes no family rows: 0 of 2,474 T4
+    # genes have a non-zero family vector).
+    workers         = int(gf_cfg.get('workers', 1))
+    seed            = int(gf_cfg.get('seed', 42))
+    hgnc_url        = str(gf_cfg.get('hgnc_url', _HGNC_ARCHIVE_URL))
 
     logger.info("=" * 60)
     logger.info("Stage 6 Step 2: Gene Family Embedding")
@@ -807,7 +846,8 @@ def main() -> None:
     logger.info("All prerequisite files found.")
 
     # ── HGNC data ────────────────────────────────────────────────────────────
-    hgnc_resolved = ensure_hgnc_data(hgnc_path, skip_download=args.skip_download)
+    hgnc_resolved = ensure_hgnc_data(hgnc_path, skip_download=args.skip_download,
+                                     archive_url=hgnc_url)
     if hgnc_resolved is None:
         logger.error("Cannot proceed without HGNC data.")
         sys.exit(1)
@@ -911,6 +951,7 @@ def main() -> None:
         sg=sg,
         epochs=epochs,
         workers=workers,
+        seed=seed,
     )
 
     model_path = output_dir / 'family_gene2vec.model'

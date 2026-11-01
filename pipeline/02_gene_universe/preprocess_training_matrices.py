@@ -57,6 +57,7 @@ import os
 import sys
 import csv
 import gzip
+import hashlib
 import json
 import argparse
 import logging
@@ -366,7 +367,9 @@ def detect_is_raw_counts(X, sample_cells: int = 500) -> Tuple[bool, str]:
             return True, "empty_sparse_matrix"
     else:
         n_cells = X.shape[0]
-        idx = np.random.choice(n_cells, min(sample_cells, n_cells), replace=False)
+        # seeded (2026-11-01): the unseeded np.random.choice made the dense-matrix raw-count
+        # check depend on the global RNG state, so a borderline matrix could be judged differently
+        idx = np.random.default_rng(0).choice(n_cells, min(sample_cells, n_cells), replace=False)
         if sp is not None and sp.issparse(X):
             sample_data = np.asarray(X[idx].todense()).flatten()
         else:
@@ -964,6 +967,52 @@ def annotate_cell_stats(adata, mito_gene_ids: Set[str]) -> None:
 # SECTION 6: STUDY-LEVEL PROCESSING
 # ═════════════════════════════════════════════════════════════════════════════
 
+def _file_md5(path) -> str:
+    h = hashlib.md5()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _source_record(filepath: str, config: dict) -> Dict[str, str]:
+    """The raw matrix a QC h5ad came from: path relative to harvesting.data_root, and md5.
+
+    Stored in each QC h5ad's .uns['source'] and in the per-sample report, so a QC file can be
+    traced to (and checked against) the exact raw download it was built from.
+    """
+    data_root = resolve_path(config, config.get('harvesting', {}).get('data_root', 'data/raw'))
+    p = Path(filepath)
+    try:
+        rel = str(p.resolve().relative_to(data_root.resolve()))
+    except ValueError:
+        rel = str(p)   # outside data_root: keep the path as given
+    rec = {'path': rel, 'data_root': str(config.get('harvesting', {}).get('data_root', 'data/raw'))}
+    try:
+        rec['md5'] = _file_md5(p) if p.is_file() else ''
+    except OSError as e:
+        rec['md5'] = ''
+        rec['md5_error'] = str(e)
+    return rec
+
+
+def _step2_provenance(gu_dir: Path) -> Dict:
+    """git commit + md5 of the Step 1 outputs this step reads (for preprocessing_report.json)."""
+    import subprocess
+    repo = Path(__file__).resolve().parents[2]
+    try:
+        r = subprocess.run(['git', '-C', str(repo), 'rev-parse', 'HEAD'],
+                           capture_output=True, text=True, timeout=10)
+        git_hash = r.stdout.strip() if r.returncode == 0 else 'unknown'
+    except Exception:
+        git_hash = 'unknown'
+    inputs = {}
+    for name in ('gene_universe.tsv', 'gene_resolution.tsv', 'manifest_step1.json'):
+        f = gu_dir / name
+        inputs[name] = {'path': str(f), 'md5': _file_md5(f) if f.is_file() else None}
+    return {'git_hash': git_hash, 'inputs': inputs}
+
+
 def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapper,
                   config: dict, output_dir: str) -> Tuple[Dict, Dict]:
     """Process a single study: load → map → QC → save raw counts + stats.
@@ -1090,7 +1139,10 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
                 study_gene_stats[gid]['total_raw_counts'] += stats['total_raw_counts']
                 # mean_raw_nonzero is recomputed at merge from totals/counts
 
-            # 10. Save QC'd h5ad — RAW COUNTS in .X
+            # 10. Save QC'd h5ad — RAW COUNTS in .X (+ where it came from, in .uns['source'])
+            source_rec = _source_record(filepath, config)
+            sample_report['source_file'] = source_rec
+            adata_qc.uns['source'] = source_rec
             if save_qc:
                 qc_dir = Path(output_dir)
                 qc_dir.mkdir(parents=True, exist_ok=True)
@@ -1297,6 +1349,7 @@ def run_corpus_preprocessing(args, config: dict):
     report_data = {
         'stage': 'stage2_step2',
         'timestamp': datetime.now().isoformat(),
+        **_step2_provenance(gu_dir),
         'elapsed_seconds': round(elapsed, 1),
         'normalization': 'NONE — raw counts preserved in QC h5ad files',
         'summary': {
@@ -1421,6 +1474,7 @@ def run_merge_mode(args, config: dict):
     report_data = {
         'stage': 'stage2_step2_merged',
         'timestamp': datetime.now().isoformat(),
+        **_step2_provenance(gu_dir),
         'normalization': 'NONE — raw counts preserved',
         'summary': {
             'studies_success': n_success,

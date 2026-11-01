@@ -781,6 +781,13 @@ Memory guidance:
         dry_run=args.dry_run,
     )
 
+    if not args.dry_run:
+        from provenance import write_provenance
+        median_dir = resolve_path(config, config['paths']['median_dir'])
+        scatter = sorted((median_dir / 'scatter').glob('scatter_*_manifest.json'))
+        write_provenance(median_dir, inputs=[median_dir / 'scatter'], md5_inputs=scatter,
+                         params=vars(args), config=config)
+
 
 if __name__ == '__main__':
     main()
