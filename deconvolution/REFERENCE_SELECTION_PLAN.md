@@ -94,7 +94,11 @@ Confidence and shared-source are folded into "Why chosen / replaced"; the full s
 | OVARY | none ([CRA008987] spatial-only) | reference-free CDSeq interim | — | **BLOCKED** | The one adult-rat ovary scRNA (Wu 2023) is **spatial-only** in public deposits; the scRNA library was never released. Ma-2020 has no ovary. |
 
 Roll-up: **READY 3** (KIDNEY, LIVER, BLOOD) **· NEEDS-BUILD 10 · NEEDS-ONLINE-DATA/ingest 3 · BLOCKED 3**
-(VENACV joined ADRNL + OVARY as blocked after the pulmonary-vein proxy was dropped 2026-07-16).
+(VENACV joined ADRNL + OVARY as blocked after the pulmonary-vein proxy was dropped 2026-07-16.)
+
+> **2026-11-01 update (`REFERENCE_RELABEL_PREREG.md` §14):** SPLEEN now uses **GSE306764** Spl-Ctrl (whole spleen,
+> not the sorted GSE186158 below) and OVARY uses **GSE343214** "Normal rat"; both pass the §14 checks and are
+> deconvolved. ADRNL, COLON and VENACV remain without a reference.
 Exact multi-ID sets were re-verified against the inventory. **SKMGN and SKMVL now build from the SAME
 2 Ma-2020 muscle -Y samples (16,30) with the same muscle merge → one identical reference serves both muscles**
 (Geyu's shared-source preference; see §3).

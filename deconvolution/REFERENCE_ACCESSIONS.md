@@ -73,9 +73,14 @@ MoTrPAC PASS1B bulk RNA-seq: `data/deconvolution/motrpac_bulk/`. Design is 2 sex
 **Deconvolved (14, 2026-07-16 rebuild):** BLOOD · CORTEX · HEART · HIPPOC · KIDNEY · LIVER · LUNG · SKMGN ·
 SKMVL · WATSC · **BAT** · **HYPOTH** · **SMLINT** · **TESTES**
 
-**Not deconvolved (5):** ADRNL (adrenal) · COLON · OVARY · SPLEEN · **VENACV** (vena cava — proxy
-**dropped**, irreducibly lung-contaminated)
+**Added 2026-11-01 (`REFERENCE_RELABEL_PREREG.md` §14):** **SPLEEN** — GSE306764 Spl-Ctrl (GSM9207348, whole
+spleen, Singleron, female Lewis); **OVARY** — GSE343214 "Normal rat" (GSM9947804, 10x, one rat). Both pass the
+§14 checks and are deconvolved; they run in the all-tissue arm (`config/profiles/refs_v4all.yaml`).
 
-ADRNL, OVARY and VENACV are **BLOCKED** (no genuine rat reference exists anywhere); COLON and SPLEEN await
-online-data ingestion. BAT (GSE244451, deposited labels → 6 types) and TESTES (OMIX767) were **built and
+**Not deconvolved (3):** ADRNL (adrenal) · COLON · **VENACV** (vena cava — proxy **dropped**, irreducibly
+lung-contaminated)
+
+ADRNL and VENACV have no usable public rat single-cell reference; COLON's only candidate (GSE326856) is sorted
+endothelial/immune/stromal cells with no epithelium and was rejected (§14). The July SPLEEN candidate
+(GSE186158) was not used. BAT (GSE244451, deposited labels → 6 types) and TESTES (OMIX767) were **built and
 deconvolved** in the rebuild.

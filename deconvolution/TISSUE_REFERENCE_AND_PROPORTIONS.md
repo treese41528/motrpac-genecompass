@@ -164,16 +164,16 @@ md5 `76f400d4…`, 22,050 genes).
 | KIDNEY | Kidney | 22,050 | 50 | ✓ |
 | LIVER | Liver | 22,050 | 50 | ✓ |
 | LUNG | Lung | 22,050 | 50 | ✓ |
-| OVARY | Ovary | 22,050 | **24** | ✗ |
+| OVARY | Ovary | 22,050 | **24** | ✓ (2026-11-01) |
 | SKMGN | Skeletal muscle — **gastrocnemius** | 22,050 | 50 | ✓ |
 | SKMVL | Skeletal muscle — **vastus lateralis** | 22,050 | 50 | ✓ |
 | SMLINT | Small intestine | 22,050 | 50 | ✓ |
-| SPLEEN | Spleen | 22,050 | 50 | ✗ |
+| SPLEEN | Spleen | 22,050 | 50 | ✓ (2026-11-01) |
 | TESTES | Testes | 22,050 | **25** | ✓ |
 | VENACV | Vena cava | 22,050 | 50 | ✗ |
 | WATSC | White adipose tissue — **subcutaneous** | 22,050 | 50 | ✓ |
 
-**14 of the 19 are deconvolved** (2026-07-16/17 rebuild); the five *not* deconvolved are **ADRNL, COLON, OVARY, SPLEEN, VENACV** (see §2.3 for why).
+**16 of the 19 are deconvolved.** 14 in the 2026-07-16/17 rebuild; **SPLEEN** (GSE306764) and **OVARY** (GSE343214) added 2026-11-01 (`REFERENCE_RELABEL_PREREG.md` §14; all-tissue arm `config/profiles/refs_v4all.yaml`). The three *not* deconvolved are **ADRNL, COLON, VENACV** (see §2.3 for why).
 
 **899 bulk samples total.** Codes-to-names cross-checked against
 `deconvolution/reference/canonical_references.tsv` and `deconvolution/tissue_references.yaml`.
@@ -205,6 +205,8 @@ plus a per-sex `~ factor(week)` omnibus F-test.
 > (GSE248413), **SMLINT** (GSE272055), and **TESTES** (OMIX767 arms C+E7W, commit d015399) — so the current
 > production panel is **14 tissues** (§2.1). The tissues that remain **not deconvolved** are **ADRNL, COLON,
 > OVARY, SPLEEN, VENACV** (VENACV's GSE280111 pulmonary-vein proxy was built then dropped as lung-contaminated).
+> **2026-11-01:** SPLEEN (GSE306764, whole spleen) and OVARY (GSE343214) have since been found, checked and
+> deconvolved (`REFERENCE_RELABEL_PREREG.md` §14); COLON's only new candidate was sorted cells and was rejected.
 > The reference-availability analysis below still explains *why* each was originally hard to build.
 
 `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md:3234` states that ADRNL, BAT, COLON, OVARY, HYPOTH, SMLINT,

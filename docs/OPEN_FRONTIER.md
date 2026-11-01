@@ -23,8 +23,10 @@ Every result below is v2 on refs4 unless marked. **Legend:** ✅ done · ◐ par
   their real-human counterpart cell type at 0.404 macro accuracy against 0.084 by chance (p = 0.0001).
 - **Aim-1 per-tier loss** (`docs/RETRAIN_V2_RESULTS.md`, last section). v2's gain is in the mouse-ortholog and
   new rat-only tokens, which April never learned.
-- **More MoTrPAC tissues** (`REFERENCE_RELABEL_PREREG.md` §14) and **a second heart reference** (§15): see the
-  hardening table.
+- **Second heart reference: PASS** (§15). An independent F344 heart study recovers cardiomyocyte fractions
+  through the production HEART reference at r 0.944 (mean error 0.043).
+- **More MoTrPAC tissues** (`REFERENCE_RELABEL_PREREG.md` §14): SPLEEN and OVARY references pass their checks
+  and are deconvolved; the all-tissue (16) rerun is in progress. ADRNL, COLON and VENACV still have none.
 
 **Retrain v2 (2026-10-06 → 10-25, pre-registered in [`RETRAIN_V2_PREREGISTRATION.md`](RETRAIN_V2_PREREGISTRATION.md)):**
 the model was retrained on a cleaned corpus (584 QC files kept of 868), scheme-B medians and fixed priors.
@@ -117,8 +119,8 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on v2 (2026
 | ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; model-independent; 13 sweeps on disk across 12 tissues). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on all **12 tissues swept** (of the 14-tissue panel): ≥0.985 at 50% purity, ≥0.99 at 85%. The 4 tissues added in the 2026-07-16 rebuild (BAT/HYPOTH/SMLINT/TESTES) were **swept 2026-07-27 and all pass** (VST ≥0.998 at 50% purity; HYPOTH glutamatergic-neuron VST = 1.000 throughout). Only BLOOD and subcutaneous fat remain unswept — neither has a capturable dominant parenchyma. | — |
 | ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): refs4 **11 of 11 hotspots ROBUST** (median Spearman of the dose statistic with vs without the covariates 0.957, median retention 0.91; July: 11 of 13). Composition (θ) confound on all refs4 blocks: 91 QUIET / 56 PASS_EXPRESSION / 18 FLAG_COMPOSITION; two hotspots flagged (LUNG mesothelial cells, SKMVL vascular smooth muscle cells). | — |
 | ✅ | **E.3** Tabula Sapiens atlas anchoring — **PASS** 2026-10-31 (0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`). Replaces the manuscript's limitation (v). | — |
-| ◐ | **Second heart reference** (`REFERENCE_RELABEL_PREREG.md` §15): GSE307551 F344 LV, deconvolving its coarse mixtures with the production HEART reference (PASS = CM r ≥ 0.9 and mean absolute CM error ≤ 0.10). Data download in progress (2026-10-31). | S |
-| ◐ | **More MoTrPAC tissues** (§14). Of the five tissues without a reference: SPLEEN (GSE306764, Lewis spleen) and OVARY (GSE343214, n = 1) found and run through the registered checks; COLON rejected (GSE326856 is sorted cells, no epithelium); ADRNL and VENACV have no usable public rat single-cell reference. Build and checks in progress (2026-10-31). | M |
+| ✅ | **Second heart reference** (`REFERENCE_RELABEL_PREREG.md` §15): GSE307551 F344 LV (independent study), 20 coarse mixtures deconvolved with the production HEART reference — **PASS** 2026-11-01: CM r 0.944, mean absolute CM error 0.043 (bar: r ≥ 0.9, error ≤ 0.10). Every class correlates (r 0.943–0.999) but absolute levels are off (endothelial +0.151, lymphocytes −0.103), so HEART stays read differentially (`data/deconvolution/validation/HEART_GSE307551_cross/`). | — |
+| ◐ | **More MoTrPAC tissues** (§14). Of the five tissues without a reference: **SPLEEN** (GSE306764, whole Lewis spleen, 14 types) and **OVARY** (GSE343214, one rat, 18 types) pass every registered check (S1; O1/O2; R1; R2 within-library r ≥ 0.94) and are built, deconvolved and embedded (2026-11-01). The SPLEEN fractions are implausible (T cells about 1%, endothelium 15% from a 34-cell type), so SPLEEN is read differentially only. COLON rejected (GSE326856 is sorted cells, no epithelium); ADRNL and VENACV have no usable public rat single-cell reference. The registered all-tissue (16) rerun of the cross-tissue steps is running (jobs 12108627–30, `config/profiles/refs_v4all.yaml`). | M |
 | ✅ | **A null for the GRN's `|z|`** — done 2026-10-31 by expression-matched decoy genes, since a label permutation is impossible here (`GRN_NULL_WHY_ABANDONED.md`). **Negative:** FDR(2) = 1.03, no t reaches FDR 0.10, 0/981 TFs beat their decoys (`GRN_DECOY_NULL_RESULTS.md`). | — |
 | ✅ | **Degenerate-block gate in the DE** — closed by the §6 rule (median per-sample library ≥ 1,000), applied to every refs4 table, with sensitivities at 100 and 0. The near-empty KIDNEY intercalated blocks are skipped. | — |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
@@ -153,6 +155,6 @@ TF-specific signal. The Aim-3 capstone therefore rests on the DE/transfer leg an
    the independence guard + leakage log exist to control.
 
 Off the critical path: **Module C** (CPA dose model, confirmatory, thin-N); the Aim-1 ablations (GPU-weeks);
-the Stages 1–7 reproduction jobs; the new-tissue references and the second heart reference (above).
+the Stages 1–7 reproduction jobs; the all-tissue (16) rerun (above).
 
 **Detailed handoff specs** live in `manuscript/wip/` (local-only; see its `README.md`).
