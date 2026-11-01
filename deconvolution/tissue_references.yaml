@@ -107,7 +107,7 @@ BLOOD:
     BLOOD differentially. Not yet put to Geyu.
 # ============================ NEEDS-BUILD (rebuild from corpus) ============================
 CORTEX:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/CORTEX_GSE303115
   previous_reference_dir: data/deconvolution/references_v3/CORTEX_GSE303115   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/CORTEX/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -133,7 +133,7 @@ CORTEX:
   notes: Rat-only rebuild of the 9-mammal multiome; replaces the invalid deployed union_merged ref.
 
 HEART:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/HEART_GSE280111_LV
   study: GSE280111
   tissue: left ventricle
@@ -189,7 +189,7 @@ VENACV:
   notes: Best venous proxy (no rat vena cava exists); shares HEART's Wistar atlas. Differential-only; drop CM-sleeve post-build.
 
 WATSC:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/WATSC_GSE137869_Y
   previous_reference_dir: data/deconvolution/references_v3/WATSC_GSE137869_Y   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/WATSC/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -215,7 +215,7 @@ WATSC:
   notes: Young-arm-only (stops the deployed build pooling 61% geriatric/CR). Adipocyte hole -> differential-only.
 
 SKMGN:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/MUSCLE_GSE137869_Y   # SHARED with SKMVL (identical build)
   previous_reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -241,7 +241,7 @@ SKMGN:
   notes: Unified muscle on shared Ma -Y (Geyu). Replaces deployed GSE184413; head-to-head vs F344 gastroc pending.
 
 SKMVL:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/MUSCLE_GSE137869_Y   # SHARED with SKMGN (one build serves both)
   previous_reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -267,7 +267,7 @@ SKMVL:
   notes: Replaces the indefensible GSE254371 chimera; shares SKMGN's build (identical).
 
 BAT:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/BAT_GSE244451
   study: GSE244451
   tissue: subscapular brown adipose tissue
@@ -291,7 +291,7 @@ BAT:
   notes: snRNA recovers brown adipocytes; overrides Ma (adipocyte hole). Dahl SS strain, male, n=2, unvalidated.
 
 HYPOTH:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/HYPOTH_GSE248413_Y
   study: GSE248413
   tissue: hypothalamus
@@ -315,7 +315,7 @@ HYPOTH:
   notes: Young (4mo) control arm; drops old + 17a-estradiol. Single pooled library; provisional.
 
 SMLINT:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/SMLINT_GSE272055
   previous_reference_dir: data/deconvolution/references_v3/SMLINT_GSE272055   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/SMLINT/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -341,7 +341,7 @@ SMLINT:
   notes: Healthy adult SD; epithelium-only isolation (no immune/muscularis) -> differential.
 
 LUNG:
-  status: needs-build
+  status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/LUNG_native_pooled
   previous_reference_dir: data/deconvolution/references_v3/LUNG_native_pooled   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/LUNG/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
@@ -395,7 +395,7 @@ HIPPOC:
 
 # ============================ BUILT 2026-07-16 (staged OMIX767, paper-panel annotation) ==============
 TESTES:
-  status: needs-build                    # reference BUILT + deconvolved (lifted genes, 2026-10-22). run_deconv_all picks it up.
+  status: ready                          # reference BUILT + deconvolved (lifted genes, 2026-10-22). run_deconv_all picks it up.
   reference_dir: data/deconvolution/references_v3/TESTES_OMIX767_lifted
   study: OMIX767
   tissue: testis
@@ -463,8 +463,8 @@ SPLEEN:
     macrophages: red-pulp and erythroid mass are under-represented; read differentially.
 
 COLON:
-  status: needs-online-data
-  reference_dir: data/deconvolution/references_v3/COLON_GSE326856
+  status: blocked                        # 2026-10-31 (REFERENCE_RELABEL_PREREG.md §14): GSE326856 rejected, see notes
+  reference_dir: null                    # was references_v3/COLON_GSE326856 (never built)
   study: GSE326856
   tissue: colon
   organism: Rattus norvegicus
@@ -483,6 +483,8 @@ COLON:
   notes: >
     IBS-D model -> "normal rats" control arm only; colon-sigmoid mucosa (no muscularis). MUST verify epithelium
     (Epcam+) present -- if excluded, COLON joins the no-reference class. Ingestion required.
+    2026-10-31 (§14): the GEO SOFT shows the libraries are sorted endothelial, immune and stromal cells (2.3k
+    control cells, no epithelium), so COLON joins the no-reference class. No other rat colon sc/snRNA found.
 
 # ============================ BLOCKED (no rat reference exists anywhere) ============================
 ADRNL:
