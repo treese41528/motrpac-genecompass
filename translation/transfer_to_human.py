@@ -68,6 +68,7 @@ _ROOT = Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve()
 sys.path.insert(0, str(_ROOT / "lib"))
 sys.path.insert(0, str(_ROOT / "pipeline" / "05_tokenization"))
 from gene_utils import load_config, resolve_path                              # noqa: E402
+from provenance import write_provenance                                       # noqa: E402
 from tokenize_corpus import (build_eligible_gene_arrays, build_gene_index,    # noqa: E402
                              map_varnames_to_eligible, tokenize_cell_batch,
                              TOP_N_DEFAULT, CELL_BATCH_SIZE)
@@ -296,6 +297,9 @@ def main():
     # make the rat pseudocells/summary reachable from the human dir (augur_prep PCA control, pseudocell count)
     _symlink(h5ad, out_dir / "pseudocells.h5ad")
     _symlink(in_dir / "summary.txt", out_dir / "summary.txt")
+    write_provenance(out_dir, inputs=[h5ad, omap, tok, med],
+                     params={**vars(args), "in_root": str(in_root), "out_root": str(out_root),
+                             "config_deconvolution": dc})
 
     print(f"\nwrote {summary['n_pseudocells']} human-transferred pseudo-cells -> {out_dir}/dataset")
     print(f"  next: embed with species=0 -> python finetune/genecompass/embed_cells.py "

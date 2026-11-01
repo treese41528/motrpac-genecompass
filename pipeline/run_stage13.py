@@ -22,10 +22,20 @@ Chain:
   4. Pathway / gene-set enrichment          (R;  deconvolution/R/run_gene_set_enrichment.sh)
        fgsea (signed dose statistic) vs MSigDB Hallmark + Reactome over the DE blocks.
        -> <genecompass_input_dir>/pseudobulk_de/enrichment/enrichment_summary.tsv
+  5. Parenchyma data-anchored validation    (py; deconvolution/validate_parenchyma_dataanchored.py)
+       do the parenchyma DE blocks recover genes that move in the matched bulk? + dominant cell type per tissue.
+       -> <genecompass_input_dir>/pseudobulk_de/{parenchyma_dataanchored_validation,dominant_celltype_flags}.tsv
+
+GRN reuse (--reuse-grn-from PROFILE). GRNs exist only for hotspots, and steps 1-2 cost GPU hours. Given a
+previous arm's profile (e.g. config/profiles/refs4_14.yaml), steps 1-2 compare that arm's DE hotspot set
+(is_hotspot == TRUE in its pseudobulk_de/de_hotspots.tsv, keyed tissue + cell type) with this arm's: if the
+sets are identical its *_pooled.tsv networks are copied (or, with --link, symlinked -- how the 16-tissue
+default tree was assembled) into this arm's grn_dir / grn_human_dir; otherwise steps 1-2 are run. Without
+the option, steps 1-2 always build the networks (the clean path).
 
 Folders and the model come from the deconvolution section of the config (grn_dir, grn_human_dir,
-augur_input_dir, genecompass_input_dir, genecompass_model_dir -> latest checkpoint, as in Stages 9 and
-12), so a profile such as config/profiles/retrain_v2_downstream.yaml gives each model its own set.
+augur_input_dir, genecompass_input_dir, model_checkpoint -- else the latest checkpoint under
+genecompass_model_dir with a warning, as in Stages 9 and 12), so a profile such as config/profiles/retrain_v2_downstream.yaml gives each model its own set.
 
 Steps 1-2 loop per cell type and SKIP a cell type whose output already exists (idempotent;
 --force re-runs). The heavy per-cell-type parallel path is slurm/analysis/build_grn_production.slurm
@@ -38,6 +48,7 @@ Usage:
   python pipeline/run_stage13.py --cell-types "SKMVL:Skeletal muscle"   # debug subset
   python pipeline/run_stage13.py --dry-run
   python pipeline/run_stage13.py --force               # re-run cell types even if output exists
+  python pipeline/run_stage13.py --reuse-grn-from config/profiles/refs4_14.yaml   # reuse GRNs if hotspots match
 
 HPC: steps 1-2 need a GPU (the frozen model); run this orchestrator inside a GPU sbatch, or use the
 array jobs for parallelism. Steps 3-4 are CPU (py / R). Full coverage; never subsamples.
@@ -47,6 +58,7 @@ import csv
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -56,6 +68,8 @@ _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve()
 os.environ.setdefault('PIPELINE_ROOT', str(_PROJECT_ROOT))
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
 from gene_utils import load_config, resolve_path  # noqa: E402
+sys.path.insert(0, str(_PROJECT_ROOT / 'deconvolution'))
+from model_checkpoint import latest_checkpoint, resolve_model_dir as resolve_model_from_config  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -67,11 +81,9 @@ THETA_MIN = 0.01
 
 
 def resolve_model_dir(base: Path) -> Path:
-    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest."""
-    if (base / 'config.json').exists():
-        return base
-    cks = sorted(base.glob('checkpoint-*'), key=lambda p: int(re.sub(r'\D', '', p.name) or 0))
-    return cks[-1] if cks else base
+    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest.
+    (Kept for callers/tests; the config path goes through deconvolution/model_checkpoint.py.)"""
+    return latest_checkpoint(base)
 
 
 def _safe(tissue: str, ct: str) -> str:
@@ -102,6 +114,61 @@ def abundant_hotspots(de_dir: Path, subset: list) -> list:
             continue
         out.append((tissue, ct, _safe(tissue, ct)))
     return out
+
+
+def hotspot_set(de_dir: Path) -> set:
+    """(TISSUE, cell type) of every is_hotspot == TRUE row of <de_dir>/de_hotspots.tsv (no abundance filter;
+    the comparison the GRN-reuse decision is made on)."""
+    hs = Path(de_dir) / 'de_hotspots.tsv'
+    if not hs.exists():
+        raise SystemExit(f"de_hotspots.tsv not found: {hs}")
+    return {(r['tissue'].strip(), r['cell_type'].strip()) for r in csv.DictReader(open(hs), delimiter='\t')
+            if r.get('is_hotspot', '').strip().upper() == 'TRUE'}
+
+
+def profile_dirs(profile: str) -> dict:
+    """de_dir / grn_dir / grn_human_dir of another config profile (PIPELINE_PROFILE semantics)."""
+    old = os.environ.get('PIPELINE_PROFILE')
+    os.environ['PIPELINE_PROFILE'] = str(profile)
+    try:
+        c = load_config()
+    finally:
+        if old is None:
+            os.environ.pop('PIPELINE_PROFILE', None)
+        else:
+            os.environ['PIPELINE_PROFILE'] = old
+    d = c['deconvolution']
+    return {'de_dir': resolve_path(c, d['genecompass_input_dir']) / 'pseudobulk_de',
+            'grn_dir': resolve_path(c, d['grn_dir']), 'grn_human_dir': resolve_path(c, d['grn_human_dir'])}
+
+
+def reuse_grns(ctx: dict, profile: str, link: bool, dry_run: bool) -> bool:
+    """Copy/link a previous arm's networks if its hotspot set equals this arm's. True = reused (skip 1-2)."""
+    src = profile_dirs(profile)
+    mine, theirs = hotspot_set(ctx['de_dir']), hotspot_set(src['de_dir'])
+    if mine != theirs:
+        logger.info(f"  hotspot set differs from {profile} (+{sorted(mine - theirs)} -{sorted(theirs - mine)}): "
+                    f"building the networks (steps 1-2)")
+        return False
+    logger.info(f"  hotspot set identical to {profile} ({len(mine)} hotspots): "
+                f"{'linking' if link else 'copying'} its networks")
+    for a, b in ((src['grn_dir'], ctx['grn_dir']), (src['grn_human_dir'], ctx['grn_human_dir'])):
+        files = sorted(Path(a).glob('*_pooled.tsv'))
+        if not files:
+            raise SystemExit(f"--reuse-grn-from: no *_pooled.tsv under {a}")
+        logger.info(f"    {len(files)} networks {a} -> {b}")
+        if dry_run:
+            continue
+        Path(b).mkdir(parents=True, exist_ok=True)
+        for f in files:
+            dst = Path(b) / f.name
+            if dst.exists() or dst.is_symlink():
+                continue
+            if link:
+                dst.symlink_to(f.resolve())
+            else:
+                shutil.copy2(f.resolve(), dst)
+    return True
 
 
 def build_steps(ctx: dict) -> list:
@@ -143,6 +210,10 @@ def build_steps(ctx: dict) -> list:
          'desc': 'run_gene_set_enrichment.sh (fgsea vs MSigDB Hallmark/Reactome) -> pseudobulk_de/enrichment/',
          'cmd': ['bash', str(DECONV / 'R' / 'run_gene_set_enrichment.sh')],
          'key': ctx['de_dir'] / 'enrichment' / 'enrichment_summary.tsv'},
+        {'num': 5, 'name': 'Parenchyma data-anchored validation + dominant cell types (py)',
+         'desc': 'validate_parenchyma_dataanchored.py -> pseudobulk_de/parenchyma_dataanchored_validation.tsv',
+         'cmd': [PY, str(DECONV / 'validate_parenchyma_dataanchored.py')],
+         'key': ctx['de_dir'] / 'parenchyma_dataanchored_validation.tsv'},
     ]
 
 
@@ -186,12 +257,16 @@ def main() -> None:
         description='Stage 13: Mechanism (differential GRN, cross-species conservation, enrichment)',
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
     p.add_argument('--model-dir', default=None,
-                   help='fine-tuned rat GeneCompass dir or a parent with checkpoint-* '
-                        '(default: deconvolution.genecompass_model_dir -> latest checkpoint)')
+                   help='fine-tuned rat GeneCompass dir or a parent with checkpoint-* (default: '
+                        'deconvolution.model_checkpoint; else latest checkpoint, with a warning)')
     p.add_argument('--cell-types', nargs='*', default=[],
                    help="debug subset, e.g. 'SKMVL:Skeletal muscle' or a tissue name (GRN steps only)")
-    p.add_argument('--from', dest='from_step', type=int, default=1, choices=[1, 2, 3, 4])
-    p.add_argument('--only', type=int, default=None, choices=[1, 2, 3, 4], help='run just this step')
+    p.add_argument('--from', dest='from_step', type=int, default=1, choices=[1, 2, 3, 4, 5])
+    p.add_argument('--only', type=int, default=None, choices=[1, 2, 3, 4, 5], help='run just this step')
+    p.add_argument('--reuse-grn-from', default=None, metavar='PROFILE',
+                   help='reuse that profile\'s GRNs when its DE hotspot set equals this arm\'s (see above)')
+    p.add_argument('--link', action='store_true',
+                   help='with --reuse-grn-from: symlink instead of copy (reproduces the assembled default tree)')
     p.add_argument('--force', action='store_true', help='re-run cell types even if output exists')
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('-v', '--verbose', action='store_true')
@@ -202,8 +277,6 @@ def main() -> None:
     config = load_config()
     d = config['deconvolution']
     gc_input = resolve_path(config, d['genecompass_input_dir'])
-    model_base = Path(args.model_dir).resolve() if args.model_dir \
-        else resolve_path(config, d['genecompass_model_dir'])
     ctx = {
         'gc_input': gc_input,
         'gc_input_human': Path(str(gc_input) + '_human'),
@@ -211,7 +284,7 @@ def main() -> None:
         'grn_dir': resolve_path(config, d['grn_dir']),
         'grn_human_dir': resolve_path(config, d['grn_human_dir']),
         'de_dir': gc_input / 'pseudobulk_de',
-        'model': resolve_model_dir(model_base),
+        'model': resolve_model_from_config(config, args.model_dir, logger),
     }
     ctx['hotspots'] = abundant_hotspots(ctx['de_dir'], args.cell_types)
 
@@ -227,7 +300,7 @@ def main() -> None:
     if (args.only in (1, 2) or (args.only is None and args.from_step <= 2)):
         if not (ctx['model'] / 'config.json').exists():
             errors.append(f"fine-tuned model not found: {ctx['model']}\n"
-                          f"  -> run Stage 7, or pass --model-dir / set deconvolution.genecompass_model_dir")
+                          f"  -> run Stage 7, or pass --model-dir / set deconvolution.model_checkpoint")
         if not ctx['hotspots']:
             errors.append(f"no abundant hotspots from {ctx['de_dir'] / 'de_hotspots.tsv'}\n  -> run Stage 10 first")
     if (args.only == 2 or (args.only is None and args.from_step <= 2)) and not ctx['gc_input_human'].exists():
@@ -240,8 +313,12 @@ def main() -> None:
 
     # DE_DIR: the enrichment R script's DE folder, passed explicitly (see run_gene_set_enrichment.R).
     env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), DE_DIR=str(ctx['de_dir']))
+    env.setdefault('DECONV_PYTHON', PY)   # the R/bash wrappers read the config with this interpreter
     steps = build_steps(ctx)
     steps = [s for s in steps if (s['num'] == args.only if args.only else s['num'] >= args.from_step)]
+    if args.reuse_grn_from and any(s['num'] in (1, 2) for s in steps):
+        if reuse_grns(ctx, args.reuse_grn_from, args.link, args.dry_run):
+            steps = [s for s in steps if s['num'] not in (1, 2)]
     t_total = time.time()
     for step in steps:
         if not run_step(step, env, args.dry_run, args.force):

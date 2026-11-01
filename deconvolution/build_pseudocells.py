@@ -45,7 +45,9 @@ import scipy.sparse as sp
 # (gsub('[^A-Za-z0-9]+','_') maps 'α'->'_') is what broke KIDNEY -- it looked for
 # predz___intercalated_cells.csv while extract_z.R wrote predz__alpha_intercalated_cells.csv (α->'alpha').
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 from celltype_names import safe as _safe  # noqa: E402
+from provenance import write_provenance  # noqa: E402
 
 
 def load_pred_z(pred_z_dir):
@@ -140,6 +142,9 @@ def main():
     print(f"pseudocells: {adata.n_obs} cells x {adata.n_vars} genes "
           f"({n_s} samples x {n_t} types, {n_drop} all-zero dropped)")
     print(ct.to_string())
+    pz = Path(args.pred_z_dir)
+    write_provenance(out, inputs=[pz / "genes.txt", pz / "types.txt", pz / "celltype_files.tsv"]
+                     + ([args.meta_tsv] if args.meta_tsv else []), params=vars(args))
     print(f"\nWrote -> {out}/pseudocells.h5ad")
 
 

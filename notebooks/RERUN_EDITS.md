@@ -1,3 +1,14 @@
+> **Runner (2026-11-01).** Re-execute with `python notebooks/run_notebooks.py [N ...]` from the project venv
+> (nbclient, the venv's own `python3` kernel; no user kernel registration). It passes `PIPELINE_PROFILE` to the
+> kernel and records it in each notebook's `metadata.rerun`, BUT notebooks 8-12 do not read the config yet: their
+> paths are hardcoded to the default 16-tissue arm (`genecompass_input_v2_refs4all[_human]`,
+> `results_refs4all/motrpac`; nb8 c1, nb9 c1/c3-c13, nb10 c1-c13, nb11 c1-c14, nb12 c1-c12), so a profile changes
+> nothing until those cells derive paths from `lib/gene_utils.load_config()`. Hand-copied constants to re-source
+> after any rerun that changes results: nb8 c1 and nb10 c1/c13 `TISSUES`/`tissues` lists; nb8 c3 run.prism
+> minutes per tissue (`jobs = {...}`, from SLURM logs); nb9 minimum token lengths (from Stage 8/9 logs); nb12 c3
+> `TRANSFER` stats (from `<human>/<tissue>/{transfer,tokenize}_summary.json`); the prose figures in each notebook
+> (from `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`). Run Stages 8-14 first; the notebooks only read outputs.
+>
 > **Superseded 2026-11-01.** Notebooks 8–12 now show all 16 tissues (refs4 plus SPLEEN and OVARY; default since
 > c3b27c7) with the v2 model, re-executed on the `_refs4all` outputs (SLURM 12114610, 12114613, 12114617, 12114627; all
 > clean). Paths `genecompass_input_v2_refs4[_human]` → `genecompass_input_v2_refs4all[_human]`, `results_refs4/` →

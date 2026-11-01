@@ -5,17 +5,26 @@ each TF's sum|delta| against the same network's decoys (empirical p, BH within n
   python deconvolution/grn_decoy_fdr.py [--tf-dir DIR] [--decoy-dir DIR] [--out DIR]
 """
 import argparse
+import os
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("PIPELINE_ROOT") or Path(__file__).resolve().parents[1])
 ap = argparse.ArgumentParser()
-ap.add_argument("--tf-dir", default=str(ROOT / "data/deconvolution/grn_v2_refs4"))
-ap.add_argument("--decoy-dir", default=str(ROOT / "data/deconvolution/grn_v2_refs4_decoy"))
+ap.add_argument("--tf-dir", default=None, help="default: deconvolution.grn_dir of the active config")
+ap.add_argument("--decoy-dir", default=None, help="default: <tf-dir>_decoy")
 ap.add_argument("--out", default=None, help="default: <decoy-dir>/fdr")
 a = ap.parse_args()
+if a.tf_dir is None:                                   # derive from the config, never a hardcoded arm
+    sys.path.insert(0, str(ROOT / "lib"))
+    from gene_utils import load_config, resolve_path
+    _c = load_config()
+    a.tf_dir = str(resolve_path(_c, _c["deconvolution"]["grn_dir"]))
+if a.decoy_dir is None:
+    a.decoy_dir = str(a.tf_dir).rstrip("/") + "_decoy"
 out = Path(a.out or Path(a.decoy_dir) / "fdr"); out.mkdir(parents=True, exist_ok=True)
 ANCHORS = {"Mef2c", "Nr4a1", "Myf6", "Tfeb", "Epas1"}
 GRID = np.arange(2.0, 50.01, 0.5)

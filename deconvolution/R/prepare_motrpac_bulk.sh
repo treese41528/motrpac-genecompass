@@ -11,9 +11,8 @@ set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export PROJECT_ROOT PIPELINE_ROOT="$PROJECT_ROOT"
-# Best-effort config read (falls back to repo-relative defaults if python/pyyaml absent)
-command -v python3 >/dev/null 2>&1 && \
-  eval "$(python3 "${PROJECT_ROOT}/deconvolution/_config_sh.py" 2>/dev/null || true)"
+# Config read is fatal on failure (no fallback to a hardcoded arm); exports every CFG_*.
+source "${PROJECT_ROOT}/deconvolution/load_config.sh"
 
 export MOTRPAC_DATA_DIR="${MOTRPAC_DATA_DIR:-${CFG_MOTRPAC_DATA_DIR:-${PROJECT_ROOT}/data/motrpac/rat_training_6mo/data}}"
 export RAT_TOKEN_MAPPING="${RAT_TOKEN_MAPPING:-${CFG_RAT_TOKEN_MAPPING:-${PROJECT_ROOT}/data/training/ortholog_mappings/rat_token_mapping.tsv}}"

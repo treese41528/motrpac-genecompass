@@ -71,6 +71,7 @@ suppressWarnings(suppressPackageStartupMessages({
 })
 source(file.path(.script_dir, "celltype_names.R"))
 source(file.path(.script_dir, "provenance.R"))
+source(file.path(.script_dir, "config.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 5)
@@ -88,6 +89,13 @@ MIN_SAMPLES_PER_SEX <- 8    # per-sex factor(week) (up to 5 levels) needs residu
 MIN_GENES           <- 50   # eBayes mean-variance trend needs a reasonable gene set
 MIN_MEDIAN_LIBSIZE  <- as.numeric(Sys.getenv("DE_MIN_MEDIAN_LIBSIZE", "1000"))   # §6 analysable-block rule
 if (is.na(MIN_MEDIAN_LIBSIZE)) stop("DE_MIN_MEDIAN_LIBSIZE is not a number")
+# Seed for IHW's random fold assignment: env DE_SEED (run_pseudobulk_de.sh / run_stage10.py --seed), else the
+# config's deconvolution.de_seed, default 1. IHW's own default is seed = 1L, so DE_SEED = 1 reproduces the
+# earlier (implicitly seeded) runs exactly.
+DE_SEED <- Sys.getenv("DE_SEED")
+DE_SEED <- as.integer(if (nzchar(DE_SEED)) DE_SEED else cfg_value("CFG_DE_SEED", default = "1"))
+if (is.na(DE_SEED)) stop("DE_SEED is not an integer")
+cat(sprintf("IHW seed: %d\n", DE_SEED))
 cat(sprintf("analysable blocks: median per-sample library >= %g\n", MIN_MEDIAN_LIBSIZE))
 
 # ---- phenotype (all-character so 11-digit viallabels never go scientific) ----
@@ -324,7 +332,8 @@ FDR_IHW_map <- setNames(rep(NA_real_, length(G_key)), G_key)
 ihw_used <- "none"
 if (length(G_p) > 50) {
   ir <- tryCatch({
-    r <- ihw(G_p, factor(G_tis), alpha = ALPHA); ihw_used <<- "IHW~tissue"; adj_pvalues(r)
+    set.seed(DE_SEED)
+    r <- ihw(G_p, factor(G_tis), alpha = ALPHA, seed = DE_SEED); ihw_used <<- "IHW~tissue"; adj_pvalues(r)
   }, error = function(e) {
     ihw_used <<- paste0("BH-global (IHW failed: ", conditionMessage(e), ")"); p.adjust(G_p, "BH")
   })
@@ -449,6 +458,7 @@ writeLines(c(
   sprintf("sex_consistency_warnings\t%s",
           if (length(repfdr_warnings)) paste(unique(repfdr_warnings), collapse = " | ") else "none"),
   sprintf("alpha\t%s", ALPHA),
+  sprintf("seed\t%d", DE_SEED),
   sprintf("n_blocks_ok\t%d", sum(summ$status == "ok")),
   sprintf("min_median_libsize\t%g", MIN_MEDIAN_LIBSIZE),
   sprintf("n_blocks_skipped_degenerate\t%d", sum(startsWith(summ$status, "SKIP: degenerate"))),
@@ -460,7 +470,7 @@ write_provenance(out_dir,
   inputs = c(pheno_tsv, hotspots_tsv, file.path(bulk_root, tissues, "bulk_samples.tsv"),
              file.path(results_root, tissues, "pred_z", "genes.txt")),
   params = list(results_root = results_root, bulk_root = bulk_root, tissues = tissues,
-                alpha = ALPHA, multiple_testing = ihw_used, sex_consistency = sexcons_method,
+                alpha = ALPHA, seed = DE_SEED, multiple_testing = ihw_used, sex_consistency = sexcons_method,
                 n_blocks_ok = sum(summ$status == "ok")))
 
 cat("\n=== DE summary (hotspots first) ===\n")

@@ -20,9 +20,9 @@ Per-tissue chain (steps 1-2, like Stage 9), then whole-experiment (steps 3-4, li
   4. compare_transfer.py             (py, CPU)  rat vs human per (tissue,cell_type): does the axis
        survive? -> <human-gate>/transfer_comparison.tsv + transfer_comparison.md
 
-The rat gate is deconvolution.hotspots_table's folder (default: genecompass_input_v2_refs4/gate_rcv10/); its
+The rat gate is deconvolution.hotspots_table's folder (default config: genecompass_input_v2_refs4all/gate_rcv10/); its
 corroboration_merged.tsv defines the hotspots and its subspace_probe.tsv the rat side of the
-comparison. <human-gate> is the same subfolder under <human-root> (genecompass_input_v2_refs4_human/gate_rcv10/).
+comparison. <human-gate> is the same subfolder under <human-root> (genecompass_input_v2_refs4all_human/gate_rcv10/).
 
 Usage:
   python pipeline/run_stage12.py                       # all tissues (transfer+embed) -> probe -> compare
@@ -47,6 +47,8 @@ _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve()
 os.environ.setdefault('PIPELINE_ROOT', str(_PROJECT_ROOT))
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
 from gene_utils import load_config, resolve_path  # noqa: E402
+sys.path.insert(0, str(_PROJECT_ROOT / 'deconvolution'))
+from model_checkpoint import latest_checkpoint, resolve_model_dir as resolve_model_from_config  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -62,11 +64,9 @@ _FALLBACK_N_CELLS = 1_000_000  # >> any tissue's pseudo-cell count -> embeds all
 
 
 def resolve_model_dir(base: Path) -> Path:
-    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest."""
-    if (base / 'config.json').exists():
-        return base
-    cks = sorted(base.glob('checkpoint-*'), key=lambda p: int(re.sub(r'\D', '', p.name) or 0))
-    return cks[-1] if cks else base
+    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest.
+    (Kept for callers/tests; the config path goes through deconvolution/model_checkpoint.py.)"""
+    return latest_checkpoint(base)
 
 
 def resolve_gate_dirs(config: dict, rat_root: Path, human_root: Path) -> tuple:
@@ -170,8 +170,8 @@ def main() -> None:
                    help='tissue labels for the per-tissue steps (default: all rat tissues)')
     p.add_argument('--label', default=None, help='single label (alias for --labels X)')
     p.add_argument('--model-dir', default=None,
-                   help='fine-tuned GeneCompass dir or parent with checkpoint-* '
-                        '(default: deconvolution.genecompass_model_dir -> latest checkpoint)')
+                   help='fine-tuned GeneCompass dir or parent with checkpoint-* (default: '
+                        'deconvolution.model_checkpoint; else latest checkpoint, with a warning)')
     p.add_argument('--target-sum', type=float, default=None,
                    help='tokenizer normalize_total target; MUST match the rat run '
                         '(default: deconvolution.pseudocell_target_sum; 6500 if unset)')
@@ -193,8 +193,7 @@ def main() -> None:
     d = config['deconvolution']
     rat_root = resolve_path(config, d['genecompass_input_dir'])
     human_root = Path(str(rat_root) + '_human')
-    model_base = Path(args.model_dir).resolve() if args.model_dir \
-        else resolve_path(config, d['genecompass_model_dir'])
+    model_dir = resolve_model_from_config(config, args.model_dir, logger)
 
     rat_gate, human_gate = resolve_gate_dirs(config, rat_root, human_root)
     for f in ('corroboration_merged.tsv', 'subspace_probe.tsv'):
@@ -211,7 +210,7 @@ def main() -> None:
 
     ctx = {
         'rat_root': rat_root, 'human_root': human_root,
-        'model_dir': resolve_model_dir(model_base),
+        'model_dir': model_dir,
         'rat_gate': rat_gate, 'human_gate': human_gate,
         'target_sum': args.target_sum if args.target_sum is not None
                       else float(d.get('pseudocell_target_sum', 6500.0)),

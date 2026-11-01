@@ -218,13 +218,23 @@ def classify_identity(evals, tier, expected_dir):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input_v2_refs4/pseudobulk_de'))
-    ap.add_argument('--prereg', default=str(_PROJECT_ROOT / 'deconvolution/reference/posctrl_prereg_refs4.tsv'))
+    ap.add_argument('--de-dir', default=None,
+                    help='DE folder (default: <deconvolution.genecompass_input_dir>/pseudobulk_de of the active config)')
+    ap.add_argument('--prereg', default=None,
+                    help='frozen spec (default: deconvolution.posctrl_prereg, else <reference_dir>/posctrl_prereg.tsv)')
     ap.add_argument('--out', default=None, help='output dir (default: --de-dir)')
     ap.add_argument('--alpha', type=float, default=0.05)
     ap.add_argument('--min-fraction', type=float, default=0.01)
     ap.add_argument('--min-nonzero', type=int, default=25)
     args = ap.parse_args()
+    if args.de_dir is None or args.prereg is None:      # derive from the config, never a hardcoded arm
+        from gene_utils import load_config, resolve_path
+        cfg = load_config(); d = cfg['deconvolution']
+        if args.de_dir is None:
+            args.de_dir = str(resolve_path(cfg, d['genecompass_input_dir']) / 'pseudobulk_de')
+        if args.prereg is None:
+            args.prereg = str(resolve_path(cfg, d['posctrl_prereg']) if d.get('posctrl_prereg')
+                              else resolve_path(cfg, d['reference_dir']) / 'posctrl_prereg.tsv')
 
     de_dir = Path(args.de_dir)
     out_dir = Path(args.out) if args.out else de_dir

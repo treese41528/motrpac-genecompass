@@ -204,6 +204,14 @@ def main():
         species=args.species,
         device=args.device,
     )
+    # provenance: which weights (resolved checkpoint path + its config.json / pytorch_model.bin stamps) embedded
+    # which dataset. lib/ resolves from the repo root, not PIPELINE_ROOT, so this works from any cwd.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'lib'))
+    from provenance import write_provenance
+    md = Path(args.model_dir).resolve()
+    write_provenance(args.output, inputs=[md / 'config.json', md / 'pytorch_model.bin',
+                                          Path(args.dataset) / 'dataset_info.json'],
+                     params={**vars(args), 'model_dir_resolved': str(md)})
 
 
 if __name__ == '__main__':

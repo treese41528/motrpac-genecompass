@@ -14,6 +14,16 @@ marker panels fixed in advance (deconvolution/reference_marker_panels.yaml) by a
   finalize  apply the committed review decisions (deconvolution/joint_reannotation_review.tsv), write the
             final per-cell labels, and run the checks of §10.4 on them.
 
+Cluster-ID guard. The review decisions are keyed to Leiden cluster IDs (j0, j1, ...), which are only stable
+if `run` reproduces the same partition AND numbering (same cells, package versions, seed). Next to the
+decisions, deconvolution/joint_reannotation_clusters.tsv records a SHA-256 of each reference's cluster
+assignment (sorted sample, barcode, joint_cluster rows of cells.tsv.gz). `run` reports whether it reproduced
+the recorded assignment; `finalize` REFUSES to apply the decisions to a different assignment (renumbered or
+re-partitioned clusters would silently get the wrong labels). After a deliberate re-review, record the new
+assignment with `finalize --record-clusters`. For exact reproduction without re-running Leiden, the final
+labels data/deconvolution/joint_labels/<REF>/cells_final.tsv.gz are deposited and the reference builds
+read them directly (tissue_references.yaml `joint_labels:`).
+
 Rule (§10.3). Per cluster, each panel gene's mean log-normalised expression is min-max scaled across
 clusters; a panel's score is the mean over its genes found in the data (at least 2). Top-level classes:
 the best class is accepted if it scores >= ACCEPT and beats the runner-up by >= MARGIN; a second class from
@@ -28,7 +38,9 @@ old_vs_new.tsv)
 Usage (project venv; loads every cell of the reference -> run via SLURM):
   python deconvolution/joint_reannotate.py run --ref KIDNEY
   python deconvolution/joint_reannotate.py finalize --ref KIDNEY
+  python deconvolution/joint_reannotate.py finalize --ref KIDNEY --record-clusters   # after a re-review only
 """
+import hashlib
 import argparse
 import json
 import os
@@ -46,6 +58,7 @@ sys.path.insert(0, str(ROOT / "deconvolution"))
 PANELS = ROOT / "deconvolution/reference_marker_panels.yaml"
 REVIEW = ROOT / "deconvolution/joint_reannotation_review.tsv"
 SPLITS = ROOT / "deconvolution/joint_reannotation_splits.tsv"
+CLUSTER_SUMS = ROOT / "deconvolution/joint_reannotation_clusters.tsv"
 OUT = ROOT / "data/deconvolution/joint_labels"
 
 # reference key -> tissue_references.yaml key whose spec selects the samples
@@ -407,6 +420,50 @@ def assign(scores, tree):
     return pd.DataFrame(rows).set_index("cluster")
 
 
+# ----------------------------------------------------------------------------- cluster-ID guard
+def cluster_assignment_sha256(cells):
+    """SHA-256 of the (sample, barcode, joint_cluster) rows, sorted by sample then barcode."""
+    c = cells[["sample", "barcode", "joint_cluster"]].astype(str).sort_values(["sample", "barcode"], kind="mergesort")
+    h = hashlib.sha256()
+    for row in c.itertuples(index=False):
+        h.update(("\t".join(row) + "\n").encode())
+    return h.hexdigest()
+
+
+def recorded_clusters(path=CLUSTER_SUMS):
+    if not Path(path).exists():
+        return pd.DataFrame(columns=["reference", "sha256", "n_cells", "n_clusters"]).set_index("reference")
+    return pd.read_csv(path, sep="\t", dtype=str, comment="#").set_index("reference")
+
+
+def record_clusters(ref, cells, path=CLUSTER_SUMS):
+    rec = recorded_clusters(path)
+    rec.loc[ref] = [cluster_assignment_sha256(cells), str(len(cells)), str(cells["joint_cluster"].nunique())]
+    with open(path, "w") as fh:
+        fh.write("# SHA-256 of each reference's joint cluster assignment (joint_reannotate.py; sorted sample, barcode,\n"
+                 "# joint_cluster rows of cells.tsv.gz). finalize refuses review decisions on any other assignment.\n")
+        rec.sort_index().rename_axis("reference").to_csv(fh, sep="\t")
+    print(f"[{ref}] recorded cluster assignment in {path}")
+
+
+def check_clusters(ref, cells, path=CLUSTER_SUMS):
+    """None if the assignment matches the recorded one; else a message saying how it differs."""
+    rec = recorded_clusters(path)
+    if ref not in rec.index:
+        return (f"{ref}: no recorded cluster assignment in {path}; the review decisions cannot be verified "
+                f"against these clusters (record one with `finalize --ref {ref} --record-clusters` only after "
+                f"reviewing clusters.tsv)")
+    r = rec.loc[ref]
+    got = cluster_assignment_sha256(cells)
+    if got == r["sha256"]:
+        return None
+    return (f"{ref}: cluster assignment differs from the one the review decisions were made on\n"
+            f"  recorded: sha256 {r['sha256'][:16]}..  {r['n_cells']} cells, {r['n_clusters']} clusters\n"
+            f"  this run: sha256 {got[:16]}..  {len(cells)} cells, {cells['joint_cluster'].nunique()} clusters\n"
+            f"  Leiden renumbered or re-partitioned the clusters (package versions, inputs, seed), so cluster IDs "
+            f"in {REVIEW.name} would label the wrong cells. Use the deposited cells_final.tsv.gz, or re-review.")
+
+
 # ----------------------------------------------------------------------------- run
 def run(ref):
     out = OUT / ref
@@ -469,6 +526,9 @@ def run(ref):
     cells = adata.obs[["sample", "barcode", "old_cluster", "old_label", "joint_cluster"]].copy()
     cells["auto_label"] = cells["joint_cluster"].map(clusters["auto_label"])
     cells.to_csv(out / "cells.tsv.gz", sep="\t", index=False)
+    msg = check_clusters(ref, cells.astype(str))
+    print(f"[{ref}] cluster assignment {'matches the recorded one' if msg is None else 'CHECK FAILED'}"
+          + ("" if msg is None else f"\n!!! {msg}\n!!! finalize will refuse these clusters"), flush=True)
 
     # per-(sample, cluster) raw count sums, so finalize can build label profiles without reloading
     key = (adata.obs["sample"].astype(str) + "\t" + adata.obs["joint_cluster"].astype(str)).values
@@ -542,13 +602,18 @@ def label_profile_checks(ref, sums, groups, cl2lab):
                         float(np.median(diff)) if diff.size else np.nan)
 
 
-def finalize(ref):
+def finalize(ref, record=False):
     out = OUT / ref
+    cells = pd.read_csv(out / "cells.tsv.gz", sep="\t", dtype=str, keep_default_na=False)
+    if record:
+        record_clusters(ref, cells)
+    msg = check_clusters(ref, cells)
+    if msg is not None:
+        raise SystemExit("FATAL (cluster-ID guard): " + msg)
     clusters = pd.read_csv(out / "clusters.tsv", sep="\t", index_col="cluster", keep_default_na=False)
     clusters["too_small"] = clusters["too_small"].astype(str) == "True"
     lab = final_labels(ref, clusters)
     clusters["final_label"] = lab
-    cells = pd.read_csv(out / "cells.tsv.gz", sep="\t", dtype=str, keep_default_na=False)
     cells["cell_type"] = cells["joint_cluster"].map(lab)
     cells.to_csv(out / "cells_final.tsv.gz", sep="\t", index=False)
 
@@ -585,8 +650,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["run", "finalize"])
     ap.add_argument("--ref", required=True, choices=ALL_REFS)
+    ap.add_argument("--record-clusters", action="store_true",
+                    help="finalize: record THIS cluster assignment as the one the review decisions refer to "
+                         "(only after re-reviewing clusters.tsv)")
     a = ap.parse_args()
-    (run if a.command == "run" else finalize)(a.ref)
+    if a.command == "run":
+        run(a.ref)
+    else:
+        finalize(a.ref, record=a.record_clusters)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+# Clean from-scratch rebuild of the 16-tissue default (deconvolution/DECONV_REBUILD_RUNBOOK.md §0): the same
+# references (tissue_references.yaml) and model as the default config, but every output goes to fresh
+# _refs4all_rebuild folders, built tissue by tissue by pipeline/run_deconv_all.py with no links. Compare the
+# result against the assembled default tree (results_refs4all, built by deconvolution/assemble_arm.py).
+#   export PIPELINE_PROFILE=config/profiles/refs4all_rebuild.yaml
+deconvolution:
+  results_dir: data/deconvolution/results_refs4all_rebuild
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4all_rebuild
+  grn_dir: data/deconvolution/grn_v2_refs4all_rebuild
+  grn_human_dir: data/deconvolution/grn_v2_refs4all_rebuild_human
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation_refs4all_rebuild

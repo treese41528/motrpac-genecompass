@@ -10,9 +10,8 @@ set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export PROJECT_ROOT PIPELINE_ROOT="$PROJECT_ROOT"
-# Best-effort config read (falls back to repo-relative defaults if python/pyyaml absent)
-command -v python3 >/dev/null 2>&1 && \
-  eval "$(python3 "${PROJECT_ROOT}/deconvolution/_config_sh.py" 2>/dev/null || true)"
+# Config read is fatal on failure (no fallback to a hardcoded arm); exports every CFG_*.
+source "${PROJECT_ROOT}/deconvolution/load_config.sh"
 export RAT_EXCLUDE_GENES="${RAT_EXCLUDE_GENES:-${CFG_RAT_EXCLUDE_GENES:-${PROJECT_ROOT}/deconvolution/reference/rat_exclude_genes.tsv}}"
 export RAT_PROTEIN_CODING_GENES="${RAT_PROTEIN_CODING_GENES:-${CFG_RAT_PROTEIN_CODING_GENES:-${PROJECT_ROOT}/deconvolution/reference/rat_protein_coding_genes.tsv}}"
 export PROTEIN_CODING_ONLY="${PROTEIN_CODING_ONLY:-${CFG_PROTEIN_CODING_ONLY:-1}}"

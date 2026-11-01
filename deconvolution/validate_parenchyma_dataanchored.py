@@ -23,10 +23,10 @@ ROOT = os.environ.get('PIPELINE_ROOT', '.')
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'))
 from gene_utils import load_config, resolve_path  # noqa: E402
 _cfg = load_config()
-BULK = os.path.join(ROOT, 'data/deconvolution/motrpac_bulk')
+BULK = str(resolve_path(_cfg, _cfg['deconvolution']['motrpac_bulk_out']))
 DE   = os.environ.get('DE_DIR') or str(resolve_path(_cfg, _cfg['deconvolution']['genecompass_input_dir']) / 'pseudobulk_de')
 print(f'DE folder: {DE}')
-PH   = os.path.join(ROOT, 'deconvolution/reference/motrpac_sample_pheno.tsv')
+PH   = str(resolve_path(_cfg, _cfg['deconvolution']['sample_pheno']))
 THR_LFC, ALPHA, MINNZ = 0.25, 0.05, 25
 # Parenchyma label per tissue; muscle is 'Skeletal muscle cells' in the jointly re-annotated reference
 # (references_v4) and 'Skeletal myocytes' before it. A tissue matching none of its names is an error.

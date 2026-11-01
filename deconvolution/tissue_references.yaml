@@ -25,6 +25,10 @@
 #   joint_labels   cells_final.tsv.gz of the joint re-annotation (2026-10-27); when set, its cell types and
 #                  joint clusters replace the consensus labels and label_scheme is not applied
 #   previous_reference_dir  the consensus-label build this reference replaced (kept on disk, not used)
+#   adopt_authors_labels  true = run adopt_authors_labels.py --tissue <T> before the build (BAT, HEART: the source
+#                  paper's deposited per-cell labels replace the corpus consensus labels of the selected samples)
+#   purity_sweep   Stage 14 holdout purity sweep on this tissue's PRODUCTION reference_dir: {focal: <parenchyma
+#                  label in that reference>, cells_per_mixture: N, tag: <sweep name>} (pipeline/run_stage14.py)
 #   allow_nonnative  bypass the reference_qc FAIL gate when a sort/isolation is INTRINSIC + intended (SPLEEN)
 #   expect         the VALIDATION contract: n_samples, sample_ids (post-QC, exact), qc_dropped (intended drops), organism
 #   build          the exact reproducible command
@@ -35,6 +39,8 @@ version: v3-2026-07-15
 KIDNEY:
   status: ready
   reference_dir: data/deconvolution/references_v4/KIDNEY_GSE240658
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: kidney, focal: "Proximal tubule cells", cells_per_mixture: 1000}
   previous_reference_dir: data/deconvolution/references_v3/KIDNEY_GSE240658   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/KIDNEY/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE240658
@@ -109,6 +115,8 @@ BLOOD:
 CORTEX:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/CORTEX_GSE303115
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: cortex, focal: "Excitatory neurons", cells_per_mixture: 1000}
   previous_reference_dir: data/deconvolution/references_v3/CORTEX_GSE303115   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/CORTEX/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE303115
@@ -135,6 +143,9 @@ CORTEX:
 HEART:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/HEART_GSE280111_LV
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: heart, focal: "Cardiomyocytes", cells_per_mixture: 1000}
+  adopt_authors_labels: true           # authors' SCP2828 labels first (adopt_authors_labels.py --tissue HEART)
   study: GSE280111
   tissue: left ventricle
   organism: Rattus norvegicus
@@ -156,6 +167,7 @@ HEART:
     qc_dropped: []
     organism: Rattus norvegicus
   build: >
+    python deconvolution/adopt_authors_labels.py --tissue HEART &&
     python deconvolution/build_reference.py --study GSE280111 --tissue "left ventricle"
     --out data/deconvolution/references_v3/HEART_GSE280111_LV
   notes: Healthy Wistar LV (all-male, 17wk); dedup fixes the 38->19 double-count. CM r=0.995.
@@ -217,6 +229,8 @@ WATSC:
 SKMGN:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/MUSCLE_GSE137869_Y   # SHARED with SKMVL (identical build)
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: skmgn, focal: "Skeletal muscle cells", cells_per_mixture: 1000}
   previous_reference_dir: data/deconvolution/references_v3/MUSCLE_GSE137869_Y   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/MUSCLE/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE137869
@@ -269,6 +283,9 @@ SKMVL:
 BAT:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/BAT_GSE244451
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: bat, focal: "Brown adipocytes", cells_per_mixture: 1000}
+  adopt_authors_labels: true           # authors' GSE244451 SCP-annotated labels first (adopt_authors_labels.py --tissue BAT)
   study: GSE244451
   tissue: subscapular brown adipose tissue
   organism: Rattus norvegicus
@@ -286,6 +303,7 @@ BAT:
     qc_dropped: []
     organism: Rattus norvegicus
   build: >
+    python deconvolution/adopt_authors_labels.py --tissue BAT &&
     python deconvolution/build_reference.py --study GSE244451 --tissue "subscapular brown adipose tissue"
     --out data/deconvolution/references_v3/BAT_GSE244451
   notes: snRNA recovers brown adipocytes; overrides Ma (adipocyte hole). Dahl SS strain, male, n=2, unvalidated.
@@ -293,6 +311,8 @@ BAT:
 HYPOTH:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v3/HYPOTH_GSE248413_Y
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: hypoth, focal: "Glutamatergic neurons", cells_per_mixture: 1000}
   study: GSE248413
   tissue: hypothalamus
   organism: Rattus norvegicus
@@ -317,6 +337,8 @@ HYPOTH:
 SMLINT:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/SMLINT_GSE272055
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: smlint, focal: "Enterocytes", cells_per_mixture: 1000}
   previous_reference_dir: data/deconvolution/references_v3/SMLINT_GSE272055   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/SMLINT/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE272055
@@ -343,6 +365,9 @@ SMLINT:
 LUNG:
   status: ready                 # built; in the default run (status refreshed 2026-11-01)
   reference_dir: data/deconvolution/references_v4/LUNG_native_pooled
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: lung_club, focal: "Club cells", cells_per_mixture: 1000}
+    - {tag: lung_at2, focal: "Alveolar type II cells", cells_per_mixture: 300}
   previous_reference_dir: data/deconvolution/references_v3/LUNG_native_pooled   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/LUNG/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   pooled: true
@@ -366,6 +391,8 @@ LUNG:
 HIPPOC:
   status: ready
   reference_dir: data/deconvolution/references_v4/HIPPOC_GSE295314
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: hippoc, focal: "Excitatory neurons", cells_per_mixture: 1000}
   previous_reference_dir: data/deconvolution/references_v3/HIPPOC_GSE295314   # consensus labels (before the joint re-annotation)
   joint_labels: data/deconvolution/joint_labels/HIPPOC/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §10
   study: GSE295314
@@ -397,6 +424,8 @@ HIPPOC:
 TESTES:
   status: ready                          # reference BUILT + deconvolved (lifted genes, 2026-10-22). run_deconv_all picks it up.
   reference_dir: data/deconvolution/references_v3/TESTES_OMIX767_lifted
+  purity_sweep:                         # Stage 14 holdout sweep on reference_dir (run_stage14.py)
+    - {tag: testes, focal: "Round spermatids", cells_per_mixture: 1000}
   study: OMIX767
   tissue: testis
   organism: Rattus norvegicus

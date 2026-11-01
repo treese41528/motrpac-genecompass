@@ -35,9 +35,9 @@ def _base(x):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--rat-dir", default=str(_ROOT / "data/deconvolution/grn_v2_refs4"))
-    ap.add_argument("--human-dir", default=str(_ROOT / "data/deconvolution/grn_v2_refs4_human"))
-    ap.add_argument("--out-dir", default=str(_ROOT / "data/deconvolution/grn_v2_refs4_human/conservation"))
+    ap.add_argument("--rat-dir", default=None, help="default: deconvolution.grn_dir of the active config")
+    ap.add_argument("--human-dir", default=None, help="default: deconvolution.grn_human_dir of the active config")
+    ap.add_argument("--out-dir", default=None, help="default: <human-dir>/conservation")
     ap.add_argument("--ortholog-map", default=str(_ROOT / "data/training/ortholog_mappings/rat_to_human_mapping.pickle"))
     ap.add_argument("--min-shared", type=int, default=8, help="min shared targets to score a TF")
     ap.add_argument("--top-k", type=int, default=0,
@@ -62,6 +62,15 @@ def main():
                          "Ignored when --top-k > 0 (that path reproduces the old biased score).")
     ap.add_argument("--out-prefix", default="", help="prefix for output filenames (e.g. 'topk40_')")
     args = ap.parse_args()
+    if args.rat_dir is None or args.human_dir is None:   # derive from the config, never a hardcoded arm
+        import sys
+        sys.path.insert(0, str(_ROOT / "lib"))
+        from gene_utils import load_config, resolve_path
+        _c = load_config(); _d = _c["deconvolution"]
+        args.rat_dir = args.rat_dir or str(resolve_path(_c, _d["grn_dir"]))
+        args.human_dir = args.human_dir or str(resolve_path(_c, _d["grn_human_dir"]))
+    if args.out_dir is None:
+        args.out_dir = str(Path(args.human_dir) / "conservation")
     outd = Path(args.out_dir); outd.mkdir(parents=True, exist_ok=True)
     r2h = {_base(k): _base(v) for k, v in pickle.load(open(args.ortholog_map, "rb")).items()}
 

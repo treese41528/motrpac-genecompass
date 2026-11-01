@@ -15,7 +15,7 @@
 #   deconvolution/run_purity_sweep.sh all       # build -> deconv -> score
 set -eo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # project root
-export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
+export PROJECT_ROOT="$PWD" PIPELINE_ROOT="$PWD"; source deconvolution/load_config.sh   # fatal on a config error
 PY="${DECONV_PYTHON:-python3}"
 REF="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}/liver_GSE220075"
 FOCAL="Hepatocytes"

@@ -43,8 +43,18 @@ def load_config():
     return {k: v for k, v in d.items() if isinstance(v, dict)}
 
 
+def inventory_available():
+    """The corpus annotation inventory (reports/annotations/annotation_inventory.tsv, gitignored) is needed
+    only to RE-RESOLVE a corpus selection; deconvolving deposited/built references does not need it."""
+    return Path(INVENTORY).exists()
+
+
 def _inventory():
     inv = {}
+    if not inventory_available():
+        print(f"[note] annotation inventory not found ({INVENTORY}): corpus selection checks are skipped; "
+              f"built references get the post-build sample check only", file=sys.stderr)
+        return inv
     with open(INVENTORY) as f:
         for r in csv.DictReader(f, delimiter="\t"):
             inv[r["sample_id"]] = r
@@ -116,6 +126,9 @@ def check_tissue(code, cfg, inv, built_only=False):
     # corpus by their own builder, e.g. the BLOOD composite: those get the post-build check only) ---
     if cfg.get("builder"):
         L.append(f"built outside the corpus by builder '{cfg['builder']}': post-build sample check only")
+    if not built_only and not cfg.get("builder") and not inventory_available():
+        L.append("annotation inventory absent: corpus selection checks skipped (post-build check only)")
+        built_only = True
     if not built_only and not cfg.get("builder"):
         try:
             if cfg.get("pooled"):

@@ -264,6 +264,7 @@ def main() -> None:
             sys.exit(1)
 
     env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT))
+    env.setdefault('DECONV_PYTHON', PY)   # the R/bash wrappers read the config with this interpreter
     if args.n_cores:
         env['N_CORES'] = str(args.n_cores)
 

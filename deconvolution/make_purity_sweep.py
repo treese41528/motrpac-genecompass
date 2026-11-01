@@ -39,6 +39,11 @@ Usage:
   python deconvolution/make_purity_sweep.py --mode holdout --study GSE220075 \
       --tissue liver --focal-type Hepatocytes \
       --out data/deconvolution/validation/SWEEP_hepato_holdout
+  # holdout on an already-built PRODUCTION reference (what pipeline/run_stage14.py does: the
+  # reference_dir of each tissue in deconvolution/tissue_references.yaml, whatever its builder)
+  python deconvolution/make_purity_sweep.py --mode holdout --ref-source \
+      data/deconvolution/references_v4/KIDNEY_GSE240658 --tissue kidney \
+      --focal-type "Proximal tubule cells" --out data/deconvolution/validation/SWEEP_kidney_holdout
   # cross-dataset (our real setting)
   python deconvolution/make_purity_sweep.py --mode cross --source-study GSE245240 \
       --tissue liver --conditions Nave --focal-type Hepatocytes \
@@ -57,6 +62,23 @@ import scipy.sparse as sp
 from build_reference import load_study, clean_cells, export_reference, canonicalize_labels
 from celltype_names import safe, assert_injective, purge_stale   # shared filename contract
 from make_pseudobulk import build_harmonization
+
+
+def load_built_reference(ref_dir):
+    """A built reference dir (reference_counts.mtx cells x genes, genes.tsv, cells_meta.tsv) as AnnData with
+    the obs columns build_reference.clean_cells / export_reference use."""
+    import anndata as ad
+    ref_dir = Path(ref_dir)
+    X = sp.csr_matrix(sio.mmread(str(ref_dir / "reference_counts.mtx")))
+    genes = pd.read_csv(ref_dir / "genes.tsv", header=None, dtype=str)[0].values
+    obs = pd.read_csv(ref_dir / "cells_meta.tsv", sep="\t", dtype=str, keep_default_na=False)
+    if X.shape != (len(obs), len(genes)):
+        sys.exit(f"ERROR: {ref_dir}: matrix {X.shape} does not match {len(obs)} cells x {len(genes)} genes")
+    obs.index = [f"c{i}" for i in range(len(obs))]
+    a = ad.AnnData(X=X, obs=obs, var=pd.DataFrame(index=genes))
+    print(f"built reference {ref_dir}: {a.n_obs} cells x {a.n_vars} genes, "
+          f"{a.obs['cell_type'].nunique()} cell types")
+    return a
 
 
 def generate_purity_sweep(pool, types, focal, rng, purity_grid, reps,
@@ -160,6 +182,9 @@ def main():
     ap.add_argument("--pooled-lung", action="store_true",
                     help="holdout: build the 3-study pooled native-lung reference instead of a single "
                          "--study (reproduces build_lung_pooled.py); ignores --study/--label-scheme/--gene-join")
+    ap.add_argument("--ref-source", help="holdout: split this already-BUILT reference dir (the production "
+                         "reference_dir) instead of rebuilding from --study; ignores --study/--label-scheme/"
+                         "--gene-join/--min-gene-cells/--sample-ids/--conditions/--gene-map/--pooled-lung")
     ap.add_argument("--gene-map", help="liftover TSV: put the cells in the bulk's gene-ID space, as the "
                          "production reference build does (TESTES: deconvolution/reference/motrpac_bulk_liftover.tsv); "
                          "in cross mode the source study is lifted to match --ref-dir")
@@ -173,7 +198,9 @@ def main():
     grid = [float(x) for x in args.purity_grid.split(",")]
 
     if args.mode == "holdout":
-        if args.pooled_lung:
+        if args.ref_source:
+            adata = load_built_reference(args.ref_source)        # already labelled + cleaned at build time
+        elif args.pooled_lung:
             from build_lung_pooled import build_pooled_lung   # 3-study native-lung pool
             adata = build_pooled_lung()
         else:

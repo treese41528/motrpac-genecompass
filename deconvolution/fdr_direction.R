@@ -1,6 +1,13 @@
 suppressPackageStartupMessages({ library(IHW) })
+# Config + seed: run from the repo root (`Rscript deconvolution/fdr_direction.R [DE_DIR] [SEED]`). The DE folder defaults
+# to <deconvolution.genecompass_input_dir>/pseudobulk_de of the active config (PIPELINE_PROFILE honoured);
+# the IHW fold seed to deconvolution.de_seed (default 1, IHW's own default). Both are recorded in the output.
+source(file.path(Sys.getenv("PIPELINE_ROOT", "."), "deconvolution", "R", "config.R"))
+.a    <- commandArgs(trailingOnly = TRUE)
 ALPHA <- 0.05
-BASE  <- "data/deconvolution/genecompass_input_v2_refs4/pseudobulk_de"
+BASE  <- if (length(.a) >= 1) .a[1] else file.path(cfg_value("CFG_GENECOMPASS_INPUT_DIR"), "pseudobulk_de")
+SEED  <- as.integer(if (length(.a) >= 2) .a[2] else cfg_value("CFG_DE_SEED", default = "1"))
+cat(sprintf("DE folder: %s\nIHW seed:  %d\n", BASE, SEED))
 summ <- read.delim(file.path(BASE,"de_summary.tsv"), check.names=FALSE)
 man  <- read.delim(file.path(BASE,"celltype_files.tsv"), check.names=FALSE)
 k <- function(t,c) paste(t,c,sep="||"); summ$key <- k(summ$tissue, summ$cell_type)
@@ -14,7 +21,7 @@ for (i in seq_len(nrow(man))) {
 G <- do.call(rbind, rows); G <- G[is.finite(G$P),]
 G <- merge(G, summ[,c("key","median_libsize","is_hotspot")], by="key", sort=FALSE)
 
-fit <- function(sub) { r <- tryCatch(ihw(sub$P, factor(sub$tissue), alpha=ALPHA), error=function(e) NULL)
+fit <- function(sub) { r <- tryCatch({ set.seed(SEED); ihw(sub$P, factor(sub$tissue), alpha=ALPHA, seed=SEED) }, error=function(e) NULL)
                        if (is.null(r)) p.adjust(sub$P,"BH") else adj_pvalues(r) }
 
 G$FDR_all <- fit(G)                                    # pooled over ALL 185

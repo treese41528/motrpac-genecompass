@@ -39,6 +39,7 @@ _ROOT = Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve()
 sys.path.insert(0, str(_ROOT / "lib"))
 sys.path.insert(0, str(_ROOT / "pipeline" / "05_tokenization"))
 from gene_utils import load_config, resolve_path                       # noqa: E402
+from provenance import write_provenance                                # noqa: E402
 from tokenize_corpus import (load_token_dict, load_median_dict,         # noqa: E402
                              build_eligible_gene_arrays, build_gene_index,
                              map_varnames_to_eligible, tokenize_cell_batch,
@@ -202,6 +203,10 @@ def main():
                "top_n": args.top_n, "species": args.species,
                "value_stats": vstats, "mean_expressed_length": float(np.mean(all_lens))},
               open(out / "tokenize_summary.json", "w"), indent=2)
+    write_provenance(out, inputs=[args.h5ad, resolve_path(cfg, paths["ortholog_dir"]),
+                                  resolve_path(cfg, paths["median_dir"])] + ([args.pa_genes] if args.pa_genes else []),
+                     params={**vars(args), "config_paths": cfg["paths"],
+                             "config_deconvolution": cfg["deconvolution"]})
     print(f"\nwrote {int(keep.sum())} tokenized pseudo-cells -> {out}/dataset")
 
 

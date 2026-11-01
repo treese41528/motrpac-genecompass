@@ -42,6 +42,8 @@ _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT') or Path(__file__).resolve()
 os.environ.setdefault('PIPELINE_ROOT', str(_PROJECT_ROOT))
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
 from gene_utils import load_config, resolve_path  # noqa: E402
+sys.path.insert(0, str(_PROJECT_ROOT / 'deconvolution'))
+from model_checkpoint import latest_checkpoint, resolve_model_dir as resolve_model_from_config  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -61,13 +63,9 @@ def slug(s: str) -> str:
 
 
 def resolve_model_dir(base: Path) -> Path:
-    """Accept either a model dir (has config.json) or a parent holding checkpoint-*;
-    in the latter case pick the highest-numbered checkpoint."""
-    if (base / 'config.json').exists():
-        return base
-    cks = sorted(base.glob('checkpoint-*'),
-                 key=lambda p: int(re.sub(r'\D', '', p.name) or 0))
-    return cks[-1] if cks else base
+    """Accept a model dir (has config.json) or a parent holding checkpoint-*; pick the latest.
+    (Kept for callers/tests; the config path goes through deconvolution/model_checkpoint.py.)"""
+    return latest_checkpoint(base)
 
 
 def pseudocell_count(gc_dir: Path):
@@ -160,8 +158,9 @@ def main() -> None:
     p.add_argument('--label', default=None, help='genecompass_input/<label> dir (Stage 8 output)')
     p.add_argument('--tissue', default=None, help='MoTrPAC code; if --label omitted, label = slug(tissue)')
     p.add_argument('--model-dir', default=None,
-                   help='fine-tuned rat GeneCompass dir or a parent with checkpoint-* '
-                        '(default: deconvolution.genecompass_model_dir from config -> latest checkpoint)')
+                   help='fine-tuned rat GeneCompass dir or a parent with checkpoint-* (default: '
+                        'deconvolution.model_checkpoint; else the latest checkpoint under '
+                        'deconvolution.genecompass_model_dir, with a warning)')
     p.add_argument('--n-cells', type=int, default=None,
                    help='cells to embed (default: all pseudo-cells; never subsample)')
     p.add_argument('--target-sum', type=float, default=None,
@@ -186,8 +185,7 @@ def main() -> None:
     d = config['deconvolution']
 
     gc_dir = resolve_path(config, d['genecompass_input_dir']) / label
-    model_base = Path(args.model_dir).resolve() if args.model_dir \
-        else resolve_path(config, d['genecompass_model_dir'])
+    model_dir = resolve_model_from_config(config, args.model_dir, logger)
 
     n_cells = args.n_cells
     if n_cells is None:
@@ -200,7 +198,7 @@ def main() -> None:
         'h5ad':       gc_dir / 'pseudocells.h5ad',
         'dataset':    gc_dir / 'dataset',
         'emb_dir':    gc_dir / 'embeddings',
-        'model_dir':  resolve_model_dir(model_base),
+        'model_dir':  model_dir,
         'pa_genes':   resolve_path(config, d['pa_genes']) if (args.pa_genes and d.get('pa_genes')) else None,
         'target_sum': args.target_sum if args.target_sum is not None
                       else float(d.get('pseudocell_target_sum', 6500.0)),

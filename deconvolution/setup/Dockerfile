@@ -49,14 +49,16 @@ RUN Rscript deconvolution/setup/install_r_packages.R \
 # uv gives a reproducible, base-independent Python 3.12 (matching motrpac-env), so the
 # wheels (incl. torch) install regardless of the base image's system Python. reticulate
 # is pointed at this interpreter so the R `anndata`/reticulate bridge works.
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY requirements.txt ./requirements.txt
-RUN uv venv --python 3.12 /opt/motrpac-venv \
- && uv pip install --python /opt/motrpac-venv/bin/python --no-cache -r requirements.txt \
+# uv pinned (was :latest); the Python packages come from the exact lock (requirements.lock.txt,
+# --no-deps: every transitive dependency is listed), not the ranged requirements.txt.
+COPY --from=ghcr.io/astral-sh/uv:0.13.6 /uv /usr/local/bin/uv
+COPY requirements.lock.txt ./requirements.lock.txt
+RUN uv venv --python 3.12.11 /opt/motrpac-venv \
+ && uv pip install --python /opt/motrpac-venv/bin/python --no-cache --no-deps -r requirements.lock.txt \
  && uv pip install --python /opt/motrpac-venv/bin/python --no-cache --no-deps \
       "git+https://github.com/omnideconv/scaden.git@03f4ee3e4cce8808a5d1a2467ea5b87f04c90a09"
 # Scaden (above) is added --no-deps because its fork pins a stale tensorflow==2.13.0; the modern
-# TF + the tf-keras Keras-2 shim come from requirements.txt. TF_USE_LEGACY_KERAS makes
+# TF + the tf-keras Keras-2 shim come from requirements.lock.txt (which already pins Scaden; the line is a no-op check). TF_USE_LEGACY_KERAS makes
 # tf.keras = Keras 2 for Scaden's code (harmless to torch). We do NOT globally disable CUDA here
 # (that would break GPU torch); run_omnideconv.* scopes CUDA_VISIBLE_DEVICES=-1 to the
 # deconvolution run so TF stays CPU without touching torch.

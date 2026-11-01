@@ -12,15 +12,27 @@
 suppressWarnings(suppressMessages({ library(limma); library(edgeR); library(data.table) }))
 
 ROOT     <- Sys.getenv("PIPELINE_ROOT", ".")
-RESULTS  <- file.path(Sys.getenv("CFG_RESULTS_DIR", unset = file.path(ROOT, "data/deconvolution/results_refs4all")), "motrpac")
-BULK     <- file.path(ROOT, "data/deconvolution/motrpac_bulk")
-PHENO    <- file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv")
-GC_DIR   <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2_refs4"))
+.script_dir <- local({
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grep("^--file=", a)])
+  if (length(f)) dirname(normalizePath(f[1])) else file.path(ROOT, "deconvolution", "R")
+})
+source(file.path(.script_dir, "config.R"))      # fatal on a config error; no hardcoded arm fallback
+source(file.path(.script_dir, "provenance.R"))
+RESULTS  <- file.path(cfg_value("CFG_RESULTS_DIR"), "motrpac")
+BULK     <- cfg_value("CFG_MOTRPAC_BULK_OUT")
+PHENO    <- cfg_value("CFG_SAMPLE_PHENO", default = file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv"))
+GC_DIR   <- cfg_value("CFG_GENECOMPASS_INPUT_DIR")
 DE_DIR   <- Sys.getenv("DE_DIR", unset = file.path(GC_DIR, "pseudobulk_de"))
 HOT      <- file.path(DE_DIR, "de_hotspots.tsv")
 OUT      <- file.path(DE_DIR, "rin_globin_robustness.tsv")
 cat(sprintf("DE folder: %s\nZ from:    %s\n", DE_DIR, RESULTS))
-META_RDA <- "/depot/reese18/apps/MotrpacRatTraining6moData/data/TRNSCRPT_META.rda"
+# TRNSCRPT_META from the vendored MotrpacRatTraining6moData submodule (v2.1.0), relative to the repo root;
+# env MOTRPAC_TRNSCRPT_META overrides it.
+META_RDA <- Sys.getenv("MOTRPAC_TRNSCRPT_META",
+                       file.path(ROOT, "vendor/MotrpacRatTraining6moData/data/TRNSCRPT_META.rda"))
+if (!file.exists(META_RDA))
+  stop("TRNSCRPT_META.rda not found: ", META_RDA, "\n  -> git submodule update --init vendor/MotrpacRatTraining6moData")
 
 # Shared cell-type -> filename contract (see deconvolution/R/celltype_names.R).
 source(file.path(local({
@@ -85,6 +97,7 @@ for (i in seq_len(nrow(hs))) {
 }
 res <- rbindlist(rows, fill=TRUE)
 fwrite(res, OUT, sep="\t")
+write_provenance(DE_DIR, inputs = c(HOT, PHENO, META_RDA), params = list(results = RESULTS, bulk = BULK, out = OUT))
 ok <- res[status=="ok"]
 cat(sprintf("\nwrote %s\n%d hotspots scored: %d ROBUST, %d CHECK; median spearman(dose-t)=%.3f, median retain=%.2f\n",
             OUT, nrow(ok), sum(ok$verdict=="ROBUST"), sum(ok$verdict=="CHECK"),
