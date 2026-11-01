@@ -667,3 +667,17 @@ changes no reference.
   0.174, endothelial 0.160, smooth muscle 0.148, granulosa 0.133, theca 0.079, pericytes 0.063, macrophages
   0.022, pDC 0.020, lymphatic EC 0.009, all other immune types ≤ 0.003. Stage 10+ not run (cross-tissue
   steps left to the user).
+- 2026-11-01 — All-tissue run (§14 "What follows"), registered before any of it is run. Stage 8/9 for
+  SPLEEN and OVARY were written into the refs4 folders; every cross-tissue step finds tissues by listing the
+  folder, so they are moved to the all-tissue arm (`config/profiles/refs_v4all.yaml`: `results_refs4all/`,
+  `genecompass_input_v2_refs4all[_human]/`, `grn_v2_refs4all[_human]/`), where the 14 refs4 tissues are
+  linked in. The refs4 folders go back to 14 tissues and the refs4 outputs are not touched (file listing
+  before/after, as §13). Steps, unchanged from the refs4 run: the gate (10 splits × 10,000 permutations,
+  §6 primary, 100 and 0 beside it), Stage 10 (DE, §6, positive controls; SPLEEN and OVARY have no
+  registered controls, so the control result can change only through the pooled fit), Stage 12 (SPLEEN
+  and OVARY transferred and embedded; human probe and comparison over 16), Stage 13 steps 1–2 only if
+  the DE hotspot set changes, then steps 3–4 and Stage 14 steps 2–3. Reported against refs4: the hotspot
+  list, every refs4 hotspot that crosses q = 0.05 (both q), any SPLEEN/OVARY hotspot, the Augur–PLS
+  Spearman, embedding vs PCA, and the transfer table. SPLEEN fractions are implausible (above), so a SPLEEN
+  hotspot is reported with that caveat and not read as biology. When the run finishes it becomes the
+  default config (§14) and refs4 becomes `config/profiles/refs4_14.yaml`.
