@@ -60,7 +60,26 @@ BLOOD_SETS = {
     "BLOOD_BM": [("GSE306764_BoneCtrl", BLOOD_RAW / "GSE306764/bone/Bone-Ctrl", "", True)],
 }
 PANEL_KEY = {k: "BLOOD" for k in BLOOD_SETS}
-ALL_REFS = sorted(REFS) + sorted(BLOOD_SETS)
+# SPLEEN, OVARY (REFERENCE_RELABEL_PREREG.md §14) and the second heart reference (§15): external GEO libraries
+# under data/raw/geo/. (sample, path, format, lift): format "mtx_dir" = a directory with genes.tsv /
+# features.tsv, barcodes.tsv, matrix.mtx (optionally .gz), or a file prefix of them; "h5" = a 10x
+# feature_bc_matrix.h5. lift: True = put Rnor_6.0 IDs through the bulk's liftover map;
+# False = IDs already in the lifted (Ensembl 115) space; "symbol" = features are NCBI gene symbols (GSE307551,
+# Cell Ranger on the RefSeq annotation): mapped to the bulk's IDs through symbol_index, a symbol kept only when
+# it resolves to exactly one bulk ID, symbols landing on one ID summed (REFERENCE_RELABEL_PREREG.md §16).
+GEO_RAW = ROOT / "data/raw/geo"
+EXTERNAL_SETS = {
+    "SPLEEN": [("GSE306764_SpleenCtrl", GEO_RAW / "GSE306764_spleen/extracted/Spl-Ctrl", "mtx_dir", True)],
+    "OVARY": [("GSE343214_Normal", GEO_RAW / "GSE343214/GSM9947804_Normal_", "mtx_dir", False)],
+    "HEART_GSE307551": [
+        ("GSE307551_F3441", GEO_RAW / "GSE307551/GSM9226643_F3441_feature_bc_matrix.h5", "h5", "symbol"),
+        ("GSE307551_F3442", GEO_RAW / "GSE307551/GSM9226644_F3442_feature_bc_matrix.h5", "h5", "symbol")],
+}
+BULK_TISSUE = {"SPLEEN": "SPLEEN", "OVARY": "OVARY", "HEART_GSE307551": "HEART"}
+# RefSeq names of the 13 mitochondrial protein-coding genes (GSE307551 has no "mt-" prefix on them)
+MITO_REFSEQ = {"ND1", "ND2", "ND3", "ND4", "ND4L", "ND5", "ND6", "COX1", "COX2", "COX3", "ATP6", "ATP8", "CYTB"}
+PANEL_KEY.update({"SPLEEN": "SPLEEN", "OVARY": "OVARY", "HEART_GSE307551": "HEART_COARSE"})
+ALL_REFS = sorted(REFS) + sorted(BLOOD_SETS) + sorted(EXTERNAL_SETS)
 
 N_HVG, N_PCS, N_NEIGHBORS, RESOLUTION, SEED = 3000, 30, 15, 1.0, 0
 ACCEPT, MARGIN, DOUBLET, MIN_PANEL_GENES = 0.5, 0.15, 0.5, 2
@@ -166,14 +185,85 @@ def load_blood(ref):
     return adata
 
 
+def _read_external(path, fmt):
+    """Raw counts (cells x genes, csr), gene IDs, gene symbols, barcodes of one external library."""
+    import scipy.io as sio
+    if fmt == "h5":
+        import scanpy as sc
+        a = sc.read_10x_h5(str(path), gex_only=True)
+        return sp.csr_matrix(a.X, dtype=np.float32), np.asarray(a.var["gene_ids"]), np.asarray(a.var_names), \
+            np.asarray(a.obs_names)
+    d, prefix = (Path(path), "") if Path(path).is_dir() else (Path(path).parent, Path(path).name)
+
+    def f(*names):
+        for name in names:
+            for cand in (d / f"{prefix}{name}.gz", d / f"{prefix}{name}"):
+                if cand.exists():
+                    return cand
+        raise FileNotFoundError(d / f"{prefix}{names[0]}")
+    feat = pd.read_csv(f("features.tsv", "genes.tsv"), sep="\t", header=None, dtype=str)
+    bc = pd.read_csv(f("barcodes.tsv"), header=None, dtype=str)[0].values
+    X = sp.csr_matrix(sio.mmread(str(f("matrix.mtx"))).T, dtype=np.float32)
+    sym = feat[1].values if feat.shape[1] > 1 else feat[0].values
+    return X, feat[0].values, sym, bc
+
+
+def symbols_to_bulk(a, tissue):
+    """Rename symbol-keyed genes to the tissue bulk's Ensembl IDs (see EXTERNAL_SETS)."""
+    import anndata as ad
+    bulk = pd.read_csv(ROOT / f"data/deconvolution/motrpac_bulk/{tissue}/bulk_genes.tsv", header=None, dtype=str)[0]
+    idx = symbol_index(bulk.values)
+    genes = np.asarray(a.var_names)
+    hit = [sorted(idx.get(g.lower(), ())) for g in genes]
+    keep = np.array([i for i, h in enumerate(hit) if len(h) == 1])
+    ids, col = np.unique([hit[i][0] for i in keep], return_inverse=True)
+    agg = sp.csr_matrix((np.ones(keep.size), (keep, col)), shape=(genes.size, ids.size))
+    stats = {"genes_in": int(genes.size), "mapped": int(keep.size), "genes_out": int(ids.size),
+             "summed_into_shared_id": int(keep.size - ids.size),
+             "dropped_ambiguous": int(sum(len(h) > 1 for h in hit)),
+             "dropped_unmapped": int(sum(len(h) == 0 for h in hit)), "bulk_genes": int(bulk.size)}
+    print(f"  symbols -> {tissue} bulk IDs: {stats}")
+    out = ad.AnnData(X=sp.csr_matrix(a.X) @ agg, obs=a.obs.copy(), var=pd.DataFrame(index=pd.Index(ids)))
+    out.uns["gene_map"] = {"path": f"symbol_index -> motrpac_bulk/{tissue}/bulk_genes.tsv", **stats}
+    return out
+
+
+def load_external(ref):
+    """One EXTERNAL_SETS entry as raw counts in the bulk's gene-ID space, with the corpus QC (>= 200 genes,
+    mitochondrial fraction <= 0.15), as load_blood."""
+    import anndata as ad
+    import build_reference as br
+    min_genes, max_mito = 200, 0.15
+    parts = []
+    for sample, path, fmt, lift in EXTERNAL_SETS[ref]:
+        X, ids, sym, bc = _read_external(path, fmt)
+        mito = (pd.Series(sym).astype(str).str.lower().str.startswith("mt-")
+                | pd.Series(sym).astype(str).isin(MITO_REFSEQ)).values
+        n_genes = np.asarray((X > 0).sum(1)).ravel()
+        frac_mt = np.asarray(X[:, mito].sum(1)).ravel() / np.maximum(np.asarray(X.sum(1)).ravel(), 1)
+        keep = (n_genes >= min_genes) & (frac_mt <= max_mito)
+        print(f"  {sample}: {X.shape[0]} barcodes -> {int(keep.sum())} after QC (>= {min_genes} genes, "
+              f"mito <= {max_mito}); {int(mito.sum())} mito genes")
+        a = ad.AnnData(X=X[keep], obs=pd.DataFrame({"sample": sample, "barcode": bc[keep],
+                                                     "leiden": "", "cell_type": ""}))
+        a.var_names = ids
+        a.var_names_make_unique()
+        if lift == "symbol":
+            a = symbols_to_bulk(a, BULK_TISSUE[ref])
+        elif lift:
+            a = br.lift_genes(a, ROOT / "deconvolution/reference/motrpac_bulk_liftover.tsv")
+        parts.append(a)
+    return ad.concat(parts, join="inner", merge="same", fill_value=0) if len(parts) > 1 else parts[0]
+
+
 def load_cells(ref):
     """Every QC cell of the reference's samples, with the old per-sample labels, in the gene space the
     production build uses (same loader, same gene join)."""
     import anndata as ad
     import scanpy as sc
     import build_reference as br
-    if ref in BLOOD_SETS:
-        adata = load_blood(ref)
+    if ref in BLOOD_SETS or ref in EXTERNAL_SETS:
+        adata = load_blood(ref) if ref in BLOOD_SETS else load_external(ref)
         adata.obs = adata.obs.rename(columns={"cell_type": "old_label", "leiden": "old_cluster"})
         adata.obs_names = (adata.obs["sample"].astype(str) + ":" + adata.obs["barcode"].astype(str)).values
         adata.X = sp.csr_matrix(adata.X, dtype=np.float32)

@@ -31,6 +31,8 @@ def build_cmd(cfg):
     out = cfg["reference_dir"]
     if cfg.get("builder") == "blood_composite":      # BLOOD option B: two GEO datasets, its own builder
         return [PY, "deconvolution/build_blood_composite.py", "build", "--out", out]
+    if cfg.get("builder") == "external_reference":   # SPLEEN/OVARY (§14): one external GEO library each
+        return [PY, "deconvolution/build_external_reference.py", "build", "--ref", cfg["external_ref"], "--out", out]
     jl = ["--joint-labels", cfg["joint_labels"]] if cfg.get("joint_labels") else []
     if cfg.get("pooled"):
         return [PY, "deconvolution/build_lung_pooled.py", "--out", out] + jl

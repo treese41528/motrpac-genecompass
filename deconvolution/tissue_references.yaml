@@ -435,27 +435,32 @@ TESTES:
     deconvolution genes 13,124 -> 13,711, bulk counts covered 91.5% -> 93.8%, theta shifts <= 1.1 pp.
 
 SPLEEN:
-  status: needs-online-data
-  reference_dir: data/deconvolution/references_v3/SPLEEN_GSE186158
-  study: GSE186158
+  status: ready
+  reference_dir: data/deconvolution/references_v4/SPLEEN_GSE306764
+  previous_candidate: GSE186158 GSM5639495   # July candidate (sorted live immune cells, SD males, Rnor_6.0); not used
+  builder: external_reference           # built by deconvolution/build_external_reference.py, not build_reference.py
+  external_ref: SPLEEN
+  joint_labels: data/deconvolution/joint_labels/SPLEEN/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §14
+  study: GSE306764
   tissue: spleen
-  organism: Rattus norvegicus            # KEYSTONE: GSE186158 is a 7-SPECIES atlas -> gate to the rat sample
-  data_present: false                    # online; not downloaded/ingested
-  sample_ids: [GSM5639495]               # the rat spleen library
-  allow_nonnative: true                  # "total immune cells isolated" -> reference_qc would FAIL (sorted); intended
+  organism: Rattus norvegicus
   label_scheme: none
   assay: scRNA
   expect:
     n_samples: 1
-    sample_ids: [GSM5639495]
+    sample_ids: [GSE306764_SpleenCtrl]
     qc_dropped: []
     organism: Rattus norvegicus
   build: >
-    # (1) download GSE186158 GSM5639495 + ingest (organism-gate to rat); (2) build_reference.py --study GSE186158
-    #     --sample-ids GSM5639495 --allow-nonnative --out data/deconvolution/references_v3/SPLEEN_GSE186158
+    python deconvolution/build_external_reference.py build --ref SPLEEN --out data/deconvolution/references_v4/SPLEEN_GSE306764
   notes: >
-    Only rat spleen scRNA. 7-species atlas (organism-gate) + immune-cell-ISOLATED (no red pulp/RBC/stroma) ->
-    allow_nonnative + differential/immune-only. Confirm age/sex/strain from the paper. Ingestion required.
+    REFERENCE_RELABEL_PREREG.md §14 (user, 2026-10-31): GSE306764 Spleen-CFA (GSM9207348, Spl-Ctrl), whole spleen,
+    RBC-lysed, not sorted; Singleron GEXSCOPE; 8-week female Lewis rats given complete Freund's adjuvant (the
+    same series and control arm as the BLOOD composite's whole blood). Ships Rnor_6.0 IDs -> bulk liftover map.
+    Labelled by the SPLEEN panel (joint_reannotate.py); 13,013 of 13,929 QC cells in 14 types. S1, R1 (WARN:
+    not in the corpus inventory) and R2 (12 scored types, r 0.945-0.999; validation/SPLEEN_R2) pass; R2 is a
+    within-library check. No mature erythroid cluster (erythroid progenitors only) and only 100 red-pulp
+    macrophages: red-pulp and erythroid mass are under-represented; read differentially.
 
 COLON:
   status: needs-online-data
@@ -490,10 +495,27 @@ ADRNL:
     Leave non-deconvolved; reference-free CDSeq on the 50 bulk samples if a composition is required.
 
 OVARY:
-  status: blocked
-  reference_dir: null
-  study: null
+  status: ready
+  reference_dir: data/deconvolution/references_v4/OVARY_GSE343214
+  builder: external_reference           # built by deconvolution/build_external_reference.py, not build_reference.py
+  external_ref: OVARY
+  joint_labels: data/deconvolution/joint_labels/OVARY/cells_final.tsv.gz   # REFERENCE_RELABEL_PREREG.md §14
+  study: GSE343214
   tissue: ovary
+  organism: Rattus norvegicus
+  label_scheme: none
+  assay: scRNA
+  expect:
+    n_samples: 1
+    sample_ids: [GSE343214_Normal]
+    qc_dropped: []
+    organism: Rattus norvegicus
+  build: >
+    python deconvolution/build_external_reference.py build --ref OVARY --out data/deconvolution/references_v4/OVARY_GSE343214
   notes: >
-    The one adult-rat ovary scRNA (Wu 2023, CRA008987) is SPATIAL-only in public deposits; the scRNA library was
-    never released. Document-and-defer; reference-free CDSeq interim.
+    REFERENCE_RELABEL_PREREG.md §14 (user, 2026-10-31): GSE343214 "Normal rat" (GSM9947804), saline control of a
+    PCOS model; 10x, Ensembl IDs already in the lifted space. One rat, strain/age not stated, no linked paper,
+    GEO text partly copied from another series. Labelled by the OVARY panel; 9,104 QC cells, none dropped, 18
+    types. O1 (granulosa 1,477; theca/stroma 2,445), O2 (0 guard-class cells), R1 (WARN: not in the corpus
+    inventory) and R2 (13 scored types, r 0.94-0.999; validation/OVARY_R2) pass; R2 is within-library. No
+    oocyte cluster. Wu 2023 (CRA008987) remains spatial-only. One animal of unknown strain: read differentially.

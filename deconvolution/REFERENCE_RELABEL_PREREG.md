@@ -612,3 +612,58 @@ changes no reference.
     the mean true fraction over the 20 mixtures; types under 20 cells per half stay in the half-reference
     but not in the mixtures. §15 uses all QC cells of both F344 libraries; the CM error is the mean over
     mixtures of |estimated − true|. Genes are in the tissue's bulk ID space throughout (§12 check 5).
+- 2026-10-31 — Downloads (job 12107254; first attempt 12103833 broke mid-transfer) and gene spaces, recorded
+  before any clustering. md5: Spl-Ctrl.tar.gz 067035422f834efd28c3f4d48edefd1c; GSE343214 Normal barcodes
+  1ba1b894…, features 68090ed5…, matrix beb0b407…; GSE307551 F3441.h5 75474693…, F3442.h5 121e8c88…
+  (full list in each `data/raw/geo/<dir>/md5sums.txt`). Spl-Ctrl ships the 32,883 Rnor_6.0 IDs (not GRCr8 as
+  §14 says) and goes through the bulk liftover map, as Blood-CFA did. GSE343214 is already in the lifted
+  Ensembl space (20,795 of 30,562 IDs in the bulk). **Deviation (§15, forced):** GSE307551 features are
+  NCBI RefSeq gene symbols, not Ensembl IDs, so the bulk liftover map cannot be used. They are mapped to the
+  HEART bulk's IDs through the same symbol resolver the panels use (Ensembl 115 names, corpus universe,
+  RGD); a symbol is kept only if it resolves to exactly one bulk ID, symbols on one ID are summed, the rest
+  dropped and counted. The 13 mitochondrial genes (ND1…CYTB, no "mt-" prefix) count toward the mito QC.
+- 2026-11-01 — §14/§15 joint re-annotation (jobs 12107293, 12107403 for SPLEEN after a path fix) and review
+  (35 decisions in `joint_reannotation_review.tsv`). Finalize + checks: job 12107449.
+  - SPLEEN: 14,527 barcodes → 13,929 QC; 27 clusters, 916 cells dropped (B–T doublets, T–erythrocyte/platelet
+    aggregates, a mixed-lineage interferon cluster, one cluster under 20). 14 types: CD4+ T 4,038, B 3,077,
+    NK 1,509, CD8+ T 1,506, non-classical monocytes 934, monocytes 459, DC 332, neutrophils 319, cycling 263,
+    plasma 191, pDC 150, erythroid progenitors 101, red-pulp macrophages 100, endothelial 34. Overrides: j3
+    "Macrophages" → non-classical monocytes (C1qa 6 CPM), j22 "Megakaryocytes" → erythroid progenitors
+    (Klf1, Epor, Car1), j9 "T cells" → cycling cells.
+  - OVARY: 10,283 → 9,104 QC; 28 clusters, none dropped. 18 types: stromal 2,106, granulosa 1,477,
+    endothelial 1,475, macrophages 752, monocytes 558, pericytes 424, CD4+ T 385, theca 339, non-classical
+    monocytes 313, NK 304, DC 175, luteal 161, neutrophils 158, erythroid 148, B 136, smooth muscle 120,
+    lymphatic EC 37, pDC 36. Overrides: j18 "Oocytes" → granulosa (Amh, Inha, Gja1, Ihh; Gdf9/Bmp15 0),
+    j11 "Luteal" → theca (Cyp17a1 2,327 CPM), j22 "Stromal" → smooth muscle. No oocytes; Foxl2 barely detected.
+  - HEART_GSE307551: 12,453 barcodes → 12,380 QC (3,959 + 8,421); 19 clusters, 565 dropped (pericyte–EC and
+    fibroblast–EC doublets). CM 4,243, EC 3,473, fibroblasts 2,077, mural 858, myeloid 528, lymphocytes 361,
+    neural/Schwann 194, epicardial 81; no adipocytes. K1 passes (median r_self 0.74 vs −0.15).
+  - Gene space: SPLEEN 32,883 Rnor_6.0 IDs → 22,050 (all in the bulk; 8,880 unmapped, 1,953 summed); OVARY
+    20,795 of 30,562 in the bulk; GSE307551 34,034 symbols → 19,966 bulk IDs (13,629 unmapped, 54
+    ambiguous, 385 summed). The mito QC also counted mt-Rnr1/2 (15 genes, prefix rule as the other loaders).
+  - **S1 PASS**: B 3,077, T 5,544, monocytes+macrophages 1,493, neutrophils 319. Reported: red-pulp
+    macrophages 100, mature erythroid 0 (erythroid progenitors 101).
+  - **O1 PASS**: granulosa 1,477, theca/stroma 2,445. **O2 PASS**: 0 guard-class cells (0%); reported per-cell
+    share with any Sftpc/Scgb1a1/Alb/Apoa1 count 6.6%.
+  - **R1 PASS** for both (reference_qc --deep --fail: WARN only, sample not in the corpus inventory).
+  - **R2 PASS** (within-library): SPLEEN 12 types scored, r 0.945–0.999 (B cells r 0.871 at mean 3.9%, not
+    scored); OVARY 13 scored, r 0.940 (erythroid, bias −0.039)–0.999; `validation/{SPLEEN,OVARY}_R2/R2.json`.
+  - **§15 PASS**: CM r 0.944, mean |error| 0.043 (bias +0.042). Per class r / bias: EC 0.943 / +0.151,
+    fibroblasts 0.985 / −0.021, mural 0.989 / +0.054, myeloid 0.997 / −0.047, lymphocytes 0.970 / −0.103,
+    neural 0.997 / −0.033, epicardial 0.999 / −0.043. Correlations hold across classes; absolute levels are
+    off (EC over, lymphocytes under), consistent with reading HEART differentially.
+    `validation/HEART_GSE307551_cross/s15_result.json`.
+  - Built: `references_v4/SPLEEN_GSE306764` (13,013 cells, 14 types, 23 states) and
+    `references_v4/OVARY_GSE343214` (9,104 cells, 18 types, 28 states); `tissue_references.yaml` updated
+    (status ready, builder external_reference); run_deconv_all.py --validate-only: 2/2 OK.
+- 2026-11-01 — Stage 8 + Stage 9 for SPLEEN and OVARY into the default folders (`results_refs4/motrpac/`,
+  `genecompass_input_v2_refs4/{spleen,ovary}`; v2 model, target sum 6,400), job 12107800 (both COMPLETED).
+  SPLEEN: 50 bulk samples, 13,182 genes deconvolved, 700 pseudo-cells. Mean fractions: NK 0.189, red-pulp
+  macrophages 0.172, non-classical monocytes 0.170, endothelial 0.150, B 0.124, erythroid progenitors 0.076,
+  pDC 0.040, neutrophils 0.029, DC 0.016, plasma 0.014, CD4+ T 0.011, cycling 0.010, monocytes 0.001,
+  CD8+ T 0.001. Implausible for spleen (T cells ~1%; endothelium 15% from a 34-cell type, likely absorbing
+  the red-pulp/stromal signal the reference lacks): reported, not adjusted; read SPLEEN differentially.
+  OVARY: 24 samples (females only), 14,574 genes, 432 pseudo-cells. Mean fractions: stromal 0.181, luteal
+  0.174, endothelial 0.160, smooth muscle 0.148, granulosa 0.133, theca 0.079, pericytes 0.063, macrophages
+  0.022, pDC 0.020, lymphatic EC 0.009, all other immune types ≤ 0.003. Stage 10+ not run (cross-tissue
+  steps left to the user).

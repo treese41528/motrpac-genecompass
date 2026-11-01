@@ -137,3 +137,28 @@ BLOOD_BM	j17	Macrophages	C1qa, C1qb, C1qc, Cd163, Vcam1, Spic, Folr2 (marrow mac
 BLOOD_BM	j18	Pro-B and pre-B cells	Rag2, Blnk, Cd24, Dlk1, Cd79a 2,077 with Mki67/Top2a (cycling pre-B cells).
 BLOOD_BM	j21	Eosinophils	Prg2 159,600, Epx 32,636, Prg3, Ear1, Il5ra.
 BLOOD_BM	j22	Plasma cells	Jchain, Mzb1, Ighm, Prdm1, Sdc1, Txndc5.
+SPLEEN	j3	Non-classical monocytes	OVERRIDE of the accepted label "Macrophages": Treml4 1,056, Adgre4 291, Nr4a1 799, Fcgr3a, Csf1r 1,766 CPM with C1qa 6 and C1qb 11 (red-pulp macrophages 5,107/6,248): patrolling monocytes, not tissue macrophages.
+SPLEEN	j4	Plasma cells	No panel >= 0.5 (score 0.19): Jchain, Mzb1, Bhlha15, Txndc5, Sdc1, Irf4, Iglc1 top markers; Cd79a 834, Ms4a1 128 (B clusters 2,600/1,000).
+SPLEEN	j7	DROP	Under-call "Immune cells": interferon program (Mx2, Isg15, Rtp4, Usp18, Ifi44) on mixed lineages, Cd3e 988 and Cd79a 954 CPM, Hbb 4,833; not decidable to one cell type.
+SPLEEN	j9	Cycling cells	OVERRIDE of the accepted label "T cells": Mki67 957, Top2a, Cdk1, Plk1 with mixed lineage genes (Cd3e 809, Nkg7 1,622, Lyz2 1,220, Cd79a 174): cycling lymphocytes, as BLOOD_PBMC j12.
+SPLEEN	j11	DROP	Possible doublet (Fibroblasts 0.79 from trace Dcn 57, Col1a1 2 CPM): T-cell genes (Themis, Satb1, Prkcq; Cd3e 871) with Hbb 25,336 and Pf4 471, median 480 genes against ~1,000 for T clusters: T-erythrocyte/platelet aggregates, low quality.
+SPLEEN	j18	Non-classical monocytes	Under-call "Immune cells": Treml4 1,121, Adgre4 560, Aoah, Mnda, Hck, Lyz2 22,989; C1qa 8 (not macrophages); Fcnb 1,614 below the classical cluster j14 (4,288).
+SPLEEN	j19	Red-pulp macrophages	No panel >= 0.5 (0.39): Spic 438, Vcam1 1,345, Hmox1 3,451, Cd163, C1qa 5,107, C1qb 6,248 CPM; the red-pulp panel genes are the top markers.
+SPLEEN	j20	Dendritic cells	Under-call "Immune cells": Clec10a, Flt3, Tmem176a/b, Dnase1l3, Il18, RT1-Db1 (cDC2); C1qa 251 (low against red-pulp macrophages).
+SPLEEN	j22	Erythroid progenitors	OVERRIDE of the accepted label "Megakaryocytes and platelets": Klf1 481, Epor 159, Car1, Ahsp, Spta1, Kel, Tfr2 (committed erythroid progenitors) with Itga2b 8 and Gp9 11 CPM; Pf4 704 only. Hemoglobin not yet expressed (Hbb 11, Alas2 1), so not the mature erythroid panel.
+SPLEEN	j23	Neutrophils	No panel >= 0.5 (Immune 0.46; median 352 genes, typical of neutrophils): Cxcr2 844, Csf3r 851, Clec4e, Clec4d, Nlrp12, Il1b top markers.
+SPLEEN	j24	DROP	Under-call "Immune cells": B-cell genes (Cd79a 1,106, Ms4a1 455) with T-cell genes (Cd3e 848, Cd3g 975), median 1,424 genes against 787 for B and ~1,000 for T clusters: B-T doublets (as BLOOD_PBMC j17).
+OVARY	j0	Granulosa cells	No panel >= 0.5 (best Erythroid 0.39 from ambient Hba-a2 2,330): Fshr 14 CPM (non-granulosa clusters <= 3 except smooth muscle 7), Gja1 1,201, Amhr2 74, Amh 60, Foxo1 top marker; collagens absent (Col1a1 19). Cyp19a1 0; Pawr, Cidea, Ccn1/Ccn2 suggest atretic-follicle granulosa.
+OVARY	j2	Stromal cells	Near-tie with Ovarian surface epithelial cells (0.82/0.82): Dcn 2,822, Col1a1 5,883, Col3a1 7,271, Tcf21 649 against Upk3b 3, Lrrn4 15, Msln 105, Krt8 42 CPM.
+OVARY	j11	Theca cells	OVERRIDE of the accepted label "Luteal cells": Cyp17a1 2,327 (theca-specific; luteal cluster j19 0), Lhcgr 326, Star 539, Cyp11a1 1,126 with Akr1c3 24 and Ptgfr 1 (luteal j19 21,805 / 233).
+OVARY	j15	Granulosa cells	No panel >= 0.5 (Granulosa 0.45): Amh 666, Inha 863, Gja1 1,651, Ihh 189, Amhr2 245, Fst 273 with Mki67 298, Top2a: cycling granulosa of growing follicles.
+OVARY	j18	Granulosa cells	OVERRIDE of the accepted label "Oocytes": Amh 686, Inha 991, Gja1 1,408, Ihh 201, Amhr2 305, Fst 246 (granulosa of preantral/small antral follicles) against oocyte genes Gdf9 0, Bmp15 0, Nobox 1, Zp3 25 CPM.
+OVARY	j19	Luteal cells	Near-tie with Hepatocytes (non-ovarian) (1.0/0.97): Akr1c3 (20alpha-HSD) 21,805, Star 2,675, Cyp11a1 2,265, Ptgfr 233; Alb 0, Fgb 0, Apoh 0 (the guard score came from Apoa1 88 CPM).
+OVARY	j20	Non-classical monocytes	Under-call "Immune cells": Cx3cr1 227, Nr4a1 961, Spn, Fcgr3a, Treml4 16, Itgb2; Fcnb 24 and Ccr2 5 (classical cluster j3 1,109 / 344).
+OVARY	j21	Plasmacytoid dendritic cells	Under-call "Immune cells": Siglech, Ccr9, Spib, Irf8, Ptcra, Flt3 top markers (OVARY uses the shared immune panel, which has no pDC class).
+OVARY	j22	Smooth muscle cells	OVERRIDE of the accepted label "Stromal cells": Myh11 2,065, Actg2 660, Cnn1 381, Lmod1, Tagln, Mylk top markers, Rgs5 0 (not pericytes): visceral-type smooth muscle.
+OVARY	j24	Dendritic cells	Under-call "Immune cells": Xcr1, Clec9a, Flt3, Wdfy4, Ccl17, RT1-Ba/Bb top markers (cDC1).
+HEART_GSE307551	j9	DROP	Near-tie Mural/Endothelial (0.57/0.50): pericyte genes (Rgs5 701, Kcnj8 216, Pdgfrb 1,325) with endothelial genes (Cdh5 245, Emcn 706, Kdr 441) each near half the pure clusters (j15, j7), median 1,085 genes against 570 and 512: pericyte-endothelial doublets.
+HEART_GSE307551	j12	Endothelial cells	No panel >= 0.5 (0.41): lymphatic endothelium (Mmrn1, Reln, Ccl21 497, Prox1 2,907 CPM, Flt4, Tbx1); coarse class Endothelial cells (production "Lymphatic endothelial cells" maps there).
+HEART_GSE307551	j13	DROP	Near-tie Fibroblasts/Endothelial (0.67/0.63): Pdgfra 358, Col1a1 401, Dcn 315 with Cdh5 297, Emcn 774, Kdr 552, about half of each pure cluster; median 1,123 genes against 665 (fibroblasts) and 512 (endothelium): fibroblast-endothelial doublets.
+HEART_GSE307551	j16	Endothelial cells	No panel >= 0.5 (0.37): endocardial endothelium, Npr3 595, Vwf 3,150, Cdh11 2,076, Emcn 987, Cdh5 210 CPM, Pkhd1l1, Cgnl1 top markers.
