@@ -28,13 +28,17 @@ are stale and contain errors corrected here (§6.11).
 > | WATSC | `references_v4/WATSC_GSE137869_Y` | GSE137869 young | 11,984 / 13 | Adipose stromal progenitor cells 0.357 | still no adipocytes; plasmacytoid DCs 0.048 high for adipose |
 > | BAT | `references_v3/BAT_GSE244451` (unchanged) | GSE244451 | 28,246 / 6 | Endothelial cells 0.270 | |
 > | SMLINT | `references_v4/SMLINT_GSE272055` | GSE272055 | 16,193 / 13 | Enterocytes 0.542 | |
-> | TESTES | `references_v3/TESTES_OMIX767_lifted` (unchanged) | OMIX767 | 5,836 / 6 | Sertoli cells 0.372 | differential only |
+> | TESTES | `references_v3/TESTES_OMIX767_lifted` (unchanged) | OMIX767 | 5,836 / 6 | Sertoli cells 0.372 | differential only; males only, so no dose-significant gene is possible (Fisher sex combine) |
+> | SPLEEN (2026-11-01) | `references_v4/SPLEEN_GSE306764` | GSE306764 (whole Lewis spleen) | 13,013 / 14 | NK cells 0.189 | implausible fractions (T cells about 1%); differential only (`ALL_TISSUE_RERUN_RESULTS.md`) |
+> | OVARY (2026-11-01) | `references_v4/OVARY_GSE343214` | GSE343214 (one rat) | 9,104 / 18 | Stromal cells 0.181 | females only, 24 samples; differential only; no dose-significant gene possible |
 >
 > Cell and type counts are from each reference's `summary.txt`; θ from `results_refs4/motrpac/<TISSUE>/estimated_fractions.csv`
+> (SPLEEN and OVARY: `results_refs4all/motrpac/<TISSUE>/estimated_fractions.csv`)
 > (changed tissues as printed in `data/results/refs4/compare_refs4.txt`). The CLEAN / CAUTION / BROKEN verdicts in §1
-> were assigned to the pre-rebuild references and have not been re-assigned for refs4. Downstream on refs4:
-> 165 blocks, 124 analysable under the §6 rule (median per-sample library ≥ 1,000), **11 hotspots**, 48,522
-> dose-significant genes. Rat blood lymphocytes, hippocampal composition and dominant-parenchyma DE stay
+> were assigned to the pre-rebuild references and have not been re-assigned for refs4. Downstream on the
+> current all-tissue (16) default (2026-11-01, `ALL_TISSUE_RERUN_RESULTS.md`): 197 blocks, 151 analysable under
+> the §6 rule (median per-sample library ≥ 1,000), **9 hotspots** (none in SPLEEN or OVARY), 53,084
+> dose-significant genes; on refs4's 14 tissues it was 165 blocks, 124 analysable, 11 hotspots, 48,522 genes. Rat blood lymphocytes, hippocampal composition and dominant-parenchyma DE stay
 > unreliable under either reference set.
 
 > ⚠️ **SUPERSEDED IN PART — 2026-07-16 rebuild.** This document audits the **pre-rebuild deployed
@@ -61,8 +65,9 @@ are stale and contain errors corrected here (§6.11).
 > 31,870). Their §3/§4/§6 analyses below therefore also describe retired references. Only **KIDNEY, LIVER and
 > BLOOD** are byte-for-byte the production references this audit was written against. Downstream also moved:
 > the rebuilt DE run yields **172 DE blocks / 15 hotspots** (was 185 blocks / 21 hotspots), and with the
-> retrained **v2** model (2026-10-25) **13 hotspots** (`docs/RETRAIN_V2_RESULTS.md`), and on refs4 (current)
-> **165 blocks / 11 hotspots** (`REFS4_RERUN_RESULTS.md`), so the block and
+> retrained **v2** model (2026-10-25) **13 hotspots** (`docs/RETRAIN_V2_RESULTS.md`), and on refs4
+> **165 blocks / 11 hotspots** (`REFS4_RERUN_RESULTS.md`; 2026-11-01 all-tissue default: 197 blocks / 9
+> hotspots, `ALL_TISSUE_RERUN_RESULTS.md`), so the block and
 > hotspot counts and tables throughout the body (e.g. §2.1-canonical-trees, §5.2, §5.4 and §8) are
 > superseded. The reference, θ and basis findings do not depend on the model. New-state authority: `REFERENCE_SELECTION_PLAN.md`, `DECONV_REBUILD_RUNBOOK.md`, and the
 > canonical on-disk results.
@@ -173,7 +178,7 @@ md5 `76f400d4…`, 22,050 genes).
 | VENACV | Vena cava | 22,050 | 50 | ✗ |
 | WATSC | White adipose tissue — **subcutaneous** | 22,050 | 50 | ✓ |
 
-**16 of the 19 are deconvolved.** 14 in the 2026-07-16/17 rebuild; **SPLEEN** (GSE306764) and **OVARY** (GSE343214) added 2026-11-01 (`REFERENCE_RELABEL_PREREG.md` §14; all-tissue arm `config/profiles/refs_v4all.yaml`). The three *not* deconvolved are **ADRNL, COLON, VENACV** (see §2.3 for why).
+**16 of the 19 are deconvolved.** 14 in the 2026-07-16/17 rebuild; **SPLEEN** (GSE306764) and **OVARY** (GSE343214) added 2026-11-01 (`REFERENCE_RELABEL_PREREG.md` §14); the all-tissue (16) run is the default config since 2026-11-01 (`ALL_TISSUE_RERUN_RESULTS.md`; the 14-tissue arm is `config/profiles/refs4_14.yaml`). The three *not* deconvolved are **ADRNL, COLON, VENACV** (see §2.3 for why).
 
 **899 bulk samples total.** Codes-to-names cross-checked against
 `deconvolution/reference/canonical_references.tsv` and `deconvolution/tissue_references.yaml`.
@@ -294,7 +299,7 @@ conclusion is UNKNOWN — it requires a rerun.**
 
 ## 3. The reference studies, tissue by tissue
 
-> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current figures: the table at the top of this document and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 Provenance is from `reports/annotations/annotation_inventory.tsv` (`sample_id` → `gsm` / `geo_title` /
 `geo_organism`) and study-level facts from `/depot/reese18/data/catalog/master_catalog.json` (`studies[]`).
@@ -571,7 +576,7 @@ If the depot is visceral, WATSC is matched to the wrong depot entirely.
 
 ## 4. The deconvolved proportions
 
-> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current figures: the table at the top of this document and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 All θ from `data/deconvolution/results/motrpac/<TIS>/estimated_fractions.csv`. n = 50 bulk samples per
 tissue; rows sum to exactly 1.0. **All values below are percent of bulk mRNA mass, not percent of cells.**
@@ -841,7 +846,7 @@ ways (BLOOD).
 
 ## 5. Validation and QC
 
-> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current figures: the table at the top of this document and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 ### 5.1 Purity sweeps (Z-matrix recovery)
 
@@ -1024,7 +1029,7 @@ already found, not a forward-looking QC.**
 
 ## 6. Known defects, ranked
 
-> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current refs4 figures: the table at the top of this document and `REFS4_RERUN_RESULTS.md`._
+> _Historical section (references and runs before 2026-07-16; block and hotspot counts from the 185/172-block runs). Current figures: the table at the top of this document and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 ### 6.1 BLOOD — omitted component (SOLVED diagnosis; the tissue is not usable as composition)
 
@@ -1295,8 +1300,8 @@ diagnostic and, notably, **no QC in this project can currently detect it**: `ref
 
 ### The 21 hotspots, triaged
 
-> _Historical (185-block / 21-hotspot run, pre-2026-07-16 references). The current hotspot set is the 11 refs4
-> hotspots in `REFS4_RERUN_RESULTS.md`; LUNG myeloid dendritic cells is not among them, and the §6 rule now
+> _Historical (185-block / 21-hotspot run, pre-2026-07-16 references). The current hotspot set is the 9 all-tissue
+> hotspots in `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: 11, `REFS4_RERUN_RESULTS.md`); LUNG myeloid dendritic cells is not among them, and the §6 rule now
 > skips near-empty blocks like the one flagged below._
 
 | Risk | Hotspots | Why |

@@ -97,8 +97,10 @@ Ranked by how established:
   rules them all,"** arXiv 2410.13956 **[✓web]**: across perturbation benchmarks, simple PCA matches
   foundation-model embeddings. Our PCA control reproduces the spirit — GeneCompass beats PCA-50 only
   modestly and ties a full-gene probe, so the *supervised signal*, not the representation, carries the
-  exercise effect. On refs4 the embedding is higher than PCA-50 in 71 of the 124 analysable blocks (median Δ AUC
-  +0.019, Wilcoxon p 0.013); over all 165 blocks, including the near-empty ones, 90 (p 0.11).
+  exercise effect. On the current default (refs4, all 16 tissues, 2026-11-01) the embedding is higher than
+  PCA-50 in 82 of the 151 analysable blocks (median Δ AUC +0.009, Wilcoxon p 0.15): not significant. Only the
+  14-tissue refs4 run reached significance (71 of 124 analysable blocks, +0.019, p 0.013; over all 165 blocks
+  90, p 0.11).
 
 ---
 
@@ -106,12 +108,14 @@ Ranked by how established:
 
 1. The gate (PERMANOVA R²) and the supervised probe (Augur) are both standard; we ran **canonical Augur**
    and it corroborates the probe (Spearman r = 0.83, 19–22/22 hotspots in June). On the current default
-   (v2 model, refs4 references, 10-split gate): r = 0.788 over the 118 analysable blocks with an Augur score (0.801 over all 158), and all
-   11 hotspots at Augur AUC ≥ 0.70 (lowest 0.730). On the July references it was r = 0.822 and 13/13
-   hotspots at AUC ≥ 0.65 (`REFS4_RERUN_RESULTS.md`).
+   (v2 model, refs4 references, all 16 tissues, 10-split gate): r = 0.785 over the 130 analysable blocks with
+   an Augur score, and all 9 hotspots at Augur AUC ≥ 0.73 (OVARY and TESTES have no Augur score: 5 controls
+   per arm, below Augur's 10 subsample; `ALL_TISSUE_RERUN_RESULTS.md`). On refs4 (14 tissues) it was r = 0.788
+   over 118 analysable blocks (0.801 over all 158) with all 11 hotspots at AUC ≥ 0.70 (lowest 0.730); on the
+   July references r = 0.822 and 13/13 hotspots at AUC ≥ 0.65 (`REFS4_RERUN_RESULTS.md`).
 2. Do the DE in **gene space, per cell type, pseudobulk-style** (Squair) on `Z` —
    `expression ~ ordinal_dose + sex` — **not** on the embedding. Optionally CPA for latent dose modeling.
-3. Value-add over PCA was sanity-checked (modest), per the "one PCA" caution.
+3. Value-add over PCA was sanity-checked (modest; not significant on the 16-tissue default), per the "one PCA" caution.
 
 So our plan (PERMANOVA-style gate → Augur-style prioritization → pseudobulk gene-space DE) **aligns with
 precedent at every step**; the one course-correction the literature enforces is to keep the DE itself in

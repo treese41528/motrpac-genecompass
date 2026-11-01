@@ -1,5 +1,14 @@
 # Rerun on the jointly re-annotated references (refs4): results (2026-10-29)
 
+> **2026-11-01: superseded as the default by the all-tissue (16) result** (`ALL_TISSUE_RERUN_RESULTS.md`,
+> c3b27c7). SPLEEN and OVARY joined; the default config is now all 16 tissues and this 14-tissue arm is
+> `config/profiles/refs4_14.yaml`. The figures below stay as the 14-tissue (refs4) record. Headline changes:
+> 197 blocks / 151 analysable (was 165 / 124); **9 exercise hotspots** (was 11: LUNG endothelial and
+> mesothelial cells move from q 0.0440 to 0.0535 with unchanged AUC, because the BH family is larger);
+> 53,084 dose-significant genes; embedding beats PCA 82/151, median +0.009, p 0.15 (no longer significant);
+> 6 GRNs (the six that remain are identical to the refs4 networks). TESTES's 0 dose-significant genes is
+> structural, not biology: `run_pseudobulk_de.R` sets the Fisher sex-combined p to missing when a sex is absent.
+
 > **2026-10-31: refs4 is now the default configuration** (`904dfb2`). `config/pipeline_config.yaml` points at
 > the `_refs4` folders, so the profile line below (`config/profiles/refs_v4.yaml`) is now just the default and
 > the profile is a no-op. The July-reference arm is `config/profiles/july_refs.yaml`. Since this report: the GRN
@@ -214,6 +223,9 @@ numbers.
   responses. The authors suggest the hippocampal response is partly non-transcriptional. Our zero HIPPOC
   hotspots and genes fit this, so the broken HIPPOC composition is unlikely to hide a strong signal. A
   weak response is still not none: bulk finds 244 genes where we find 0.
+  _2026-11-01: the TESTES half of this does not hold. TESTES is males only, and `run_pseudobulk_de.R` sets the
+  Fisher sex-combined p to missing when a sex is absent, so its 0 dose-significant genes is structural, not
+  a weak response (`ALL_TISSUE_RERUN_RESULTS.md`)._
 - **Our hotspot tissues rank high in MoTrPAC** (BLOOD, LUNG, both muscles).
 - **One tension: HYPOTH.** Its OPC block is a hotspot in July and refs4, yet MoTrPAC finds the fewest
   training-regulated genes there (16). The gate measures how well the embedding separates trained from

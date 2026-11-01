@@ -32,6 +32,11 @@ Bulk source to match: **MoTrPAC PASS1B = Fischer 344 (F344), adult ~6 mo, sedent
 > `REFS4_RERUN_RESULTS.md`. The per-tissue map with cell counts is at the top of
 > `TISSUE_REFERENCE_AND_PROPORTIONS.md`. SPLEEN and OVARY candidates are being checked under
 > `REFERENCE_RELABEL_PREREG.md` §14; ADRNL and VENACV still have no usable rat reference.
+>
+> **UPDATE 2026-11-01.** SPLEEN (`references_v4/SPLEEN_GSE306764`) and OVARY (`references_v4/OVARY_GSE343214`)
+> passed their checks and were deconvolved; the all-tissue (16) run is the default (197 blocks, 151 analysable,
+> 9 hotspots; `ALL_TISSUE_RERUN_RESULTS.md`). COLON's candidate was rejected; ADRNL, COLON and VENACV have no
+> reference.
 
 ---
 

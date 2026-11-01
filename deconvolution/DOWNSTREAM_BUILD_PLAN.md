@@ -6,6 +6,9 @@
 > beat expression-matched decoys; `GRN_DECOY_NULL_RESULTS.md`), so Module B's hubs are expression-driven model
 > readouts, not regulators, and Module F's "conserved regulators" cannot rest on the GRN stream. Current status:
 > `docs/OPEN_FRONTIER.md`.
+>
+> **2026-11-01.** The default is now refs4 over all 16 tissues (SPLEEN, OVARY added): 9 hotspots, 6 GRNs (the two
+> LUNG endothelial/mesothelial networks drop out; the other six are unchanged) (`ALL_TISSUE_RERUN_RESULTS.md`).
 
 _v1, 2026-06-22. Covers the proposal's UNBUILT downstream-GeneCompass tasks:
 Aim 2b (GRN), Aim 2c (dose), Aim 3a/3b/3c (cross-species). Grounded in a read-only

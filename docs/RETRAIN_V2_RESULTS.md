@@ -6,6 +6,11 @@
 > The GRN decoy null (`deconvolution/GRN_DECOY_NULL_RESULTS.md`) finds no TF-specific signal, so the regulator
 > lists in "Stage 13 steps 1–3" are expression-driven model readouts, not regulators. The C1–C4 results and the
 > per-tier loss section (last) do not depend on the references.
+>
+> **2026-11-01 note.** The default is now refs4 over all 16 tissues (SPLEEN and OVARY added): 197 blocks, 151
+> analysable, 9 hotspots, 9/9 preserved in transfer, 6 GRNs, self-consistency median ρ 0.310
+> (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`). The refs4 figures above are the 14-tissue arm
+> (`config/profiles/refs4_14.yaml`).
 
 Scored against `docs/RETRAIN_V2_PREREGISTRATION.md` (registered 2026-10-08; its §6 logs every change
 since). C1–C2 ask whether the retrained model learned rat expression without losing what GeneCompass

@@ -6,7 +6,18 @@ against — an exact, locked sample selection *before* any bulk is deconvolved. 
 runbook + the verification record. It exists because the old build path let a ~85%-non-rat cortex reference and
 a rat-mouse-chimera muscle reference reach production; that class of bug is now structurally impossible.
 
-## 0. Current default: refs4 (2026-10-31)
+## 0. Current default: refs4 on all 16 tissues (2026-11-01)
+
+> **2026-11-01.** The default is now refs4 over all 16 tissues: the 14 below plus SPLEEN
+> (`references_v4/SPLEEN_GSE306764`) and OVARY (`references_v4/OVARY_GSE343214`), registered in
+> `REFERENCE_RELABEL_PREREG.md` §14/§16, results in `ALL_TISSUE_RERUN_RESULTS.md` (c3b27c7). Outputs go to the
+> `_refs4all` folders (`results_refs4all/`, `genecompass_input_v2_refs4all/` (+ `_human/`),
+> `augur_input_v2_refs4all/`, `grn_v2_refs4all/` (+ `_human/`)). The 14-tissue refs4 arm is
+> `config/profiles/refs4_14.yaml`; `config/profiles/refs_v4all.yaml` is now a no-op. The all-tissue run linked
+> the 14 refs4 tissues in from the `_refs4` folders (`slurm/analysis/refs4all_setup.sh`, local) and reran the
+> cross-tissue steps over all 16, so in the commands below substitute `_refs4all` for `_refs4` and wait for all
+> 16 tissues. Expected totals (16 tissues): 197 blocks, 151 analysable, 9 hotspots, 53,084 dose-significant
+> genes, 9/9 hotspots preserved in human transfer, 6 GRNs. The 14-tissue text below is kept as the refs4 record.
 
 **What changed since this runbook was written.** The production references are now the jointly re-annotated
 set, refs4 (default since `904dfb2`, 2026-10-31; registered in `REFERENCE_RELABEL_PREREG.md`, results in
@@ -23,12 +34,13 @@ set, refs4 (default since `904dfb2`, 2026-10-31; registered in `REFERENCE_RELABE
 
 | Arm | How to select it | Stage 8 results | Pseudo-cells / embeddings | Gate + hotspots |
 |---|---|---|---|---|
-| **v2 + refs4 (default)** | nothing: `config/pipeline_config.yaml` | `data/deconvolution/results_refs4/` | `genecompass_input_v2_refs4/` (+ `_human/`) | `genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv` |
+| **v2 + refs4, 16 tissues (default since 2026-11-01)** | nothing: `config/pipeline_config.yaml` | `data/deconvolution/results_refs4all/` | `genecompass_input_v2_refs4all/` (+ `_human/`) | `genecompass_input_v2_refs4all/gate_rcv10/corroboration_merged.tsv` |
+| v2 + refs4, 14 tissues (default 2026-10-31 to 11-01) | `export PIPELINE_PROFILE=config/profiles/refs4_14.yaml` | `data/deconvolution/results_refs4/` | `genecompass_input_v2_refs4/` (+ `_human/`) | `genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv` |
 | v2 + July refs | `export PIPELINE_PROFILE=config/profiles/july_refs.yaml` | `results/` | `genecompass_input_v2/` (+ `_human/`) | `genecompass_input_v2/gate_rcv10/` |
 | April model | `export PIPELINE_PROFILE=config/profiles/april.yaml` | `results/` | `genecompass_input/` (+ `_human/`) | |
 
-`config/profiles/refs_v4.yaml` is now a no-op (its values are the default's); it is kept because the refs4 jobs set
-it. Other refs4 outputs: `augur_input_v2_refs4/`, `grn_v2_refs4/`, `grn_v2_refs4_human/`; the positive-control spec
+`config/profiles/refs_v4.yaml` pointed at the 14-tissue `_refs4` folders (the same values as `refs4_14.yaml`); it
+is kept because the refs4 jobs set it. Other refs4 outputs: `augur_input_v2_refs4/`, `grn_v2_refs4/`, `grn_v2_refs4_human/`; the positive-control spec
 is `deconvolution/reference/posctrl_prereg_refs4.tsv` (targets renamed to the joint labels; genes, directions
 and thresholds unchanged). Comparison printout: `data/results/refs4/compare_refs4.txt`.
 
@@ -54,7 +66,7 @@ python pipeline/run_stage14.py --from 2                          # composition c
 The refs4 run itself linked BAT, HEART, HYPOTH and TESTES into the `_refs4` folders from the July v2 ones
 (`slurm/analysis/refs4_setup.sh`, local) instead of re-running them; their Stage 9 QC reproduces v2 exactly.
 The registered sensitivities (`--min-libsize 100` / `0`, and `DE_MIN_MEDIAN_LIBSIZE` 100 / 0) write beside the
-primary with `_minlib100` / `_minlib0` suffixes. Expected totals: 14 tissues, 8,100 pseudo-cells (8,082 embedded),
+primary with `_minlib100` / `_minlib0` suffixes. Expected totals (refs4, 14 tissues): 8,100 pseudo-cells (8,082 embedded),
 165 blocks, 124 analysable, 11 hotspots, 48,522 dose-significant genes, 11/11 hotspots preserved in human
 transfer, 8 GRNs.
 
@@ -176,3 +188,5 @@ proxy was dropped — irreducibly lung-contaminated — so it is not deconvolved
   notebooks) **together** after the deconv wave.
 - **2026-10-31:** refs4 adopted as the default (§0). SPLEEN and OVARY candidates are being checked under
   `REFERENCE_RELABEL_PREREG.md` §14; COLON's candidate was rejected (sorted cells, no epithelium).
+- **2026-11-01:** SPLEEN and OVARY built and deconvolved; the all-tissue (16) rerun is the default (§0;
+  `ALL_TISSUE_RERUN_RESULTS.md`): 197 blocks, 9 hotspots. ADRNL, COLON and VENACV still have no reference.

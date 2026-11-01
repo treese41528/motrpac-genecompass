@@ -2,46 +2,58 @@
 
 _Status 2026-06-15 (supervised re-measurement + cross-method corroboration in §3b; external + cross-species validation in §3c; the §3 "exercise is small" reading is superseded — but see the §3c magnitude reconciliation). Companions: `MOTRPAC_BULK_LIFTOVER.md` (bulk gene-ID prep), `EMBEDDING_DE_STANDARDS.md` (methods in the literature), `README.md`._
 
-> **Current configuration: retrain v2 model + refs4 references (default since 2026-10-31, `904dfb2`).**
-> The sections below were written with the April model and the June/July references and keep their dated
-> findings. Every result from Stage 8 on has since been rerun on the jointly re-annotated references (refs4;
-> BLOOD with a whole-blood composite), which are now the default in `config/pipeline_config.yaml`. The July
-> references are `config/profiles/july_refs.yaml`; April's model is `config/profiles/april.yaml`. The full
-> refs4-vs-July comparison is [`REFS4_RERUN_RESULTS.md`](REFS4_RERUN_RESULTS.md); the April-vs-v2 model
-> comparison is [`docs/RETRAIN_V2_RESULTS.md`](../docs/RETRAIN_V2_RESULTS.md). Current figures:
+> **Current configuration: retrain v2 model + refs4 references over all 16 tissues (default since 2026-11-01,
+> c3b27c7).** The sections below were written with the April model and the June/July references and keep their
+> dated findings. Every result from Stage 8 on has since been rerun on the jointly re-annotated references (refs4;
+> BLOOD with a whole-blood composite), first on 14 tissues and then (2026-11-01) on all 16 with SPLEEN and
+> OVARY added; the 16-tissue run is the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
+> `config/profiles/refs4_14.yaml`, the July references are `config/profiles/july_refs.yaml`, and April's model is
+> `config/profiles/april.yaml`. The 16-vs-14 comparison is
+> [`ALL_TISSUE_RERUN_RESULTS.md`](ALL_TISSUE_RERUN_RESULTS.md); refs4-vs-July is
+> [`REFS4_RERUN_RESULTS.md`](REFS4_RERUN_RESULTS.md); April-vs-v2 is
+> [`docs/RETRAIN_V2_RESULTS.md`](../docs/RETRAIN_V2_RESULTS.md). Current figures:
 >
-> | Question | v2 + refs4 (current) | v2 + July refs |
-> |---|---|---|
-> | Pseudo-cells (14 tissues) / embedded | 8,100 / 8,082 (18 LUNG goblet pseudo-cells fall below the tokenizer's 200-gene minimum) | 8,450 |
-> | Do the pseudo-cell embeddings separate cell types? (Stage 9 silhouette, median of 14 tissues) | 0.810 ¹ | 0.731 |
-> | Cell-type blocks / analysable under the §6 rule (median per-sample library ≥ 1,000) | 165 / 124 | 172 / 172 (no rule) |
-> | Which cell types carry a detectable exercise signal? (Aim-2 gate, 10 splits × 10,000 permutations, BH q < 0.05) | **11 hotspots** (same 11 at the ≥ 100 threshold; 9 with no rule) | 13 (19 with the §6 rule) |
-> | Held-out trained-vs-control AUC, median / max (analysable blocks) | 0.604 / 0.887 | 0.561 / 0.887 |
-> | Does the embedding beat PCA-50 of the same pseudo-cells? (blocks higher; median Δ; Wilcoxon p) | 71 of 124 analysable; +0.019; p 0.013 (all 165 blocks: 90; +0.014; p 0.11) | 95 of 172; +0.019; p 0.073 |
-> | Canonical Augur AUC on the hotspots; Spearman with PLS-1 | 11 of 11 ≥ 0.73; 0.788 (118 analysable blocks; 0.801 over all 158) | 13 of 13 ≥ 0.65; 0.822 (166 blocks) |
-> | Dose-significant genes (FDR_IHW < 0.05) | 48,522 (124 blocks) | 28,999 (172 blocks) |
-> | Pre-registered DE positive controls (Stage 10, frozen spec) | 5 of 81 outcomes changed: Tier A 5, Ai 2, B 7 recovered; 3 wrong direction | Tier A 4, Ai 2, B 6 + 1 confounded; 2 wrong direction |
-> | Does the hotspots' exercise signal survive re-expression as human? (preserved / weakened / lost) | **11 / 0 / 0 of 11** | 13 / 0 / 0 of 13 |
-> | Whole table, preserved / weakened / lost | 42 / 15 / 107 (164 paired blocks) | 34 / 12 / 126 |
-> | Trained AUC, Spearman rat ~ human | 0.751 | 0.616 |
-> | Pooled sex check (median sex AUC, rat → human; floor 0.70) | 0.717 → 0.730, PASS | 0.682 → 0.671, FAIL |
-> | Hotspots RIN/globin ROBUST | 11 of 11 | 11 of 13 |
-> | Does a transferred rat cell land on its Tabula Sapiens counterpart? (E.3, macro top-1 accuracy) | 0.404 vs null 0.084, PASS ([`translation/ATLAS_PROJECTION_RESULTS.md`](../translation/ATLAS_PROJECTION_RESULTS.md)) | not run |
+> | Question | v2 + refs4, 16 tissues (current) | v2 + refs4, 14 tissues | v2 + July refs |
+> |---|---|---|---|
+> | Pseudo-cells / embedded | 9,232 / 9,214 (SPLEEN 700, OVARY 432 added; `*/tokenize_summary.json`) | 8,100 / 8,082 (18 LUNG goblet pseudo-cells fall below the tokenizer's 200-gene minimum) | 8,450 |
+> | Do the pseudo-cell embeddings separate cell types? (Stage 9 silhouette, median per tissue) | not recomputed (SPLEEN, OVARY added) | 0.810 ¹ (14 tissues) | 0.731 |
+> | Cell-type blocks / analysable under the §6 rule (median per-sample library ≥ 1,000) | 197 / 151 | 165 / 124 | 172 / 172 (no rule) |
+> | Which cell types carry a detectable exercise signal? (Aim-2 gate, 10 splits × 10,000 permutations, BH q < 0.05) | **9 hotspots**; none in SPLEEN or OVARY | 11 (same 11 at the ≥ 100 threshold; 9 with no rule) | 13 (19 with the §6 rule) |
+> | Held-out trained-vs-control AUC, median / max (analysable blocks) | 0.605 / 0.887 | 0.603 / 0.887 | 0.561 / 0.887 |
+> | Does the embedding beat PCA-50 of the same pseudo-cells? (blocks higher; median Δ; Wilcoxon p) | 82 of 151 analysable; +0.009; **p 0.15** (not significant) | 71 of 124; +0.019; p 0.013 (all 165 blocks: 90; +0.014; p 0.11) | 95 of 172; +0.019; p 0.073 |
+> | Canonical Augur AUC on the hotspots; Spearman with PLS-1 | 9 of 9 ≥ 0.73; 0.785 (130 analysable blocks; OVARY and TESTES unscored) | 11 of 11 ≥ 0.73; 0.788 (118 analysable blocks; 0.801 over all 158) | 13 of 13 ≥ 0.65; 0.822 (166 blocks) |
+> | Dose-significant genes (FDR_IHW < 0.05) | 53,084 (151 blocks; SPLEEN 6,439, OVARY 0 ²) | 48,522 (124 blocks) | 28,999 (172 blocks) |
+> | Pre-registered DE positive controls (Stage 10, frozen spec), recovered | Tier A 6/45 (SKMGN Mfn1 added via the pooled refit), Ai 2/14, B 7/22 | Tier A 5, Ai 2, B 7; 5 of 81 outcomes changed from July; 3 wrong direction | Tier A 4, Ai 2, B 6 + 1 confounded; 2 wrong direction |
+> | Does the hotspots' exercise signal survive re-expression as human? (preserved / weakened / lost) | **9 / 0 / 0 of 9** | 11 / 0 / 0 of 11 | 13 / 0 / 0 of 13 |
+> | Whole table, preserved / weakened / lost | 44 / 29 / 123 (1 block has no human counterpart) | 42 / 15 / 107 (164 paired blocks) | 34 / 12 / 126 |
+> | Trained AUC, Spearman rat ~ human | 0.766 | 0.751 | 0.616 |
+> | Pooled sex check (median sex AUC, rat → human; floor 0.70) | 0.743 → 0.745, PASS (block Spearman 0.930, 173 blocks) | 0.717 → 0.730, PASS | 0.682 → 0.671, FAIL |
+> | Hotspots RIN/globin ROBUST | 9 of 9 | 11 of 11 | 11 of 13 |
+> | Does a transferred rat cell land on its Tabula Sapiens counterpart? (E.3, macro top-1 accuracy) | not rerun (E.3 used the 14-tissue hotspots) | 0.404 vs null 0.084, PASS ([`translation/ATLAS_PROJECTION_RESULTS.md`](../translation/ATLAS_PROJECTION_RESULTS.md)) | not run |
+>
+> ² Structural, not biology: `R/run_pseudobulk_de.R` combines the two sexes' training p values by Fisher's
+> method and sets the combined p to missing when either sex is absent, so a single-sex tissue (OVARY, TESTES)
+> can never have a dose-significant gene. OVARY and TESTES also have no Augur score (5 controls per arm, below
+> Augur's 10 per arm subsample).
 >
 > ¹ Computed 2026-10-31 on the refs4 embeddings (cosine silhouette by cell type over each tissue's embedded
 > pseudo-cells; the same code gives 0.731 on the July embeddings). Per tissue: BAT 0.382, BLOOD 0.553, CORTEX
 > 0.912, HEART 0.876, HIPPOC 0.738, HYPOTH 0.765, KIDNEY 0.768, LIVER 0.852, LUNG 0.520, SKMGN 0.923, SKMVL 0.870,
 > SMLINT 0.851, TESTES 0.988, WATSC 0.692.
 >
-> The 11 refs4 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets,
-> neutrophils; LUNG endothelial, mesothelial and vascular smooth muscle cells; SKMGN tenocytes; SKMVL
-> satellite cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells. Three persist
+> The 9 current (16-tissue) hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and
+> platelets, neutrophils; LUNG vascular smooth muscle cells; SKMGN tenocytes; SKMVL satellite cells and
+> vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells. The 14-tissue refs4 run also had LUNG
+> endothelial and mesothelial cells (q 0.0440; 0.0535 in the 16-tissue BH family, AUC unchanged): any claim
+> naming them as hotspots holds for refs4 (14 tissues) only. Of the refs4 hotspots, three persist
 > exactly from July (BLOOD classical monocytes, HYPOTH OPC, LUNG endothelial) and BLOOD megakaryocytes persist
 > as megakaryocytes and platelets. The July BLOOD lymphocyte/basophil hotspots, LUNG macrophages and the
 > SKMGN skeletal-myocyte hotspot do not carry over; claims about those cell types should not be taken from
-> the July run. Two refs4 hotspots carry a composition flag (LUNG mesothelial, SKMVL vascular smooth muscle).
-> HIPPOC composition is unreliable under either reference set (`HIPPOC_REFS4_DIAGNOSIS.md`). Neither
-> reference set's embedding separates exercise significantly better than a plain PCA across blocks. The "same
+> the July run. One current hotspot carries a composition flag (SKMVL vascular smooth muscle; refs4 also LUNG
+> mesothelial).
+> HIPPOC composition is unreliable under either reference set (`HIPPOC_REFS4_DIAGNOSIS.md`). In the current
+> 16-tissue run the embedding does not separate exercise significantly better than a plain PCA across
+> analysable blocks (p 0.15); only the 14-tissue refs4 run reached p 0.013, and the July run did not. The "same
 > cell lands near its rat embedding" reading of the transfer cosine (§4b) does not hold: a cell's cosine to
 > its own human-space embedding is lower than the cosine between two different cells of its tissue, so the
 > cosine measures how far apart the species' regions sit. The E.3 atlas test is what anchors the transfer;
@@ -65,18 +77,18 @@ The question Aim 2 asks of those embeddings: **does within-cell-type variation t
 | Stage | Status | Key artifact / result |
 |---|---|---|
 | Bulk gene-ID liftover & prep | ✅ | 32,432 / 32,883 ENSRNOG mapped; primary-gene vocab coverage 95.0%. See `MOTRPAC_BULK_LIFTOVER.md` |
-| Per-tissue SC references (14 tissues) | ✅ | incl. **heart fix** (GSE280111 left ventricle — has cardiomyocytes) and **cortex** gene-rich union build |
+| Per-tissue SC references (16 tissues; SPLEEN and OVARY added 2026-11-01) | ✅ | incl. **heart fix** (GSE280111 left ventricle — has cardiomyocytes) and **cortex** gene-rich union build |
 | BayesPrism validation (per tissue) | ✅ | liver holdout **0.998** / cross **0.949** (meets the Chu 2022 paper ≥0.95); heart cardiomyocyte r=**0.995**; WAT corroborated across 5 methods (DWLS 0.98/0.99); **lung is the weakest cross (~0.73)** |
 | Connector (pseudo-cells → tokenize → embed) | ✅ | liver smoke test: silhouette **0.775**, kNN purity **1.000**, 83% between-/17% within-cell-type variance |
-| End-to-end run (all 14 tissues) | ✅ | refs4: **8,100 pseudo-cells**, 8,082 embedded (768-d) on disk (July refs: 8,450) |
-| Aim-2 validation gate | ✅ | refs4: **165** (tissue × cell-type) rows across all 14 tissues, 124 analysable under §6 (July refs: 172) |
+| End-to-end run (all 16 tissues) | ✅ | refs4 (14 tissues): **8,100 pseudo-cells**, 8,082 embedded (768-d) on disk (July refs: 8,450) |
+| Aim-2 validation gate | ✅ | 16 tissues: **197** (tissue × cell-type) blocks, 151 analysable under §6 (refs4, 14 tissues: 165 / 124; July refs: 172) |
 | Interactive viewer | ✅ | self-contained, offline 3-tab `viewer.html` (Atlas / Signal / Focus) |
-| **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: v2 + refs4 held-out AUC up to **0.887**; **11** FDR-significant hotspots (10 splits × 10,000 permutations, §6 rule; July refs 13) |
-| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it on refs4 (Spearman **0.788** with PLS-1 over the 118 analysable blocks, just under the registered 0.80; 0.801 over all 158; 11 of 11 hotspots at AUC ≥ 0.73); the embedding does **not** beat PCA-50 significantly across blocks (p 0.11; July refs 0.073) |
+| **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: v2 + refs4 held-out AUC up to **0.887**; **9** FDR-significant hotspots over 16 tissues (10 splits × 10,000 permutations, §6 rule; refs4 14 tissues 11; July refs 13) |
+| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it (16 tissues: Spearman **0.785** with PLS-1 over 130 analysable blocks, just under the registered 0.80; 9 of 9 hotspots at AUC ≥ 0.73; refs4 14 tissues 0.788 over 118); the embedding does **not** beat PCA-50 significantly across analysable blocks (16 tissues p 0.15; the 14-tissue refs4 run alone reached p 0.013; July refs 0.073) |
 | **External + cross-species validation** (§3c) | ✅ | same-data **Vetr 2024** corroborates hotspot geography + supplies the DE recipe & rat→human blueprint; human PBMC scRNA (**Yu 2023**) validates the immune hotspot; per-gene magnitude is modest → "reliably detectable," not "large" |
 | **Atlas anchoring of the transfer (E.3)** | ✅ | pre-registered PASS 2026-10-31: transferred rat cells land on their Tabula Sapiens counterpart at macro top-1 accuracy **0.404** vs null 0.084 (p = 0.0001); `translation/ATLAS_PROJECTION_RESULTS.md` |
 
-Tissues covered: bat, blood, cortex, heart, hippoc, hypoth, kidney, liver, lung, skmgn (gastrocnemius), skmvl (vastus lateralis), smlint, testes, watsc (WAT) — 14 deconvolved tissues (VENACV dropped: no genuine rat vena-cava reference). Design per tissue: 2 sex × 5 exercise group (control / 1w / 2w / 4w / 8w) × 5 reps = ~50 samples per cell type.
+Tissues covered: bat, blood, cortex, heart, hippoc, hypoth, kidney, liver, lung, skmgn (gastrocnemius), skmvl (vastus lateralis), smlint, testes, watsc (WAT) — 14 deconvolved tissues (VENACV dropped: no genuine rat vena-cava reference). _2026-11-01: SPLEEN and OVARY added (16 tissues; both read differentially only, OVARY females only)._ Design per tissue: 2 sex × 5 exercise group (control / 1w / 2w / 4w / 8w) × 5 reps = ~50 samples per cell type.
 
 ---
 
@@ -169,6 +181,12 @@ That trained median η² ≈ **0.023** is the honest size of the exercise effect
 > held-out AUC 0.887 (SKMVL satellite cells). Augur gives AUC ≥ 0.70 on all 11 and follows PLS-1 at Spearman
 > 0.788 over the analysable blocks (0.801 over all). The embedding is higher than PCA-50 in 71 of 124 analysable blocks (median +0.019, Wilcoxon p 0.013); over all 165 blocks, 90 (p 0.11).
 > See `REFS4_RERUN_RESULTS.md`.
+>
+> **All 16 tissues (2026-11-01, default).** Same gate and §6 rule: **9** hotspots of 151 analysable blocks
+> (197 total), max held-out AUC 0.887. LUNG endothelial and mesothelial cells move from q 0.0440 to 0.0535
+> (AUC unchanged; the BH family grew by 32 blocks, none significant). Augur gives AUC ≥ 0.73 on all 9 and
+> follows PLS-1 at Spearman 0.785 over 130 blocks. The embedding is higher than PCA-50 in 82 of 151
+> analysable blocks (median +0.009, Wilcoxon p 0.15): no longer significant. See `ALL_TISSUE_RERUN_RESULTS.md`.
 
 **Cross-method corroboration** (`run_augur.R`, `corroborate_summary.py`; see `EMBEDDING_DE_STANDARDS.md` for the methods context):
 - **Method robustness.** _(NB: the Augur corroboration below was not re-run for the 2026-07-16 rebuild; it reflects the prior 10-tissue / 21–22-hotspot roster.)_ Canonical **Augur** (Skinnider/Squair 2021 — the published cross-validated-RF standard for cell-type perturbation-responsiveness) reproduces our PLS-1 ranking at **Spearman r = 0.83** (n=186) and independently confirms **19/22 hotspots at AUC ≥ 0.70 (22/22 at ≥ 0.65)**; Augur's median AUC on the FDR-significant set is **0.82** vs 0.55 elsewhere; sex positive control max AUC **1.00** (liver, WAT). The finding is not an artifact of our specific linear method — a different, published, nonlinear method finds the same cells.
@@ -241,6 +259,14 @@ The §3b re-measurement and §3c external validation settle the gate's question:
 > so the naive program is not testable; cytotoxicity recovers in BLOOD NK cells. Parenchyma bulk-mover
 > recovery: SKMGN 0.394, SKMVL 0.582, HEART 0.917, so the dominant-parenchyma problem is unchanged. Outputs:
 > `genecompass_input_v2_refs4/pseudobulk_de/`. The §4a text below (June/July references) is kept as written.
+>
+> **All 16 tissues (2026-11-01, default).** 197 blocks, 151 run; **53,084 dose-significant genes**, of which
+> SPLEEN 6,439 (spread evenly over its 12 analysable types: shared deconvolved-bulk signal, not a
+> cell-type-specific response) and OVARY 0. Positive controls: Tier A 6/45 (SKMGN Mfn1, IHW 0.058 → 0.048,
+> via the pooled refit), Ai 2/14, B 7/22. **Single-sex tissues cannot have dose-significant genes:**
+> `run_pseudobulk_de.R` (line ~255) sets the Fisher sex-combined p to missing when either sex is absent, so
+> TESTES's 0 genes in every run, and OVARY's 0, are structural, not biology. Changing that would change the
+> registered method and needs its own registration. Outputs: `genecompass_input_v2_refs4all/pseudobulk_de/`.
 
 The §4 pivot is executed. Implementation: `deconvolution/R/run_pseudobulk_de.R` (driven by Stage-10 orchestrator
 `pipeline/run_stage10.py`: DE → positive-control comparison). Exhaustive Vetr-faithful design — per (tissue × cell
@@ -337,6 +363,12 @@ SKMVL/cortex re-deconvolutions). `DOWNSTREAM_BUILD_PLAN.md` = the GRN/perturbati
 > optional and unbuilt in "Honest scope" below, has since been run and PASSES (0.404 vs null 0.084;
 > `translation/ATLAS_PROJECTION_RESULTS.md`); three hotspots do not land on their human counterpart (SKMGN
 > tenocytes, LUNG vascular smooth muscle, BLOOD erythroid).
+>
+> **All 16 tissues (2026-11-01, default).** 9 of 9 hotspots preserved; whole table 44 / 29 / 123 (one block has
+> no human counterpart; most of the extra weakened blocks are new SPLEEN/OVARY blocks with near-chance rat
+> AUCs); rat ~ human Spearman of the trained AUC 0.766, of the dose ρ 0.725; pooled sex check PASS (0.743 →
+> 0.745; block-level Spearman 0.930 over 173 blocks). Outputs:
+> `genecompass_input_v2_refs4all_human/gate_rcv10/transfer_comparison.{tsv,md}`.
 
 **The grant's cross-species aim, executed as a TRANSFER (not an alignment).** MoTrPAC's invasive,
 multi-tissue, time-course exercise study cannot be run in humans, so the rat is the experimental proxy and
@@ -408,10 +440,10 @@ the canonical 10-split probe + comparison, which `run_stage12.py` now writes, un
 1. **Per-cell-type DE on `Z` — ✅ DONE 2026-06-22 (see §4a for results, the pre-registered positive-control verdict, the parenchyma diagnostic, and the reference reconsideration).** (field-standard route — see `EMBEDDING_DE_STANDARDS.md`). Pseudobulk-style model per (tissue, cell type): `expression ~ dose(ordinal week) + sex (+ interaction)` on the deconvolved `Z`. Each pseudo-cell is already a sample-level profile, so this is sample-level / pseudobulk — the approach Squair 2021 shows controls false discoveries — **not** a single-cell-level test and **not** DE "on" the embedding. DESeq2 / edgeR / limma-voom or an equivalent empirical-Bayes / permutation test. Start with the **22 FDR-significant hotspots** (blood immune + skeletal muscle). **Mirror the same-data Vetr 2024 recipe** (§3c) for comparability — DESeq2 LRT over the ordinal time course, sexes combined by Fisher (or sex modeled explicitly), IHW for multiple testing — and **self-check against published positive controls**: Vetr's per-tissue gene lists (blood cholesterol/asthma programs, SKM-VL TMBIM1/ATP6V1G2) and Yu 2023's immune programs (CXCR4, S100A8/A9, cytotoxicity/naive sets), reading expression (`Z`) changes alongside fraction (`θ`) changes (the composition confound, §3c). Output: ranked, sex-adjusted, dose-shaped exercise-responsive genes per cell type. This is the deliverable that turns the corroborated AUC signal into biology.
 2. **GRN / perturbation routes (after DE).** Caveats from the connector work: pseudo-cell GRN/perturbation is only valid for **abundant** cell types (rare ones sit at the reference prior, no exercise signal); n ≈ 50 samples/cell type is too thin for data-driven GRN (DeepSEM) → default to the **model-driven in-silico-perturbation** GRN route in GeneCompass.
 3. **Dose modeling.** Evaluate **CPA** (compositional perturbation autoencoder) repurposed for exercise dose (1/2/4/8 wk) on the hotspot cell types.
-4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE (see §4b): the rat exercise axis survives re-expression in human GeneCompass space — v2 + refs4: 11 of 11 hotspots preserved, 42 / 15 / 107 over all blocks, pooled sex check PASS (0.717 → 0.730); on the July references 13 of 13, 34 / 12 / 126, sex check FAIL.** (a) E.3 external validation against Tabula Sapiens — ✅ DONE 2026-10-31, PASS (macro accuracy 0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`); remaining: (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
+4. **Cross-species (grant aim).** **Aim 3a embedding-space TRANSFER — ✅ DONE (see §4b): the rat exercise axis survives re-expression in human GeneCompass space — v2 + refs4, 16 tissues: 9 of 9 hotspots preserved, 44 / 29 / 123 over all blocks, pooled sex check PASS (0.743 → 0.745); 14 tissues: 11 of 11, 42 / 15 / 107, PASS (0.717 → 0.730); on the July references 13 of 13, 34 / 12 / 126, sex check FAIL.** (a) E.3 external validation against Tabula Sapiens — ✅ DONE 2026-10-31, PASS (macro accuracy 0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`); remaining: (b) the **Aim 3c genetics route** — **Vetr 2024 (§3c) is the blueprint** — rat exercise DE → human ortholog → GTEx eQTL / GWAS / S-PrediXcan / Open Targets → trait-tissue-gene triplets, our contribution being the **cell-type-resolved** extension (push per-cell-type DE through the same pipeline). 3a transfers the representation; 3c gives the clinical interpretation.
 5. **Secondary / hardening.**
    - Multi-method θ cross-check (omnideconv) — **✅ DONE:** 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agrees with the omnideconv paper (MuSiC/SCDC correct the bias, BayesPrism/CIBERSORTx don't; DWLS the one rat caveat) + downstream-claims guidance. See `OMNIDECONV_RESULTS.md`.
-   - **Lung — ✅ FIXED:** the weak cross-dataset lung was the engineered GSE178405 reference; replaced by the native pooled reference (`REFERENCE_QC.md`), giving lung 3 real exercise hotspots. Reference selection is now QC-gated (`reference_qc.py`, `tissue_references.yaml`).
+   - **Lung — ✅ FIXED:** the weak cross-dataset lung was the engineered GSE178405 reference; replaced by the native pooled reference (`REFERENCE_QC.md`), giving lung 3 real exercise hotspots under refs4 (14 tissues; 1 in the current 16-tissue run). Reference selection is now QC-gated (`reference_qc.py`, `tissue_references.yaml`).
    - Viewer v2: real per-cell-type **local PCA** projection in Focus (from the 768-d embeddings) so the within-type exercise/sex axis shows on its own canvas rather than the zoomed global coords.
 6. **Risks to keep in view.**
    - **Activity confound** (the key threat): bulk fraction shifts can reflect expression drift, not true cell-fraction change → frame exercise results **relative / differential**, not as absolute fractions.
@@ -421,9 +453,9 @@ the canonical 10-split probe + comparison, which `run_stage12.py` now writes, un
 
 ## 6. Artifacts & reproduce
 
-**Outputs** (current default v2 + refs4 under `data/deconvolution/genecompass_input_v2_refs4/` and `genecompass_input_v2_refs4_human/`; v2 + July refs under `genecompass_input_v2/`; April's under `genecompass_input/`; all gitignored; the hotspot tables are each root's `gate_rcv10/`):
+**Outputs** (current default v2 + refs4, 16 tissues, under `data/deconvolution/genecompass_input_v2_refs4all/` and `genecompass_input_v2_refs4all_human/`; the 14-tissue refs4 arm under `genecompass_input_v2_refs4/` and `genecompass_input_v2_refs4_human/`; v2 + July refs under `genecompass_input_v2/`; April's under `genecompass_input/`; all gitignored; the hotspot tables are each root's `gate_rcv10/`):
 - `<tissue>/embeddings/cell_embeddings.npy` + `<tissue>/dataset/` — per-tissue pseudo-cell embeddings (768-d) and tokenized datasets.
-- `pheno_merge_test.tsv` — the gate (refs4: 165 rows, 14 tissues; July: 172); `subspace_probe.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv` — the §3b re-measurement + corroboration; `augur_input/<tissue>/` — Augur inputs.
+- `pheno_merge_test.tsv` — the gate (16 tissues: 197 blocks; refs4: 165 rows, 14 tissues; July: 172); `subspace_probe.tsv`, `pca_control.tsv`, `augur_results.tsv`, `corroboration_merged.tsv` — the §3b re-measurement + corroboration; `augur_input/<tissue>/` — Augur inputs.
 - `umap/umap_coords.tsv`, `umap/viewer.html`, `umap/viewer_data.json` — UMAP + interactive viewer.
 
 **Committed code** (`deconvolution/`):
@@ -435,17 +467,17 @@ the canonical 10-split probe + comparison, which `run_stage12.py` now writes, un
 **Regenerate:**
 ```bash
 source /depot/reese18/apps/motrpac-env/bin/activate
-G=data/deconvolution/genecompass_input_v2_refs4; R=$G/gate_rcv10   # v2 + refs4 = the default config
+G=data/deconvolution/genecompass_input_v2_refs4all; R=$G/gate_rcv10   # v2 + refs4, 16 tissues = the default config
 python deconvolution/pheno_merge_test.py        # → pheno_merge_test.tsv  (auto-discovers all tissues with embeddings)
 # canonical gate (pre-registration §6): 10 splits x 10,000 permutations -> the hotspot table in gate_rcv10/
 python deconvolution/subspace_probe.py --gc-root $G --perms 10000 --folds 5 --repeats 10 --out $R/subspace_probe.tsv
 python deconvolution/augur_prep.py --gc-root $G --pca 50 --perms 10000 --folds 5 --repeats 10 \
-    --out data/deconvolution/augur_input_v2_refs4 --ctl-out $R/pca_control.tsv
-Rscript deconvolution/run_augur.R data/deconvolution/augur_input_v2_refs4 $R/augur_results.tsv
-python deconvolution/corroborate_summary.py --gc-root $R   # → $R/corroboration_merged.tsv (11 hotspots; §6 rule)
+    --out data/deconvolution/augur_input_v2_refs4all --ctl-out $R/pca_control.tsv
+Rscript deconvolution/run_augur.R data/deconvolution/augur_input_v2_refs4all $R/augur_results.tsv
+python deconvolution/corroborate_summary.py --gc-root $R   # → $R/corroboration_merged.tsv (9 hotspots; §6 rule)
 python pipeline/run_stage10.py                  # DE etc. on deconvolution.hotspots_table
 python pipeline/run_stage12.py --from 3         # human-space probe + comparison, same method → <human>/gate_rcv10/
 python deconvolution/build_umap_viewer.py       # → umap/viewer.html + viewer_data.json
 ```
 
-> **CORRECTION 2026-07-17 (historical; superseded by the refs4 figures in the box at the top):** the 13-hotspot figure in an earlier version of this section was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.
+> **CORRECTION 2026-07-17 (historical; superseded by the figures in the box at the top):** the 13-hotspot figure in an earlier version of this section was a stale-join ARTIFACT (Stage 10 was run before the detection layer `redetect_redE`, so newly-merged labels had no AUC row). The authoritative correct-order re-run gives **15 hotspots / 172 blocks**, muscle myofiber RECOVERED as #1 (SKM-GN Skeletal myocytes AUC 0.893). See `project_deposited_label_adoption_2026-07-16` memory.

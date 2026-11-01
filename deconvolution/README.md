@@ -5,23 +5,27 @@ MoTrPAC bulk RNA-seq → **BayesPrism** per-cell-type deconvolution → per-cell
 `AIM2_DECONV_RESULTS.md` for the science and `MOTRPAC_BULK_LIFTOVER.md` for the
 bulk gene-ID prep.
 
-**Current default (2026-10-31): v2 model + refs4 references.** The references are the jointly re-annotated
-set (`data/deconvolution/references_v4/`, with BLOOD as a whole-blood composite; BAT, HEART, HYPOTH and TESTES
-keep their `references_v3/` builds), selected by `config/pipeline_config.yaml` with no profile. Outputs:
-`data/deconvolution/results_refs4/` (Stage 8), `genecompass_input_v2_refs4/` and `_human/` (Stages 9, 10, 12;
-gate in `gate_rcv10/`), `augur_input_v2_refs4/`, `grn_v2_refs4/` and `grn_v2_refs4_human/` (Stage 13).
-Current figures: 14 tissues, 8,100 pseudo-cells (8,082 embedded), 165 blocks (124 analysable under the §6
-rule, median per-sample library ≥ 1,000), **11 exercise hotspots**, 48,522 dose-significant genes, 11 of 11
-hotspots preserved in human transfer and RIN/globin-robust, 8 GRNs. The GRNs carry no TF-specific signal
-(`GRN_DECOY_NULL_RESULTS.md`). Results: `REFS4_RERUN_RESULTS.md`. The July references (172 blocks, 13
-hotspots) are `config/profiles/july_refs.yaml`; April's model is `config/profiles/april.yaml`. Rebuild:
-`DECONV_REBUILD_RUNBOOK.md` §0.
+**Current default (2026-11-01): v2 model + refs4 references over all 16 tissues.** The references are the
+jointly re-annotated set (`data/deconvolution/references_v4/`, with BLOOD as a whole-blood composite; BAT,
+HEART, HYPOTH and TESTES keep their `references_v3/` builds) plus SPLEEN (`references_v4/SPLEEN_GSE306764`) and
+OVARY (`references_v4/OVARY_GSE343214`), selected by `config/pipeline_config.yaml` with no profile. Outputs:
+`data/deconvolution/results_refs4all/` (Stage 8), `genecompass_input_v2_refs4all/` and `_human/` (Stages 9, 10,
+12; gate in `gate_rcv10/`), `augur_input_v2_refs4all/`, `grn_v2_refs4all/` and `grn_v2_refs4all_human/` (Stage
+13). Current figures: 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 blocks (151 analysable under the §6 rule, median per-sample library
+≥ 1,000), **9 exercise hotspots** (none in SPLEEN or OVARY), 53,084 dose-significant genes, 9 of 9 hotspots
+preserved in human transfer and RIN/globin-robust, 6 GRNs. The embedding does not beat PCA-50 significantly
+(p 0.15). Single-sex tissues (TESTES, OVARY) cannot have a dose-significant gene (the Fisher sex combine needs
+both sexes), so their 0 genes is structural. The GRNs carry no TF-specific signal (`GRN_DECOY_NULL_RESULTS.md`).
+Results: `ALL_TISSUE_RERUN_RESULTS.md`. The 14-tissue refs4 arm (8,100 pseudo-cells, 165 blocks, 124
+analysable, 11 hotspots, 48,522 genes, 8 GRNs; `REFS4_RERUN_RESULTS.md`) is `config/profiles/refs4_14.yaml`;
+the July references (172 blocks, 13 hotspots) are `config/profiles/july_refs.yaml`; April's model is
+`config/profiles/april.yaml`. Rebuild: `DECONV_REBUILD_RUNBOOK.md` §0.
 
 **Reference integrity — start here.** `tissue_references.yaml` is the canonical tissue→reference map
 (single source of truth). `REFERENCE_QC.md` documents the build-time QC gate (`reference_qc.py`) and the
 two reference bugs it now prevents: the **liver** Visium-spatial contamination (removed) and the
 **engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`, which gave lung a real
-exercise-hotspot signal; 3 LUNG hotspots on refs4). Cross-method validation, the full **mRNA-bias analysis**, and **which
+exercise-hotspot signal; 1 LUNG hotspot on the 16-tissue default, 3 on refs4's 14 tissues). Cross-method validation, the full **mRNA-bias analysis**, and **which
 downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. Analysis notebooks
 (`../notebooks/pipeline8–12`) still need re-executing per `../notebooks/RERUN_EDITS.md`.
 

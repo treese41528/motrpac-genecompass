@@ -5,13 +5,23 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-10-31. The working model is **retrain v2** and the working references are **refs4**
-(the jointly re-annotated references, `references_v4/`), both the default in `config/pipeline_config.yaml`.
-The July references are `config/profiles/july_refs.yaml`; April's model is `config/profiles/april.yaml`.
-Every result below is v2 on refs4 unless marked. **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked
+**Last updated:** 2026-11-01. The working model is **retrain v2** and the working references are **refs4**
+(the jointly re-annotated references, `references_v4/`) over **all 16 tissues** (refs4's 14 plus SPLEEN and
+OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
+`config/profiles/refs4_14.yaml`; the July references are `config/profiles/july_refs.yaml`; April's model is
+`config/profiles/april.yaml`. Every result below is v2 on refs4 unless marked; headline figures are the
+16-tissue ones (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`), with the 14-tissue refs4 figures as comparison. **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked
 (external) · ⊘ out-of-scope.
 
-**Recently closed (2026-10-31).**
+**Recently closed (2026-11-01).**
+- **All-tissue (16) rerun: done, now the default** (c3b27c7, `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`).
+  SPLEEN and OVARY joined: 197 blocks, 151 analysable, **9 exercise hotspots** (refs4: 11). LUNG endothelial
+  and mesothelial cells drop out (q 0.0440 → 0.0535, AUC unchanged) because the BH family is larger. No
+  SPLEEN or OVARY hotspot. Embedding beats PCA is no longer significant (p 0.15; refs4 p 0.013). Single-sex
+  tissues (TESTES, OVARY) can never have a dose-significant gene under the Fisher sex combine: TESTES's 0
+  genes is structural, not biology.
+
+**Closed 2026-10-31.**
 - **refs4 adopted as the default** (`904dfb2`). The references were relabelled by one joint procedure, BLOOD got
   a whole-blood composite, and everything from Stage 8 on was rerun (`deconvolution/REFS4_RERUN_RESULTS.md`).
 - **The DE near-empty-block gate is closed.** It is the §6 rule (a block is analysed only if its median
@@ -26,24 +36,27 @@ Every result below is v2 on refs4 unless marked. **Legend:** ✅ done · ◐ par
 - **Second heart reference: PASS** (§15). An independent F344 heart study recovers cardiomyocyte fractions
   through the production HEART reference at r 0.944 (mean error 0.043).
 - **More MoTrPAC tissues** (`REFERENCE_RELABEL_PREREG.md` §14): SPLEEN and OVARY references pass their checks
-  and are deconvolved; the all-tissue (16) rerun is in progress. ADRNL, COLON and VENACV still have none.
+  and are deconvolved; the all-tissue (16) rerun is done (above). ADRNL, COLON and VENACV still have none.
 
 **Retrain v2 (2026-10-06 → 10-25, pre-registered in [`RETRAIN_V2_PREREGISTRATION.md`](RETRAIN_V2_PREREGISTRATION.md)):**
 the model was retrained on a cleaned corpus (584 QC files kept of 868), scheme-B medians and fixed priors.
 C1–C2 pass (rat learned, human/mouse kept), so v2 replaced April and everything downstream was rerun with it.
 
-**Verified canonical figures** (v2 + refs4, 14 tissues): **8,100 pseudo-cells** (8,082 embedded; 18 LUNG
-goblet pseudo-cells fall below the tokenizer's 200-gene minimum); **165 cell-type blocks, 124 analysable
-under §6, 11 exercise hotspots** (Aim-2 gate, 10 splits × 10,000 permutations, BH q < 0.05); 48,522
-dose-significant genes (FDR_IHW < 0.05); **11 of 11 hotspots preserved** in human transfer; all 11 RIN/globin
-ROBUST; 8 GRNs, rat–human self-consistency median ρ 0.310. Model
+**Verified canonical figures** (v2 + refs4, all 16 tissues, 2026-11-01): **9,232 pseudo-cells** (9,214
+embedded); **197 cell-type blocks, 151
+analysable under §6, 9 exercise hotspots** (Aim-2 gate, 10 splits × 10,000 permutations, BH q < 0.05); 53,084
+dose-significant genes (FDR_IHW < 0.05; SPLEEN 6,439, OVARY 0); **9 of 9 hotspots preserved** in human
+transfer; all 9 RIN/globin ROBUST; 6 GRNs, rat–human self-consistency median ρ 0.310 (633 TFs). The 14-tissue
+refs4 figures were 8,100 pseudo-cells (8,082 embedded; 18 LUNG goblet pseudo-cells fall below the tokenizer's
+200-gene minimum), 165 blocks, 124 analysable, 11 hotspots, 48,522 dose-significant genes, 11 of 11
+preserved, 8 GRNs (`deconvolution/REFS4_RERUN_RESULTS.md`). Model
 `rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species` (= `checkpoint-591763`); ortholog map 15,234
 rat→human pairs. The July-reference v2 figures (172 blocks, 13 hotspots) and April's are in
 `docs/RETRAIN_V2_RESULTS.md` and git history.
 
-The 11 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets, neutrophils; LUNG
-endothelial, mesothelial and vascular smooth muscle cells; SKMGN tenocytes; SKMVL satellite cells and
-vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
+The 9 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets, neutrophils; LUNG
+vascular smooth muscle cells; SKMGN tenocytes; SKMVL satellite cells and vascular smooth muscle cells; HYPOTH
+oligodendrocyte precursor cells. refs4 (14 tissues) also had LUNG endothelial and mesothelial cells.
 
 ---
 
@@ -55,13 +68,13 @@ vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
 | **1** | Catastrophic-forgetting check (pre-registered C1–C2, PASS): rat gene-ID loss 7.13 → 3.06 (v2 init → v2); human +0.05% and mouse +1.32% vs base (limit +10%) | `docs/RETRAIN_V2_RESULTS.md` C1–C2 |
 | **1** | Per-tier masked-prediction loss (2026-10-31): T2b/T3b/T4 tokens 19–20 → 2.2–2.4 nats (v2 init → v2); April stays at 11–14 on them | `docs/RETRAIN_V2_RESULTS.md` (per-tier section); `eval_mlm.py --by-tier` |
 | **1** | Representation-quality validation trio (§3.6) — see [Aim-1 validation results](#aim-1-validation-results) | `reports/aim1_validation_v2/` |
-| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW), refs4 + §6 rule: **165 blocks, 124 analysable, 11 exercise hotspots**, 48,522 dose-significant genes; pre-registered positive controls 5 of 81 outcomes changed from July (Tier A 5, Ai 2, B 7 recovered) | `deconvolution/REFS4_RERUN_RESULTS.md`; `AIM2_DECONV_RESULTS.md` |
-| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **11 of 11 hotspots preserved**; rat-to-human Spearman of the exercise AUC 0.751 (July 0.616) | `REFS4_RERUN_RESULTS.md` (Stage 12) |
-| **3a** | **E.3 atlas anchoring — PASS** (pre-registered): transferred rat cells sit nearest their Tabula Sapiens counterparts (macro accuracy 0.404 vs null 0.084, p = 0.0001). Fails for 3 hotspots (SKMGN tenocytes, LUNG vascular smooth muscle, BLOOD erythroid); LUNG mesothelial and HYPOTH OPC have no atlas counterpart | `translation/ATLAS_PROJECTION_RESULTS.md` |
+| **2a** | Per-cell-type DE on deconvolved Z (limma-trend, IHW), refs4 + §6 rule, 16 tissues: **197 blocks, 151 analysable, 9 exercise hotspots**, 53,084 dose-significant genes; pre-registered positive controls Tier A 6/45, Ai 2/14, B 7/22 recovered (refs4, 14 tissues: 165 / 124 / 11 hotspots / 48,522 genes; Tier A 5/45). Single-sex tissues (TESTES, OVARY) cannot have a dose-significant gene (Fisher sex combine) | `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`; `REFS4_RERUN_RESULTS.md`; `AIM2_DECONV_RESULTS.md` |
+| **3a** | Cross-species **transfer** of the rat exercise response into human embedding space; **9 of 9 hotspots preserved**; rat-to-human Spearman of the exercise AUC 0.766 (refs4 0.751 with 11 of 11; July 0.616) | `ALL_TISSUE_RERUN_RESULTS.md`; `REFS4_RERUN_RESULTS.md` (Stage 12) |
+| **3a** | **E.3 atlas anchoring — PASS** (pre-registered): transferred rat cells sit nearest their Tabula Sapiens counterparts (macro accuracy 0.404 vs null 0.084, p = 0.0001). Fails for 3 hotspots (SKMGN tenocytes, LUNG vascular smooth muscle, BLOOD erythroid); LUNG mesothelial and HYPOTH OPC have no atlas counterpart. Run on the 14-tissue refs4 hotspots (11) |  `translation/ATLAS_PROJECTION_RESULTS.md` |
 | **2b** | **Rat in-silico perturbation engine** — April's pre-registration CLOSED, all 4 criteria PASS. **Under v2: 3 of 4 pass; #2 (Mef2c targets in the curated muscle/mito set) FAILS** (0/25; the set was written after April's smoke run and is not neutral between models). | commits `bca3221`, `b162409`; `RETRAIN_V2_RESULTS.md` (Module A) |
-| **2b** | Model-driven **differential GRN** (dose-pooled, bootstrapped; refs4: 8 networks). **Decoy null (2026-10-31): no TF-specific signal** — `\|z\| ≥ 2` FDR 1.03 against expression-matched random genes; 0 of 981 TFs beat their decoys on hub strength. Hub tables are descriptive model readouts, not regulator calls. | `ffbebff`, `fb07c3c`; Stage 13; `GRN_DECOY_NULL_RESULTS.md` |
-| **3b** | **Perturbation on the transferred human cells** — human-space GRN + a rat↔human **self-consistency** score (refs4 median ρ **0.310**; July 0.292; April 0.451). NOT cross-species biological conservation (same cells through the same model), and after the decoy null, self-consistency of an expression-driven quantity. | `bbf33de`; Stage 13; `REFS4_RERUN_RESULTS.md` |
-| **hardening** | Purity sweeps (12 of 14 tissues, all meet the Chu-2022 bar; model-independent), composition confound on all blocks (refs4: QUIET 91 / PASS_EXPRESSION 56 / FLAG 18; hotspots LUNG mesothelial and SKMVL VSMC flagged), RIN/globin robustness (**11 of 11 hotspots ROBUST**) | Stage 14; `REFS4_RERUN_RESULTS.md` |
+| **2b** | Model-driven **differential GRN** (dose-pooled, bootstrapped; 16 tissues: 6 networks, identical to six of refs4's 8). **Decoy null (2026-10-31): no TF-specific signal** — `\|z\| ≥ 2` FDR 1.03 against expression-matched random genes; 0 of 981 TFs beat their decoys on hub strength. Hub tables are descriptive model readouts, not regulator calls. | `ffbebff`, `fb07c3c`; Stage 13; `GRN_DECOY_NULL_RESULTS.md` |
+| **3b** | **Perturbation on the transferred human cells** — human-space GRN + a rat↔human **self-consistency** score (median ρ **0.310** over 633 TFs, 16 tissues; refs4 0.310 over 859; July 0.292; April 0.451). NOT cross-species biological conservation (same cells through the same model), and after the decoy null, self-consistency of an expression-driven quantity. | `bbf33de`; Stage 13; `REFS4_RERUN_RESULTS.md` |
+| **hardening** | Purity sweeps (12 of 14 tissues, all meet the Chu-2022 bar; model-independent; SPLEEN and OVARY not swept), composition confound on all blocks (16 tissues: QUIET 112 / PASS_EXPRESSION 62 / FLAG 23; hotspot SKMVL VSMC flagged; refs4: 91 / 56 / 18, LUNG mesothelial also flagged), RIN/globin robustness (**9 of 9 hotspots ROBUST**; refs4 11 of 11) | Stage 14; `ALL_TISSUE_RERUN_RESULTS.md`; `REFS4_RERUN_RESULTS.md` |
 | **hardening** | DE near-empty-block gate: the §6 rule (median per-sample library ≥ 1,000), with sensitivities at 100 and 0; the hotspot set is the same at 1,000 and 100 | `REFERENCE_RELABEL_PREREG.md` §6; `REFS4_RERUN_RESULTS.md` |
 | **hardening** | Joint re-annotation of the references (refs4) + BLOOD whole-blood composite; reference integrity (QC gate + manifest + from-scratch driver); full omnideconv panel + mRNA-bias analysis | `REFERENCE_RELABEL_PREREG.md`; `REFERENCE_QC.md`, `OMNIDECONV_RESULTS.md` |
 
@@ -115,14 +128,14 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on v2 (2026
 |---|---|---|
 | ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`) | — |
 | ✅ | **Reference integrity** — DONE (2026-07): `reference_qc.py` gate (wired into `build_reference`), `tissue_references.yaml`, `run_deconv_all.py`; liver Visium contamination + engineered→native lung fixed (`REFERENCE_QC.md`) | — |
-| ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; lung went from 0 exercise hotspots to real immune/stromal ones (refs4: endothelial, mesothelial and vascular smooth muscle cells, all preserved rat→human; July: endothelial cells + macrophages) (was ◐ weak) | — |
+| ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; lung went from 0 exercise hotspots to real immune/stromal ones (16 tissues: vascular smooth muscle cells, preserved rat→human; refs4 (14 tissues): endothelial, mesothelial and vascular smooth muscle cells, all preserved; July: endothelial cells + macrophages) (was ◐ weak) | — |
 | ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; model-independent; 13 sweeps on disk across 12 tissues). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on all **12 tissues swept** (of the 14-tissue panel): ≥0.985 at 50% purity, ≥0.99 at 85%. The 4 tissues added in the 2026-07-16 rebuild (BAT/HYPOTH/SMLINT/TESTES) were **swept 2026-07-27 and all pass** (VST ≥0.998 at 50% purity; HYPOTH glutamatergic-neuron VST = 1.000 throughout). Only BLOOD and subcutaneous fat remain unswept — neither has a capturable dominant parenchyma. | — |
-| ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): refs4 **11 of 11 hotspots ROBUST** (median Spearman of the dose statistic with vs without the covariates 0.957, median retention 0.91; July: 11 of 13). Composition (θ) confound on all refs4 blocks: 91 QUIET / 56 PASS_EXPRESSION / 18 FLAG_COMPOSITION; two hotspots flagged (LUNG mesothelial cells, SKMVL vascular smooth muscle cells). | — |
+| ✅ | Technical covariates (**RIN / %globin**) robustness on every hotspot — DONE (`rin_globin_robustness.tsv`): 16 tissues **9 of 9 hotspots ROBUST** (median Spearman of the dose statistic with vs without the covariates 0.997, median retention 0.98); refs4 (14 tissues) 11 of 11 (0.957, 0.91); July 11 of 13. Composition (θ) confound on all 197 blocks: 112 QUIET / 62 PASS_EXPRESSION / 23 FLAG_COMPOSITION; one hotspot flagged (SKMVL vascular smooth muscle cells). refs4: 91 / 56 / 18, with LUNG mesothelial cells also flagged. | — |
 | ✅ | **E.3** Tabula Sapiens atlas anchoring — **PASS** 2026-10-31 (0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`). Replaces the manuscript's limitation (v). | — |
 | ✅ | **Second heart reference** (`REFERENCE_RELABEL_PREREG.md` §15): GSE307551 F344 LV (independent study), 20 coarse mixtures deconvolved with the production HEART reference — **PASS** 2026-11-01: CM r 0.944, mean absolute CM error 0.043 (bar: r ≥ 0.9, error ≤ 0.10). Every class correlates (r 0.943–0.999) but absolute levels are off (endothelial +0.151, lymphocytes −0.103), so HEART stays read differentially (`data/deconvolution/validation/HEART_GSE307551_cross/`). | — |
-| ◐ | **More MoTrPAC tissues** (§14). Of the five tissues without a reference: **SPLEEN** (GSE306764, whole Lewis spleen, 14 types) and **OVARY** (GSE343214, one rat, 18 types) pass every registered check (S1; O1/O2; R1; R2 within-library r ≥ 0.94) and are built, deconvolved and embedded (2026-11-01). The SPLEEN fractions are implausible (T cells about 1%, endothelium 15% from a 34-cell type), so SPLEEN is read differentially only. COLON rejected (GSE326856 is sorted cells, no epithelium); ADRNL and VENACV have no usable public rat single-cell reference. The registered all-tissue (16) rerun of the cross-tissue steps is running (jobs 12108627–30, `config/profiles/refs_v4all.yaml`). | M |
+| ✅ | **More MoTrPAC tissues** (§14). Of the five tissues without a reference: **SPLEEN** (GSE306764, whole Lewis spleen, 14 types) and **OVARY** (GSE343214, one rat, 18 types) pass every registered check (S1; O1/O2; R1; R2 within-library r ≥ 0.94) and are built, deconvolved and embedded (2026-11-01). The SPLEEN fractions are implausible (T cells about 1%, endothelium 15% from a 34-cell type), so SPLEEN is read differentially only. COLON rejected (GSE326856 is sorted cells, no epithelium); ADRNL and VENACV have no usable public rat single-cell reference. The registered all-tissue (16) rerun is **done** (2026-11-01, c3b27c7; `ALL_TISSUE_RERUN_RESULTS.md`) and is now the default config: 197 blocks / 151 analysable, 9 hotspots (refs4's LUNG endothelial and mesothelial cells cross q 0.05 as the BH family grows), no SPLEEN or OVARY hotspot, SPLEEN 6,439 dose-significant genes, OVARY 0 (single sex: structural). OVARY and TESTES have no Augur score (5 controls per arm). **Open:** a single-sex DE fix would change the registered method and needs its own registration. | — |
 | ✅ | **A null for the GRN's `|z|`** — done 2026-10-31 by expression-matched decoy genes, since a label permutation is impossible here (`GRN_NULL_WHY_ABANDONED.md`). **Negative:** FDR(2) = 1.03, no t reaches FDR 0.10, 0/981 TFs beat their decoys (`GRN_DECOY_NULL_RESULTS.md`). | — |
-| ✅ | **Degenerate-block gate in the DE** — closed by the §6 rule (median per-sample library ≥ 1,000), applied to every refs4 table, with sensitivities at 100 and 0. The near-empty KIDNEY intercalated blocks are skipped. | — |
+| ✅ | **Degenerate-block gate in the DE** — closed by the §6 rule (median per-sample library ≥ 1,000), applied to every refs4 and all-tissue table, with sensitivities at 100 and 0. The near-empty KIDNEY intercalated blocks are skipped. | — |
 | ☐ | Module G — viewer v2 per-cell-type local PCA (lowest value, defer) | M |
 
 ### Blocked / out of scope
@@ -155,6 +168,6 @@ TF-specific signal. The Aim-3 capstone therefore rests on the DE/transfer leg an
    the independence guard + leakage log exist to control.
 
 Off the critical path: **Module C** (CPA dose model, confirmatory, thin-N); the Aim-1 ablations (GPU-weeks);
-the Stages 1–7 reproduction jobs; the all-tissue (16) rerun (above).
+the Stages 1–7 reproduction jobs; a single-sex DE method for TESTES and OVARY (needs its own registration).
 
 **Detailed handoff specs** live in `manuscript/wip/` (local-only; see its `README.md`).

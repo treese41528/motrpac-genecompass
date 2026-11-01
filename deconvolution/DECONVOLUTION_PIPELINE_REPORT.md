@@ -1,10 +1,12 @@
 # MoTrPAC → GeneCompass Deconvolution Pipeline — Technical Reference Report
 
-> **Current configuration: v2 model + refs4 references (default since 2026-10-31, `904dfb2`).** The section
-> "Current figures (refs4, 2026-10-31)" below is authoritative. The body was written with the April model and
+> **Current configuration: v2 model + refs4 references over all 16 tissues (default since 2026-11-01, c3b27c7;
+> refs4 on 14 tissues was the default 2026-10-31, `904dfb2`, now `config/profiles/refs4_14.yaml`).** The section
+> "Current figures (all 16 tissues, 2026-11-01)" below is authoritative; "refs4, 14 tissues" after it is the
+> comparison. The body was written with the April model and
 > the June/July references; its hotspot, block, transfer and GRN figures come from those earlier runs. Where the
 > body disagrees with the current-figures section, the section wins. Full refs4-vs-July comparison:
-> `REFS4_RERUN_RESULTS.md`; April-vs-v2 model comparison: `docs/RETRAIN_V2_RESULTS.md`. Profiles:
+> `REFS4_RERUN_RESULTS.md`; 16-vs-14-tissue comparison: `ALL_TISSUE_RERUN_RESULTS.md`; April-vs-v2 model comparison: `docs/RETRAIN_V2_RESULTS.md`. Profiles:
 > `config/profiles/july_refs.yaml` (v2 on the July references), `config/profiles/april.yaml` (April's model).
 
 > ⚠️ **(Historical, 2026-07-16 rebuild; superseded by refs4.)** Headline figures as of the 2026-07-16 reference rebuild; some deep-body build/validation detail predates it.
@@ -25,7 +27,50 @@
 > the actual scripts, config, and output tables; where a published doc lagged the code it was
 > reconciled to the code (see Reconciliation notes).
 
-## Current figures (refs4, 2026-10-31)
+## Current figures (all 16 tissues, 2026-11-01)
+
+**What changed.** SPLEEN (GSE306764, 14 types) and OVARY (GSE343214, 18 types; females only) joined the 14
+refs4 tissues, and the cross-tissue steps (gate, Augur, PCA control, DE with the pooled IHW fit, transfer,
+GRN, hardening) were rerun as registered in `REFERENCE_RELABEL_PREREG.md` §14/§16. Both new tissues are read
+differentially only. Outputs: `genecompass_input_v2_refs4all/` (+ `_human/`), `augur_input_v2_refs4all/`,
+`grn_v2_refs4all/` (+ `_human/`), `results_refs4all/`. Source of truth: `ALL_TISSUE_RERUN_RESULTS.md`.
+
+| Question / quantity | All 16 tissues (current) | refs4, 14 tissues | Source |
+|---|---|---|---|
+| Tissues | 16 (VENACV, ADRNL, COLON not deconvolved) | 14 | `config/pipeline_config.yaml` |
+| Pseudo-cells / embedded | **9,232 / 9,214** (SPLEEN 700, OVARY 432 added) | 8,100 / 8,082 | `genecompass_input_v2_refs4all/*/tokenize_summary.json` |
+| Cell-type blocks / analysable (§6) | **197 / 151** | 165 / 124 | `gate_rcv10/corroboration_merged.tsv` |
+| Exercise hotspots (10 splits × 10,000 permutations, BH q < 0.05) | **9**; none in SPLEEN or OVARY | 11 | same |
+| Held-out trained AUC, median / max (analysable blocks) | 0.605 / 0.887 | 0.603 / 0.887 | same |
+| Canonical Augur on hotspots; Spearman with PLS-1 | 9/9 at AUC ≥ 0.73; 0.785 (130 analysable blocks; OVARY and TESTES unscored) | 11/11 ≥ 0.73; 0.788 (118) | same |
+| Embedding vs PCA-50 (analysable) | higher in 82/151; median Δ +0.009; Wilcoxon **p 0.15** (not significant) | 71/124; +0.019; p 0.013 | `gate_rcv10/pca_control.tsv` |
+| DE blocks run / skipped near-empty | 151 / 46 | 124 / 41 | `pseudobulk_de/de_methods.tsv` |
+| Fisher meta-tests | 1,755,187 | 1,598,503 | same |
+| Dose-significant genes (FDR_IHW < 0.05) | **53,084** (BLOOD 19,358; SPLEEN 6,439; OVARY 0 ¹) | 48,522 | `pseudobulk_de/de_summary.tsv` |
+| Positive controls recovered (Tier A / Ai / B) | 6/45 / 2/14 / 7/22 (Tier A adds SKMGN Mfn1 via the pooled refit) | 5 / 2 / 7 | `ALL_TISSUE_RERUN_RESULTS.md` |
+| Composition confound (all blocks) QUIET / PASS_EXPRESSION / FLAG | 112 / 62 / 23 (hotspot flagged: SKMVL VSMC) | 91 / 56 / 18 | `composition_confound_table.tsv` |
+| Hotspots RIN/globin ROBUST | **9 / 9** | 11 / 11 | `rin_globin_robustness.tsv` |
+| Parenchyma bulk-mover recovery SKMGN / SKMVL / HEART | 0.394 / 0.547 / 0.917 | 0.394 / 0.582 / 0.917 | `parenchyma_dataanchored_validation.tsv` |
+| Transfer: hotspots preserved / weakened / lost | **9 / 0 / 0** | 11 / 0 / 0 | `genecompass_input_v2_refs4all_human/gate_rcv10/transfer_comparison.md` |
+| Transfer: all blocks preserved / weakened / lost | 44 / 29 / 123 (1 block with no human counterpart) | 42 / 15 / 107 | same |
+| Trained-AUC / dose-ρ Spearman rat ~ human | 0.766 / 0.725 | 0.751 / — | same |
+| Pooled sex check, rat → human (floor 0.70) | 0.743 → 0.745, PASS; block-level Spearman 0.930 (173 blocks) | 0.717 → 0.730, PASS; 0.918 | same |
+| GRNs (hotspots with mean fraction ≥ 0.01) | 6 (identical to six of refs4's 8; the two LUNG endothelial/mesothelial networks drop out) | 8 | `grn_v2_refs4all/` |
+| GRN rat–human self-consistency, median ρ | 0.310 over 633 TFs | 0.310 over 859 TFs | `ALL_TISSUE_RERUN_RESULTS.md` |
+| E.3 atlas anchoring | not rerun (run on the 14-tissue hotspots) | 0.404 vs null 0.084, PASS | `translation/ATLAS_PROJECTION_RESULTS.md` |
+
+¹ Structural, not biology: `R/run_pseudobulk_de.R` (line ~255) sets the Fisher sex-combined p to missing when
+either sex is absent, so single-sex tissues (OVARY, TESTES) can never have a dose-significant gene. TESTES's 0
+in every run is this. OVARY and TESTES also have no Augur score (5 controls per arm, below Augur's 10).
+
+The 9 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets, neutrophils; SKMVL
+satellite cells and vascular smooth muscle cells; SKMGN tenocytes; LUNG vascular smooth muscle cells; HYPOTH
+oligodendrocyte precursor cells. LUNG endothelial and mesothelial cells were hotspots in refs4 (14 tissues)
+only: their q moves from 0.0440 to 0.0535 with unchanged AUC because the BH family is larger. The embedding no
+longer beats PCA-50 significantly for the same reason. SPLEEN has DE but no embedding signal; its 6,439 genes
+are spread evenly over its types (shared deconvolved-bulk signal).
+
+## refs4, 14 tissues (2026-10-31; the comparison arm since 2026-11-01)
 
 **What changed.** The references were relabelled by one joint procedure (`references_v4/`), BLOOD got a
 whole-blood composite reference (GSE335156 PBMC + GSE306764 neutrophils and erythroid cells), and every stage
@@ -34,7 +79,7 @@ their references. A block now enters the gate's BH family and the DE only if its
 ≥ 1,000 (the §6 rule; sensitivities at 100 and 0 are reported). Outputs: `data/deconvolution/results_refs4/`,
 `genecompass_input_v2_refs4/` (+ `_human/`), `augur_input_v2_refs4/`, `grn_v2_refs4/` (+ `_human/`).
 
-| Question / quantity | v2 + refs4 (current) | v2 + July refs | Source |
+| Question / quantity | v2 + refs4, 14 tissues | v2 + July refs | Source |
 |---|---|---|---|
 | Tissues | 14 (VENACV, ADRNL, COLON, OVARY, SPLEEN not deconvolved) | 14 | `tissue_references.yaml` |
 | Pseudo-cells / embedded | **8,100 / 8,082** (18 LUNG goblet pseudo-cells below the tokenizer's 200-gene minimum) | 8,450 / 8,450 | `genecompass_input_v2_refs4/*/tokenize_summary.json` |
@@ -61,9 +106,9 @@ their references. A block now enters the gate's BH family and the DE only if its
 | GRN decoy null (`\|z\|` ≥ 2 vs expression-matched random genes) | FDR(2) = 1.03; 0/981 TFs beat their decoys: **no TF-specific signal** | not run | `GRN_DECOY_NULL_RESULTS.md` |
 | GRN rat–human self-consistency, median ρ | 0.310 over 859 TFs (53.1% ≥ 0.3) | 0.292 over 944 TFs | `compare_refs4.txt` |
 
-The 11 hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets, neutrophils; LUNG
-endothelial, mesothelial and vascular smooth muscle cells; SKMGN tenocytes; SKMVL satellite cells and vascular
-smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
+The 11 refs4 (14-tissue) hotspots: BLOOD classical monocytes, erythroid cells, megakaryocytes and platelets,
+neutrophils; LUNG endothelial, mesothelial and vascular smooth muscle cells; SKMGN tenocytes; SKMVL satellite
+cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
 
 **Reading.**
 - The exercise signal survives the change of references on a different set of blocks. The July BLOOD
@@ -106,7 +151,7 @@ per tissue is the hardest to resolve and its canonical mito/HSP transcript contr
 so the exercise story leans on **immune + mid-abundance stromal/endothelial** cell types, which validate against
 external data (Yu 2023, Vetr 2024) and survive the cross-species transfer.
 
-### Canonical figures, v2 + July references (historical; verified 2026-06-25, updated 2026-10-25; superseded by "Current figures (refs4, 2026-10-31)" above)
+### Canonical figures, v2 + July references (historical; verified 2026-06-25, updated 2026-10-25; superseded by "Current figures (all 16 tissues, 2026-11-01)" above)
 
 | Quantity | Value | Source |
 |---|---|---|
@@ -1451,7 +1496,7 @@ All outputs are **gitignored** and regenerable; large outputs (bulk, deconv resu
 
 ## Overview
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 Stage 8 builds 14 tissue-specific rat single-cell references for BayesPrism deconvolution of MoTrPAC bulk RNA-seq (Danko Lab BayesPrism v2.2.3, `new.prism(key=NULL)` for normal tissue). References are single-study, paper-faithful (no pooling/balancing of cells across studies); the reference construction pipeline applies three orthogonal isolation axes (tissue-split, sex-split, strain-split) and a critical collinear-label-merging step to fix over-fragmentation of the dominant parenchyma.
 
@@ -1758,7 +1803,7 @@ Validation design: 50 Dirichlet pseudobulk mixtures (α=1, balanced, 1000 cells 
 
 ## Overview
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 Stage 8 deconvolves MoTrPAC rat bulk RNA-seq to per-cell-type expression and fractions using **BayesPrism** (Danko-Lab), with validation across holdout and cross-dataset scenarios against known-truth pseudobulk mixtures, and independent corroboration via the **omnideconv multi-method panel** (MuSiC, DWLS, SCDC, Bisque). The deconvolution is both *accurate* (median Pearson r ≥0.95 on holdout, most cross-dataset validations ≥0.70) and *robust* (DWLS matches or exceeds BayesPrism; MuSiC/SCDC align with BayesPrism on WAT; Bisque is an outlier).
 
@@ -1983,7 +2028,7 @@ The omnideconv paper (Dietrich et al. 2025/2026) identifies that **CIBERSORTx an
 
 ## Stage 9: Pseudo-cells, Tokenization & GeneCompass Embedding
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 The Stage 9 pipeline bridges the deconvolution output (BayesPrism Z matrices) to the fine-tuned rat GeneCompass model, producing 768-dimensional embeddings per pseudo-cell for downstream exercise-signal detection (Stage 10) and cross-species transfer (Stage 12). This stage executes two sequential substeps per tissue: (1) pseudo-cell assembly and tokenization, and (2) embedding extraction via the fine-tuned checkpoint.
 
@@ -2393,7 +2438,7 @@ data/deconvolution/genecompass_input/
 
 ## Overview
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 Stage 10 comprises three integrated components on the GeneCompass 768-d pseudo-cell embeddings and per-cell-type gene-space deconvolved expression: (1) a detection layer measuring whether exercise signal is encoded in the embeddings, (2) an exhaustive per-cell-type differential-expression analysis on BayesPrism's deconvolved Z matrix, and (3) a pre-registered positive-control verdict that diagnoses the pipeline's fidelity when positive controls unexpectedly fail. The analysis bridges the embedding gate (Stage 9) and cross-species transfer (Stage 12), enabling cell-type-resolved exercise biology that bulk RNA-seq cannot resolve.
 
@@ -2824,7 +2869,7 @@ Notable Tier-A not-significant (direction-correct but flat):
 
 ## Overview
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 Stage 12 is the **cross-species transfer module (Aim 3a, Module E)** of the MoTrPAC-GeneCompass pipeline. It re-expresses each rat pseudo-cell as a human cell via ortholog mapping and GeneCompass embedding, then tests whether the exercise-trained axis survives transfer. This is a **one-directional transfer** (rat data → human representation → analyze); no human dataset is required as input. The key insight: human biological responses can be inferred from rat measurements by leveraging a pre-trained language model in human token space.
 
@@ -3118,7 +3163,7 @@ The PRESERVED hotspots form the **primary target set** for per-cell-type DE (dow
 
 ## Overview
 
-> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current refs4 figures: "Current figures (refs4, 2026-10-31)" at the top and `REFS4_RERUN_RESULTS.md`._
+> _Historical section: the numbers here are from an earlier reference set (June/July references; April or July-reference v2 runs). Current figures: "Current figures (all 16 tissues, 2026-11-01)" at the top and `ALL_TISSUE_RERUN_RESULTS.md` (refs4, 14 tissues: `REFS4_RERUN_RESULTS.md`)._
 
 The MoTrPAC-GeneCompass deconvolution pipeline is a multi-stage system that takes MoTrPAC rat bulk RNA-seq through BayesPrism cell-type deconvolution (Stage 8), tokenization and GeneCompass embedding (Stage 9), differential expression and cross-tissue analysis (Stage 10), and finally cross-species transfer to human embedding space with axis-survival testing (Stage 12). This section maps the complete artifact structure, outputs, code organization, and critical caveats that apply across all downstream analyses.
 
