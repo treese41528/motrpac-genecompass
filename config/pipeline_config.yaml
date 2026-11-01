@@ -74,6 +74,9 @@ paths:
   # OMIX767 testis files from qc_external_mtx.py). A rerun of Stage 2 from raw GEO writes a different set
   # (docs/repro_stages1_7/REPRODUCTION.md). Only a >10% deviation warns.
   expected_qc_h5ad_files: 868
+  # Stage 2 sample numbering (<study>_sample<idx>) pinned to the canonical run: the original numbering
+  # followed filesystem walk order, which is not portable. New/unlisted files are numbered in sorted order.
+  stage2_sample_order: config/stage2_sample_order.tsv
 
   gene_universe_dir: data/training/gene_universe
   ortholog_dir: data/training/ortholog_mappings

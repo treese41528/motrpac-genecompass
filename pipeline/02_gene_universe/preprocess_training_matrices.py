@@ -1013,6 +1013,59 @@ def _step2_provenance(gu_dir: Path) -> Dict:
     return {'git_hash': git_hash, 'inputs': inputs}
 
 
+def _load_pinned_order(config: dict) -> Dict[str, List[Tuple[str, str]]]:
+    """study -> [(sample_id, source path relative to data_root)] from paths.stage2_sample_order, or {}."""
+    rel = config.get('paths', {}).get('stage2_sample_order')
+    if not rel:
+        return {}
+    table = resolve_path(config, rel)
+    if not table.is_file():
+        logger.warning(f"stage2_sample_order table not found: {table}; numbering by sorted discovery order")
+        return {}
+    pinned = defaultdict(list)
+    with open(table) as f:
+        for row in csv.DictReader((l for l in f if not l.startswith('#')), delimiter='\t'):
+            pinned[row['study']].append((row['sample_id'], row['source']))
+    return pinned
+
+
+def number_matrix_files(study_accession: str, matrix_files: List[Tuple[str, str]],
+                        config: dict) -> List[Tuple[str, str, str]]:
+    """Give each discovered matrix its sample_id: [(sample_id, filepath, fmt)].
+
+    sample_id is <study>_sample<idx>. The canonical run numbered files in filesystem walk order, which
+    is not portable, so studies listed in paths.stage2_sample_order keep their pinned ids (matched by
+    path relative to harvesting.data_root). Files of a listed study that are not in the table, and all
+    files of unlisted studies, are numbered after that in sorted path order (deterministic everywhere).
+    """
+    # Not resolve(): data/raw/geo is a symlink, and the table holds paths as seen under data_root
+    data_root = os.path.abspath(resolve_path(config, config.get('harvesting', {}).get('data_root', 'data/raw')))
+
+    def rel(fp):
+        r = os.path.relpath(os.path.abspath(fp), data_root)
+        r = str(fp) if r.startswith('..') else r
+        # x.mtx and x.mtx.gz side by side are one matrix (discovery keeps whichever it meets first)
+        return r[:-3] if r.endswith('.mtx.gz') else r
+
+    # Discovery can return the same file twice (the study walk enters <GSE>_RAW, which is then walked
+    # again); the canonical run numbered both copies, so pinned ids are matched occurrence by occurrence.
+    found = defaultdict(list)
+    for fp, fmt in matrix_files:
+        found[rel(fp)].append((fp, fmt))
+    pinned = _load_pinned_order(config).get(study_accession, [])
+    out, taken = [], defaultdict(int)
+    for sample_id, src in pinned:
+        src = src[:-3] if src.endswith('.mtx.gz') else src
+        if taken[src] < len(found.get(src, [])):
+            out.append((sample_id, *found[src][taken[src]])); taken[src] += 1
+        else:
+            logger.warning(f"{sample_id}: pinned source not found on disk: {src}")
+    next_idx = 1 + max((int(sid.rsplit('sample', 1)[1]) for sid, _ in pinned), default=-1)
+    for src in sorted(src for src in found if taken[src] == 0):   # new files: once each, sorted
+        out.append((f"{study_accession}_sample{next_idx}", *found[src][0])); next_idx += 1
+    return out
+
+
 def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapper,
                   config: dict, output_dir: str) -> Tuple[Dict, Dict]:
     """Process a single study: load → map → QC → save raw counts + stats.
@@ -1046,8 +1099,7 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
     total_cells_before = 0
     total_cells_after = 0
 
-    for idx, (filepath, fmt) in enumerate(matrix_files):
-        sample_id = f"{study_accession}_sample{idx}"
+    for sample_id, filepath, fmt in number_matrix_files(study_accession, matrix_files, config):
         sample_report = {
             'sample_id': sample_id,
             'source': filepath,
