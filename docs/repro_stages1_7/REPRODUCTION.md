@@ -1,15 +1,15 @@
-# Reproducing Stages 1–7 (the v2 model build): status 2026-10-31
+# Reproducing Stages 1–7 (the v2 model build): 2026-10-31 to 11-01
 
 **Question.** Can the v2 model's inputs (corpus, gene universe, tokens, medians, priors, init, training mix)
 and the start of its training be rebuilt from the repository and the files on disk, and do they match what v2
 was trained on?
 
 Every rerun writes to scratch (`/scratch/gilbreth/reese18/motrpac_repro_20261031/`, through scratch-only
-profiles); no repository data, config or canonical output was touched. Files in this folder:
-`stage2_step1_gene_universe_diff.tsv` (genes in only one of the two universes) and
-`stage2_reference_file_mtimes.txt` (dates of the Stage 2 symbol/synonym reference files).
+profiles); no repository data, config or canonical output was touched. Comparison tables (`stage*.tsv`, one row
+per compared file or tensor), timings and the scripts/SLURM files/profiles used (`scripts/`) are in this folder.
+The scratch outputs were deleted after comparison.
 
-## Result so far
+## Stage 2 step 1 and code review (first results)
 
 **Stage 2, step 1 (gene universe) does not reproduce.** Same config, same 20,942 input matrices, same
 `rat_gene_info.tsv` md5 as the canonical run of 2026-02-22 (git 14ab1ba). The rerun resolves 3,968 fewer raw
@@ -60,11 +60,69 @@ requires Step 1's output even when Step 1 is skipped), so on a fresh tree Steps 
 Not rerun: Stage 6 co-expression and promoter (neither enters v2; see above). Wall times per step:
 `timings_s1to7data.tsv`. Scripts, SLURM files and profiles used: `scripts/`.
 
-## Pending (queued SLURM jobs)
+## Stage 7 training restart: result (job 12103825, 31 min, 2026-11-01 14:23–14:54, 4 × A100-40GB)
 
-| Job | What | Compared against |
+Phase 1 restarted from the canonical `rat_genecompass_init_v2` on the canonical `mixed_species_dataset_v2`, with the
+committed `rat_finetune_v2.yaml`, default seeds (seed_num 0, seed_val 42, Trainer seed 42) and the same launch as
+`slurm/finetune/stage7.slurm` (torchrun, 4 GPUs, fp16, gradient checkpointing). Output to scratch. Stopped after step
+2,000 (2,003 per-step entries). Compared with the `log_history` in v2's `checkpoint-480000/trainer_state.json`
+(`stage7_train_loss.tsv`).
+
+**Result: the trajectory reproduces, within GPU floating-point nondeterminism.**
+- Learning rate identical at all 40 logged points.
+- 50-step mean training loss (`loss`, 4 decimals as logged): equal at 39 of 40 points, the other off by 0.0001
+  (step 2,000: 0.7164 vs 0.7165). For example: step 50, 1.0092 / 1.0092; step 500, 0.8120 / 0.8120; step 1,000,
+  0.7454 / 0.7454.
+- Per-step rank-0 gene-ID loss: steps 0 and 1 are bit-identical. From step 2 on, the values differ by a median of
+  6e-5 and at most 9.2e-4. Value loss differs by at most 1.3e-4. The gap does not grow over the 2,000 steps
+  (per-500-step median 5e-5 to 7e-5), so the batches and masks are the same and only fp16/cuBLAS reduction order
+  differs.
+- `torchrun exit 1` in the job log is from the planned SIGTERM after step 2,000, not a failure.
+
+Not covered: the remaining 515,793 steps of phase 1 and all of phase 2. With nondeterministic GPU kernels, a full
+rerun would not be bit-identical; the C1/C2 probe scores are the right check on a rebuilt model.
+
+## Stage 2 steps 2–3 and OMIX767 QC: result (job 12103827, 23 h 22 min, 2026-10-31 17:47 to 11-01 16:10)
+
+`run_stage2.py`, all three steps, run sequentially like the 2026-02-23 run, followed by `qc_external_mtx.py` for
+OMIX767 C and E7W. Each step reads the rerun's previous step. Every reproduced QC h5ad was compared with the
+same-named canonical file: md5 first; where md5 differed, X, obs, var, raw and uns were compared
+(`stage2_qc_h5ad.tsv`, `stage2_gene_universe.tsv`).
+
+**The step-1 gene difference carries into the QC files and the pruned universe. Cell QC itself behaves the same.**
+- Studies: 80 succeed and 58 fail, as in February. Cells after QC: 8,930,742 vs 8,930,695 (+47).
+- QC h5ads: 812 reproduced files compared, 421 byte-identical and 391 different. Of the 557 + 2 files v2 keeps
+  (`keep`, OMIX767 included), **372 are byte-identical and 187 differ**. In those 187:
+  - 1–27 fewer genes (the synonym-resolved genes that step 1 no longer finds).
+  - In 98 of them the cell count also moves by −8 to +13. Gene-count-based QC (`gene_number_filter`, the 3-SD
+    outlier filter) sees slightly different totals.
+  - Kept differing files: 1,929,132 cells vs 1,929,099.
+  - By study: GSE280111 (78 files, −13 genes each), GSE284698 (41, −15), and a few files each from 21 more.
+- **The 27 `keep_raw_slot` files are not produced.** They came from the cancelled 2026-02-18 run (8 GSE127248,
+  8 GSE253767, 5 GSE253672, 3 GSE275999, 2 GSE235314, 1 GSE186158). The committed Stage 2 either finds no
+  matrices for these samples or writes them under other names, so v2's corpus holds 27 files (and their cells)
+  that the committed code cannot regenerate.
+- OMIX767 (`qc_external_mtx.py`): **IDENTICAL**. Both h5ads and both `.qc.json` reports are byte-identical. The
+  universe genes it uses are unaffected.
+- Step 3 pruning: `pruned_gene_universe.tsv` has 22,212 genes vs 22,213 (23 only in the rerun, 24 only in the
+  canonical file; `stage2_pruned_universe_diff.tsv`). `expression_stats.tsv` and every other step-2/3 output
+  differs accordingly.
+
+Effect on v2: none in practice. Stages 3–7 were rerun from the canonical QC files and the canonical pruned universe,
+which Stage 1 shows are exactly the files v2 used, and they reproduce. What does not reproduce is how those
+canonical inputs were made. Rebuilding them from raw GEO with today's reference files and code gives a corpus that
+differs in 187 + 27 of its 584 files.
+
+## Summary
+
+| Stage | Rerun from | Result |
 |---|---|---|
-| 12103827 (running) | Stage 2 step 2 cell QC (~23 h), step 3 pruning, OMIX767 QC | Canonical QC h5ads and expression stats: how far the step-1 difference spreads |
-| 12103825 (4 GPUs) | 2,000 steps of phase 1 restarted from the canonical v2 init on the canonical mix | v2's `log_history`, step by step |
-
-This file will be updated with each job's result.
+| 1 (inputs) | Corpus plan md5s | IDENTICAL: 868/868 files |
+| 2 gene universe + cell QC | Raw GEO + current reference files | DIFFERS: universe 22,485 vs 22,488 genes, pruned 22,212 vs 22,213; 372/559 kept QC files identical, 187 differ, 27 not produced; OMIX767 identical |
+| 3 | Canonical pruned universe | IDENTICAL |
+| 4 (+ hybrid medians) | Canonical QC files + rerun Stage 3 | IDENTICAL |
+| 5 | Rerun Stage 4 | IDENTICAL (418 GB corpus, byte for byte) |
+| 6 | Rerun Stage 3 | GRN IDENTICAL; family vectors DIFFER (gensim threads), with no effect on v2 |
+| 7 init | Rerun Stage 3 + 6 | 231/234 tensors IDENTICAL; 3 differ (unseeded random rows) |
+| 7 mix + probe | Rerun Stage 5 | IDENTICAL (546 GB); probe data md5s match the registered values |
+| 7 training | Canonical init + mix | First 2,000 steps track v2 within fp16 nondeterminism (50-step loss equal to 4 decimals at 39/40 points) |

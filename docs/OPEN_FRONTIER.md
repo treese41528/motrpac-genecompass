@@ -150,7 +150,7 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on v2 (2026
 | Status | Item | Effort |
 |---|---|---|
 | ✅ | Per-tier masked-prediction loss (2026-10-31; see Done) | — |
-| ◐ | **End-to-end Stages 1–7 reproduction** (`docs/repro_stages1_7/REPRODUCTION.md`). So far: Stage 2's gene universe does not rebuild byte for byte from the current symbol/synonym files (22,485 vs 22,488 genes); the init was unseeded (now `--seed`); Stage 6's orchestrator named a missing Step 4 script (fixed). Cell QC, Stages 3–5, the init rebuild, the training mix and a 2,000-step training restart are queued. | M (compute) |
+| ✅ | **End-to-end Stages 1–7 reproduction** (2026-11-01; `docs/repro_stages1_7/REPRODUCTION.md`). Stages 1, 3, 4, 5, the training mix and the eval probe rebuild byte for byte; the Stage 6 GRN is identical; the init differs only in its 3 unseeded random tensors (now `--seed`); a 2,000-step training restart tracks v2's loss within fp16 nondeterminism (39/40 logged points equal to 4 decimals). **Stage 2 does not rebuild from raw GEO**: the synonym files post-date the canonical run, so 187 of the kept QC files lose 1–27 genes and 27 `keep_raw_slot` files (from the cancelled 2026-02-18 run) are not produced. No effect on v2, whose canonical inputs are on disk and verified. | — |
 | ☐ | **Fine-tuning ablations** (priors off, no mouse tokens, single-phase). Each is a full two-phase retrain (v2 took about three weeks on 4 A100s), so none is run; they need a dedicated allocation. | L (GPU-weeks) |
 
 ---
@@ -168,6 +168,6 @@ TF-specific signal. The Aim-3 capstone therefore rests on the DE/transfer leg an
    the independence guard + leakage log exist to control.
 
 Off the critical path: **Module C** (CPA dose model, confirmatory, thin-N); the Aim-1 ablations (GPU-weeks);
-the Stages 1–7 reproduction jobs; a single-sex DE method for TESTES and OVARY (needs its own registration).
+a single-sex DE method for TESTES and OVARY (needs its own registration).
 
 **Detailed handoff specs** live in `manuscript/wip/` (local-only; see its `README.md`).
