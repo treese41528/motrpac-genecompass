@@ -12,7 +12,7 @@
 suppressWarnings(suppressMessages({ library(limma); library(edgeR); library(data.table) }))
 
 ROOT     <- Sys.getenv("PIPELINE_ROOT", ".")
-RESULTS  <- file.path(Sys.getenv("CFG_RESULTS_DIR", unset = file.path(ROOT, "data/deconvolution/results_refs4")), "motrpac")
+RESULTS  <- file.path(Sys.getenv("CFG_RESULTS_DIR", unset = file.path(ROOT, "data/deconvolution/results_refs4all")), "motrpac")
 BULK     <- file.path(ROOT, "data/deconvolution/motrpac_bulk")
 PHENO    <- file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv")
 GC_DIR   <- Sys.getenv("CFG_GENECOMPASS_INPUT_DIR", unset = file.path(ROOT, "data/deconvolution/genecompass_input_v2_refs4"))

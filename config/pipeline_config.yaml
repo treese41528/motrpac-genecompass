@@ -341,12 +341,13 @@ deconvolution:
   built_reference_dir: data/deconvolution/references     # build_reference.py per-tissue SC references
   idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
   validation_dir: data/deconvolution/validation
-  # Default = the jointly re-annotated references (references_v4/, tissue_references.yaml; adopted 2026-10-31,
-  # REFERENCE_RELABEL_PREREG.md §8, REFS4_RERUN_RESULTS.md) with the v2 model. The July-reference v2 outputs
-  # are config/profiles/july_refs.yaml; April's model is config/profiles/april.yaml. BAT/HEART/HYPOTH/TESTES,
-  # whose references did not change, are linked into the _refs4 folders from the July v2 ones.
-  results_dir: data/deconvolution/results_refs4
-  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4  # pseudo-cells/tokenized/embeddings/umap
+  # Default = all 16 tissues with a reference (since 2026-11-01, REFERENCE_RELABEL_PREREG.md §14/§16,
+  # ALL_TISSUE_RERUN_RESULTS.md): the jointly re-annotated references (references_v4/, tissue_references.yaml;
+  # REFS4_RERUN_RESULTS.md) plus SPLEEN and OVARY, with the v2 model. The 14 refs4 tissues are linked into the
+  # _refs4all folders from the _refs4 ones. The 14-tissue result is config/profiles/refs4_14.yaml; the
+  # July-reference v2 outputs are config/profiles/july_refs.yaml; April's model is config/profiles/april.yaml.
+  results_dir: data/deconvolution/results_refs4all
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all  # pseudo-cells/tokenized/embeddings/umap
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
@@ -356,11 +357,11 @@ deconvolution:
   # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
   # DE wrapper): the 10 splits x 10,000 permutations gate (pre-registration §6), scored under the §6
   # analysable-block rule (median library >= 1,000; REFERENCE_RELABEL_PREREG.md §6).
-  hotspots_table: data/deconvolution/genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4all/gate_rcv10/corroboration_merged.tsv
   # Canonical-Augur exports (augur_prep.py) and the Stage 13 differential GRNs in rat and human space.
-  augur_input_dir: data/deconvolution/augur_input_v2_refs4
-  grn_dir: data/deconvolution/grn_v2_refs4
-  grn_human_dir: data/deconvolution/grn_v2_refs4_human
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4all
+  grn_dir: data/deconvolution/grn_v2_refs4all
+  grn_human_dir: data/deconvolution/grn_v2_refs4all_human
   # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
   # posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11). July's: reference/posctrl_prereg.tsv.
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv

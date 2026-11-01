@@ -4,6 +4,7 @@
 # The 14 refs4 tissues are linked in from the refs4 folders (slurm/analysis/refs4all_setup.sh); SPLEEN and
 # OVARY live here. The cross-tissue steps (gate BH, pooled IHW/repfdr, transfer comparison, GRNs, Stage 14)
 # are rerun over all 16. The 14-tissue refs4 result stays the registered comparison.
+# Since 2026-11-01 these are also the default config values, so this profile is a no-op kept for scripts.
 deconvolution:
   results_dir: data/deconvolution/results_refs4all
   genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all

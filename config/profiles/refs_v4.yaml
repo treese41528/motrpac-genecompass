@@ -1,4 +1,4 @@
-# Now a no-op: these are the default config's values since 2026-10-31 (kept because the refs4 jobs set it).
+# Same values as config/profiles/refs4_14.yaml (the 14-tissue refs4 arm); the default since 2026-11-01 is all 16 tissues.
 # Rebuilt-reference profile (2026-10-28, REFERENCE_RELABEL_PREREG.md §8): Stage 8 onward with the jointly
 # re-annotated references (references_v4/, tissue_references.yaml) and the BLOOD composite, with the v2
 # model. Every output goes to a _refs4 folder so the July-reference v2 results stay untouched for the

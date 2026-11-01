@@ -1,0 +1,12 @@
+# 14-tissue refs4 profile: the jointly re-annotated references with the v2 model, without SPLEEN/OVARY
+# (REFS4_RERUN_RESULTS.md: 165 blocks, 124 analysable, 11 hotspots). Default 2026-10-31 to 11-01; since then
+# the registered comparison for the all-tissue default (ALL_TISSUE_RERUN_RESULTS.md).
+#   export PIPELINE_PROFILE=config/profiles/refs4_14.yaml
+deconvolution:
+  results_dir: data/deconvolution/results_refs4
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4
+  grn_dir: data/deconvolution/grn_v2_refs4
+  grn_human_dir: data/deconvolution/grn_v2_refs4_human
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv

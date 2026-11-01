@@ -681,3 +681,10 @@ changes no reference.
   Spearman, embedding vs PCA, and the transfer table. SPLEEN fractions are implausible (above), so a SPLEEN
   hotspot is reported with that caveat and not read as biology. When the run finishes it becomes the
   default config (§14) and refs4 becomes `config/profiles/refs4_14.yaml`.
+- 2026-11-01 — All-tissue run finished (jobs 12108627–30); result in `ALL_TISSUE_RERUN_RESULTS.md`. 9
+  hotspots (refs4: 11). Crossing q = 0.05: LUNG endothelial and LUNG mesothelial (q 0.0440 → 0.0535 each);
+  no SPLEEN or OVARY hotspot. Embedding vs PCA 82/151, p 0.15 (refs4 p 0.013). Nothing written through the
+  links (the follow-up's own listing diff was a path-prefix artefact: absolute in setup, relative after;
+  identical once normalised). Found: single-sex tissues (TESTES, OVARY) can never have a dose-significant
+  gene (Fisher combine needs both sexes); reported, not changed. As registered, the all-tissue arm becomes
+  the default config; refs4 → `config/profiles/refs4_14.yaml`.
