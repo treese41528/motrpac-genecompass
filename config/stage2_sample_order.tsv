@@ -2,6 +2,9 @@
 # sample_id <study>_sample<idx> was the file's position in filesystem walk order, which differs between
 # filesystems; preprocess_training_matrices.py numbers listed studies from this table. Paths are relative
 # to harvesting.data_root. status = the canonical run's outcome for that file.
+# The 27 rows of GSE127248, GSE253767, GSE253672, GSE275999, GSE235314 and GSE186158 are the keep_raw_slot files of
+# config/corpus_v2_plan.tsv, which the canonical run did not produce (their _RAW dirs were empty). They were pinned
+# 2026-11-01 by regenerating them from the unpacked archives: identical cells and counts (docs/repro_stages1_7/REPRODUCTION.md).
 study	sample_id	source	format	status
 GSE128992	GSE128992_sample0	geo/single_cell/geo_datasets/GSE128992/GSE128992_RAW/GSM3689776_mouse_10X_matrix.txt.gz	tsv	load_failed
 GSE128992	GSE128992_sample1	geo/single_cell/geo_datasets/GSE128992/GSE128992_RAW/GSM3689777_rat_10X_matrix.txt.gz	tsv	load_failed
@@ -1041,3 +1044,30 @@ GSE314229	GSE314229_sample5	geo/single_cell/geo_datasets/GSE314229/GSE314229_RAW
 GSE314229	GSE314229_sample6	geo/single_cell/geo_datasets/GSE314229/GSE314229_RAW/GSM9386489_TO_4d_4h_matrix.mtx.gz	mtx	success
 GSE314229	GSE314229_sample7	geo/single_cell/geo_datasets/GSE314229/GSE314229_RAW/GSM9386492_TOE_2d_24h_matrix.mtx	mtx	success
 GSE314229	GSE314229_sample8	geo/single_cell/geo_datasets/GSE314229/GSE314229_RAW/GSM9386493_TOE_4d_4h_matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample0	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633094_RatIC_PC2_DMSO.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample1	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633091_RatIC_NC1_DMSO.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample2	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633087_RatIC_NC1_fresh.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample3	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633089_RatIC_PC1_fresh.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample4	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633088_RatIC_NC2_fresh.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample5	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633090_RatIC_PC2_fresh.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample6	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633092_RatIC_NC2_DMSO.matrix.mtx.gz	mtx	success
+GSE127248	GSE127248_sample7	geo/single_cell/geo_datasets/GSE127248/GSE127248_RAW/GSM3633093_RatIC_PC1_DMSO.matrix.mtx.gz	mtx	success
+GSE186158	GSE186158_sample5	geo/single_cell/geo_datasets/GSE186158/GSE186158_RAW/GSM5639495_Rat/Rat/filtered_feature_bc_matrix/matrix.mtx.gz	mtx	success
+GSE235314	GSE235314_sample0	geo/single_cell/geo_datasets/GSE235314/GSE235314_RAW/GSM7498810_BLA/BLA/filtered_feature_bc_matrix.h5	h5	success
+GSE235314	GSE235314_sample4	geo/single_cell/geo_datasets/GSE235314/GSE235314_RAW/GSM7498810_BLA/BLA/filtered_feature_bc_matrix/matrix.mtx.gz	mtx	success
+GSE253672	GSE253672_sample4	geo/single_cell/geo_datasets/GSE253672/GSE253672_RAW/GSM8025510_TA_9_L_matrix/matrix.mtx	mtx	success
+GSE253672	GSE253672_sample8	geo/single_cell/geo_datasets/GSE253672/GSE253672_RAW/GSM8025501_HP_7_L_matrix/matrix.mtx	mtx	success
+GSE253672	GSE253672_sample9	geo/single_cell/geo_datasets/GSE253672/GSE253672_RAW/GSM8025499_HP_10_R_matrix/matrix.mtx	mtx	success
+GSE253672	GSE253672_sample12	geo/single_cell/geo_datasets/GSE253672/GSE253672_RAW/GSM8025504_TA_1_L_matrix/matrix.mtx	mtx	success
+GSE253672	GSE253672_sample15	geo/single_cell/geo_datasets/GSE253672/GSE253672_RAW/GSM8025506_TA_2_L_matrix/matrix.mtx	mtx	success
+GSE253767	GSE253767_sample0	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027653_MI2_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample1	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027657_MI-stiff2_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample2	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027652_MI1_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample3	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027656_MI-stiff1_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample4	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027659_Sham2_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample5	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027655_MI-soft2_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample6	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027658_Sham1_UMI_mat.csv.gz	csv	success
+GSE253767	GSE253767_sample7	geo/single_cell/geo_datasets/GSE253767/GSE253767_RAW/GSM8027654_MI-soft1_UMI_mat.csv.gz	csv	success
+GSE275999	GSE275999_sample0	geo/single_cell/geo_datasets/GSE275999/GSE275999_RAW/GSM8489217_MUT-1/MUT-1/matrix.mtx.gz	mtx	success
+GSE275999	GSE275999_sample4	geo/single_cell/geo_datasets/GSE275999/GSE275999_RAW/GSM8489214_WT-1/WT-1/matrix.mtx.gz	mtx	success
+GSE275999	GSE275999_sample5	geo/single_cell/geo_datasets/GSE275999/GSE275999_RAW/GSM8489215_WT-2/WT-2/matrix.mtx.gz	mtx	success

@@ -94,15 +94,20 @@ python pipeline/run_stage1.py --from 4                  # metadata, matrix analy
 #   deterministic: DEPOSITED: data/catalog/.
 
 # ── Stage 2. Gene universe + cell QC (data/training/gene_universe/, qc_h5ad/; ~23 h, 16 CPUs, 200 GB) ──
-python pipeline/run_stage2.py                           # step 1 universe, step 2 QC h5ads, step 3 pruning
+python pipeline/run_stage2.py --to 1                    # step 1: gene universe
+bash scripts/restore_rawslot_studies.sh                 # unpack the 6 studies behind the 27 keep_raw_slot files
+python pipeline/run_stage2.py --from 2                  # step 2 QC h5ads, step 3 pruning
+#   The restore goes between steps 1 and 2 because the canonical step 1 ran while those six studies' _RAW
+#   folders were empty. Step 2 numbers files from config/stage2_sample_order.tsv, not filesystem order.
 python pipeline/02_gene_universe/qc_external_mtx.py \
     --mtx-dir data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/C_gene_bc_matrices --sample-id OMIX767_grcr8_sampleC
 python pipeline/02_gene_universe/qc_external_mtx.py \
     --mtx-dir data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/E7W_gene_bc_matrices --sample-id OMIX767_grcr8_sampleE7W
 #   -> 868 QC h5ads (config/corpus_v2_plan.tsv: one row each with md5 and n_cells; 584 kept) and
 #   pruned_gene_universe.tsv (22,213 genes). DEPOSITED: both. A rerun differs (187 of the kept files and
-#   the universe by a few genes; the 27 keep_raw_slot files come from a cancelled February run and are not
-#   produced at all). Check a restored set: md5s in config/corpus_v2_plan.tsv.
+#   the universe by a few genes, because the RGD synonym files were rewritten after the canonical run; the
+#   27 keep_raw_slot files regenerate with identical cells and counts but store counts in X, so their md5s
+#   differ). Check a restored set: md5s in config/corpus_v2_plan.tsv.
 
 # ── Stage 3. Ortholog mapping + token dictionary (data/training/ortholog_mappings/; seconds) ───────────
 python pipeline/run_stage3.py

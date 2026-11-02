@@ -101,7 +101,7 @@ same-named canonical file: md5 first; where md5 differed, X, obs, var, raw and u
 - **The 27 `keep_raw_slot` files are not produced.** They came from the cancelled 2026-02-18 run (8 GSE127248,
   8 GSE253767, 5 GSE253672, 3 GSE275999, 2 GSE235314, 1 GSE186158). The committed Stage 2 either finds no
   matrices for these samples or writes them under other names, so v2's corpus holds 27 files (and their cells)
-  that the committed code cannot regenerate.
+  that the committed code could not regenerate at the time. **Resolved:** see the follow-up below.
 - OMIX767 (`qc_external_mtx.py`): **IDENTICAL**. Both h5ads and both `.qc.json` reports are byte-identical. The
   universe genes it uses are unaffected.
 - Step 3 pruning: `pruned_gene_universe.tsv` has 22,212 genes vs 22,213 (23 only in the rerun, 24 only in the
@@ -113,12 +113,78 @@ which Stage 1 shows are exactly the files v2 used, and they reproduce. What does
 canonical inputs were made. Rebuilding them from raw GEO with today's reference files and code gives a corpus that
 differs in 187 + 27 of its 584 files.
 
+## Follow-up (2026-11-01): Stage 2 diagnosis, the 27 raw-slot files, and the fixes
+
+**Step 1: the reference files changed; the code did not.** Job 12118753 ran step 1 twice on the current inputs:
+once with the February code (a worktree at 14ab1ba) and once with HEAD. The two runs gave the same result:
+`gene_universe.tsv` md5 02991870 both times, 22,485 genes, against the canonical fe62f634 (22,488 genes).
+Compared with the canonical `gene_resolution.tsv`, 214 of 568,594 raw IDs resolve differently, and every one is
+an RGD-synonym change: 106 resolved by synonym in February and unresolved now, 96 the reverse, 10 resolved by
+synonym to a different gene, and 2 empty/unresolved swaps. So the synonym references in `data/references/biomart`,
+rewritten on 2026-02-24, are the cause. They cannot be restored from upstream because the files step 1 read were
+overwritten. What was done:
+- `config/reference_md5sums.tsv` now records the md5 of every reference file, and step 1 refuses to run when one
+  differs (override: `--allow-reference-drift`).
+- The current reference files are on the deposit list, so a rebuild can use exactly the files that
+  `config/reference_md5sums.tsv` pins.
+
+**The 27 raw-slot files are reproducible.** The canonical run produced none of them because the six studies'
+`_RAW` folders were empty after the 2026-02-21 RAID recovery. The 27 files in the corpus came from the cancelled
+2026-02-18 run. Job 12118868 unpacked the series archives, including the nested per-sample `GSM*.tar.gz`, and
+ran the committed Stage 2 on the six studies:
+- GSE127248's series `RAW.tar` on GEO is truncated (6,066,176 bytes) and the URL now returns 404, so its 24
+  files were downloaded per sample.
+- **All 27 regenerated files match their canonical counterparts:** same barcodes and identical counts on every
+  shared gene (maximum absolute difference 0; `rawslot_cmp` table below).
+- One difference: the 8 GSE253767 files have 17,351 genes against the canonical 17,352. The canonical gene
+  universe was used, so this predates the reference change: the cancelled 02-18 run's gene set.
+
+The steps are now committed:
+- `scripts/restore_rawslot_studies.sh` unpacks the six studies, checking every archive and file against
+  `config/rawslot_restore_md5.tsv` and downloading GSE127248 per sample. It was tested end to end in a fresh
+  folder (job 12120952).
+- `config/stage2_sample_order.tsv` pins the 27 canonical IDs to their source files. On the restored tree all 27
+  get the right file under both forward and reversed discovery order. Under the walk-order numbering they had
+  come out as other IDs (for example, canonical `GSE127248_sample0` was regenerated as `sample7`).
+- The regenerated files hold counts in X, while the canonical files held log-normalized X with counts in `.raw`.
+  Their md5s therefore differ from `config/corpus_v2_plan.tsv`; `raw_counts_adata` reads counts from either.
+
+| canonical | regenerated as (walk order) | cells | genes canon / new | counts identical |
+|---|---|---|---|---|
+| GSE127248_sample0–7 | sample7,1,4,2,3,0,5,6 | 3,641–4,736 | 17,883 / 17,883 | all 8 |
+| GSE253767_sample0–7 | sample11,13,1,10,14,12,0,15 | 8,098–12,342 | 17,352 / 17,351 | all 8 |
+| GSE253672_sample4,8,9,12,15 | sample20,11,9,14,16 | 6,480–12,436 | same | all 5 |
+| GSE275999_sample0,4,5 | sample3,0,1 | 17,041–19,589 | same | all 3 |
+| GSE235314_sample0,4 | sample2,3 | 12,408–12,455 | same | both |
+| GSE186158_sample5 | sample3 | 14,432 | same | yes |
+
+**Stage 2 numbering now depends only on the table, not on the filesystem.** `<study>_sample<idx>` was the
+file's position in `os.walk` order. That order is filesystem-specific: sorting instead would renumber 371 of 529
+studies. `config/stage2_sample_order.tsv` (1,038 canonical rows plus the 27 above) fixes every ID. Tested on the
+real tree, 1,038/1,038 IDs come out right in native order and 1,037 with every listing reversed. The exception
+is `GSE128992_sample0`, a multi-species folder that failed to load in both runs.
+
+**IHW was already seeded.** An audit claim that the Stage 10 DE used unseeded IHW folds was wrong: `ihw()`
+defaults to `seed = 1L` and calls `set.seed` itself (checked in R, IHW 1.34.0). The DE results were reproducible.
+`run_pseudobulk_de.R` now passes `DE_SEED` (config `deconvolution.de_seed: 1`) explicitly. Because that is the
+same value, no numbers change.
+
+**What still cannot be regenerated, so it must be deposited:**
+- **The v2 QC h5ads.** These are needed for a byte-exact rebuild; the 187 files above differ through the old
+  synonym files.
+- **The reference files** in `data/references/biomart` and the HGNC copy.
+- **The v2 init**, unseeded at the time.
+- **Inputs from external or one-off processes:** the LLM study classification, the consensus cell annotations,
+  the joint labels, and the author label objects for BAT and HEART.
+
+The final weights are the latest checkpoint: `models/pytorch_model.bin` md5 ae6100ff equals `checkpoint-591763`.
+
 ## Summary
 
 | Stage | Rerun from | Result |
 |---|---|---|
 | 1 (inputs) | Corpus plan md5s | IDENTICAL: 868/868 files |
-| 2 gene universe + cell QC | Raw GEO + current reference files | DIFFERS: universe 22,485 vs 22,488 genes, pruned 22,212 vs 22,213; 372/559 kept QC files identical, 187 differ, 27 not produced; OMIX767 identical |
+| 2 gene universe + cell QC | Raw GEO + current reference files | DIFFERS: universe 22,485 vs 22,488 genes, pruned 22,212 vs 22,213; 372/559 kept QC files identical, 187 differ (synonym files changed 02-24; code ruled out); the 27 raw-slot files regenerate with identical counts via `scripts/restore_rawslot_studies.sh`; OMIX767 identical |
 | 3 | Canonical pruned universe | IDENTICAL |
 | 4 (+ hybrid medians) | Canonical QC files + rerun Stage 3 | IDENTICAL |
 | 5 | Rerun Stage 4 | IDENTICAL (418 GB corpus, byte for byte) |
