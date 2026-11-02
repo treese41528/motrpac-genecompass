@@ -60,6 +60,15 @@ writes a manifest or a `provenance_*.json` (git commit, config, input sizes and 
 byte and what does not). "Deposited" marks the outputs that are deposited with v2 because a rerun cannot
 give the same bytes; to reproduce v2 exactly, restore those and start from the next step.
 
+Check a restored deposit against the committed checksums before starting:
+- `python scripts/deposit_manifest.py --verify` covers the gene universes, catalog, cell annotations, joint labels,
+  v2 init and v2 weights (`config/deposit_md5.tsv`).
+- The other deposited sets have their own tables:
+  - QC h5ads: `config/corpus_v2_plan.tsv`
+  - Reference files: `config/reference_md5sums.tsv`
+  - GeneCompass assets: `bash scripts/stage_genecompass_assets.sh --verify`
+  - External deconvolution references: `bash deconvolution/fetch_external_refs.sh --verify`
+
 ```bash
 # ── 0. Clone + environment ────────────────────────────────────────────────────────────────────────────
 git clone --recurse-submodules https://github.com/treese41528/motrpac-genecompass.git && cd motrpac-genecompass

@@ -145,8 +145,9 @@ reuse them (use `--force` or the rebuild profile's fresh `validation_dir`).
 python notebooks/run_notebooks.py 8 9 10 11 12           # re-execute in place (batch job; CPU)
 ```
 
-Notebooks 8-12 still hardcode the default `_refs4all` paths and some hand-copied constants
-(`notebooks/RERUN_EDITS.md`): under a profile, re-source those first.
+Notebooks 8-12 read their paths, tissue lists and per-tissue numbers from the active config and the outputs
+(`notebooks/nb_config.py`), so under the rebuild profile they show the rebuild. Only the markdown prose quotes
+figures by hand (`notebooks/RERUN_EDITS.md`).
 
 ### 0.9 Expected totals (16 tissues)
 

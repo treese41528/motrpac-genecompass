@@ -1,0 +1,20 @@
+# BayesPrism run.prism wall time (minutes) for Stage 8 runs made before run_deconvolution.R recorded it in
+# provenance (params.run_prism_minutes, 2026-11-01). Read by notebooks/nb_config.py, only for the results_dir named.
+# Each value is the "run.prism wall time" line of the log named (logs/ is local to the cluster, gitignored).
+results_dir	tissue	minutes	log
+data/deconvolution/results_refs4all	BAT	11.34	deconv_bat_11318555.out
+data/deconvolution/results_refs4all	BLOOD	10.86	refs4_s8_12041931_2.out
+data/deconvolution/results_refs4all	CORTEX	11.64	refs4_s8_12042040_3.out
+data/deconvolution/results_refs4all	HEART	33.53	deconv_heart_11318722.out
+data/deconvolution/results_refs4all	HIPPOC	13.41	refs4_s8_12041931_9.out
+data/deconvolution/results_refs4all	HYPOTH	9.98	deconv_hypoth_11310564.out
+data/deconvolution/results_refs4all	KIDNEY	14.02	refs4_s8_12041931_0.out
+data/deconvolution/results_refs4all	LIVER	9.05	refs4_s8_12041931_1.out
+data/deconvolution/results_refs4all	LUNG	15.28	refs4_s8_12041931_8.out
+data/deconvolution/results_refs4all	OVARY	6.37	s14_s8_12107800_1.out
+data/deconvolution/results_refs4all	SKMGN	9.22	refs4_s8_12041931_5.out
+data/deconvolution/results_refs4all	SKMVL	9.21	refs4_s8_12041931_6.out
+data/deconvolution/results_refs4all	SMLINT	10.05	refs4_s8_12041931_7.out
+data/deconvolution/results_refs4all	SPLEEN	10.00	s14_s8_12107800_0.out
+data/deconvolution/results_refs4all	TESTES	4.98	testes_lifted_12007286.out (first run: the lifted reference production uses; the second, 4.73, used the raw-ID reference)
+data/deconvolution/results_refs4all	WATSC	10.32	refs4_s8_12041931_4.out

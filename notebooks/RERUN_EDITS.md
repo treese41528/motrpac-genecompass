@@ -1,3 +1,18 @@
+> **Config-driven (2026-11-01, later).** Notebooks 8–12 no longer hardcode paths or per-tissue numbers. They import
+> `notebooks/nb_config.py`, which reads the active config (`PIPELINE_PROFILE` honoured), so running a profile with
+> `run_notebooks.py` shows that profile's outputs. Sources:
+> - **Paths:** `deconvolution.results_dir`, `genecompass_input_dir` (+ `_human`) and `hotspots_table`.
+> - **Tissue lists:** the tissues deconvolved in `results_dir`.
+> - **nb8 run.prism minutes:** each run's provenance (`params.run_prism_minutes`, recorded since 2026-11-01). Older
+>   runs read `deconvolution/reference/run_prism_minutes_backfill.tsv`, values from the SLURM logs.
+> - **nb9 minimum token length:** the tokenized datasets. It now reports the shortest *kept* cell: LUNG shows 200
+>   where the hand-copied value was the pre-drop 156.
+> - **nb12 transfer stats:** `transfer_summary.json`, `tokenize_summary.json` and the rows of `cell_embeddings.npy`.
+>
+> Checked against the old hand-copied values: all equal, except TESTES run.prism. The notebook had 4.73 min, taken
+> from the raw-ID reference run in the same log; the production (lifted) run took 4.98. What still needs a hand edit
+> after a rerun that changes results is the prose in the markdown cells; the computed cells are authoritative.
+>
 > **Runner (2026-11-01).** Re-execute with `python notebooks/run_notebooks.py [N ...]` from the project venv
 > (nbclient, the venv's own `python3` kernel; no user kernel registration). It passes `PIPELINE_PROFILE` to the
 > kernel and records it in each notebook's `metadata.rerun`, BUT notebooks 8-12 do not read the config yet: their

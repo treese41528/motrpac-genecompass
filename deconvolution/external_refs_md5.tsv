@@ -1,10 +1,10 @@
 # Files fetched by deconvolution/fetch_external_refs.sh (paths relative to the repo root), with size and md5 as
-# on disk on 2026-11-01. kind: download = as served; extracted = unpacked from a download. md5 'TODO' = not
-# computed (BAT/HEART deposited-label objects, 4-14 GB each; run md5sum on a compute node and fill in).
+# on disk on 2026-11-01. kind: download = as served; extracted = unpacked from a download. The BAT and HEART
+# deposited-label objects (4-14 GB) were hashed on 2026-11-02 (compute node).
 # Verify:  bash deconvolution/fetch_external_refs.sh --verify
 tissue	path	bytes	md5	kind	source
-BAT	data/raw/geo/GSE244451/GSE244451_PVAT_BAT_SCPAnnotated.h5ad	9072466376	TODO	extracted	gunzip of the above
-BAT	data/raw/geo/GSE244451/GSE244451_PVAT_BAT_SCPAnnotated.h5ad.gz	4209110192	TODO	download	GEO GSE244451 series supplement (authors deposited labels; adopt_authors_labels.py)
+BAT	data/raw/geo/GSE244451/GSE244451_PVAT_BAT_SCPAnnotated.h5ad	9072466376	3b55113a90ce77f4a2cc52e6ebe44b9f	extracted	gunzip of the above
+BAT	data/raw/geo/GSE244451/GSE244451_PVAT_BAT_SCPAnnotated.h5ad.gz	4209110192	f3c7790a082d7dfb935242439da92cc1	download	GEO GSE244451 series supplement (authors deposited labels; adopt_authors_labels.py)
 BLOOD	data/raw/geo/blood_option_b/GSE306764/GSM9207340_Blood-Ctrl.tar.gz	47901001	24b635ee6a3920c7f2ce923595df2a98	download	GEO GSM9207340 (GSE306764 Blood-Ctrl)
 BLOOD	data/raw/geo/blood_option_b/GSE306764/GSM9207344_Bone-Ctrl.tar.gz	53647034	6e886884abccdea6529239977632c1a1	download	GEO GSM9207344 (GSE306764 Bone-Ctrl; BLOOD_BM labels only)
 BLOOD	data/raw/geo/blood_option_b/GSE306764/blood/Blood-Ctrl/barcodes.tsv	424088	aa5053e22c68bd94579db1f75e1a287f	extracted	GEO GSM9207340 (GSE306764 Blood-Ctrl)
@@ -28,7 +28,7 @@ BLOOD	data/raw/geo/blood_option_b/GSE335156/GSM9806836_V4_matrix.mtx.gz	13590845
 BLOOD	data/raw/geo/blood_option_b/GSE335156/GSM9806837_V5_barcodes.tsv.gz	93803	d9a9e87c470d4a82ac6a9b157f2d2e45	download	GEO GSE335156 V1-V5 (GSM9806833-37)
 BLOOD	data/raw/geo/blood_option_b/GSE335156/GSM9806837_V5_features.tsv.gz	235319	6e9969c0ad1758a6c2ad58d47663034f	download	GEO GSE335156 V1-V5 (GSM9806833-37)
 BLOOD	data/raw/geo/blood_option_b/GSE335156/GSM9806837_V5_matrix.mtx.gz	136461158	4ffb133cc140c8c54339b918e2386e92	download	GEO GSE335156 V1-V5 (GSM9806833-37)
-HEART	data/raw/geo/GSE280111/ratmap_scp.h5ad	13915187914	TODO	download	Single Cell Portal SCP2828 (login; manual; adopt_authors_labels.py)
+HEART	data/raw/geo/GSE280111/ratmap_scp.h5ad	13915187914	e862b4b1ed5a6e8662e7fb713d667925	download	Single Cell Portal SCP2828 (login; manual; adopt_authors_labels.py)
 HEART_GSE307551	data/raw/geo/GSE307551/GSM9226643_F3441_feature_bc_matrix.h5	6884743	75474693558124bfad38a753757fb15f	download	GEO GSM9226643/GSM9226644 (GSE307551; §15 second heart reference check)
 HEART_GSE307551	data/raw/geo/GSE307551/GSM9226644_F3442_feature_bc_matrix.h5	15232317	121e8c8809048468314cb54f996541aa	download	GEO GSM9226643/GSM9226644 (GSE307551; §15 second heart reference check)
 OVARY	data/raw/geo/GSE343214/GSM9947804_Normal_barcodes.tsv.gz	52132	1ba1b894a692eb396df0f67a18b5c9c4	download	GEO GSM9947804 (GSE343214 Normal)
