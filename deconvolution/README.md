@@ -9,9 +9,11 @@ bulk gene-ID prep.
 jointly re-annotated set (`data/deconvolution/references_v4/`, with BLOOD as a whole-blood composite; BAT,
 HEART, HYPOTH and TESTES keep their `references_v3/` builds) plus SPLEEN (`references_v4/SPLEEN_GSE306764`) and
 OVARY (`references_v4/OVARY_GSE343214`), selected by `config/pipeline_config.yaml` with no profile. Outputs:
-`data/deconvolution/results_refs4all/` (Stage 8), `genecompass_input_v2_refs4all/` and `_human/` (Stages 9, 10,
-12; gate in `gate_rcv10/`), `augur_input_v2_refs4all/`, `grn_v2_refs4all/` and `grn_v2_refs4all_human/` (Stage
-13). Current figures: 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 blocks (151 analysable under the §6 rule, median per-sample library
+`data/deconvolution/results_refs4all_rebuild/` (Stage 8), `genecompass_input_v2_refs4all_rebuild/` and `_human/`
+(Stages 9, 10, 12; gate in `gate_rcv10/`), `augur_input_v2_refs4all_rebuild/`, `grn_v2_refs4all_rebuild/` and
+`grn_v2_refs4all_rebuild_human/` (Stage 13), `validation_refs4all_rebuild/` (Stage 14 sweeps). These are the
+clean rebuild (2026-11-03), identical to the earlier assembled `_refs4all` tree through Stage 13
+(`REFS4ALL_REBUILD_RESULTS.md`). Current figures: 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 blocks (151 analysable under the §6 rule, median per-sample library
 ≥ 1,000), **9 exercise hotspots** (none in SPLEEN or OVARY), 53,084 dose-significant genes, 9 of 9 hotspots
 preserved in human transfer and RIN/globin-robust, 6 GRNs. The embedding does not beat PCA-50 significantly
 (p 0.15). Single-sex tissues (TESTES, OVARY) cannot have a dose-significant gene (the Fisher sex combine needs

@@ -10,8 +10,8 @@ augur_input_dir, grn_dir, grn_human_dir, validation_dir for the Stage 14 sweeps)
 Provenance JSON (timestamps, paths), logs and .rds files are skipped, because their bytes change on every run;
 each .rds has derived tables that are compared instead.
 
-    python deconvolution/compare_arms.py --b config/profiles/refs4all_rebuild.yaml --out <dir>
-    (--a defaults to the default config)
+    python deconvolution/compare_arms.py --a config/profiles/refs_v4all.yaml --out <dir>   # assembled tree vs default
+    (--a and --b default to the default config; since 2026-11-03 the default is the clean rebuild)
 """
 import argparse
 import hashlib
@@ -113,7 +113,7 @@ def cmp_h5ad(a, b, atol):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--a", default="", help="profile for arm A (default: the default config)")
-    ap.add_argument("--b", required=True, help="profile for arm B")
+    ap.add_argument("--b", default="", help="profile for arm B (default: the default config)")
     ap.add_argument("--atol", type=float, default=1e-9)
     ap.add_argument("--min-cos", type=float, default=0.9999)
     ap.add_argument("--out", required=True, help="folder for compare_files.tsv and compare_summary.tsv")
@@ -147,7 +147,7 @@ def main():
     df.to_csv(out / "compare_files.tsv", sep="\t", index=False)
     summ = df.groupby(["folder", "verdict"]).size().unstack(fill_value=0)
     summ.to_csv(out / "compare_summary.tsv", sep="\t")
-    print(f"A: {a.a or '(default config)'}\nB: {a.b}\n")
+    print(f"A: {a.a or '(default config)'}\nB: {a.b or '(default config)'}\n")
     print(summ.to_string())
     bad = df[df.verdict.isin(["DIFFERS", "ONLY_A", "ONLY_B"])]
     if len(bad):

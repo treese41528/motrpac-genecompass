@@ -110,3 +110,14 @@ checksum of `posctrl_summary.md`, which contains its own path.
 - **GeneCompass embedding:** deterministic on the A100s used.
 - **Not covered** (scope as pre-registered): the reference builds and joint re-annotation (§0.4–0.5), and
   Stages 1–7 (see `docs/repro_stages1_7/REPRODUCTION.md`).
+
+## Adopted as the default (2026-11-03)
+
+The default config now points at the rebuild's folders (`_refs4all_rebuild`, Stage 14 in `validation_refs4all_rebuild/`).
+- **Results:** they do not change through Stage 13, because the two trees are identical there.
+- **Stage 14:** the default now carries the sweeps on the current references.
+- **The assembled tree:** it stays on disk as `config/profiles/refs_v4all.yaml`.
+- **Other profiles:** they keep the older `validation/` sweeps.
+- **The research-phase method validation** (V0/V1/V2, the cross sets, the pilot liver sweep) stays in
+  `data/deconvolution/validation/` through the new key `pilot_validation_dir`.
+

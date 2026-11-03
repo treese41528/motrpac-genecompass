@@ -8,7 +8,7 @@ only once every tissue is embedded). It is the committed form of the gate the de
 and writes the table whose q_sup_trained < 0.05 blocks are the hotspots Stages 10, 12 and 13 read.
 
 The gate folder is the folder of deconvolution.hotspots_table (default config:
-genecompass_input_v2_refs4all/gate_rcv10/); the Augur exports go to deconvolution.augur_input_dir.
+genecompass_input_v2_refs4all_rebuild/gate_rcv10/); the Augur exports go to deconvolution.augur_input_dir.
 
 Chain:
   1. embed_qc.py            per-tissue embedding QC (silhouette, kNN purity, value scale)        -> stdout

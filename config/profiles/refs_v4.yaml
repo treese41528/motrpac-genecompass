@@ -16,3 +16,4 @@ deconvolution:
   # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
   # deconvolution/reference/posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11).
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

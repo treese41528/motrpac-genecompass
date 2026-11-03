@@ -3,6 +3,7 @@
 # _refs4all_rebuild folders, built tissue by tissue by pipeline/run_deconv_all.py with no links. Compare the
 # result against the assembled default tree (results_refs4all, built by deconvolution/assemble_arm.py).
 #   export PIPELINE_PROFILE=config/profiles/refs4all_rebuild.yaml
+# Since 2026-11-03 these are the default config values (this profile is a no-op kept for scripts).
 deconvolution:
   results_dir: data/deconvolution/results_refs4all_rebuild
   genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild

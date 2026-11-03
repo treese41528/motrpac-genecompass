@@ -11,3 +11,4 @@ deconvolution:
   grn_dir: data/deconvolution/grn_v2_refs4h
   grn_human_dir: data/deconvolution/grn_v2_refs4h_human
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

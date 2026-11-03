@@ -229,7 +229,9 @@ export PIPELINE_PROFILE=config/profiles/april.yaml
 **Which references.** Since 2026-10-31 the default deconvolution references are the jointly re-annotated
 ones (`references_v4/`, listed per tissue in `deconvolution/tissue_references.yaml`; BLOOD is a whole-blood
 composite). Since 2026-11-01 the default covers all 16 deconvolved tissues (SPLEEN and OVARY added) and every
-Stage 8–14 output lives in a `_refs4all` folder (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`); the 14-tissue
+Stage 8–14 output lives in a `_refs4all_rebuild` folder: the clean, link-free rebuild, identical to the earlier
+assembled `_refs4all` tree through Stage 13 (`deconvolution/REFS4ALL_REBUILD_RESULTS.md`;
+`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`); the 14-tissue
 refs4 arm (`_refs4` folders, `deconvolution/REFS4_RERUN_RESULTS.md`) is `config/profiles/refs4_14.yaml`. The July consensus-label references and their v2 results are `config/profiles/july_refs.yaml`.
 
 ---

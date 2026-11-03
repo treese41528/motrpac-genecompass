@@ -12,7 +12,7 @@ cross-species cortex). Before each tissue it runs TWO gates:
 Tissues are skipped (not run) when blocked / needs-online-data / (proposed, unless --include-proposed).
 
 Outputs go STRAIGHT into the active config's folders -- deconvolution.results_dir/motrpac/<TISSUE> and
-deconvolution.genecompass_input_dir/<label> (default config: the 16-tissue _refs4all arm) -- with no links.
+deconvolution.genecompass_input_dir/<label> (default config: the 16-tissue _refs4all_rebuild folders) -- with no links.
 A tissue whose output folder is a symlink (an arm assembled by deconvolution/assemble_arm.py) is refused,
 because writing would go through the link into another arm; pass --allow-links to override.
 

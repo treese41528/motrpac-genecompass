@@ -19,8 +19,8 @@ export PROJECT_ROOT="$PWD" PIPELINE_ROOT="$PWD"; source deconvolution/load_confi
 PY="${DECONV_PYTHON:-python3}"
 REF="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}/liver_GSE220075"
 FOCAL="Hepatocytes"
-HOLD="${CFG_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_holdout"
-CROSS="${CFG_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_cross"
+HOLD="${CFG_PILOT_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_holdout"
+CROSS="${CFG_PILOT_VALIDATION_DIR:-data/deconvolution/validation}/SWEEP_hepato_cross"
 STAGES=("$HOLD" "$CROSS")
 # Sweep by CELL fraction but denser at the high end: hepatocyte RNA fraction lags
 # cell fraction in the snRNA cross source, so we need high cell-frac points to

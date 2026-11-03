@@ -11,7 +11,7 @@ cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PROJECT_ROOT="$PWD" PIPELINE_ROOT="$PWD"; source deconvolution/load_config.sh   # fatal on a config error
 PY="${DECONV_PYTHON:-python3}"
 REFROOT="${CFG_BUILT_REFERENCE_DIR:-data/deconvolution/references}"
-VAL="${CFG_VALIDATION_DIR:-data/deconvolution/validation}"
+VAL="${CFG_PILOT_VALIDATION_DIR:-data/deconvolution/validation}"
 mkdir -p tmp/dsbuild
 
 # CROSS jobs: tag<TAB>tissue_normalized<TAB>ref_study<TAB>source_study<TAB>source_conditions(optional)

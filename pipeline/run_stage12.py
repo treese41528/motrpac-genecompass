@@ -20,9 +20,9 @@ Per-tissue chain (steps 1-2, like Stage 9), then whole-experiment (steps 3-4, li
   4. compare_transfer.py             (py, CPU)  rat vs human per (tissue,cell_type): does the axis
        survive? -> <human-gate>/transfer_comparison.tsv + transfer_comparison.md
 
-The rat gate is deconvolution.hotspots_table's folder (default config: genecompass_input_v2_refs4all/gate_rcv10/); its
+The rat gate is deconvolution.hotspots_table's folder (default config: genecompass_input_v2_refs4all_rebuild/gate_rcv10/); its
 corroboration_merged.tsv defines the hotspots and its subspace_probe.tsv the rat side of the
-comparison. <human-gate> is the same subfolder under <human-root> (genecompass_input_v2_refs4all_human/gate_rcv10/).
+comparison. <human-gate> is the same subfolder under <human-root> (genecompass_input_v2_refs4all_rebuild_human/gate_rcv10/).
 
 Usage:
   python pipeline/run_stage12.py                       # all tissues (transfer+embed) -> probe -> compare

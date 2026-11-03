@@ -24,3 +24,4 @@ deconvolution:
   augur_input_dir: data/deconvolution/augur_input
   grn_dir: data/deconvolution/grn
   grn_human_dir: data/deconvolution/grn_human
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

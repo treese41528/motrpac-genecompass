@@ -58,6 +58,7 @@ def main():
                      ("reference_v2_dir", "CFG_REFERENCE_V2_DIR"),
                      ("results_dir", "CFG_RESULTS_DIR"),
                      ("validation_dir", "CFG_VALIDATION_DIR"),
+                     ("pilot_validation_dir", "CFG_PILOT_VALIDATION_DIR"),
                      ("validation_v2_dir", "CFG_VALIDATION_V2_DIR"),
                      ("motrpac_bulk_out", "CFG_MOTRPAC_BULK_OUT"),
                      ("genecompass_input_dir", "CFG_GENECOMPASS_INPUT_DIR"),
