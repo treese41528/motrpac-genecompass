@@ -1,5 +1,7 @@
 # Clean rebuild of the 16-tissue default: pre-registration (2026-11-01, before any job ran)
 
+Results: `REFS4ALL_REBUILD_RESULTS.md` (2026-11-02). The criteria below are unchanged.
+
 **Question.** Does the committed clean path (`DECONV_REBUILD_RUNBOOK.md` §0.6–0.7, `config/profiles/refs4all_rebuild.yaml`)
 reproduce the default tree `results_refs4all/`? That tree was assembled from links to three earlier runs
 (July, refs4, in place).

@@ -229,7 +229,7 @@ def main():
             continue
         expressed.append(g)
         point[g] = d
-        ks = sorted(d, key=lambda k: -abs(d[k]))
+        ks = sorted(d, key=lambda k: (-abs(d[k]), k))   # ties by id, so a --top-edges cut does not follow the hash seed
         if args.top_edges and args.top_edges > 0:      # 0 = no cap (default)
             ks = ks[:args.top_edges]
         cand[g] = ks
@@ -275,7 +275,7 @@ def main():
             z = d / sd if sd > 0 else 0.0
             edges.append((g, sym.get(g, ""), k, sym.get(k, ""), round(d, 6), round(sd, 6), round(z, 2))
                          + ((decoy_for[g],) if decoy_for else ()))
-    edges.sort(key=lambda e: -abs(e[6]))
+    edges.sort(key=lambda e: (-abs(e[6]), e[0], e[2]))   # ties by (tf, target): set order follows the hash seed
     conf = [e for e in edges if abs(e[6]) >= 2]
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)

@@ -2,7 +2,7 @@
 """Compare every Stage 8-14 output of two config arms, file by file (e.g. the default tree and a clean rebuild).
 
 Each output folder of arm A (deconvolution.results_dir, genecompass_input_dir and its _human twin,
-augur_input_dir, grn_dir, grn_human_dir) is paired with arm B's, and every file is matched by relative path:
+augur_input_dir, grn_dir, grn_human_dir, validation_dir for the Stage 14 sweeps) is paired with arm B's, and every file is matched by relative path:
 - IDENTICAL: same bytes.
 - EQUAL: tables (.tsv/.csv/.txt) with the same shape, the same non-numeric cells, and numeric cells within --atol.
 - CLOSE: embeddings (.npy) whose per-row cosine is at least --min-cos; h5ad files with X within --atol.
@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-KEYS = ["results_dir", "genecompass_input_dir", "augur_input_dir", "grn_dir", "grn_human_dir"]
+KEYS = ["results_dir", "genecompass_input_dir", "augur_input_dir", "grn_dir", "grn_human_dir", "validation_dir"]
 SKIP_SUFFIX = (".rds", ".log", ".out", ".err", ".png", ".pdf")
 
 
@@ -117,10 +117,11 @@ def main():
     ap.add_argument("--atol", type=float, default=1e-9)
     ap.add_argument("--min-cos", type=float, default=0.9999)
     ap.add_argument("--out", required=True, help="folder for compare_files.tsv and compare_summary.tsv")
+    ap.add_argument("--only", nargs="*", default=None, help="compare only these folders (keys as in the summary)")
     a = ap.parse_args()
     A, B = arm_dirs(a.a), arm_dirs(a.b)
     rows = []
-    for key in A:
+    for key in (a.only or A):
         fa = files_under(A[key]) if A[key].is_dir() else {}
         fb = files_under(B[key]) if B[key].is_dir() else {}
         for rel in sorted(set(fa) | set(fb)):

@@ -1,3 +1,25 @@
+> **Notebooks 2, 3, 6, 7 (2026-11-02).** Their hand-typed data values now come from the files that record them:
+> - **nb2:** the Stage 2 parameters come from the config. Its "BioMart 113 / mRatBN7.2" was the wrong label; the
+>   config says 115 / GRCr8. The QC cascade is summed from `preprocessing_report.json`, plus the cells
+>   `corpus_v2_plan.tsv` keeps.
+>   - The hand values (14.49M → 10.24M cells, "73 studies, 895 samples") matched neither source.
+>   - The recorded run: 9.47M cells after empty-droplet removal → 8.93M final, 810 samples from 80 studies.
+>   - The v2 plan keeps 6.80M cells: 584 samples from 81 studies.
+> - **nb3:** the tier counts come from `rat_token_mapping.tsv`, and the base vocabulary from
+>   `human_mouse_tokens.pickle`.
+> - **nb6:** coverage and elapsed times come from the Stage 6 manifests; the universe size from
+>   `pruned_gene_universe.tsv`.
+> - **nb7:** vocabulary, architecture, steps and loss means come from the init config and the final
+>   `trainer_state.json` files. Wall times and job IDs exist only in the SLURM logs, and are labelled as such.
+> - **Label fixes:**
+>   - The 4,717 new tokens are 2,243 T3 + 2,474 T4, not all T4: corrected in the nb3 markdown, the nb3 print
+>     and the nb7 config comment.
+>   - The nb6 GRN row said "22,213/22,213 embedded", which counted the 3,463 zero vectors. It now reads
+>     18,750 non-zero (+3,463 zero). `grn_embeddings.pkl` has 21,455 keys because it is keyed by unified ID,
+>     which several rat genes share.
+>
+> The markdown prose elsewhere still quotes figures by hand.
+>
 > **Config-driven (2026-11-01, later).** Notebooks 8–12 no longer hardcode paths or per-tissue numbers. They import
 > `notebooks/nb_config.py`, which reads the active config (`PIPELINE_PROFILE` honoured), so running a profile with
 > `run_notebooks.py` shows that profile's outputs. Sources:

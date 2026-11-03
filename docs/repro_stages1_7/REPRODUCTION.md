@@ -192,3 +192,4 @@ The final weights are the latest checkpoint: `models/pytorch_model.bin` md5 ae61
 | 7 init | Rerun Stage 3 + 6 | 231/234 tensors IDENTICAL; 3 differ (unseeded random rows) |
 | 7 mix + probe | Rerun Stage 5 | IDENTICAL (546 GB); probe data md5s match the registered values |
 | 7 training | Canonical init + mix | First 2,000 steps track v2 within fp16 nondeterminism (50-step loss equal to 4 decimals at 39/40 points) |
+| 8–14 (16 tissues) | Production references + prepared bulk + v2 checkpoint, fresh folders | IDENTICAL through Stage 13: θ, Z, embeddings, gate, DE, transfer byte for byte; GRN edges and values identical (tie order fixed); Stage 14 equal on the 3 comparable sweeps. `deconvolution/REFS4ALL_REBUILD_RESULTS.md` |
