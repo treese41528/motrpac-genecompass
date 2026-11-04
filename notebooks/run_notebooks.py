@@ -7,9 +7,9 @@ the running interpreter, with no user-level kernel registration needed. The note
 the active config, so the kernel inherits PIPELINE_PROFILE (and PIPELINE_ROOT) from this process; the profile
 in effect is printed and stored in each notebook's metadata (metadata.rerun).
 
-Re-run Stages 8-14 FIRST: the notebooks only read outputs. Notebooks 8-12 take their numbers from the outputs
-(notebooks/nb_config.py); notebooks 1-7 and the markdown prose of all of them still quote some figures by hand
-(see notebooks/RERUN_EDITS.md), so re-check those after a rerun that changes results.
+Re-run Stages 8-14 FIRST: the notebooks only read outputs. Every number they show, in code output or in the
+rendered "Results for this config" summaries, comes from the outputs or the config; the markdown holds methods,
+constants and history only (notebooks/RERUN_EDITS.md), so a rerun needs no hand edits.
 
   python notebooks/run_notebooks.py                       # all 12, in place
   python notebooks/run_notebooks.py 8 9 10 11 12          # the Stage 8-12 notebooks

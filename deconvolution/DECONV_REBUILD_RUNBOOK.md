@@ -152,8 +152,8 @@ python notebooks/run_notebooks.py 8 9 10 11 12           # re-execute in place (
 ```
 
 Notebooks 8-12 read their paths, tissue lists and per-tissue numbers from the active config and the outputs
-(`notebooks/nb_config.py`), so under the rebuild profile they show the rebuild. Only the markdown prose quotes
-figures by hand (`notebooks/RERUN_EDITS.md`).
+(`notebooks/nb_config.py`), so under the rebuild profile they show the rebuild. Their summaries are rendered from
+the outputs too; the markdown quotes no results (`notebooks/RERUN_EDITS.md`).
 
 ### 0.9 Expected totals (16 tissues)
 

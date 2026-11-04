@@ -1,3 +1,44 @@
+> **Markdown prose (2026-11-04).** No markdown cell of notebooks 1–12 quotes a result any more. Every figure the prose
+> used to state is printed by a code cell from the outputs or the config. Notebooks 8–12 end with a "Results for this
+> config" cell that renders the summary sentences from the gate, DE and transfer tables. What the markdown still
+> holds: method descriptions and constants (thresholds, the gate method), history, and SLURM job IDs labelled as
+> coming from SLURM accounting. Comparisons with other arms (refs4, July, April) point to their committed results docs.
+> A rerun therefore needs no hand edits.
+> - **New computed values:**
+>   - nb6: the T4 family and GRN non-zero counts, from the Stage 6 files (0 and 36 of 2,474, equal to the v2 init log).
+>   - nb7: the C1/C2 table from `data/results/retrain_v2/mlm/*.json`, and phase coverage (steps × global batch ÷ rows).
+>   - nb9: the cell-type silhouette. Its median over the 16 tissues is 0.810; the prose had quoted a 14-tissue value.
+>   - nb12: the rat→human cosine, as `translation/transfer_cosine.py` defines it. The median over tissues of the
+>     per-tissue mean is 0.974 on 16 tissues (0.969 on the 14 the prose quoted); the median of medians is 0.976. A
+>     different cell of the same tissue sits at 0.993 in rat space.
+> - **Wrong statements corrected while doing this:**
+>   - nb1 and nb3 said BioMart 113 / mRatBN7.2; the config says 115 / GRCr8.
+>   - nb3:
+>     - The confidence rule was misdescribed: "high = T1/T2" is not the code.
+>     - Stage 4 was said to use mouse medians, which it does not.
+>     - The token-space plot labelled reuse as T1–T3 and new tokens as T4. Reuse is T1+T2, and the new tokens are
+>       T3+T4.
+>     - The ortholog-type counts came out blank, from a wrong column name.
+>   - nb2: the code printed "expected: 895" files and a pruning "Universe (in)" equal to its output.
+>   - nb5: the run was given 13 CPUs / 256 GB and a conda env; SLURM accounting says 4 CPUs / 64 GB, and the env is a
+>     venv. "Total scatter time … wall-clock" was a sum of task times.
+>   - nb6: the claim that the promoter no-TSS set is "dominated by T4 and lncRNAs" was false; it is mostly T1
+>     protein-coding (the table is now printed). The zero GRN vectors are not all T4.
+>   - nb8:
+>     - The bulk source is Rnor_6.0 (~rel-96), not rel-104.
+>     - The exclusion list is 247 genes, not 190.
+>     - "BayesPrism without a fixed seed, so the archived rds are needed" contradicted the rebuild, which reproduced
+>       every θ and Z.
+>   - nb9: Stage 5 was said to use normalize_total(10,000). v2's corpus divides raw counts by the hybrid medians; only
+>     Stage 9 normalizes, to `pseudocell_target_sum`.
+>   - nb10: the DE was described as TMM + voom, keeping genes in ≥3 samples, with Storey BH. The code fits limma-trend
+>     on log-CPM, keeps every gene expressed in at least one sample, and uses BH.
+>   - nb11:
+>     - The `group` factor was called four-class; it has five levels.
+>     - Dose was said to cover training animals only; it includes control = 0.
+>     - Blocks need ≥6 pseudo-cells, not ≥10.
+>     - The BH penalty does not depend on how many blocks a tissue has.
+>
 > **Notebooks 2, 3, 6, 7 (2026-11-02).** Their hand-typed data values now come from the files that record them:
 > - **nb2:** the Stage 2 parameters come from the config. Its "BioMart 113 / mRatBN7.2" was the wrong label; the
 >   config says 115 / GRCr8. The QC cascade is summed from `preprocessing_report.json`, plus the cells
@@ -18,7 +59,7 @@
 >     18,750 non-zero (+3,463 zero). `grn_embeddings.pkl` has 21,455 keys because it is keyed by unified ID,
 >     which several rat genes share.
 >
-> The markdown prose elsewhere still quotes figures by hand.
+> The markdown prose elsewhere still quoted figures by hand (fixed 2026-11-04, above).
 >
 > **Config-driven (2026-11-01, later).** Notebooks 8–12 no longer hardcode paths or per-tissue numbers. They import
 > `notebooks/nb_config.py`, which reads the active config (`PIPELINE_PROFILE` honoured), so running a profile with

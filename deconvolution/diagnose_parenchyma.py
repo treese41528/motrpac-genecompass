@@ -11,7 +11,9 @@ Tests three hypotheses by comparing the SEX-ADJUSTED ordinal-week dose-slope of 
   decoupling (worse): Z-slope does NOT correlate with bulk-slope -> Z carries a different signal.
   H1 (over-split): for SKMVL only, pooling the two muscle-parenchyma labels recovers the trend.
 
-Read-only, vectorized, seconds-scale. No model, no GPU.
+Read-only, vectorized, seconds-scale. No model, no GPU. Reads the active config's deconvolution.results_dir
+(PIPELINE_PROFILE honoured). Each tissue's parenchyma labels are candidates: every one present in the run is
+pooled (refs4 names the muscle parenchyma "Skeletal muscle cells"; earlier references "Skeletal myocytes").
 """
 import os, re, sys
 import numpy as np
@@ -19,16 +21,19 @@ import pandas as pd
 from scipy.io import mmread
 from scipy import stats
 
-ROOT = os.environ.get('PIPELINE_ROOT', '.')
+ROOT = os.environ.setdefault('PIPELINE_ROOT', os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(ROOT, 'lib'))
+from gene_utils import load_config, resolve_path  # noqa: E402
+_cfg = load_config()
 BULK = os.path.join(ROOT, 'data/deconvolution/motrpac_bulk')
-RES  = os.path.join(ROOT, 'data/deconvolution/results/motrpac')
+RES  = str(resolve_path(_cfg, _cfg['deconvolution']['results_dir']) / 'motrpac')
 PHENO = os.path.join(ROOT, 'deconvolution/reference/motrpac_sample_pheno.tsv')
 WEEK = {'control': 0, '1w': 1, '2w': 2, '4w': 4, '8w': 8}
 CTRL = {'Sod2': 'ENSRNOG00000086727', 'Mef2c': 'ENSRNOG00000033134', 'Slc2a4': 'ENSRNOG00000017226',
         'Hspa1b': 'ENSRNOG00000045654', 'Hsp90aa1': 'ENSRNOG00000059714',
         'Opa1': 'ENSRNOG00000001717'}   # Opa1 = a control that DID recover (reference point)
-PAR = {'SKMGN': ['Skeletal myocytes'],
-       'SKMVL': ['Skeletal myocytes'],
+PAR = {'SKMGN': ['Skeletal muscle cells', 'Skeletal myocytes'],
+       'SKMVL': ['Skeletal muscle cells', 'Skeletal myocytes'],
        'HEART': ['Cardiomyocytes'],
        'LIVER': ['Hepatocytes']}
 
@@ -66,11 +71,12 @@ for TIS in ['SKMGN', 'SKMVL', 'HEART', 'LIVER']:
     for ct in PAR[TIS]:
         f = os.path.join(RES, TIS, 'pred_z', f'predz__{safe(ct)}.csv')
         if not os.path.exists(f):
-            print(f'  (missing {ct})'); continue
+            continue                           # candidate label not in this run
         Z = pd.read_csv(f, index_col=0)        # samples x genes
         pz_each[ct] = Z
     if not pz_each:
-        continue
+        print(f'  (no parenchyma label of {PAR[TIS]} in {RES}/{TIS})'); continue
+    print(f'  results: {RES}; parenchyma: {", ".join(pz_each)}')
     # align on shared genes across the first label's Z and bulk
     any_ct = next(iter(pz_each))
     zgenes = list(pz_each[any_ct].columns)
