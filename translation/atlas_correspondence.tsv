@@ -128,3 +128,35 @@ skmvl	Schwann cells
 skmvl	Skeletal muscle cells	fast muscle cell; slow muscle cell
 skmvl	Tenocytes	tendon cell
 skmvl	Vascular smooth muscle cells	smooth muscle cell
+ovary	B cells	
+ovary	CD4+ T cells	
+ovary	Dendritic cells	
+ovary	Endothelial cells	endothelial cell
+ovary	Erythroid cells	
+ovary	Granulosa cells	
+ovary	Luteal cells	
+ovary	Lymphatic endothelial cells	endothelial cell
+ovary	Macrophages	macrophage
+ovary	Monocytes	
+ovary	NK cells	
+ovary	Neutrophils	
+ovary	Non-classical monocytes	
+ovary	Pericytes	
+ovary	Plasmacytoid dendritic cells	
+ovary	Smooth muscle cells	blood vessel smooth muscle cell
+ovary	Stromal cells	stromal cell of ovary
+ovary	Theca cells	theca cell
+spleen	B cells	B cell
+spleen	CD4+ T cells	CD4-positive, alpha-beta T cell; naive thymus-derived CD4-positive, alpha-beta T cell; T cell
+spleen	CD8+ T cells	CD8-positive, alpha-beta T cell; naive thymus-derived CD8-positive, alpha-beta T cell; T cell
+spleen	Cycling cells	
+spleen	Dendritic cells	
+spleen	Endothelial cells	endothelial cell
+spleen	Erythroid progenitors	erythrocyte; hematopoietic precursor cell
+spleen	Monocytes	classical monocyte; monocyte; intermediate monocyte; non-classical monocyte
+spleen	NK cells	natural killer cell; innate lymphoid cell
+spleen	Neutrophils	neutrophil
+spleen	Non-classical monocytes	non-classical monocyte; monocyte
+spleen	Plasma cells	plasma cell
+spleen	Plasmacytoid dendritic cells	
+spleen	Red-pulp macrophages	macrophage
