@@ -36,7 +36,7 @@ MIN_CELLS = 20          # cells per (donor, cell type) pseudobulk
 # MoTrPAC tissue label (genecompass_input/<label>) -> Tabula Sapiens tissue file
 TISSUES = {"blood": "Blood", "lung": "Lung", "skmgn": "Muscle", "skmvl": "Muscle", "heart": "Heart",
            "liver": "Liver", "kidney": "Kidney", "watsc": "Fat", "bat": "Fat", "smlint": "Small_Intestine",
-           "testes": "Testis"}
+           "testes": "Testis", "spleen": "Spleen", "ovary": "Ovary"}
 
 
 def prep(args):
