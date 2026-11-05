@@ -6,7 +6,8 @@ Record tables: `atlas_record/` (per-type table, summary).
 
 > **2026-11-01 note.** E.3 was run on the refs4 (14-tissue) cells and its 11 hotspots. The current all-tissue (16)
 > default has 9 hotspots, all among those 11 (LUNG endothelial and mesothelial cells drop out;
-> `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`); SPLEEN and OVARY were not projected. Not rerun.
+> `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`); SPLEEN and OVARY were not projected. **Rerun on the default with SPLEEN
+> and OVARY on 2026-11-04: PASS, 0.430 over 120 types in 13 tissues (`ATLAS_PROJECTION_16_RESULTS.md`).**
 
 **Verdict: PASS.** Macro top-1 accuracy **0.404** over 103 rat cell types in 11 tissues, against a label-shuffle
 null of 0.084 (95th percentile 0.124); p = 0.0001 (10,000 permutations); 4.8 times the null mean.
