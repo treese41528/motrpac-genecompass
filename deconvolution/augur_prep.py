@@ -3,7 +3,7 @@
 
 Two outputs:
   (A) Per-tissue inputs for CANONICAL Augur (R / neurorestore) under
-      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2/ by default):
+      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2_refs4all_rebuild/ under the default config):
         embed.tsv   768-d GeneCompass CLS embedding, cells x dims
         pca.tsv     PCA-50 of the log-normalized deconvolved Z, cells x PCs
         meta.tsv    cell_id, cell_type, sample, label(trained/control), sex, week
@@ -21,7 +21,13 @@ Two outputs:
 Join + alignment identical to pheno_merge_test.py / subspace_probe.py (mix{i} -> viallabel -> pheno;
 h5ad reindexed to the embedding row order by pseudocell_id).
 """
-import argparse, glob, os, re, sys
+import os
+# Pin BLAS/OpenMP to one thread BEFORE numpy/sklearn load: the production gate ran with these set to 1 in its
+# SLURM script, and multi-threaded BLAS can change floating-point summation order. Parallelism here is
+# joblib processes (--jobs), so results no longer depend on the calling script's environment.
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ[_v] = "1"
+import argparse, glob, re, sys
 from pathlib import Path
 
 import numpy as np, pandas as pd

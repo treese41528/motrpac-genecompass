@@ -30,6 +30,7 @@ import requests
 import time
 import argparse
 import logging
+import hashlib
 import json
 import pickle
 from pathlib import Path
@@ -64,8 +65,12 @@ def _cfg(key_path: str, fallback):
             return fallback
     return obj
 
+# Ensembl 115 / GRCr8 archive host (the release of the v2 reference files). Do not point this at
+# www.ensembl.org: the live host serves whatever release is current.
 BIOMART_SERVER = _cfg('harvesting.biomart_server',
-                       "https://www.ensembl.org/biomart/martservice")
+                       "https://sep2025.archive.ensembl.org/biomart/martservice")
+ENSEMBL_RELEASE = str(_cfg('biomart.ensembl_release', '115'))
+ASSEMBLY = str(_cfg('biomart.assembly', 'GRCr8'))
 RGD_GENES_URL = _cfg('harvesting.rgd_genes_url',
                       "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt")
 
@@ -77,6 +82,62 @@ def _default_output_dir() -> Path:
         if rat_gene_info:
             return resolve_path(_config, str(Path(rat_gene_info).parent))
     return Path("data/references/biomart")
+
+# Every file this run writes: {path: write time}. md5 + size go into fetch_metadata.json.
+_WRITTEN: Dict[str, str] = {}
+
+
+def _write_text(path: Path, data: str) -> None:
+    path.write_text(data)
+    _WRITTEN[str(path)] = datetime.now().isoformat(timespec='seconds')
+
+
+def _md5(path: Path) -> str:
+    h = hashlib.md5()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _merge_metadata(metadata_path: Path, run: dict, species_meta: dict,
+                    ortholog_meta: Optional[dict]) -> dict:
+    """Fold this run into fetch_metadata.json instead of overwriting it.
+
+    Per-species and ortholog entries are replaced only for what this run fetched (a rat-only
+    rerun keeps the human and mouse entries); 'files' holds md5/bytes/release/host/date of the
+    latest write of every file; 'runs' keeps one record per invocation.
+    """
+    meta = {}
+    if metadata_path.exists():
+        try:
+            meta = json.loads(metadata_path.read_text())
+        except (OSError, ValueError):
+            meta = {}
+    meta.setdefault('species', {}).update(species_meta)
+    if ortholog_meta is not None:
+        meta.setdefault('orthologs', {}).update(ortholog_meta)
+    files = meta.setdefault('files', {})
+    for p, when in sorted(_WRITTEN.items()):
+        path = Path(p)
+        if path.exists():
+            files[path.name] = {
+                'md5': _md5(path), 'bytes': path.stat().st_size, 'written': when,
+                'source': RGD_GENES_URL if path.name == 'GENES_RAT.txt' else BIOMART_SERVER,
+                'ensembl_release': None if path.name == 'GENES_RAT.txt' else ENSEMBL_RELEASE,
+                'assembly': None if path.name == 'GENES_RAT.txt' else ASSEMBLY,
+            }
+            if path.name == 'GENES_RAT.txt':   # RGD has no release number; its header dates the file
+                with open(path, errors='replace') as fh:
+                    for line in fh:
+                        if not line.startswith('#'):
+                            break
+                        if 'GENERATED-ON' in line:
+                            files[path.name]['generated_on'] = line.split(':', 1)[1].strip()
+    meta.setdefault('runs', []).append(run)
+    meta['timestamp'] = run['timestamp']   # last update (kept for older readers)
+    return meta
+
 
 # Test genes to verify coverage
 TEST_GENES = _cfg('harvesting.test_genes', [
@@ -246,6 +307,7 @@ def fetch_rgd_data(output_dir: Path, logger: logging.Logger,
         with open(output_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
+        _WRITTEN[str(output_path)] = datetime.now().isoformat(timespec='seconds')
         
         elapsed = time.time() - start
         lines = sum(1 for _ in open(output_path))
@@ -345,7 +407,7 @@ def build_symbol_lookup(output_dir: Path, species: str, logger: logging.Logger,
                          f"{species} all genes", logger, timeout)
     if data:
         path = output_dir / f"{species}_all_genes.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         
         lines = data.strip().split('\n')[1:]  # skip header
         for line in lines:
@@ -365,7 +427,7 @@ def build_symbol_lookup(output_dir: Path, species: str, logger: logging.Logger,
                          f"{species} synonyms", logger, timeout)
     if data:
         path = output_dir / f"{species}_gene_synonyms.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         
         lines = data.strip().split('\n')[1:]
         added = 0
@@ -399,7 +461,7 @@ def build_symbol_lookup(output_dir: Path, species: str, logger: logging.Logger,
                          f"{species} UniProt", logger, timeout)
     if data:
         path = output_dir / f"{species}_uniprot.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         
         lines = data.strip().split('\n')[1:]
         added = 0
@@ -466,7 +528,7 @@ def fetch_ortholog_data(output_dir: Path, logger: logging.Logger,
                          "rat-human orthologs", logger, timeout)
     if data:
         path = output_dir / "rat_human_orthologs.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         results['rat_human'] = {
             'path': str(path),
             'records': data.count('\n') - 1,
@@ -480,7 +542,7 @@ def fetch_ortholog_data(output_dir: Path, logger: logging.Logger,
                          "rat-mouse orthologs", logger, timeout)
     if data:
         path = output_dir / "rat_mouse_orthologs.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         results['rat_mouse'] = {
             'path': str(path),
             'records': data.count('\n') - 1,
@@ -494,7 +556,7 @@ def fetch_ortholog_data(output_dir: Path, logger: logging.Logger,
                          "rat gene info", logger, timeout)
     if data:
         path = output_dir / "rat_gene_info.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         results['rat_gene_info'] = {
             'path': str(path),
             'records': data.count('\n') - 1,
@@ -508,7 +570,7 @@ def fetch_ortholog_data(output_dir: Path, logger: logging.Logger,
                          "mouse-human orthologs", logger, timeout)
     if data:
         path = output_dir / "mouse_human_orthologs.tsv"
-        path.write_text(data)
+        _write_text(path, data)
         results['mouse_human'] = {
             'path': str(path),
             'records': data.count('\n') - 1,
@@ -600,6 +662,7 @@ Examples:
     logger.info("=" * 60)
     logger.info(f"Output: {args.output_dir}")
     logger.info(f"Species: {args.species}")
+    logger.info(f"BioMart: {BIOMART_SERVER} (Ensembl {ENSEMBL_RELEASE} / {ASSEMBLY})")
     logger.info(f"Include RGD: {not args.no_rgd}")
     if _config is not None:
         logger.info(f"Config: loaded (project_root={_config.get('_project_root', '?')})")
@@ -653,13 +716,27 @@ Examples:
         path = args.output_dir / f"{species}_symbol_lookup.pickle"
         with open(path, 'wb') as f:
             pickle.dump(lookup, f)
+        _WRITTEN[str(path)] = datetime.now().isoformat(timespec='seconds')
         logger.info(f"Saved: {path} ({len(lookup):,} symbols)")
     
-    # Save metadata
+    # Save metadata (accumulated across runs, per species; md5 of every file written)
     metadata_path = args.output_dir / "fetch_metadata.json"
+    run_record = {
+        'timestamp': all_metadata['timestamp'],
+        'species': list(args.species),
+        'biomart_server': BIOMART_SERVER,
+        'ensembl_release': ENSEMBL_RELEASE,
+        'assembly': ASSEMBLY,
+        'rgd_url': None if args.no_rgd else RGD_GENES_URL,
+        'files_written': sorted(Path(p).name for p in _WRITTEN),
+    }
+    merged = _merge_metadata(metadata_path, run_record, all_metadata['species'],
+                             all_metadata.get('orthologs'))
     with open(metadata_path, 'w') as f:
-        json.dump(all_metadata, f, indent=2)
+        json.dump(merged, f, indent=2)
     logger.info(f"Saved: {metadata_path}")
+    logger.info("If these files are meant to replace the pinned references, regenerate "
+                "config/reference_md5sums.tsv (see its header).")
     
     # Summary
     logger.info("\n" + "=" * 60)

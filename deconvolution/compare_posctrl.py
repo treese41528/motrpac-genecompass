@@ -158,22 +158,29 @@ def resolve_targets(store, tissue, target):
 
 
 def check_targets(store, prereg):
-    """Fail if an explicit target matches no DE block; warn if it matches only some.
+    """Fail if an explicit target names no DE block; warn if some of its blocks are absent or skipped.
 
     resolve_targets() drops names it cannot find, so a stale label used to be scored silently
     as 'not_testable' -- all 28 muscle controls after the muscle relabel to 'Skeletal myocytes'.
+    A block that exists in de_summary but was skipped (e.g. degenerate under the §6 library rule)
+    is not a stale label: its controls are scored 'not_testable', with a warning.
     """
     none, partial = [], []
     for (tissue, target), g in prereg.groupby(['tissue', 'cell_type_target']):
         if str(target).strip().upper() == 'ANY':
             continue
         wanted = [t.strip() for t in str(target).split('|')]
+        known = set(store.summary.loc[store.summary.tissue == tissue, 'cell_type'].astype(str))
         avail = set(store.celltypes(tissue))
-        hit = [t for t in wanted if t in avail]
-        if not hit:
+        if not any(t in known for t in wanted):
             none.append(f"{tissue}: {target!r} ({len(g)} rows)")
-        elif len(hit) < len(wanted):
-            partial.append(f"{tissue}: {sorted(set(wanted) - avail)} absent")
+            continue
+        absent = sorted(set(wanted) - known)
+        skipped = sorted((set(wanted) & known) - avail)
+        if absent:
+            partial.append(f"{tissue}: {absent} absent")
+        if skipped:
+            partial.append(f"{tissue}: {skipped} skipped in DE (not testable, {len(g)} rows)")
     for p in partial:
         print(f"WARNING: pre-registered target partly absent -- {p}", file=sys.stderr)
     if none:
@@ -211,13 +218,23 @@ def classify_identity(evals, tier, expected_dir):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--de-dir', default=str(_PROJECT_ROOT / 'data/deconvolution/genecompass_input_v2/pseudobulk_de'))
-    ap.add_argument('--prereg', default=str(_PROJECT_ROOT / 'deconvolution/reference/posctrl_prereg.tsv'))
+    ap.add_argument('--de-dir', default=None,
+                    help='DE folder (default: <deconvolution.genecompass_input_dir>/pseudobulk_de of the active config)')
+    ap.add_argument('--prereg', default=None,
+                    help='frozen spec (default: deconvolution.posctrl_prereg, else <reference_dir>/posctrl_prereg.tsv)')
     ap.add_argument('--out', default=None, help='output dir (default: --de-dir)')
     ap.add_argument('--alpha', type=float, default=0.05)
     ap.add_argument('--min-fraction', type=float, default=0.01)
     ap.add_argument('--min-nonzero', type=int, default=25)
     args = ap.parse_args()
+    if args.de_dir is None or args.prereg is None:      # derive from the config, never a hardcoded arm
+        from gene_utils import load_config, resolve_path
+        cfg = load_config(); d = cfg['deconvolution']
+        if args.de_dir is None:
+            args.de_dir = str(resolve_path(cfg, d['genecompass_input_dir']) / 'pseudobulk_de')
+        if args.prereg is None:
+            args.prereg = str(resolve_path(cfg, d['posctrl_prereg']) if d.get('posctrl_prereg')
+                              else resolve_path(cfg, d['reference_dir']) / 'posctrl_prereg.tsv')
 
     de_dir = Path(args.de_dir)
     out_dir = Path(args.out) if args.out else de_dir

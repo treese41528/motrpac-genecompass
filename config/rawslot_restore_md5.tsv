@@ -1,0 +1,33 @@
+# Inputs of scripts/restore_rawslot_studies.sh (the six studies behind the 27 keep_raw_slot files of
+# config/corpus_v2_plan.tsv). Paths relative to <data_root>/geo/single_cell/geo_datasets. GSE127248: the series
+# RAW.tar on GEO is truncated (6,066,176 bytes) and now 404s, so its 24 files come per sample from the URLs below.
+file	md5	url
+GSE253767/GSE253767_RAW.tar	1e75fa5c9c1ea9f7b8fd8fc210374c5b	https://ftp.ncbi.nlm.nih.gov/geo/series/GSE253nnn/GSE253767/suppl/GSE253767_RAW.tar
+GSE253672/GSE253672_RAW.tar	4511d0dac9d4252fc687de0d0fcc8d32	https://ftp.ncbi.nlm.nih.gov/geo/series/GSE253nnn/GSE253672/suppl/GSE253672_RAW.tar
+GSE275999/GSE275999_RAW.tar	6aabf063eafa2d7a4924698006080019	https://ftp.ncbi.nlm.nih.gov/geo/series/GSE275nnn/GSE275999/suppl/GSE275999_RAW.tar
+GSE235314/GSE235314_RAW.tar	17066a0f900767e315ef3f60b8acb1e5	https://ftp.ncbi.nlm.nih.gov/geo/series/GSE235nnn/GSE235314/suppl/GSE235314_RAW.tar
+GSE186158/GSE186158_RAW.tar	fde04115f2cd1b84fa05d0250bfdbf19	https://ftp.ncbi.nlm.nih.gov/geo/series/GSE186nnn/GSE186158/suppl/GSE186158_RAW.tar
+GSE127248/GSE127248_RAW/GSM3633087_RatIC_NC1_fresh.barcodes.tsv.gz	784b8f4dc4af688ee016043d26496e17	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633087/suppl/GSM3633087_RatIC_NC1_fresh.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633087_RatIC_NC1_fresh.genes.tsv.gz	06618025d44d1195d7e2fec15cb33cdb	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633087/suppl/GSM3633087_RatIC_NC1_fresh.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633087_RatIC_NC1_fresh.matrix.mtx.gz	da48719ca2f1947771d0f3430c4a9a0a	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633087/suppl/GSM3633087_RatIC_NC1_fresh.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633088_RatIC_NC2_fresh.barcodes.tsv.gz	3b6b709d9a8e34533b625e71bccc95aa	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633088/suppl/GSM3633088_RatIC_NC2_fresh.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633088_RatIC_NC2_fresh.genes.tsv.gz	5713febd3c26b223befb7ed5f76a2ae4	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633088/suppl/GSM3633088_RatIC_NC2_fresh.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633088_RatIC_NC2_fresh.matrix.mtx.gz	90a2a1f077804bed0e73d38d4ac991ba	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633088/suppl/GSM3633088_RatIC_NC2_fresh.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633089_RatIC_PC1_fresh.barcodes.tsv.gz	b84881efb5abb36206a839f1aebbaa9f	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633089/suppl/GSM3633089_RatIC_PC1_fresh.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633089_RatIC_PC1_fresh.genes.tsv.gz	91b7aa303a562e49fe13a0f42e5032a6	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633089/suppl/GSM3633089_RatIC_PC1_fresh.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633089_RatIC_PC1_fresh.matrix.mtx.gz	2fcdd54e1e0adbb1c9ddd5adbc7cf531	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633089/suppl/GSM3633089_RatIC_PC1_fresh.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633090_RatIC_PC2_fresh.barcodes.tsv.gz	cec740b415a52730527be8285c3c6f19	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633090/suppl/GSM3633090_RatIC_PC2_fresh.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633090_RatIC_PC2_fresh.genes.tsv.gz	ae0f439c6b6ebd8aee9dcb9de63284f8	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633090/suppl/GSM3633090_RatIC_PC2_fresh.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633090_RatIC_PC2_fresh.matrix.mtx.gz	8f86590530ad702bb1ddfd9bdb3ac664	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633090/suppl/GSM3633090_RatIC_PC2_fresh.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633091_RatIC_NC1_DMSO.barcodes.tsv.gz	fc2e35ff5542d3a37b463b40f5fc467b	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633091/suppl/GSM3633091_RatIC_NC1_DMSO.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633091_RatIC_NC1_DMSO.genes.tsv.gz	595f316c37d393b9585e0d29a976a5db	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633091/suppl/GSM3633091_RatIC_NC1_DMSO.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633091_RatIC_NC1_DMSO.matrix.mtx.gz	4dd12951079f54ae9c32b78f5b92fb97	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633091/suppl/GSM3633091_RatIC_NC1_DMSO.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633092_RatIC_NC2_DMSO.barcodes.tsv.gz	9e64d168e168e8bd840307f952bd0ac3	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633092/suppl/GSM3633092_RatIC_NC2_DMSO.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633092_RatIC_NC2_DMSO.genes.tsv.gz	cc69693626fbda3c22ca757befcecc4b	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633092/suppl/GSM3633092_RatIC_NC2_DMSO.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633092_RatIC_NC2_DMSO.matrix.mtx.gz	93ed7f2f905daa2b3f2addc79bbacfc8	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633092/suppl/GSM3633092_RatIC_NC2_DMSO.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633093_RatIC_PC1_DMSO.barcodes.tsv.gz	b2ecd133ba3a0bc5c911d6f02a912ca7	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633093/suppl/GSM3633093_RatIC_PC1_DMSO.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633093_RatIC_PC1_DMSO.genes.tsv.gz	56cf61c980c32d25060bba847d8805ce	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633093/suppl/GSM3633093_RatIC_PC1_DMSO.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633093_RatIC_PC1_DMSO.matrix.mtx.gz	282aefa3d63bec9fa40aa08eb7b895b4	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633093/suppl/GSM3633093_RatIC_PC1_DMSO.matrix.mtx.gz
+GSE127248/GSE127248_RAW/GSM3633094_RatIC_PC2_DMSO.barcodes.tsv.gz	310047b17dd1e6be0624feb2345e425f	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633094/suppl/GSM3633094_RatIC_PC2_DMSO.barcodes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633094_RatIC_PC2_DMSO.genes.tsv.gz	4300254b198603949f8b6f8bb42851f6	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633094/suppl/GSM3633094_RatIC_PC2_DMSO.genes.tsv.gz
+GSE127248/GSE127248_RAW/GSM3633094_RatIC_PC2_DMSO.matrix.mtx.gz	06a4e61981a8e4d4e63e91b9bd9b0968	https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM3633nnn/GSM3633094/suppl/GSM3633094_RatIC_PC2_DMSO.matrix.mtx.gz

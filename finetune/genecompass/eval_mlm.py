@@ -17,6 +17,8 @@ Masks follow GeneCompass's collator (15% of real tokens; of those 80% <mask>, 10
 (seed, species, batch index), and the random-token range is fixed per species (human/mouse: the
 50,558-token GeneCompass vocabulary; rat: 55,275), so every model sees identical inputs.
 Metrics are token-weighted over masked positions: gene-ID cross-entropy, value MSE, top-1 accuracy.
+--by-tier also splits the rat cells' gene-ID metrics by the masked token's ortholog tier (rat_token_mapping.tsv;
+a token shared by genes of different tiers is reported under the joined tier names).
 """
 import argparse
 import json
@@ -88,6 +90,15 @@ def load_model(model_dir, kind, device):
     return model.eval().to(device), float(model.emb_warmup.alpha), missing
 
 
+def load_tiers():
+    """rat token id -> tier name (joined with '+' when genes of several tiers share the token)."""
+    import csv
+    tiers = {}
+    for r in csv.DictReader(open(ROOT / "data/training/ortholog_mappings/rat_token_mapping.tsv"), delimiter="\t"):
+        tiers.setdefault(int(r["token_id"]), set()).add(r["tier"])
+    return {k: "+".join(sorted(v)) for k, v in tiers.items()}
+
+
 def mask_batch(input_ids, values, gen, vocab):
     real = input_ids != PAD_ID
     masked = (torch.rand(input_ids.shape, generator=gen) < 0.15) & real
@@ -112,7 +123,9 @@ def evaluate(args):
     species = [0, 1] if args.kind == "base" else [0, 1, 2]
     out = {"model": str(args.model), "kind": args.kind, "probe": str(args.probe), "seed": args.seed,
            "emb_warmup_alpha": alpha, "missing_keys": missing, "species": {}}
+    tier_of = load_tiers() if args.by_tier else None
     for s in species:
+        tier_acc = {}
         idx = torch.nonzero(sp_all == s).flatten().tolist()
         vocab = 55275 if s == 2 else GC_VOCAB
         ce_sum = se_sum = n_tok = n_hit = 0.0
@@ -133,9 +146,20 @@ def evaluate(args):
             se_sum += float(o.value_loss) * k
             n_hit += int((o.logits.argmax(-1).cpu()[m] == labels[m]).sum())
             n_tok += k
+            if tier_of is not None and s == 2:
+                lg = o.logits[m.to(device)].float()
+                lab = labels[m]
+                ce = torch.nn.functional.cross_entropy(lg, lab.to(device), reduction="none").cpu()
+                hit = (lg.argmax(-1).cpu() == lab)
+                for t, c, h in zip(lab.tolist(), ce.tolist(), hit.tolist()):
+                    a = tier_acc.setdefault(tier_of.get(t, "untiered"), [0.0, 0, 0])
+                    a[0] += c; a[1] += int(h); a[2] += 1
         out["species"][SPECIES[s]] = {"cells": len(idx), "masked_tokens": int(n_tok),
                                       "id_loss": ce_sum / n_tok, "value_loss": se_sum / n_tok,
                                       "top1_acc": n_hit / n_tok}
+        if tier_acc:
+            out["species"][SPECIES[s]]["by_tier"] = {t: {"masked_tokens": a[2], "id_loss": a[0] / a[2],
+                                                          "top1_acc": a[1] / a[2]} for t, a in sorted(tier_acc.items())}
         print(SPECIES[s], json.dumps(out["species"][SPECIES[s]]))
     path = Path(str(args.out) + ".json")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -157,6 +181,7 @@ def main():
     e.add_argument("--probe", required=True)
     e.add_argument("--out", required=True)
     e.add_argument("--batch-size", type=int, default=8)
+    e.add_argument("--by-tier", action="store_true", help="also report rat gene-ID metrics per ortholog tier")
     e.add_argument("--seed", type=int, default=20261008)
     args = ap.parse_args()
     build_probe(args) if args.cmd == "build-probe" else evaluate(args)

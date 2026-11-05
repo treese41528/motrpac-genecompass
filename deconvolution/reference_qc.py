@@ -27,6 +27,9 @@ DEVEL     = re.compile(r"(\bE\d+\.?\d*\b|\bP\d+\b|embryo|embryonic|fetal|foetal|
 
 def load_inventory(path):
     inv = {}
+    if not os.path.exists(path):          # gitignored corpus inventory; absent on a clone with deposited refs
+        print(f"[note] inventory not found ({path}): every sample reports 'not in inventory' (WARN only)")
+        return inv
     with open(path) as f:
         for r in csv.DictReader(f, delimiter="\t"):
             inv[r["sample_id"]] = (r.get("geo_title", "") + " | " + r.get("geo_source_name", "")

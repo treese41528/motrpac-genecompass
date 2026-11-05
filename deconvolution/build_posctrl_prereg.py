@@ -17,12 +17,42 @@ Tiers (by how cleanly the EXPRESSION direction is anchored):
         (acute/human/n=3, up-only DE, protocol-dependent sign). Scored on program enrichment, never direction.
 
 Output: deconvolution/reference/posctrl_prereg.tsv
+
+A reference whose cell types were renamed (e.g. the joint re-annotation, REFERENCE_RELABEL_PREREG.md §11)
+gets its own copy through an explicit old -> new name map, genes/directions/thresholds unchanged:
+  build_posctrl_prereg.py --celltype-map deconvolution/reference/posctrl_celltype_map_refs4.tsv \
+      --out deconvolution/reference/posctrl_prereg_refs4.tsv
+The map is a TSV (tissue, old, new); `new` may be pipe-joined. Every mapped name is written to `notes`.
 """
-import csv, os, sys
+import argparse, csv, os, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GU   = os.path.join(ROOT, "data/training/gene_universe/pruned_gene_universe.tsv")
-OUT  = os.path.join(ROOT, "deconvolution/reference/posctrl_prereg.tsv")
+_ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+_ap.add_argument("--celltype-map", default=None, help="TSV tissue/old/new renaming target cell types")
+_ap.add_argument("--out", default=os.path.join(ROOT, "deconvolution/reference/posctrl_prereg.tsv"))
+_args = _ap.parse_args()
+OUT  = _args.out
+CT_MAP = {}
+if _args.celltype_map:
+    with open(_args.celltype_map) as fh:
+        for r in csv.DictReader((l for l in fh if not l.startswith("#")), delimiter="\t"):
+            CT_MAP[(r["tissue"], r["old"])] = r["new"]
+
+
+def map_target(tissue, ct):
+    """Rename each pipe-joined target through CT_MAP (order kept, duplicates dropped)."""
+    if ct.strip().upper() == "ANY" or not CT_MAP:
+        return ct, ""
+    out, moved = [], []
+    for t in ct.split("|"):
+        new = CT_MAP.get((tissue, t), t)
+        if new != t:
+            moved.append(f"{t} -> {new}")
+        for n in new.split("|"):
+            if n not in out:
+                out.append(n)
+    return "|".join(out), ("cell type renamed: " + "; ".join(moved)) if moved else ""
 
 # symbol -> rel-113 ENSRNOG (case-insensitive), from the gene universe (same ID space as DE rownames)
 sym2ens = {}
@@ -79,7 +109,13 @@ SPEC = [
 ]
 
 rows = []
+used = set()
 for tier, group, syms, tissue, ct, sex, edir, src, notes in SPEC:
+    ct_old = ct
+    ct, moved = map_target(tissue, ct)
+    used |= {(tissue, t) for t in ct_old.split("|")} & set(CT_MAP)
+    if moved:
+        notes = (notes + "; " if notes else "") + moved
     for s in syms:
         ens = sym2ens.get(s.lower(), "NA")
         testable_prior = "TRUE"
@@ -93,6 +129,9 @@ for tier, group, syms, tissue, ct, sex, edir, src, notes in SPEC:
                          anchored_direction=("TRUE" if edir in ("up", "down") else "FALSE"),
                          testable_prior=testable_prior, source=src, notes=n))
 
+unused = set(CT_MAP) - used
+if unused:
+    sys.exit(f"ERROR: cell-type map entries match no target: {sorted(unused)}")
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 cols = ["tier","group","symbol","ensembl","tissue","cell_type_target","sex",
         "expected_dir","anchored_direction","testable_prior","source","notes"]

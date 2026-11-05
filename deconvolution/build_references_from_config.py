@@ -6,6 +6,9 @@ config-driven builder. For each buildable tissue it constructs the exact build_r
 from the config's filters (organism / conditions / title / sample_ids / dedup / label-scheme / gene-join),
 builds into reference_dir, then runs the post-build selection check (cells_meta used exactly expect.sample_ids).
 Shared references (SKMGN+SKMVL -> one Ma muscle build) are built once. Pooled lung uses build_lung_pooled.py.
+Tissues with `adopt_authors_labels: true` (BAT, HEART) first run adopt_authors_labels.py --tissue <T>, which
+writes the source paper's deposited per-cell labels as the samples' celltypes/consensus annotations (needs
+the deposited objects fetched by deconvolution/fetch_external_refs.sh); the build then consumes them.
 
 Loads many h5ads -> RUN ON A COMPUTE NODE (see --submit).
 
@@ -21,16 +24,29 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "deconvolution"))
 os.environ.setdefault("PIPELINE_ROOT", str(ROOT))
 import validate_selection as V  # noqa: E402
+from slurm_site import sbatch_site_args  # noqa: E402
 
 PY = os.environ.get("DECONV_PYTHON") or sys.executable
 BUILDABLE = {"ready", "needs-build", "proposed"}
 
 
+def pre_build_cmds(code, cfg):
+    """Commands that must run before build_cmd (the deposited-label adoption for BAT/HEART)."""
+    if cfg.get("adopt_authors_labels"):
+        return [[PY, "deconvolution/adopt_authors_labels.py", "--tissue", code]]
+    return []
+
+
 def build_cmd(cfg):
     """The exact command that builds this tissue's reference into cfg['reference_dir']."""
     out = cfg["reference_dir"]
+    if cfg.get("builder") == "blood_composite":      # BLOOD option B: two GEO datasets, its own builder
+        return [PY, "deconvolution/build_blood_composite.py", "build", "--out", out]
+    if cfg.get("builder") == "external_reference":   # SPLEEN/OVARY (§14): one external GEO library each
+        return [PY, "deconvolution/build_external_reference.py", "build", "--ref", cfg["external_ref"], "--out", out]
+    jl = ["--joint-labels", cfg["joint_labels"]] if cfg.get("joint_labels") else []
     if cfg.get("pooled"):
-        return [PY, "deconvolution/build_lung_pooled.py", "--out", out]
+        return [PY, "deconvolution/build_lung_pooled.py", "--out", out] + jl
     c = [PY, "deconvolution/build_reference.py",
          "--study", cfg["study"], "--tissue", cfg["tissue"],
          "--organism", cfg.get("organism", "Rattus norvegicus"),
@@ -51,7 +67,7 @@ def build_cmd(cfg):
         c += ["--no-dedup-gsm"]
     if cfg.get("gene_map"):
         c += ["--gene-map", cfg["gene_map"]]
-    return c
+    return c + jl
 
 
 def main():
@@ -60,8 +76,9 @@ def main():
     ap.add_argument("--submit", action="store_true", help="sbatch ONE job that builds all references")
     ap.add_argument("--tissue", nargs="*", help="subset of BULK codes (default: all buildable)")
     ap.add_argument("--force", action="store_true", help="rebuild even if the reference already exists")
-    ap.add_argument("--account", default="reese18")
-    ap.add_argument("--partition", default="a100-40gb")
+    ap.add_argument("--account", default=None, help="sbatch --account (default: MGC_SLURM_ACCOUNT in site.env)")
+    ap.add_argument("--partition", default=None, help="sbatch --partition (default: MGC_SLURM_PARTITION)")
+    ap.add_argument("--qos", default=None, help="sbatch --qos (default: MGC_SLURM_QOS)")
     ap.add_argument("--mem", default="128G")
     ap.add_argument("--cores", type=int, default=16)
     ap.add_argument("--time", default="6:00:00")
@@ -89,14 +106,17 @@ def main():
 
     if args.submit:
         sub = " ".join(shlex.quote(t) for t in (args.tissue or []))
-        inner = (f"set -euo pipefail; cd {ROOT}; export PIPELINE_ROOT={ROOT}; "
-                 f'eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"; '
+        prof = os.environ.get("PIPELINE_PROFILE", "")
+        inner = (f"set -euo pipefail; cd {shlex.quote(str(ROOT))}; mkdir -p tmp; "
+                 f"export PROJECT_ROOT={shlex.quote(str(ROOT))} PIPELINE_ROOT={shlex.quote(str(ROOT))} "
+                 f"DECONV_PYTHON={shlex.quote(PY)} TMPDIR={shlex.quote(str(ROOT / 'tmp'))}"
+                 + (f" PIPELINE_PROFILE={shlex.quote(prof)}" if prof else "") + "; "
                  f"{shlex.quote(PY)} deconvolution/build_references_from_config.py --run "
                  f"{'--force ' if args.force else ''}{('--tissue '+sub) if sub else ''}")
-        sb = ["sbatch", f"--account={args.account}", f"--partition={args.partition}", "--nodes=1",
-              "--ntasks=1", f"--cpus-per-task={args.cores}", f"--mem={args.mem}", "--gres=gpu:1",
-              f"--time={args.time}", "--job-name=build_refs",
-              "--output=logs/build_refs_%j.out", "--error=logs/build_refs_%j.err", f"--wrap={inner}"]
+        sb = (["sbatch"] + sbatch_site_args(args.account, args.partition, args.qos)
+              + ["--nodes=1", "--ntasks=1", f"--cpus-per-task={args.cores}", f"--mem={args.mem}",
+                 f"--time={args.time}", "--job-name=build_refs",
+                 "--output=logs/build_refs_%j.out", "--error=logs/build_refs_%j.err", f"--wrap={inner}"])
         (ROOT / "logs").mkdir(exist_ok=True)
         r = subprocess.run(sb, cwd=ROOT, capture_output=True, text=True)
         print((r.stdout or r.stderr).strip())
@@ -107,9 +127,10 @@ def main():
     for code, cfg in plan:
         rd = cfg["reference_dir"]
         built = (ROOT / rd / "cells_meta.tsv").exists()
-        cmd = build_cmd(cfg)
+        cmds = pre_build_cmds(code, cfg) + [build_cmd(cfg)]
         print(f"\n[{code}] -> {rd}" + ("  (exists)" if built else ""))
-        print("   " + " ".join(shlex.quote(x) for x in cmd))
+        for cmd in cmds:
+            print("   " + " ".join(shlex.quote(x) for x in cmd))
         if not args.run:
             continue
         if built and not args.force:
@@ -118,7 +139,11 @@ def main():
             env = dict(os.environ, PIPELINE_ROOT=str(ROOT))
             if cfg.get("allow_nonnative"):
                 env["ALLOW_NONNATIVE_REF"] = "1"
-            rc = subprocess.run(cmd, cwd=ROOT, env=env).returncode
+            rc = 0
+            for cmd in cmds:
+                rc = subprocess.run(cmd, cwd=ROOT, env=env).returncode
+                if rc != 0:
+                    break
             if rc != 0:
                 fails.append(f"{code}: build exited {rc}"); print(f"   BUILD FAILED ({rc})"); continue
         # post-build: assert the built reference used exactly expect.sample_ids

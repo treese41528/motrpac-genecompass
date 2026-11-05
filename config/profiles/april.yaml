@@ -11,7 +11,12 @@ paths:
   median_dir: data/training/gene_medians
   hybrid_medians: data/training/gene_medians/hybrid_gene_medians.pickle
   tokenized_corpus_dir: data/training/tokenized_corpus
+medians:
+  n_scatter_tasks: 50          # April's Stage 4 ran 50 scatter tasks (v2: 16); Stage 5 used 50 in both
 deconvolution:
+  # April ran on the July references (the default moved to the joint re-annotation on 2026-10-31).
+  results_dir: data/deconvolution/results
+  posctrl_prereg: deconvolution/reference/posctrl_prereg.tsv
   genecompass_input_dir: data/deconvolution/genecompass_input
   genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
   pseudocell_target_sum: 6500
@@ -19,3 +24,4 @@ deconvolution:
   augur_input_dir: data/deconvolution/augur_input
   grn_dir: data/deconvolution/grn
   grn_human_dir: data/deconvolution/grn_human
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

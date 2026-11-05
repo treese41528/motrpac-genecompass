@@ -2,79 +2,75 @@
 
 ## Overview
 
-Stage 7 adapts GeneCompass (326.8M parameters, 12-layer BERT) for rat
-transcriptomics by continuing masked language model pre-training on our
-9,483,420-cell rat corpus. The model grows by 2.9% to accommodate 2,474
-rat-specific T4 gene tokens.
+Stage 7 adapts GeneCompass (12-layer BERT, GeneCompass_Base) to rat transcriptomics by continuing
+masked-language-model pre-training on a rat/human/mouse mix. The working model is **v2**
+(`docs/RETRAIN_V2_RESULTS.md`): 6,803,206 rat cells (584 QC files kept by `config/corpus_v2_plan.tsv`)
+interleaved 40/45/15 with GeneCompass's 0.5M human and mouse cells. The vocabulary grows from 50,558 to
+**55,275** tokens: 2,243 T3 rat tokens (warm-started from their human/mouse ortholog) and 2,474 T4
+rat-specific tokens (random rows). April's model (`configs/rat_finetune.yaml`) had 53,032.
 
-## Quick Start
+## Quick start (v2 config: `configs/rat_finetune_v2.yaml`)
 
 ```bash
-# 1. Validate prerequisites and extend checkpoint
-python pipeline/07_finetuning/run_stage7.py --dry-run
-
-# 2. Run (Step 1: init checkpoint, Step 2: submit SLURM job)
-python pipeline/07_finetuning/run_stage7.py
-
-# Or run steps individually:
-python pipeline/07_finetuning/rat_model_init.py \
-    --checkpoint vendor/GeneCompass/pretrained_models/GeneCompass_Base \
-    --rat-token-dict data/training/ortholog_mappings/rat_tokens.pickle \
-    --stage6-dir data/training/prior_knowledge \
-    --homologous-gene-path vendor/GeneCompass/prior_knowledge/homologous_hm_token.pickle \
-    --output-dir data/models/rat_genecompass_init
-
-sbatch slurm/stage7.slurm
+python pipeline/run_stage7.py --dry-run             # validate prerequisites, print every step
+python pipeline/run_stage7.py --from 1 --to 3       # init (seeded), training mix, evaluation probe
+python pipeline/run_stage7.py --from 4 --phase 1    # train phase 1 (frozen encoder); rerun to resume
+python pipeline/run_stage7.py --from 4 --phase 2    # train phase 2 (all layers)
 ```
+
+Step 4 runs `scripts/train_stage7.sh` (torchrun, `distributed.nproc_per_node` GPUs, fp16, gradient
+checkpointing, auto-resume from the newest `checkpoint-*`). On a cluster, wrap that script in your
+scheduler's batch file, or pass `--sbatch <your wrapper>`. The individual commands are in the root
+`README.md` ("Rebuilding the v2 model").
+
+For exact v2 reproduction the init (`data/models/rat_genecompass_init_v2`, built before
+`initialization.seed` existed, so not regenerable byte for byte), the mix and the checkpoints are
+deposited; see `docs/repro_stages1_7/REPRODUCTION.md`.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `rat_load_prior_embedding.py` | Builds [53032, 768] prior knowledge tensors from Stage 6 |
-| `rat_model_init.py` | Extends GeneCompass_Base checkpoint to rat vocabulary |
-| `rat_pretrain.py` | Main training script (torchrun-compatible) |
-| `run_stage7.py` | Orchestrator: validates prerequisites → init → submit |
+| `build_rat_token_dictionary.py` | Merges GeneCompass's human/mouse tokens with the Stage 3 rat tokens (55,275 entries for v2) |
+| `rat_load_prior_embedding.py` | Builds the [vocab, 768] prior-knowledge tensors (Stage 6 rows only where the init policy allows) |
+| `rat_model_init.py` | Extends GeneCompass_Base to the rat vocabulary (`--seed` for the random rows) |
+| `build_mixed_species_dataset.py` | The rat/human/mouse training mix with per-row source references |
+| `eval_mlm.py` | `build-probe`: the fixed evaluation probe; `eval`: masked-LM scores on it |
+| `rat_pretrain.py` | Training script (torchrun); copies the training YAML and a provenance record into each run folder |
 | `monitor.py` | W&B setup and custom metric helpers |
 
-## Architecture Changes
+The orchestrator is `pipeline/run_stage7.py`; the launch is `scripts/train_stage7.sh`.
+
+## Architecture changes (v2)
 
 | Component | Original | Extended |
 |---|---|---|
-| `word_embeddings` | [50558, 768] | [53032, 768] |
-| `cls_embedding` | [2, 768] | [3, 768] (rat=2) |
-| `prior_knowledge` buffers | [50558, 768] ×4 | [53032, 768] ×4 |
-| `homologous_index` | [50558] | [53032] (T4=identity) |
-| `prediction biases` | [50558] | [53032] |
-| **Total parameters** | 326.8M | 336.4M (+2.9%) |
+| `word_embeddings` / tied decoder | [50558, 768] | [55275, 768] |
+| `cls_embedding` | [2, 768] | [3, 768] (rat = 2, from mouse + noise) |
+| `prior_knowledge` buffers | [50558, 768] ×4 | [55275, 768] ×4 |
+| `homologous_index` | [50558] | [55275] (T4 = identity) |
+| prediction biases | [50558] | [55275] |
 
-## Key Design Decisions
+## Key design decisions
 
-1. **T1-T3 prior knowledge preserved from pre-trained model** — only T4 rows
-   come from Stage 6. The pre-trained embedding values are calibrated to the
-   learned projection layers; overwriting them would degrade performance.
-
-2. **Vendor submodule unmodified** — all changes in `pipeline/07_finetuning/`.
-   `cls_embedding` extended via monkey-patch after model construction.
-
-3. **Co-expression rescaling** — T4 co-exp norms ~4.8 vs model expectation
-   ~18.6. Rescaled by 3.9× to match the projection layer's input scale.
-
-4. **Weight tying maintained** — `cls.predictions.decoder.weight` and
-   `word_embeddings.weight` are the same tensor.
-
-## Monitoring
-
-W&B project: `reese18-purdue-university/motrpac-genecompass-rat`
-
-Metrics per step: `id_loss`, `value_loss`, `loss`, `emb_warmup_alpha`,
-`grad_norm`, `learning_rate`
+1. **T1–T3 prior knowledge comes from the pre-trained model** (T3 rows copy their ortholog's rows); only
+   T4 rows may come from Stage 6, and v2 leaves the T4 promoter and co-expression rows zero
+   (`initialization.t4_zero_priors`), so v2's init takes only 36 T4 GRN rows from Stage 6.
+2. **Vendor submodule unmodified** — all rat code lives here; `cls_embedding` is extended after model
+   construction.
+3. **Weight tying maintained** — `cls.predictions.decoder.weight` and `word_embeddings.weight` are the
+   same tensor.
 
 ## Configuration
 
-All hyperparameters in `config/pipeline_config.yaml` under `finetuning:`.
-CLI arguments override config values.
+All hyperparameters are in `configs/rat_finetune_v2.yaml` (sections `model`, `data`, `phase1`, `phase2`,
+`training`, `initialization`, `mixing`, `probe`, `logging`, `output`, `distributed`). CLI arguments to
+`rat_pretrain.py` override them.
 
-## Estimated Runtime
+## Runtime (v2, one node with 4 × A100-40GB)
 
-~18 hours/epoch on 4× A100-40GB → ~54 hours for 3 epochs.
+Phase 1: 517,793 steps (job 11917121, ended 2026-10-15; started after the 2026-10-08 init). Phase 2:
+591,763 steps (ended 2026-10-23; resumed once from `checkpoint-470000` after a node failure). The mix build
+takes about 4.7 h and the probe about 1.6 h (timings from the 2026-10-31 reproduction).
+
+W&B project: `reese18-purdue-university/motrpac-genecompass-rat`.

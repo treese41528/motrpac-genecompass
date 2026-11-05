@@ -1,0 +1,21 @@
+file	md5_repro	md5_canonical	result	detail
+family_embeddings.pkl	edef255566c235c85d3e41f0bf4e5f79	55a58100bc8724924d1b7f290e38466b	DIFFERS	type=dict len=26019
+family_gene2vec.model	79ea94fec37d9813842d7026ae9cc463	85dcde713dd3f4fe7c9ff2c03e8adb94	DIFFERS	
+family_gene2vec.model.syn1neg.npy	2dc9fce7d0bbf5c5b4f132073d444330	63841ea5b72556e5236fdb9fab6598e1	DIFFERS	
+family_gene2vec.model.wv.vectors.npy	e4d6aeaf40c72400b5118f67306c084d	f2cacad16880827b52ecb1acfbba6133	DIFFERS	
+family_gene_pairs.txt	916557040adc4f6728d20cee8b7b1f12	916557040adc4f6728d20cee8b7b1f12	IDENTICAL	
+grn_embeddings.pkl	78e5aae24322415c622132833c0276a0	78e5aae24322415c622132833c0276a0	IDENTICAL	
+grn_transfer_coverage.tsv	6e3ef1ecd9a67dabaa2d3c7be1d8406b	6e3ef1ecd9a67dabaa2d3c7be1d8406b	IDENTICAL	
+stage6_family_manifest.json	63093975d712c130c66a2f29a53e2697	9fa4026964e84dda728d28a0ab22eab9	DIFFERS	4 diffs: /inputs/rat_to_human_mapping/path: /scratch/gilbreth/reese18/motrpac_repro_20261031/s3/ortholog_mappings/rat_to_human_mapping.pickle != /depot/reese18/apps/motrpac-genecompass/data/training/ortholog_mappings/rat_to_human_mapping.pickle | /inputs/rat_token_mapping/md5: 258ffccb436c9464fa9c93844e299b06 != 26a810edf77c7c4b77cf22e9b70db266 | /inputs/rat_token_mapping/path: /scratch/gilbreth/reese18/motrpac_repro_20261031/s3/ortholog_mappings/rat_token_mapping.tsv != /depot/reese18/apps/motrpac-genecompass/data/training/ortholog_mappings/rat_token_mapping.tsv | /inputs/rat_token_mapping/size_bytes: 3135380 != 3155823
+stage6_grn_manifest.json	5ffdd727227d09d389f8e14d99439257	0382b585e214c4c727ae6cdb1472852e	CONTENT-IDENTICAL	0 diffs: 
+coexp_embeddings.pkl			ONLY_IN_CANONICAL	
+coexp_gene2vec.model			ONLY_IN_CANONICAL	
+coexp_gene2vec.model.syn1neg.npy			ONLY_IN_CANONICAL	
+coexp_gene2vec.model.wv.vectors.npy			ONLY_IN_CANONICAL	
+coexp_gene_pairs.txt			ONLY_IN_CANONICAL	
+promoter_embeddings.pkl			ONLY_IN_CANONICAL	
+promoter_sequences.fa			ONLY_IN_CANONICAL	
+promoter_skipped.tsv			ONLY_IN_CANONICAL	
+stage6_coexp_manifest.json			ONLY_IN_CANONICAL	
+stage6_promoter_manifest.json			ONLY_IN_CANONICAL	
+tss_coordinates_cache.pkl			ONLY_IN_CANONICAL	

@@ -2,13 +2,15 @@
 # lib/provenance.py, with the same fields: git commit (plus modified tracked files), command
 # line, time, host, run parameters, and the size and mtime of each input file.
 #
-# It never stops the run: a failure only prints a warning.
+# It never stops the run: a failure only prints a warning. md5 = TRUE (or env PROVENANCE_MD5=1) also records
+# each input file's md5 (tools::md5sum; directories are skipped) -- off by default because inputs can be GB.
 #
 #   source(file.path(.script_dir, "provenance.R"))
 #   write_provenance(out_dir, inputs = c(pheno_tsv), params = list(alpha = ALPHA))
 #   # -> <out_dir>/provenance_<script>.json
 
-write_provenance <- function(out_dir, inputs = character(), params = list(), name = NULL) {
+write_provenance <- function(out_dir, inputs = character(), params = list(), name = NULL,
+                             md5 = identical(Sys.getenv("PROVENANCE_MD5"), "1")) {
   tryCatch({
     args_all <- commandArgs(trailingOnly = FALSE)
     script <- sub("^--file=", "", grep("^--file=", args_all, value = TRUE))
@@ -23,8 +25,10 @@ write_provenance <- function(out_dir, inputs = character(), params = list(), nam
     stamp <- function(p) {
       if (!file.exists(p)) return(list(path = p, exists = FALSE))
       i <- file.info(p)
-      list(path = p, exists = TRUE, bytes = unname(i$size),
-           mtime = format(i$mtime, "%Y-%m-%dT%H:%M:%S"))
+      rec <- list(path = p, exists = TRUE, bytes = unname(i$size),
+                  mtime = format(i$mtime, "%Y-%m-%dT%H:%M:%S"))
+      if (isTRUE(md5) && !isTRUE(i$isdir)) rec$md5 <- unname(tools::md5sum(p))
+      rec
     }
     record <- list(
       script = script,

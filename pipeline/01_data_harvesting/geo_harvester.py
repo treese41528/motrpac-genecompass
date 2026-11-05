@@ -67,6 +67,18 @@ python geo_harvester.py \
     --download \
     --workers 8 \
     --email your_email
+
+# Replay: re-download exactly the GEO series the v2 build scanned (no search; md5s recorded by default)
+# (the February 2026 harvest ran --mode both into data/raw/geo; Stage 2 reads it through
+#  data/raw/geo/{single_cell,bulk}/geo_datasets -> ../geo_datasets)
+python geo_harvester.py \
+    --mode both \
+    --accessions config/stage2_step1_accessions.txt \
+    --output_dir data/raw/geo \
+    --download --batch-esummary 400 --workers 8 --resume
+
+# Search, frozen at a date (later submissions are not picked up)
+python geo_harvester.py --mode single-cell --download --maxdate 2026/02/15
 """
 
 import os
@@ -924,9 +936,19 @@ def build_search_term(mode: str, organism: str, user_term: Optional[str]) -> str
 # -----------------------
 # GEO / Entrez Helpers
 # -----------------------
-def search_geo_series(term: str, retmax: int = 200, retstart: int = 0, retries: int = 3) -> Tuple[List[str], int]:
+def _date_kwargs(maxdate: Optional[str]) -> Dict[str, str]:
+    """Entrez esearch date window: records published up to maxdate (YYYY/MM/DD), or no limit."""
+    if not maxdate:
+        return {}
+    return {"datetype": "pdat", "mindate": "1900/01/01", "maxdate": maxdate}
+
+
+def search_geo_series(term: str, retmax: int = 200, retstart: int = 0, retries: int = 3,
+                      maxdate: Optional[str] = None) -> Tuple[List[str], int]:
     """
     Search for GEO Series (GSE) records with retry logic.
+    maxdate (YYYY/MM/DD) limits the search to records published on or before that date, so a
+    later rerun of the same query returns the same series (plus none added since).
     
     Returns:
         Tuple of (list of UIDs, total count)
@@ -935,7 +957,8 @@ def search_geo_series(term: str, retmax: int = 200, retstart: int = 0, retries: 
     
     for attempt in range(1, retries + 1):
         try:
-            handle = Entrez.esearch(db="gds", term=term, retmax=retmax, retstart=retstart)
+            handle = Entrez.esearch(db="gds", term=term, retmax=retmax, retstart=retstart,
+                                    **_date_kwargs(maxdate))
             record = Entrez.read(handle)
             handle.close()
             return record.get("IdList", []), int(record.get("Count", 0))
@@ -962,15 +985,15 @@ def search_geo_series(term: str, retmax: int = 200, retstart: int = 0, retries: 
     return [], 0
 
 
-def fetch_all_geo_ids(term: str) -> List[str]:
-    """Fetch all GEO UIDs matching the search term."""
+def fetch_all_geo_ids(term: str, maxdate: Optional[str] = None) -> List[str]:
+    """Fetch all GEO UIDs matching the search term (published on or before maxdate, if given)."""
     all_geo_ids: List[str] = []
     retmax = 500
     retstart = 0
     t0 = time.time()
     
     # First search to get total count
-    ids, total_count = search_geo_series(term, retmax=retmax, retstart=retstart)
+    ids, total_count = search_geo_series(term, retmax=retmax, retstart=retstart, maxdate=maxdate)
     
     if total_count == 0:
         logging.warning(f"No results found. Try simplifying your search or checking the term.")
@@ -980,7 +1003,7 @@ def fetch_all_geo_ids(term: str) -> List[str]:
     retstart += retmax
     
     while retstart < total_count:
-        ids, _ = search_geo_series(term, retmax=retmax, retstart=retstart)
+        ids, _ = search_geo_series(term, retmax=retmax, retstart=retstart, maxdate=maxdate)
         all_geo_ids.extend(ids)
         retstart += retmax
         time.sleep(ncbi_sleep_time())
@@ -2551,7 +2574,18 @@ def main():
     parser.add_argument("--batch-esummary", type=int,
                         default=_cfg("harvesting.geo_batch_esummary", 0))
     parser.add_argument("--workers", type=int, default=0)
-    parser.add_argument("--verify-checksums", action="store_true")
+    # md5 recording is ON by default (2026-11-01): every downloaded file gets a .md5 sidecar and an
+    # md5 in manifest.json, so a later re-download can be checked against this one.
+    parser.add_argument("--verify-checksums", dest="verify_checksums", action="store_true", default=True,
+                        help="Record/verify md5 checksums of downloaded files (default: on)")
+    parser.add_argument("--no-verify-checksums", dest="verify_checksums", action="store_false",
+                        help="Do not compute md5 checksums")
+    parser.add_argument("--accessions", type=str, default=None, metavar="FILE",
+                        help="Replay mode: process exactly the GSE accessions listed in FILE (one per line, "
+                             "'#' comments allowed; e.g. config/corpus_v2_accessions.txt) instead of searching")
+    parser.add_argument("--maxdate", type=str, default=None, metavar="YYYY/MM/DD",
+                        help="Search mode: only series published on or before this date (Entrez pdat), "
+                             "so the query result does not grow with later submissions")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--log_level", type=str, default="INFO",
                         help="Logging level (DEBUG, INFO, WARNING, ERROR)")
@@ -2708,14 +2742,30 @@ def main():
     if args.dry_run:
         logging.info("DRY-RUN MODE: Will show what would be downloaded without downloading")
 
-    term = build_search_term(mode=args.mode, organism=args.organism, user_term=args.search_term)
+    replay_gses = None
+    if args.accessions:
+        # Replay mode: a fixed accession list, no search (the list is the record of what was harvested)
+        with open(args.accessions) as fh:
+            replay_gses = [ln.split("#", 1)[0].strip() for ln in fh]
+        replay_gses = list(dict.fromkeys(g for g in replay_gses if g))
+        bad = [g for g in replay_gses if not re.fullmatch(r"GSE\d+", g)]
+        if bad:
+            logging.error(f"--accessions {args.accessions}: not GSE accessions: {bad[:5]}")
+            return
+        term = f"accession list {args.accessions} ({len(replay_gses)} series)"
+        uids = []
+    else:
+        term = build_search_term(mode=args.mode, organism=args.organism, user_term=args.search_term)
+        if args.maxdate:
+            term_note = f" [published <= {args.maxdate}]"
+        else:
+            term_note = ""
+        logging.info(f"Search term: {term}{term_note}")
+        uids = fetch_all_geo_ids(term, maxdate=args.maxdate)
     run_report.search_term = term
-    logging.info(f"Search term: {term}")
 
-    uids = fetch_all_geo_ids(term)
-    
     # If no results and using default term, try a simpler fallback
-    if not uids and not args.search_term:
+    if replay_gses is None and not uids and not args.search_term:
         logging.warning("Primary search returned no results. Trying simplified fallback query...")
         
         # Build a very simple fallback query
@@ -2728,12 +2778,12 @@ def main():
         
         logging.info(f"Fallback search term: {fallback_term}")
         run_report.search_term = fallback_term
-        uids = fetch_all_geo_ids(fallback_term)
+        uids = fetch_all_geo_ids(fallback_term, maxdate=args.maxdate)
     
-    logging.info(f"Total GEO Series (UIDs) found: {len(uids)}")
-    run_report.total_gse_found = len(uids)
+    logging.info(f"Total GEO Series (UIDs) found: {len(uids) if replay_gses is None else len(replay_gses)}")
+    run_report.total_gse_found = len(uids) if replay_gses is None else len(replay_gses)
     
-    if not uids:
+    if replay_gses is None and not uids:
         logging.error("No GEO Series found. Exiting.")
         logging.error("Tip: Try a custom search term with --search_term, e.g.:")
         logging.error("  --search_term 'single cell AND rat[Organism] AND gse[ETYP]'")
@@ -2744,11 +2794,15 @@ def main():
 
     if args.limit > 0:
         uids = uids[:args.limit]
-        logging.info(f"Limiting to first {len(uids)} records.")
+        if replay_gses is not None:
+            replay_gses = replay_gses[:args.limit]
+        logging.info(f"Limiting to first {args.limit} records.")
 
-    logging.info("Converting UIDs to GSE accessions...")
     sleep_time = ncbi_sleep_time()
-    if args.batch_esummary and args.batch_esummary > 0:
+    if replay_gses is not None:
+        gse_list = replay_gses
+    elif args.batch_esummary and args.batch_esummary > 0:
+        logging.info("Converting UIDs to GSE accessions...")
         gse_list = batch_uid_to_gse(uids, batch_size=args.batch_esummary, sleep=0.0)
     else:
         gse_list = []

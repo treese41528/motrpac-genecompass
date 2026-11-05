@@ -1,0 +1,89 @@
+# GEO series behind the v2 training corpus: the studies of config/corpus_v2_plan.tsv rows whose action
+# starts with 'keep' (584 QC files from 81 studies; 80 GEO series listed below).
+# Replay the download (Stage 1) with:
+#   python pipeline/01_data_harvesting/geo_harvester.py --mode both --download \
+#       --accessions config/corpus_v2_accessions.txt --output_dir data/raw/geo --resume
+# Not on GEO (no downloader; fetch by hand):
+#   OMIX767 (2 files)
+# GEO supplementary files can be replaced by submitters after the v2 harvest (2026-02), so a replay is
+# not guaranteed byte-identical; the QC h5ads' md5s are in config/corpus_v2_plan.tsv.
+GSE127248
+GSE137869
+GSE142541
+GSE143920
+GSE155699
+GSE167981
+GSE167991
+GSE168545
+GSE178405
+GSE181979
+GSE184413
+GSE186158
+GSE196313
+GSE199067
+GSE201900
+GSE209872
+GSE212415
+GSE213978
+GSE214388
+GSE215247
+GSE216247
+GSE218106
+GSE218561
+GSE220075
+GSE223564
+GSE230500
+GSE232936
+GSE234247
+GSE235314
+GSE236114
+GSE237527
+GSE239540
+GSE240658
+GSE240848
+GSE242310
+GSE244451
+GSE245240
+GSE247625
+GSE248328
+GSE248413
+GSE249426
+GSE250245
+GSE251834
+GSE252844
+GSE253672
+GSE253767
+GSE254371
+GSE260849
+GSE261489
+GSE262729
+GSE266415
+GSE268359
+GSE268927
+GSE269120
+GSE269590
+GSE272055
+GSE272895
+GSE273062
+GSE275999
+GSE279531
+GSE279905
+GSE280111
+GSE280826
+GSE281996
+GSE284465
+GSE284573
+GSE284698
+GSE285476
+GSE289104
+GSE295314
+GSE295692
+GSE297627
+GSE298842
+GSE303115
+GSE305314
+GSE305964
+GSE307917
+GSE312264
+GSE312833
+GSE314229

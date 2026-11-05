@@ -15,7 +15,7 @@
 # Output: deconvolution/reference_v2/<tag>/   (parallel to v1 reference/, kept for comparison)
 set -uo pipefail
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-export PIPELINE_ROOT="$PWD"; command -v python3 >/dev/null && eval "$(python3 deconvolution/_config_sh.py 2>/dev/null || true)"
+export PROJECT_ROOT="$PWD" PIPELINE_ROOT="$PWD"; source deconvolution/load_config.sh   # fatal on a config error
 PY="${DECONV_PYTHON:-python3}"
 OUT="${CFG_REFERENCE_V2_DIR:-data/deconvolution/references_v2}"
 mkdir -p tmp/refbuild_v2 "$OUT"

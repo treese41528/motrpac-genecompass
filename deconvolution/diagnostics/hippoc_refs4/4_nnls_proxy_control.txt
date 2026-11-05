@@ -1,0 +1,29 @@
+
+=== CORTEX
+                                  BayesPrism  NNLS_sqrt  cells  median_umi
+Excitatory neurons                    0.592      0.608   5334     15290.0
+Astrocytes                            0.116      0.168    921      1763.0
+Inhibitory neurons                    0.114      0.050   1737      8513.0
+Oligodendrocytes                      0.102      0.120   2267      1974.0
+Medium spiny neurons                  0.040      0.013    685      7283.0
+Vascular leptomeningeal cells         0.018      0.000     42      1004.0
+Border-associated macrophages         0.010      0.000     41       529.0
+Microglia                             0.008      0.040    921      1122.0
+Neutrophils                           0.001      0.000     29       737.0
+Neuroblasts                           0.001      0.000    250      1283.0
+Oligodendrocyte precursor cells       0.000      0.000    679      1816.0
+T cells                               0.000      0.000     30      1205.0
+
+=== HIPPOC
+                                  BayesPrism  NNLS_sqrt  cells  median_umi
+Endothelial cells                     0.498      0.594    341       848.0
+Inhibitory neurons                    0.358      0.063   4145      3955.0
+Astrocytes                            0.085      0.210   1631      2839.0
+Dentate gyrus granule cells           0.028      0.024   4803      6916.0
+Oligodendrocytes                      0.019      0.106   4815      1778.0
+Thalamic neurons                      0.004      0.000    598      5857.0
+Excitatory neurons                    0.003      0.000   3049      5910.0
+Mural cells                           0.002      0.003     40       993.0
+Microglia                             0.001      0.000   2139      1566.0
+Vascular leptomeningeal cells         0.001      0.000    185      3585.0
+Oligodendrocyte precursor cells       0.000      0.000   2146      2618.0

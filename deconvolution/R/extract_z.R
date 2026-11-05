@@ -23,6 +23,7 @@ suppressWarnings(suppressPackageStartupMessages({
   if (length(f)) dirname(normalizePath(f[1])) else "."
 })
 source(file.path(.script_dir, "celltype_names.R"))
+source(file.path(.script_dir, "provenance.R"))
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) stop("usage: extract_z.R <bp_result.rds> <out_dir>")
@@ -55,4 +56,6 @@ for (t in types) {
 }
 write_ct_manifest(file.path(zdir, "celltype_files.tsv"),
                   basename(out_dir), types, "predz__", ".csv")
+write_provenance(zdir, inputs = rds,
+                 params = list(n_samples = dim(Z)[1], n_genes = dim(Z)[2], cell_types = types))
 cat(sprintf("Wrote pred Z (%d types) + celltype_files.tsv -> %s/\n", length(types), zdir))

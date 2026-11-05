@@ -28,16 +28,26 @@ project_root: "."
 # are resolved via deterministic mapping rules; unresolved identifiers
 # are excluded with audit logs.
 biomart:
-  ensembl_release: "113"         # REQUIRED — verified before stage runs
-  assembly: "mRatBN7.2"         # REQUIRED
+  # The files on disk (data/references/biomart/) are Ensembl 115 / GRCr8 exports, fetched 2026-02-24
+  # from the live www.ensembl.org BioMart (then release 115) and byte-identical to the archive below.
+  # The label here used to say 113 / mRatBN7.2, which was wrong. Re-fetch from the ARCHIVE host only
+  # (the live host moves to each new release); see harvesting.biomart_server.
+  ensembl_release: "115"        # REQUIRED — verified before stage runs
+  assembly: "GRCr8"             # REQUIRED
   species: "rattus_norvegicus"
-  download_date: "2026-01-15"   # REQUIRED — fill actual date
+  archive_host: "https://sep2025.archive.ensembl.org"   # Ensembl 115 archive (September 2025)
+  download_date: "2026-02-24"   # REQUIRED — date the on-disk files were fetched
 
   # Primary gene annotation (Gene stable ID, Gene name, Gene type, Chr, Desc)
   rat_gene_info: data/references/biomart/rat_gene_info.tsv
-  # Optional expected checksum — if set, Stage 2 verifies match.
-  # Omit this key until you have the actual hash, then pin it:
-  #   rat_gene_info_md5: "a1b2c3d4e5f6..."
+  # Expected checksum — Stage 2/3 refuse a different file (BioMartReference.from_config)
+  rat_gene_info_md5: "aa206a030b06c5cfe376c1cd211e5a53"
+
+  # md5 + size of every file in data/references/biomart/ as the v2 build read them. Stage 2 step 1
+  # (build_gene_universe.py, incl. its RGD synonym loader) checks the files it reads against this
+  # table and fails on a mismatch, unless run with --allow-reference-drift or this flag is true.
+  reference_md5sums: config/reference_md5sums.tsv
+  allow_reference_drift: false
 
   # Supplementary (adds NCBI gene IDs)
   rat_genes_biomart: data/references/biomart/rat_all_genes.tsv
@@ -60,7 +70,13 @@ rgd:
 # ============================================================
 paths:
   qc_h5ad_dir: data/training/qc_h5ad
-  expected_qc_h5ad_files: 895
+  # 868 = the h5ads in qc_h5ad_dir, one per row of config/corpus_v2_plan.tsv (584 kept by v2, incl. the two
+  # OMIX767 testis files from qc_external_mtx.py). A rerun of Stage 2 from raw GEO writes a different set
+  # (docs/repro_stages1_7/REPRODUCTION.md). Only a >10% deviation warns.
+  expected_qc_h5ad_files: 868
+  # Stage 2 sample numbering (<study>_sample<idx>) pinned to the canonical run: the original numbering
+  # followed filesystem walk order, which is not portable. New/unlisted files are numbered in sorted order.
+  stage2_sample_order: config/stage2_sample_order.tsv
 
   gene_universe_dir: data/training/gene_universe
   ortholog_dir: data/training/ortholog_mappings
@@ -84,7 +100,11 @@ paths:
 
   prior_knowledge_dir: data/training/prior_knowledge
   hgnc_file: data/references/hgnc/hgnc_complete_set.txt
-  rat_genome_fasta: data/references/genome/Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz
+  # Stage 6 promoter step (build_promoter_embedding.py downloads it if absent): the Ensembl 115 / GRCr8
+  # genome, matching the BioMart release above. (Older runs used the release-113 mRatBN7.2 FASTA under
+  # data/references/genome/Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz; no Stage 6 promoter vector
+  # enters v2's init.)
+  rat_genome_fasta: data/references/genome/Rattus_norvegicus.GRCr8.dna.toplevel.fa.gz
   mouse_human_orthologs: data/references/biomart/mouse_human_orthologs.tsv
 
   models_dir: data/models
@@ -95,7 +115,11 @@ paths:
 # ============================================================
 harvesting:
   email: "reese18@purdue.edu"
-  biomart_server: "https://www.ensembl.org/biomart/martservice"
+  # Pinned to the Ensembl 115 archive (biomart.archive_host); the live www.ensembl.org host serves
+  # whatever release is current, so a fetch from it would not reproduce the v2 reference files.
+  biomart_server: "https://sep2025.archive.ensembl.org/biomart/martservice"
+  # RGD serves only the current GENES_RAT.txt (no dated archive). v2 used the file whose header reads
+  # '# GENERATED-ON: 2026/02/21' (md5 in config/reference_md5sums.tsv); it is deposited with the v2 data.
   rgd_genes_url: "https://download.rgd.mcw.edu/data_release/GENES_RAT.txt"
   biomart_timeout: 600
   fetch_species:
@@ -247,6 +271,10 @@ orthologs:
 medians:
   method: sparse_vectorized
   min_nonzero_cells: 10
+  # Scatter task count (compute_gene_medians.py --n-tasks default; run_stage4.py runs tasks 0..N-1).
+  # v2 was built with 16 (stage4_manifest.json n_scatter_tasks). Files are assigned to tasks by stride,
+  # so N changes the scatter files; keep 16 to reproduce v2's Stage 4 outputs byte for byte.
+  n_scatter_tasks: 16
 
 # ============================================================
 # Stage 5: Reference Assembly & Corpus Export
@@ -264,6 +292,12 @@ reference_assembly:
   # high expression."
   # Consumed by Stage 5 (corpus export), NOT by Step 1 (cell QC).
   top_n_genes: 2048
+
+  # Tokenize task count (tokenize_corpus.py --n-tasks and assemble_corpus.py --expected-tasks default;
+  # run_stage5.py runs tasks 0..N-1). v2 was built with 50 (stage5_manifest.json). Files are assigned to
+  # tasks by stride and the corpus is assembled task by task, so N DETERMINES THE ROW ORDER of the
+  # tokenized corpus (and hence of the training mix): change it and the dataset is no longer v2's.
+  n_tokenize_tasks: 50
 
   # MoTrPAC exclusion list (data leakage prevention)
   exclude_studies:
@@ -289,19 +323,32 @@ prior_knowledge:
     workers: 8
 
   # Step 2: Gene family embedding
+  # Deterministic since 2026-11-01: workers 1 + seed + PYTHONHASHSEED (the script re-execs itself under
+  # hash_seed). The on-disk family_embeddings.pkl was trained with workers: 8 and cannot be regenerated; a
+  # rerun gives different vectors (mean per-gene correlation 0.77). v2 takes no family rows (0 of 2,474 T4
+  # genes have a non-zero family vector), so this does not touch v2.
   gene_family:
     min_family_size: 2          # GeneCompass exact
     vector_size: 768
     window: 1
     sg: 1
     epochs: 30
-    workers: 8
+    workers: 1                  # was 8 (not deterministic)
+    seed: 42
+    hash_seed: 0                # PYTHONHASHSEED for the word2vec run
+    # HGNC download if paths.hgnc_file is missing: a dated monthly archive snapshot. The local file v2's
+    # Stage 6 read (md5 5e1e18fea6f3b34dca80758c5322a9e6, fetched 2026-03-17) is not in the archive
+    # (between the 03-06 and 04-01 snapshots); it is deposited.
+    hgnc_url: "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2026-03-06.txt"
     rat_only_tokens: true       # Only embed rat-specific tokens (T4); 
                                 # ortholog-mapped tokens inherit from GC
 
   # Steps 3 & 4: Promoter and GRN — stubs, not yet implemented
   promoter:
     enabled: true             # Requires DNABert + Ensembl genome sequences
+    dnabert_model: "zhihan1996/DNA_bert_6"
+    # HF Hub commit of the DNABERT-6 snapshot used (from the local HF cache, refs/main)
+    dnabert_revision: "c56e67ea5827e0ddc67ef059addcf71569b1216e"
   grn:
     enabled: true   # PECA2vec cross-species transfer from GeneCompass human/mouse GRNs
 
@@ -312,6 +359,10 @@ prior_knowledge:
 # into data/ (e.g. data/training/preprocessed -> /depot/.../training/preprocessed).
 # Machine-specific overrides belong in the gitignored config/pipeline_config.local.yaml.
 deconvolution:
+  # Fine-tuned weights Stages 9, 12 and 13 load (explicit, so a new checkpoint cannot change results;
+  # md5 of pytorch_model.bin ae6100ff..., identical to checkpoint-591763)
+  model_checkpoint: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/models
+  de_seed: 1            # IHW fold seed (1 = IHW's own default, what every run so far used)
   # Inputs: single-cell corpus (raw QC matrices) + per-sample annotations
   qc_matrices_dir: data/training/preprocessed/qc_matrices
   cell_annotations_dir: data/training/cell_annotations
@@ -340,11 +391,20 @@ deconvolution:
   output_root: data/deconvolution
   built_reference_dir: data/deconvolution/references     # build_reference.py per-tissue SC references
   idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
-  validation_dir: data/deconvolution/validation
-  results_dir: data/deconvolution/results
-  # Model-dependent outputs, one set per model: v2's here, April's in config/profiles/april.yaml.
-  # genecompass_input_v2/<tissue>/pseudocells.h5ad links to April's (pseudo-cells do not depend on the model).
-  genecompass_input_dir: data/deconvolution/genecompass_input_v2  # pseudo-cells/tokenized/embeddings/umap
+  # Stage 14 purity sweeps on the production references (pipeline/run_stage14.py).
+  validation_dir: data/deconvolution/validation_refs4all_rebuild
+  # The research-phase method validation (build_all_datasets.sh: V0/V1/V2 and cross sets; run_purity_sweep.sh:
+  # the paper-faithful liver sweep on the pilot reference). Not part of the numbered stages.
+  pilot_validation_dir: data/deconvolution/validation
+  # Default = all 16 tissues with a reference (since 2026-11-01, REFERENCE_RELABEL_PREREG.md §14/§16,
+  # ALL_TISSUE_RERUN_RESULTS.md): the jointly re-annotated references (references_v4/, tissue_references.yaml;
+  # REFS4_RERUN_RESULTS.md) plus SPLEEN and OVARY, with the v2 model. Since 2026-11-03 the default folders are
+  # the clean rebuild (_refs4all_rebuild: every tissue built in place by the runbook commands, no links), which
+  # reproduces the earlier assembled tree byte for byte through Stage 13 (REFS4ALL_REBUILD_RESULTS.md); the
+  # assembled tree is config/profiles/refs_v4all.yaml. The 14-tissue result is config/profiles/refs4_14.yaml; the
+  # July-reference v2 outputs are config/profiles/july_refs.yaml; April's model is config/profiles/april.yaml.
+  results_dir: data/deconvolution/results_refs4all_rebuild
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild  # pseudo-cells/tokenized/embeddings/umap
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
@@ -352,12 +412,16 @@ deconvolution:
   # the model's corpus (v2 6,400; April 6,500). Stage 12 must use the rat run's value.
   pseudocell_target_sum: 6400
   # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
-  # DE wrapper). v2's is the 10 splits x 10,000 permutations gate (pre-registration §6).
-  hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
+  # DE wrapper): the 10 splits x 10,000 permutations gate (pre-registration §6), scored under the §6
+  # analysable-block rule (median library >= 1,000; REFERENCE_RELABEL_PREREG.md §6).
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv
   # Canonical-Augur exports (augur_prep.py) and the Stage 13 differential GRNs in rat and human space.
-  augur_input_dir: data/deconvolution/augur_input_v2
-  grn_dir: data/deconvolution/grn_v2
-  grn_human_dir: data/deconvolution/grn_v2_human
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4all_rebuild
+  grn_dir: data/deconvolution/grn_v2_refs4all_rebuild
+  grn_human_dir: data/deconvolution/grn_v2_refs4all_rebuild_human
+  # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
+  # posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11). July's: reference/posctrl_prereg.tsv.
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
   reference_v2_dir: data/deconvolution/references_v2     # V2 re-audited SC references
   validation_v2_dir: data/deconvolution/validation_v2    # V2 validation pseudobulk/results
   # Runtime (R / BayesPrism)

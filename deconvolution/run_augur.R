@@ -11,16 +11,25 @@
 # two conditions: trained-vs-control (exercise) and sex (positive control). This lets the
 # published RF method (vs our linear PLS-1 probe) weigh in, and on embedding-vs-PCA too.
 #
-# Inputs : data/deconvolution/augur_input_v2/<tissue>/{embed.tsv,pca.tsv,meta.tsv}  (augur_prep.py)
-# Output : data/deconvolution/genecompass_input_v2/augur_results.tsv  (tissue, representation,
-#          condition, cell_type, augur_auc)
+# Inputs : <deconvolution.augur_input_dir>/<tissue>/{embed.tsv,pca.tsv,meta.tsv}  (augur_prep.py)
+# Output : <gate dir>/augur_results.tsv (tissue, representation, condition, cell_type, augur_auc); the gate
+#          dir is the folder of deconvolution.hotspots_table (e.g. <genecompass_input_dir>/gate_rcv10/).
+# Both default from the active config (PIPELINE_PROFILE honoured); pass them to override.
 #
-# Run: R_LIBS_USER=$PWD/R_libs module load r/4.4.1 ; Rscript --no-init-file deconvolution/run_augur.R
+# Run (repo root): module load r/4.4.1; R_LIBS_USER=$PWD/R_libs Rscript --no-init-file deconvolution/run_augur.R [IN OUT]
+# Seed: Augur seeds each subsample internally (set.seed(subsample_idx)); set.seed(deconvolution.de_seed) is
+# called first as well, so the run never depends on the session's RNG state. Recorded in provenance.
 suppressMessages({ library(Augur) })
+source(file.path(Sys.getenv("PIPELINE_ROOT", "."), "deconvolution", "R", "config.R"))
+source(file.path(Sys.getenv("PIPELINE_ROOT", "."), "deconvolution", "R", "provenance.R"))
 
 args    <- commandArgs(TRUE)
-IN      <- if (length(args) >= 1) args[1] else "data/deconvolution/augur_input_v2"
-OUT     <- if (length(args) >= 2) args[2] else "data/deconvolution/genecompass_input_v2/augur_results.tsv"
+IN      <- if (length(args) >= 1) args[1] else cfg_value("CFG_AUGUR_INPUT_DIR")
+OUT     <- if (length(args) >= 2) args[2] else
+  file.path(dirname(cfg_value("CFG_HOTSPOTS_TABLE")), "augur_results.tsv")
+SEED    <- as.integer(Sys.getenv("AUGUR_SEED", cfg_value("CFG_DE_SEED", default = "1")))
+set.seed(SEED)
+cat(sprintf("Augur in: %s\nout: %s\nseed: %d\n", IN, OUT, SEED))
 NTHREAD <- as.integer(Sys.getenv("AUGUR_THREADS", "8"))
 # control arm has only 10 pseudo-cells per cell type (2 sex x 5 reps), so Augur's default
 # subsample_size=20 (which requires >=20 in EVERY condition) drops all cell types. Balance 10v10.
@@ -75,4 +84,7 @@ for (td in list.dirs(IN, recursive = FALSE)) {
 }
 out <- do.call(rbind, res)
 write.table(out, OUT, sep = "\t", quote = FALSE, row.names = FALSE)
+write_provenance(dirname(OUT), inputs = file.path(list.dirs(IN, recursive = FALSE), "meta.tsv"),
+                 params = list(in_dir = IN, out = OUT, seed = SEED, subsample_size = SS, min_cells = MC,
+                               n_threads = NTHREAD), name = "provenance_run_augur.json")
 cat("\nwrote", OUT, "(", nrow(out), "rows )\n")

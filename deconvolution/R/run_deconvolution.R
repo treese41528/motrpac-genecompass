@@ -109,8 +109,8 @@ prism <- new.prism(reference = ref, mixture = mix, input.type = "count.matrix",
                    key = NULL, outlier.cut = 0.01, outlier.fraction = 0.1)
 t0 <- Sys.time()
 bp <- run.prism(prism = prism, n.cores = n.cores)
-cat(sprintf("run.prism wall time: %.2f min\n",
-            as.numeric(difftime(Sys.time(), t0, units = "mins"))))
+prism_min <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
+cat(sprintf("run.prism wall time: %.2f min\n", prism_min))
 
 theta <- get.fraction(bp = bp, which.theta = "final", state.or.type = "type")
 write.csv(theta, file.path(out_dir, "estimated_fractions.csv"))
@@ -125,7 +125,8 @@ write_provenance(out_dir,
                 bayesprism = as.character(packageVersion("BayesPrism")),
                 outlier_cut = 0.01, outlier_fraction = 0.1,
                 exclude_sex_chromosomes = sex_on, protein_coding_only = pc_only,
-                n_ref_cells = nrow(ref), n_ref_genes = ncol(ref), n_mixtures = nrow(mix)))
+                n_ref_cells = nrow(ref), n_ref_genes = ncol(ref), n_mixtures = nrow(mix),
+                run_prism_minutes = round(prism_min, 2)))
 cat("\n=== mean estimated cell-type fraction ===\n")
 print(round(sort(colMeans(theta), decreasing = TRUE), 4))
 cat(sprintf("\nWrote: %s/estimated_fractions.csv\n", out_dir))

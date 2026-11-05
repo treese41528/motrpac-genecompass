@@ -24,9 +24,17 @@ packages:
   - {name: limSolve,   version: "2.0.1",  source: cran}   # Bisque needs it; back on CRAN 2025-06-24
   - {name: reticulate, version: "1.46.0", source: cran}
   - {name: anndata,    version: "0.8.0",  source: cran}
+  - {name: SoupX,      version: "1.6.2",  source: cran}   # HIPPOC ambient correction (REFERENCE_RELABEL_PREREG.md §13)
+  # Stages 10-13 (added 2026-11-01; versions read from the project R_libs DESCRIPTION files)
+  - {name: repfdr,     version: "1.2.3",  source: cran}   # Stage 10 8w sex-consistency (run_pseudobulk_de.R)
+  - {name: msigdbr,    version: "26.1.0", source: cran}   # Stage 13 gene sets (run_gene_set_enrichment.R); msigdbdf not installed
 
   # ---- Bioconductor ----
   - {name: DESeq2,     version: "1.46.0", source: bioc}    # VST metric (paper-faithful scoring)
+  - {name: limma,      version: "3.62.2", source: bioc}    # Stage 10/14 limma-trend DE (run_pseudobulk_de.R, RIN/globin check)
+  - {name: edgeR,      version: "4.4.2",  source: bioc}    # Stage 10/14 log2-CPM (cpm/calcNormFactors)
+  - {name: IHW,        version: "1.34.0", source: bioc}    # Stage 10 global IHW~tissue (seeded: deconvolution.de_seed)
+  - {name: fgsea,      version: "1.32.4", source: bioc}    # Stage 13 enrichment (GSEA_SEED)
 
   # ---- GitHub: reference-based method packages (omnideconv forks + Bisque) ----
   # These forks are patched to omnideconv::deconvolute()'s calling convention; use
@@ -37,6 +45,8 @@ packages:
   - {name: bseqsc,        version: "1.0",        source: github, repo: omnideconv/bseqsc, sha: 9ac71beb}
   - {name: BisqueRNA,     version: "1.0.5",      source: github, repo: cozygene/bisque,   sha: 8640250d}  # CRAN copy removed 2025-06-02
   - {name: SCOPfunctions, version: "0.0.0.9000", source: github, repo: CBMR-Single-Cell-Omics-Platform/SCOPfunctions, sha: b7c3656a}  # omnideconv hard dep
+  # Canonical Augur for the Aim-2 gate corroboration (deconvolution/run_augur.R); RemoteSha of the installed copy.
+  - {name: Augur,         version: "1.0.3",      source: github, repo: neurorestore/Augur, sha: b252b84e4af687d9817813b1db409267eb44ec3f}
 
   # ---- GitHub, PATCHED at install time ----
   # omnideconv's DESCRIPTION lists devtools/pkgdown/knitr/rmarkdown/testthat as
@@ -48,7 +58,10 @@ packages:
   # ---- vendored git submodule (audited Danko-Lab R BayesPrism, NOT pyBayesPrism) ----
   # Pinned by the repo's submodule commit. If the submodule is absent, the installer
   # falls back to github Danko-Lab/BayesPrism (subdir BayesPrism) — less reproducible.
+  # Submodule commit 19052052a6f30833b27e2148294459b0ba2f923e (git submodule status vendor/BayesPrism); the
+  # installed R_libs copy carries no RemoteSha because it was installed from the local submodule path.
   - {name: BayesPrism, version: "2.2.3", source: vendor, path: vendor/BayesPrism/BayesPrism,
+     sha: 19052052a6f30833b27e2148294459b0ba2f923e,
      github_fallback: "Danko-Lab/BayesPrism", subdir: BayesPrism}
 
 # Methods deliberately EXCLUDED from this stack and why (do not "helpfully" re-add):

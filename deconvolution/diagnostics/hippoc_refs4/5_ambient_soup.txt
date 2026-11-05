@@ -1,0 +1,53 @@
+July barcodes 278549, kept in refs4 23886, soup (dropped) 254663
+
+(1) Pearson(log CPM) with the soup / with the bulk mean:
+  refs4: Astrocytes 0.89/0.81, Dentate gyrus  0.87/0.75, Endothelial ce 0.89/0.82, Excitatory neu 0.86/0.74, Inhibitory neu 0.89/0.76, Microglia 0.81/0.71, Mural cells 0.74/0.66, Oligodendrocyt 0.86/0.75, Oligodendrocyt 0.88/0.78, Thalamic neuro 0.87/0.75, Vascular lepto 0.78/0.72
+  July: Adrenergic neu 0.98/0.85, Astrocytes 0.97/0.86, Bergmann glia 0.87/0.79, Endothelial ce 0.90/0.81, Erythroid prec 0.59/0.49, Excitatory neu 0.96/0.83, Granulocytes 0.56/0.47, Meningeal cell 0.97/0.85, Microglia 0.97/0.85, Monocytes 0.72/0.62, Myeloid dendri 0.72/0.62, Neuroendocrine 0.65/0.55, Neutrophils 0.67/0.58, Non-classical  0.92/0.80, Nuocytes 0.85/0.73, Oligodendrocyt 0.86/0.75, Oligodendrocyt 0.87/0.77, Schwann cells 0.96/0.84
+  soup vs bulk: 0.87
+  July 'Excitatory neurons': 165498 barcodes, 91.3% of them dropped as junk in refs4
+  July 'Microglia': 75023 barcodes, 93.5% dropped as junk
+
+(2) estimated ambient fraction per refs4 type (SoupX-style upper bound):
+  Endothelial cells 0.55, Astrocytes 0.39, Oligodendrocytes 0.27, Oligodendrocyte precursor cells 0.23, Microglia 0.22, Mural cells 0.19, Vascular leptomeningeal cells 0.16, Inhibitory neurons 0.11, Thalamic neurons 0.09, Dentate gyrus granule cells 0.08, Excitatory neurons 0.07
+
+                                  BayesPrism  NNLS as built  NNLS + soup  NNLS ambient-corrected  NNLS corrected + soup  NNLS July ref  corrected + neurons merged
+Endothelial cells                     0.498          0.594        0.159                   0.007                  0.098          0.000                       0.007
+ALL NEURONS                           0.393          0.087        0.000                   0.544                  0.000          0.000                       0.545
+Inhibitory neurons                    0.358          0.063        0.000                   0.142                  0.000          0.000                       0.151
+Astrocytes                            0.085          0.210        0.079                   0.000                  0.040          0.618                       0.001
+Dentate gyrus granule cells           0.028          0.024        0.000                   0.007                  0.000          0.000                       0.000
+Oligodendrocytes                      0.019          0.106        0.003                   0.008                  0.000          0.000                       0.008
+Thalamic neurons                      0.004          0.000        0.000                   0.155                  0.000          0.000                       0.000
+Excitatory neurons                    0.003          0.000        0.000                   0.240                  0.000          0.000                       0.394
+Mural cells                           0.002          0.003        0.000                   0.410                  0.000          0.000                       0.412
+Vascular leptomeningeal cells         0.001          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Microglia                             0.001          0.000        0.000                   0.031                  0.000          0.000                       0.028
+Bergmann glia                         0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Adrenergic neurons                    0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Granulocytes                          0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Erythroid precursor cells             0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Meningeal cells                       0.000          0.000        0.000                   0.000                  0.000          0.053                       0.000
+Monocytes                             0.000          0.000        0.000                   0.000                  0.000          0.001                       0.000
+Non-classical monocytes               0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Neutrophils                           0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Neuroendocrine cells                  0.000          0.000        0.000                   0.000                  0.000          0.002                       0.000
+Myeloid dendritic cells               0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+SOUP                                  0.000          0.000        0.759                   0.000                  0.861          0.000                       0.000
+Oligodendrocyte precursor cells       0.000          0.000        0.000                   0.000                  0.000          0.000                       0.000
+Nuocytes                              0.000          0.000        0.000                   0.000                  0.000          0.013                       0.000
+Schwann cells                         0.000          0.000        0.000                   0.000                  0.000          0.312                       0.000
+
+(3) ambient fractions (merged): {'Astrocytes': np.float64(0.4), 'Excitatory neurons': np.float64(0.08), 'Inhibitory neurons': np.float64(0.11), 'Microglia': np.float64(0.21), 'Oligodendrocyte precursor cells': np.float64(0.27), 'Oligodendrocytes': np.float64(0.27), 'Vascular': np.float64(0.34)}
+                                 vascular merged, raw  vascular merged, corrected  corrected, Mural dropped
+Astrocytes                                      0.379                       0.066                     0.029
+Dentate gyrus granule cells                     0.000                       0.000                     0.001
+Endothelial cells                               0.000                       0.000                     0.183
+Excitatory neurons                              0.005                       0.244                     0.241
+Inhibitory neurons                              0.143                       0.418                     0.188
+Microglia                                       0.050                       0.111                     0.083
+Mural cells                                     0.000                       0.000                     0.000
+Oligodendrocyte precursor cells                 0.000                       0.000                     0.000
+Oligodendrocytes                                0.159                       0.035                     0.020
+Thalamic neurons                                0.000                       0.000                     0.250
+Vascular                                        0.264                       0.125                     0.000
+Vascular leptomeningeal cells                   0.000                       0.000                     0.003

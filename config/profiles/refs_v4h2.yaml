@@ -1,0 +1,14 @@
+# HIPPOC ambient-corrected arm (2026-10-29, REFERENCE_RELABEL_PREREG.md §13b): refs4 with only the HIPPOC
+# reference replaced by references_v4/HIPPOC_GSE295314_ambcorr_percell (per-nucleus SoupX + vascular/neuron types merged).
+#   export PIPELINE_PROFILE=config/profiles/refs_v4h.yaml
+# The other 13 tissues are linked in from the refs4 folders (slurm/analysis/refs4h2_setup.sh), so the
+# cross-tissue steps (gate BH, pooled IHW) see all 14 tissues. refs4 stays the registered result.
+deconvolution:
+  results_dir: data/deconvolution/results_refs4h2
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4h2
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4h2/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4h2
+  grn_dir: data/deconvolution/grn_v2_refs4h2
+  grn_human_dir: data/deconvolution/grn_v2_refs4h2_human
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

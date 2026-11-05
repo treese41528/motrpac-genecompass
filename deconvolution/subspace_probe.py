@@ -40,9 +40,14 @@ Usage:
   python deconvolution/subspace_probe.py [--perms 1000] [--folds 5] [--repeats 1] [--jobs 8]
          [--gc-root ...] [--pheno ...] [--bulk-root ...] [--out ...]
 """
+import os
+# Pin BLAS/OpenMP to one thread BEFORE numpy/sklearn load: the production gate ran with these set to 1 in its
+# SLURM script, and multi-threaded BLAS can change floating-point summation order. Parallelism here is
+# joblib processes (--jobs), so results no longer depend on the calling script's environment.
+for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ[_v] = "1"
 import argparse
 import glob
-import os
 import re
 import sys
 import zlib

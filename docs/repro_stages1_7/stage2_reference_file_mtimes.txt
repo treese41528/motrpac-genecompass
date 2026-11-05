@@ -1,0 +1,23 @@
+  
+2026-03-17 20:20:37.276418000 .
+2026-07-03 12:40:55.129079000 ..
+2026-02-24 22:52:57.831420000 fetch_metadata.json
+2026-02-24 22:47:53.015153751 GENES_RAT.txt
+2026-02-24 22:52:43.368000798 human_all_genes.tsv
+2026-02-24 23:10:05.598555461 human_gene_annotations.tsv
+2026-02-24 22:52:48.147518718 human_gene_synonyms.tsv
+2026-02-24 22:52:57.822289774 human_symbol_lookup.pickle
+2026-02-24 22:52:57.752884411 human_uniprot.tsv
+2026-02-24 22:52:16.729471257 mouse_all_genes.tsv
+2026-02-24 23:10:05.636561142 mouse_gene_annotations.tsv
+2026-02-24 22:52:21.365008045 mouse_gene_synonyms.tsv
+2026-03-17 20:20:40.718780033 mouse_human_orthologs.tsv
+2026-02-24 22:52:26.233533049 mouse_symbol_lookup.pickle
+2026-02-24 22:52:26.154387652 mouse_uniprot.tsv
+2026-02-24 22:47:47.416317114 rat_all_genes.tsv
+2026-02-24 22:47:59.872631538 rat_gene_info.tsv
+2026-02-24 22:47:49.871434917 rat_gene_synonyms.tsv
+2026-02-24 22:47:55.636306196 rat_human_orthologs.tsv
+2026-02-24 22:47:58.592276868 rat_mouse_orthologs.tsv
+2026-02-24 22:47:59.922648819 rat_symbol_lookup.pickle
+2026-02-24 22:47:52.739247486 rat_uniprot.tsv

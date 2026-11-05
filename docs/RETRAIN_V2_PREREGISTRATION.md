@@ -274,3 +274,9 @@ v2 mix (after the OMIX767 rebuild) and its md5 recorded in §6 before phase 1 st
   variants (2026-07-13). These reruns are not C5 criteria; their results are reported in
   `docs/RETRAIN_V2_RESULTS.md` under their own heading, with April's alongside where April has the same
   output.
+- 2026-10-27 — Reference relabel registered separately (`deconvolution/REFERENCE_RELABEL_PREREG.md`), before
+  its audit is computed. Per-sample label drift in the corpus-built references leaves 49 of v2's 172 DE
+  blocks with a median library under 50 reads, including one of the 13 hotspots (KIDNEY renal interstitial
+  fibroblasts). The references will be relabelled by a fixed rule and a block will need a median library of
+  at least 1,000 reads to be analysed. v2's downstream results are then rerun on the relabelled references
+  and reported as a correction; the C5 comparison above, April vs v2 on the July references, stays as scored.

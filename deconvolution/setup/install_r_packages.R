@@ -104,6 +104,7 @@ install_vendor <- function(p) {
     pak::pkg_install(paste0("local::", vpath), dependencies = NA, ask = FALSE)
   } else if (!is.null(p$github_fallback)) {
     ref <- if (!is.null(p$subdir)) sprintf("%s/%s", p$github_fallback, p$subdir) else p$github_fallback
+    if (!is.null(p$sha)) ref <- sprintf("%s@%s", ref, p$sha)          # same commit as the submodule
     cat(sprintf(">> BayesPrism: vendored path missing (%s); falling back to github::%s\n",
                 vpath, ref))
     cat("   (less reproducible -- prefer `git submodule update --init vendor/BayesPrism`)\n")

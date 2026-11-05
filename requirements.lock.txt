@@ -10,9 +10,12 @@
 # --no-deps is required: every transitive dependency is already listed, and
 # Scaden's own metadata pins tensorflow==2.13.0, which would conflict.
 #
-# Known drift from requirements.txt: GEOparse, bioservices and pyfaidx are
-# listed there but are NOT installed in this environment (Stage 1 harvesting
-# and promoter retrieval need them).
+# GEOparse==2.0.4 (Stage 1 geo_harvester.py) was added by hand on 2026-11-01:
+# it was missing from motrpac-env (the v2 harvest ran in February from an
+# earlier env). Its dependencies (numpy, pandas, requests, tqdm) are listed.
+# Known drift from requirements.txt: bioservices and pyfaidx are listed there
+# but are NOT installed in this environment (pyfaidx: Stage 6 promoter step,
+# which v2 does not use; pip install pyfaidx before running it).
 #
 # Regenerate after a deliberate upgrade:
 #   pip freeze > requirements.lock.txt   (then restore this header)
@@ -71,6 +74,7 @@ fsspec==2026.2.0
 future==1.0.0
 gast==0.7.0
 gensim==4.4.0
+GEOparse==2.0.4
 gitdb==4.0.12
 GitPython==3.1.46
 google-crc32c==1.8.0

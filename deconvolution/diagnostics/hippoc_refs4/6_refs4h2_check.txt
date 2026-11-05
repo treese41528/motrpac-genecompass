@@ -1,0 +1,51 @@
+arm refs4h2: HIPPOC_GSE295314_ambcorr_percell
+SoupX per sample:
+            sample  n_cells  n_soup_barcodes  soup_umi  median_cell_umi  rho_autoEstCont  rho_used                   rho_source  ambient_umi_per_droplet
+ GSE295314_sample0     2096            16459   5135680             6893            0.047     0.047 percell: min(0.9, A_s / UMI)               383.598308
+ GSE295314_sample1     3980            75711  28227175             2916            0.167     0.167 percell: min(0.9, A_s / UMI)               515.184147
+GSE295314_sample10     2815            67540  24331777             3652            0.079     0.079 percell: min(0.9, A_s / UMI)               438.470607
+ GSE295314_sample2     9230            26371  10054375             3330            0.051     0.051 percell: min(0.9, A_s / UMI)               369.393676
+ GSE295314_sample7     2988            52556  16386374             3920            0.083     0.083 percell: min(0.9, A_s / UMI)               369.623365
+ GSE295314_sample8     2783            16026   6457433             3726            0.048     0.048 percell: min(0.9, A_s / UMI)               369.623365
+
+SoupX per refs4 type:
+                cell_type_refs4  umi_before  umi_after  fraction_removed  n_cells  median_umi_after                       cell_type
+                     Astrocytes     5850847    5185509            0.1137     1631            2759.0                      Astrocytes
+    Dentate gyrus granule cells    36728391   34815232            0.0521     4803            6782.0                         Neurons
+              Endothelial cells      569102     435737            0.2343      341             637.0                  Vascular cells
+             Excitatory neurons    20392732   19243835            0.0563     3049            5827.0                         Neurons
+             Inhibitory neurons    19236053   17604884            0.0848     4145            3774.0                         Neurons
+                      Microglia     4125583    3289151            0.2027     2139            1296.0                       Microglia
+                    Mural cells       58629      41796            0.2871       40             772.0                  Vascular cells
+Oligodendrocyte precursor cells     7032467    6192904            0.1194     2146            2405.0 Oligodendrocyte precursor cells
+               Oligodendrocytes    10869018    8852343            0.1855     4815            1532.0                Oligodendrocytes
+               Thalamic neurons     3719705    3435496            0.0764      598            5590.5                         Neurons
+  Vascular leptomeningeal cells      748710     663715            0.1135      185            3365.0                  Vascular cells
+
+(1) BayesPrism mean fraction over 50 HIPPOC samples
+                                 refs4 (merged names)  refs4h2  refs4h2 sd
+Vascular cells                                  0.501    0.465       0.016
+Neurons                                         0.393    0.443       0.017
+Astrocytes                                      0.085    0.075       0.008
+Oligodendrocytes                                0.019    0.015       0.009
+Microglia                                       0.001    0.001       0.001
+Oligodendrocyte precursor cells                 0.000    0.001       0.002
+  §13 criterion: Neurons 0.443, largest non-neuronal Vascular cells 0.465 -> FAILS
+
+(2) NNLS proxy (sqrt scale, BayesPrism gene set):
+                                 refs4 merged, uncorrected  refs4h2 corrected
+Astrocytes                                           0.389              0.457
+Microglia                                            0.051              0.000
+Neurons                                              0.126              0.261
+Oligodendrocyte precursor cells                      0.000              0.000
+Oligodendrocytes                                     0.165              0.048
+Vascular cells                                       0.269              0.234
+
+(3) per merged type (soup vs bulk r = 0.87):
+                                 ambient before  ambient after  r(soup) before  r(soup) after  r(bulk) before  r(bulk) after
+Astrocytes                                 0.40           0.22            0.89           0.86            0.81           0.79
+Microglia                                  0.21           0.02            0.81           0.63            0.71           0.56
+Neurons                                    0.09           0.04            0.88           0.85            0.76           0.73
+Oligodendrocyte precursor cells            0.27           0.07            0.86           0.79            0.75           0.70
+Oligodendrocytes                           0.27           0.02            0.88           0.77            0.78           0.69
+Vascular cells                             0.38           0.22            0.85           0.80            0.78           0.74

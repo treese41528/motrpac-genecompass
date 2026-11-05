@@ -1,0 +1,164 @@
+# Review decisions for joint re-annotation (REFERENCE_RELABEL_PREREG.md §10.3). One row per cluster the rule
+# sent to REVIEW. Evidence: clusters.tsv top markers (log2FC pooled CPM vs rest, detected in >=25%), panel
+# scores, per-sample counts, median genes per cell, and pooled CPM of named genes from group_sums.npz.
+reference	cluster	decision	reason
+KIDNEY	j2	Injured proximal tubule cells	Havcr1 31 CPM (every other cluster <=2), Cdh6, Spp1, Cd44 and Cald1 highest of all tubule clusters, Slc34a1 and Lrp2 reduced; all 4 samples (max share 0.38). Panel score 0.35, under 0.5 because Vcam1/Krt20 are low.
+KIDNEY	j3	DROP	PT (Lrp2 3674, Slc34a1 5420) and TAL (Slc12a1 3358, Umod 427) genes together at once, median 3,337 genes per nucleus (about 1.5x the PT clusters) and no specific markers of its own: PT-TAL doublets.
+KIDNEY	j6	DROP	Low quality: median 324 genes, top markers are the 13 mitochondrial genes only.
+KIDNEY	j8	Proximal tubule cells	Lrp2 4665, Kap 832, Slc7a13, Afm, Slco4c1, Enpp3 (S3 segment markers); PT score 0.45, just under 0.5.
+KIDNEY	j10	DROP	Low quality: median 541 genes; markers are ribosomal and housekeeping genes (Rps*, Eef1a1, Gapdh, Gpx1), no cell-type genes.
+KIDNEY	j13	Fibroblasts	C7, Hgf, Prrx1, Col6a3, Col12a1, Adam12 (interstitial fibroblast); Pdgfrb and Abcc9 also high, Myh11 low; Mural/Fibroblast near-tie decided for fibroblasts.
+KIDNEY	j20	Immune cells	Ptprc, Lcp1, Lcp2, Ikzf1, Dock2 (pan-immune); myeloid (Ctss, Ly86, Slc11a1, Tbxas1) and lymphoid (Klra2, Pou2f2, Prkcb) genes together at snRNA depth, so no sub-type is supported. Panel score 0.48.
+KIDNEY	j21	Cycling cells	Top2a, Mki67, Cenpf, Ndc80, Bub1b (cycling); tubular background (Lrp2 2719); 107 cells from all 4 samples.
+CORTEX	j6	Medium spiny neurons	Under-call made specific after the split rerun accepted it as "Inhibitory neurons" (it had been REVIEW before). Ppp1r1b, Drd1, Drd2, Adora2a, Penk, Tac1, Rgs9, Gpr6 (striatal medium spiny neurons); 684 of 685 cells from GSE303115_sample18, so a striatal piece in that sample's dissection. Kept under its own name (inhibitory, but not cortical interneurons); listed under K2.
+CORTEX	j18	Astrocytes	Gja1, Aqp4, Mlc1, Slc7a10, Agt, Ntsr2, Slc25a18 (astrocyte); astrocyte score 1.0, the ependymal near-tie comes from Rarres2/Dynlrb2, no Foxj1 among the markers.
+CORTEX	j22	Neuroblasts	Dcx, Sox4, Dlx1, Igfbpl1, Fabp7, Cd24 (migrating neuroblasts / immature interneurons); both samples.
+LIVER	j6	Hepatocytes	Periportal hepatocytes: Sds, Hal, Aspg, Agxt, Amdhd1 high; hepatocyte score 0.44, low only relative to the top hepatocyte clusters; all 4 samples.
+LIVER	j7	Hepatocytes	Hepatocytes in a stress/fasting state: Atf3, Gadd45a/g, Trib1, Lpin1, Alas1, Nr1i3; hepatocyte score 0.39; all 4 samples.
+LIVER	j8	Hepatic stellate cells	Reln, Hgf, Colec11, Ecm1, Lhx2, Pth1r, Adamts13 (stellate, not portal fibroblast); stellate and fibroblast panels both 1.0, decided by the stellate-specific genes.
+LIVER	j9	Hepatocytes	Pericentral hepatocytes: Glul, Cyp7a1, Cyp27a1, Oat; hepatocyte score 0.39; all 4 samples.
+LIVER	j17	Mesothelial cells	Msln, Upk1b, Efemp1, Igfbp6, Cav1 (capsule mesothelium); 58 cells from all 4 samples; Mesothelial is not in the LIVER panel.
+WATSC	j3	Macrophages	C1qa (12,864 CPM), C1qb, C1qc, Mrc1, Cd163, Folr2, F13a1, Trem2; immune score 0.38 only because the panel is min-max scaled against lymphocyte clusters with higher Ptprc/Coro1a.
+WATSC	j4	Macrophages	C1qa 11,296 CPM, Cd68, Ms4a7, Hmox1, Cxcl2, Tlr2 (inflammatory macrophage state); 80% from GSE137869_sample35.
+WATSC	j5	Macrophages	C1qa 13,828 CPM, Cd68, F13a1; interferon/stress genes (Cxcl10, Gbp5, Ifit2, Gdf15); 595 of 596 cells from GSE137869_sample35, so a sample-specific macrophage state; listed under K2.
+WATSC	j7	Dendritic cells	MHC class II (RT1-Da, RT1-Db1, RT1-Ba, Cd74), Ccl17, Itgb7, Clec7a, Alcam (cDC2); the erythroid "doublet" flag comes from Hba-a3 ambient RNA (Alas2 is 0), not erythroid cells.
+WATSC	j14	Adipose stromal progenitor cells	Pdgfra 220 CPM, Cxcl14, Sfrp2, Dpep1, Gdf10, Smoc2, Crabp1 (adipose progenitor); S100b and Stmn2 raise the Schwann score, but Mpz is 0.
+WATSC	j17	Dendritic cells	Ccl22, Ccl17, Ccl19, Il4i1, Cacnb3, Traf1 (mature migratory dendritic cells).
+MUSCLE	j0	Skeletal muscle cells	Myonuclei: Ckm, Actn3, Tnnt3, Mybpc2, Tnni2, Mylk2 (fast fibres). The muscle panel is max-scaled against the 40-cell ambient cluster j13, which pushes every myonuclear cluster below 0.5.
+MUSCLE	j1	Skeletal muscle cells	Myonuclei: Myh4, Actn3, Ampd1, Mybpc2, Myom2, Scn4a (type IIb).
+MUSCLE	j3	Pericytes	Pdgfrb, Rerg, Gucy1a2, Pde3a, Ebf1, Il34; no Myh11/Acta2 among its markers, unlike the smooth-muscle cluster j16.
+MUSCLE	j4	Skeletal muscle cells	Oxidative myonuclei: Fabp3, Ckmt2, Ppargc1a, Esrrg, Acsl1, Mybpc1. The erythroid candidate is Hba ambient RNA, not erythroid cells.
+MUSCLE	j5	Skeletal muscle cells	Myonuclei: Prkag3, Ampd1, Gpd2, Phka1, Mss51 (glycolytic fibres).
+MUSCLE	j12	Skeletal muscle cells	Myotendinous-junction myonuclei: Col22a1, Frem2, Fras1, Col24a1. Merged into the myonuclei rather than split, since separate parenchymal fragments are collinear in BayesPrism (the multi-tissue validation finding).
+MUSCLE	j14	Skeletal muscle cells	Neuromuscular-junction myonuclei: Chrne, Musk, Etv4, Ncam1, Col13a1. Merged into the myonuclei for the same reason as j12.
+MUSCLE	j17	Skeletal muscle cells	Slow type I myonuclei: Myh7, Tnnt1, Tnni1, Myl2, Myl3. Fibre types are not split, for the same reason.
+KIDNEY	j12	DROP	OVERRIDE of the accepted label "Proximal tubule cells" (§9, 2026-10-27 verification): PT genes (Slc34a1 20,662 CPM, Slc5a2, Slc34a3) together with DCT/TAL genes (Slc12a3, Tmem52b, Klhl3; Slc12a1 5,090, Umod 662); old labels split PT 183 / distal tubule 105. PT-distal doublets.
+WATSC	j15	DROP	OVERRIDE of the accepted label "Adipose stromal progenitor cells": top markers are T-cell genes (Cd3g, Cd8b, Itk, Lat, Xcl1) in a cluster scored as stromal; old labels fibroblast 31 / CD8 T 11; median 2,377 genes, above both parents. Stromal-T doublets.
+WATSC	j16	DROP	OVERRIDE of the accepted label "Adipose stromal progenitor cells": macrophage genes (C1qa 3,855 CPM, Cd68, Cd14) at about a third of the macrophage clusters' level together with stromal genes (Pdgfra 138); old labels macrophage 117 / fibroblast 97; median 2,350 genes. Macrophage-stromal doublets.
+WATSC	j18	Glandular epithelial cells	OVERRIDE of the accepted label "Mesothelial cells": Aqp5, Wfdc2, Clca1, Tfap2b, Bpifb2, Mlph (secretory glandular epithelium, not mesothelium; Msln not among the markers). Old label "Luminal epithelial cells".
+WATSC	j21	Mammary luminal epithelial cells	OVERRIDE of the accepted label "Mesothelial cells": milk-protein genes Lalba, Csn2, Csn3, Csn1s2b with Krt8, Cldn3, Cldn4, Elf3 (mammary luminal epithelium); 57 of 62 cells from GSE137869_sample35. Subcutaneous fat pads contain mammary tissue.
+MUSCLE	j13	DROP	OVERRIDE of the accepted label "Skeletal muscle cells": 40 cells whose markers are the 13 mitochondrial genes plus ambient myofibre transcripts (Tnnc2, Pvalb, Myl11); median 353 genes. Low quality, as KIDNEY j6. Its maximal muscle-panel score is what pushed the real myonuclear clusters under 0.5.
+SMLINT	j0	CD8+ T cells	OVERRIDE of the accepted label "CD4+ T cells": Cd8a 1,178 and Cd8b 211 CPM against Cd40lg 84; Cd4 and Il7r are absent from the reference's gene space, so the CD4 panel rested on Cd40lg and Cd28 alone. Old labels Memory CD8+ T cells 201, CD8+ NKT-like 101.
+SMLINT	j4	Enterocytes	S100g, Fabp2 (11,546 CPM), Fabp1, Prap1, Chp2, Car2 (absorptive enterocytes); median 431 genes, low but with specific markers; epithelial score 0.44.
+SMLINT	j7	DROP	Median 347 genes; T-cell genes (Cd3e, Cd8a, Gzma, Ptprc) together with enterocyte genes (Epcam 1,131, Fabp2 3,400); old labels mostly enterocyte/goblet. Low-quality lymphocyte-epithelial mixture.
+SMLINT	j8	DROP	Low quality: median 388 genes, top markers the 13 mitochondrial genes.
+SMLINT	j14	Goblet cells	Zg16, Muc2, Fcgbp, Tff3, Reg4, Fer1l6 (goblet); median 404 genes; epithelial score 0.46.
+SMLINT	j15	Transit-amplifying cells	Mki67, Top2a, Cenpf, Aspm, Bub1 with Olfm4 and Slc12a2 (cycling crypt cells); epithelial score 0.45.
+SMLINT	j18	Enterocytes	Si, Slc26a2, Abcc6, Btnl5, Maf (enterocytes), mitochondrial genes elevated but median 1,048 genes.
+SMLINT	j19	Erythroid cells	Hba-a2, Hba-a3, Alas2, Ahsp, Slc4a1, Rhd, Bpgm (erythroid, not only globin); median 237 genes, as expected for reticulocytes; Erythroid is not in the SMLINT panel.
+SMLINT	j24	Enteroendocrine cells	Chga, Chgb, Neurod1, Cck, Gast, Nts, Sct, Scg2 (enteroendocrine); old label "Merkel cells" 40.
+SMLINT	j26	DROP	Low quality: median 489 genes, markers mostly mitochondrial with Olfm4/Pigr background.
+LUNG	j1	Club cells	Scgb3a2, Scgb1a1, Bpifa5, Chia, Pon1, Scnn1g (club); club score just under 0.5.
+LUNG	j4	Endothelial cells	Cldn5, Cdh5, Ptprb, Vwf, Emcn, Plvap, Clec14a (blood endothelium; no Prox1/Mmrn1 among the markers); old labels include "Ionocytes" 184.
+LUNG	j21	Club cells	Cyp2f4, Scgb3a2, Scnn1g, Bpifa5, Gstt3 (club); 95% from one sample (K2).
+LUNG	j23	Ciliated cells	Dnah2, Dnah3, Dnah12, Cfap100, Cfap65, Ttll9 (ciliated); median 612 genes.
+LUNG	j27	DROP	Median 529 genes against ~2,900 for the macrophage clusters; markers are long non-specific genes (Lrmda, Atxn1, Dst, Fry, Ralgapa2); low quality.
+LUNG	j30	Ciliated cells	Deup1, Rsph1, Drc12, Dynlrb2, Tekt4, Zmynd10 (ciliated, including deuterosome-stage precursors).
+LUNG	j34	Goblet cells	Muc5b, Bpifb1, Bpifa1, Scgb3a1, Agr2, Gp2 (airway goblet/secretory); 90% from one sample (K2).
+LUNG	j37	DROP	Literature check 2026-10-28 (JOINT_REANNOTATION_LITCHECK.md): mesothelial genes at about a third of the mesothelial cluster j31 (Msln 801 vs 2237, Upk3b 525 vs 1555 CPM) together with macrophage and AT2 genes (Lyz2 32240, Cd68 510, Ptprc 755, Sftpc 11309 CPM; j31: 1959, 46, 112, 810), median 3,463 genes vs 2,210 in j31, old labels "Alveolar macrophages" 398: mesothelial-macrophage(-AT2) doublets, as j36. Was "Mesothelial cells".
+LUNG	j0	T cells	OVERRIDE of the accepted label "CD4+ T cells": Cd8a 459 and Cd8b 147 CPM alongside Cd40lg 124 (naive T, Lef1/Tcf7/Satb1); with Cd4 absent from the gene space, CD4 and CD8 cannot be separated here.
+LUNG	j3	Non-classical monocytes	Under-call made specific (accepted as "Immune cells"): Adgre4, Treml4, Spn (CD43, high on rat non-classical monocytes), Adgre1, C3ar1.
+LUNG	j5	DROP	OVERRIDE of the accepted label "Erythroid cells": median 563 genes; Hba-a2 together with club/AT2 ambient genes (Scgb1a1, Scgb3a2, Chia, Sftpb) and no Alas2/Ahsp among its markers. Low-quality ambient cluster.
+LUNG	j8	CD4+ T cells	Under-call made specific (accepted as "Immune cells"): Il2ra, Foxp3, Gata3, Icos, Cd28, Cxcr6 with Cd40lg 78 against Cd8a 62.
+LUNG	j9	DROP	OVERRIDE of the accepted label "Alveolar macrophages": top markers are B-cell genes (Pax5, Ms4a1, Cd79b, Cr2) in a cluster scored as macrophage; median 4,984 genes, well above both. B-macrophage doublets.
+LUNG	j13	DROP	OVERRIDE of the accepted label "Alveolar macrophages": neutrophil genes (S100a8, S100a9, Csf3r, Il1r2) on a macrophage background; median 2,870 genes against 603 for neutrophils. Neutrophil-macrophage doublets.
+LUNG	j17	Plasmacytoid dendritic cells	Under-call made specific (accepted as "Immune cells"): Siglech, Ccr9, Ptcra, Smim5, Gapt, Flt3.
+LUNG	j25	Tuft cells	OVERRIDE of the accepted label "Pulmonary neuroendocrine cells": Dclk1, Pou2f3, Trpm5, Avil, Gnat3, Sh2d6, Rgs13 are tuft-cell genes; the LUNG panel had no tuft class. Old label "Tuft cells" 299.
+LUNG	j26	DROP	OVERRIDE of the accepted label "T cells": T-cell genes with monocyte genes (Treml4, Adgre4, Spn); median 3,187 genes, double the T clusters. T-monocyte doublets.
+LUNG	j29	DROP	OVERRIDE of the accepted label "Alveolar macrophages": top markers are T-cell genes (Cd3d, Cd3g, Itk, Tcf7, Zap70); median 3,527 genes. T-macrophage doublets.
+LUNG	j35	DROP	OVERRIDE of the accepted label "B cells": top markers are neutrophil genes (Retnlg, S100a8, S100a9, Cxcr2, Prok2); 28 cells. B-neutrophil doublets.
+LUNG	j36	DROP	OVERRIDE of the accepted label "Alveolar macrophages": AT2 genes (Sftpc, Lamp3, Slc34a2, Defb3) as top markers; median 5,995 genes. AT2-macrophage doublets.
+LIVER	j15	NK cells	OVERRIDE of the accepted label "CD8+ T cells": Cd3e 43 CPM against Klrd1 263, Gzma 258, Nkg7 113; its Cd8a (183) is the CD8α that rat NK cells carry.
+WATSC	j6	Non-classical monocytes	Under-call made specific (accepted as "Immune cells"): Fcgr3a, Spn, Fpr2, Trem3, Il1b, Lyz2 29,571 CPM, C1qa a tenth of the macrophage clusters'; 93% from GSE137869_sample10 (K2).
+WATSC	j11	NK and cytotoxic T cells	Under-call made specific (accepted as "Immune cells"): Nkg7 3,864, Gzma, Gzmk, Prf1, Klrd1, Tbx21 together with Cd3e 661 and Cd8b 153; old labels CD8+ T 179, NK 66; NK and effector CD8 T are not separated by this clustering.
+WATSC	j12	T cells	OVERRIDE of the accepted label "CD4+ T cells": Cd8a 393 and Cd8b 108 CPM alongside Cd40lg 258; with Cd4 absent, CD4 and CD8 cannot be separated here.
+WATSC	j13	T cells	Under-call made specific (accepted as "Immune cells"): Cd3e 922, Cd3g, Lck, Icos, Gata3, Cd40lg 170 with Cd8a 325; Cpa3 1,218 CPM shows mast cells inside it too, too few to separate.
+WATSC	j19	Cycling cells	Under-call made specific (accepted as "Immune cells"): Top2a, Mki67, Cdk1, Ube2c, Cenpf (cycling immune cells).
+WATSC	j20	Plasmacytoid dendritic cells	Under-call made specific (accepted as "Immune cells"): Siglech, Spib, Irf8, Bcl11a, Gapt.
+MUSCLE	j7	Macrophages	Under-call made specific (accepted as "Immune cells"): F13a1, Cd163, Mrc1, C1qc, Ctss, Ltc4s.
+SMLINT	j10	Enterocytes	Under-call made specific (accepted as "Epithelial cells"): Car4, Slc6a14, Gsta2/3/5, Acer1, Ces2j (absorptive enterocytes).
+SMLINT	j21	Macrophages	Under-call made specific (accepted as "Immune cells"): C1qa, C1qb, C1qc, Csf1r, Cd68, Ms4a7, Aif1.
+CORTEX	j24.2	Vascular leptomeningeal cells	Part of the split j24: Col1a2, Col1a1, Col3a1, Slc6a20a, Ogn, Bnc2, Slc13a4 (meningeal fibroblasts, as j24.4).
+CORTEX	j24.5	Neutrophils	Part of the split j24. Literature check 2026-10-28 (JOINT_REANNOTATION_LITCHECK.md): neutrophil genes dominate (S100a9 10667, S100a8 3076, Ngp 2341, Camp 602, Retnlg 234 CPM) with no classical-monocyte signal (Cd14 0, Cx3cr1 0, Fcgr1a 67); Plac8 and Ifitm1 are shared with neutrophils. Some lymphoid and erythroid RNA (Cd3e 234, Cd79a 268, Hba-a2 201): intravascular blood leukocytes, neutrophil-dominated. Was "Monocytes".
+HIPPOC	j0	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j1	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j2	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j3	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j4	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j5	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j6	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j9	DROP	Low quality: median 243-307 genes per nucleus; markers housekeeping, oxidative-phosphorylation and ambient genes (Ptgds, Mt3, Cox*, Ndufa4, Tmsb4x, Cst3, Pebp1), no cell-type panel above 0.25; spread over all 6 samples. These barcodes carried the old labels "Neurons" and "Microglia".
+HIPPOC	j7	DROP	Low quality: median 329 genes; top markers the mitochondrial genes, then ambient astrocyte/neuron genes (Atp1a2, S100b, Sparcl1, Apoe, Map1a).
+HIPPOC	j14	DROP	Low quality: median 446 genes; markers housekeeping and generic neuronal genes (Calm1/3, Hspa8, Hsp90aa1, Nrgn, Uchl1), no panel above 0.27; Plp1 3,075 CPM ambient.
+HIPPOC	j16	Inhibitory neurons	Gad1 816 CPM (excitatory clusters <=53), Adarb2, Reln, Erbb4, Dlx1, Npas1 (CGE-derived interneurons); the choroid-plexus near-tie has no Ttr (9 CPM).
+HIPPOC	j21	Microglia	Csf1r 1,826, Cx3cr1 1,075, P2ry12 154 CPM; Inpp5d, Dock8, Runx1, Ikzf1 (microglial nuclear genes); Microglia and BAM both 1.0, no Mrc1/Cd163 among the markers.
+HIPPOC	j24	Thalamic neurons	Literature check 2026-10-28 (JOINT_REANNOTATION_LITCHECK.md): Lef1 521 and Tcf7l2 183 CPM (<=35 in every hippocampal neuron cluster), Zic1 14, Shox2 20, Slc17a6 130, Ntng1 617; LEF1/TCF7L2 mark thalamic neurons and are absent from the hippocampal formation (Nagalski 2012; Lipiec 2020), and Gad1 281 is a third to a sixth of the interneuron clusters. A thalamic dissection carry-over, kept as its own type so it does not enter the interneuron profile (the MoTrPAC dissection may carry the same). Was "Inhibitory neurons". Earlier note: accepted as "T cells" in the first run and sent to REVIEW after the split rerun rescaled the panels; a neuronal cluster (Snap25 1,563 CPM, median 3,006 genes, Cd3e 2) with Gad1 281 CPM against 13-19 in excitatory clusters, plus Foxp2, Zfhx4, Glra3; the T score came from min-max scaling against the near-empty low-quality clusters. 72% from one sample.
+HIPPOC	j25	Excitatory neurons	Slc17a7 516, Neurod6 58 CPM, Snap25 1,909; markers Rph3al, Hgf, Fstl4, Adcy8 (pyramidal-type, subfield not decided); 80% from one sample (K2).
+HIPPOC	j13.1	Endothelial cells	Part of the split j13: Flt1, Slc2a1, Abcb1a, Epas1, Cxcl12, Igfbp7 (blood-brain-barrier endothelium); median 468 genes.
+HIPPOC	j13.2	DROP	Part of the split j13: median 267 genes; oxidative-phosphorylation and housekeeping markers only (Cox6b1, Cox6a1, Atp5mg, B2m).
+HIPPOC	j13.3	DROP	Part of the split j13: median 373 genes; mitochondrial genes, Ptgds, Apoe, Sparc ambient.
+HIPPOC	j13.4	Vascular leptomeningeal cells	Part of the split j13: Aldh1a2, Slc6a13, Slc6a20b, Tbx18, Slc22a8, Colec12 (meningeal fibroblasts).
+HIPPOC	j13.5	Mural cells	Part of the split j13: Atp13a5, Abcc9, Rbpms, Irag1, Egflam (pericytes); 40 cells.
+HIPPOC	j13.6	Vascular leptomeningeal cells	Part of the split j13: Aldh1a2, Slc6a13, Tbx18, Tbx15, C7, Slc13a4 (meningeal fibroblasts).
+HIPPOC	j13.7	Endothelial cells	Part of the split j13: Flt1, Epas1, Cxcl12, Igfbp7, Hip1 (endothelium); median 487 genes.
+HIPPOC	j13.9	Vascular leptomeningeal cells	Part of the split j13: Slc47a1, Bnc2, Prrx2, Alx1, Col8a2, Slco2a1 (arachnoid/meningeal fibroblasts).
+BLOOD_PBMC	j0	CD8+ T cells	Under-call made specific (accepted as "T cells"): Cd8a 625, Cd8b, Ctsw, Runx3 against Cd40lg 26 CPM.
+BLOOD_PBMC	j2	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 258 against Cd8a 4 CPM; Il6st, Tox.
+BLOOD_PBMC	j3	Regulatory T cells	Under-call made specific (accepted as "T cells"): Foxp3, Il2ra, Ikzf2, Ctla4, Icos, Gata3.
+BLOOD_PBMC	j4	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 247 against Cd8a 5 CPM; Lat, Gimap9.
+BLOOD_PBMC	j5	CD4+ T cells	Under-call made specific (accepted as "T cells"): Cd40lg 229 against Cd8a 0, with interferon genes (Mx2, Usp18, Ifi44, Isg20): an interferon-stimulated CD4 state, 177 cells.
+BLOOD_PBMC	j8	DROP	OVERRIDE of the accepted label "B cells": B-cell genes (Cd79a 3,520) with platelet genes (Pf4 4,587, Itga2b, Gp9, Treml1, Clec1b): platelet-B cell aggregates.
+BLOOD_PBMC	j12	Cycling cells	OVERRIDE of the accepted label "NK cells": Mki67 311, Top2a, Cdk1, Rrm2 with mixed T/NK/B genes (Cd3e 243, Nkg7 1,335, Cd79a 146): cycling lymphocytes.
+BLOOD_PBMC	j15	DROP	OVERRIDE of the accepted label "T cells": T-cell genes (Cd3e 655, Cd40lg 239) with platelet genes (Pf4 1,737, Gp9, Treml1, Clec1b): platelet-T cell aggregates.
+BLOOD_PBMC	j16	DROP	OVERRIDE of the accepted label "Non-classical monocytes": monocyte genes (Adgre4 465, Treml4 240) with B-cell genes (Cd79a 1,768, Ms4a1 279); median 2,845 genes. Monocyte-B doublets.
+BLOOD_PBMC	j17	DROP	B-cell genes (Cd79a 995, Pax5, Ebf1) with T-cell genes (Cd3e 384, Cd40lg 89); median 3,032 genes against ~1,500 for B clusters. B-T doublets.
+BLOOD_PBMC	j18	DROP	OVERRIDE of the accepted label "Basophils": median 778 genes, Hba-a2 21,637 and Pf4 1,191 CPM with low levels of every lineage; no basophil genes (Fcer1a 1, Hdc 46). Low-quality ambient cluster.
+BLOOD_PBMC	j20	DROP	Non-classical monocyte genes (Adgre4 360, Treml4 208) with T/NK genes (Cd3e 344, Nkg7 117) and Hba-a2 4,122; median 3,234 genes. Doublets.
+BLOOD_PBMC	j22	DROP	Erythroid genes (Hba-a2 190,012, Alas2 1,095) with non-classical monocyte genes (Adgre4 436, Treml4 357). Reticulocyte-monocyte doublets.
+BLOOD_PBMC	j24	DROP	NK genes (Nkg7 846, Ncr1) with B (Cd79a 425) and T (Cd3e 220) genes; median 3,370 genes against 2,049 for NK j11. Doublets.
+BLOOD_PBMC	j25	DROP	Erythroid genes (Alas2 880, Slc4a1 876, Kel, Gypa) with T-cell genes (Cd3e 295, Cd40lg 110); median 2,247 genes against 229 for the reticulocyte cluster j26. Reticulocyte-T doublets; 74% from rat V4.
+BLOOD_PBMC	j27	DROP	OVERRIDE of the accepted label "Erythroid cells": erythroid genes with B-cell genes (Cd79a 574, Ms4a1 235); median 1,890 genes. Reticulocyte-B doublets.
+BLOOD_PBMC	j28	DROP	Erythroid genes (Alas2 851, Slc4a1 882) with NK genes (Nkg7 348, Klrd1 634). Reticulocyte-NK doublets.
+BLOOD_WB	j0	T cells	Ptprc 6,388, Cd3e 530, Themis, Tcf12, Bach2; median 584 genes (low-depth T cells).
+BLOOD_WB	j1	T cells	Cd3e 998, Cd247, Cd27, Lef1, Il7r, Grap (naive T cells).
+BLOOD_WB	j7	Non-classical monocytes	Adgre4 976, Treml4, Zeb2, Aoah, Tcf7l2.
+BLOOD_WB	j12	Neutrophils	OVERRIDE of the accepted label "Basophils": S100a9 35,091, S100a8 13,889, Cxcr2, Csf3r, Nlrp12, Ccr1 (neutrophils, with interferon genes Ifit3, Isg15, Oas1b); Fcer1a 8, Hdc 31.
+BLOOD_WB	j17	B cells	Pax5, Ebf1, Bank1, Mef2c with Cd79a 834, Ms4a1 447; median 496 genes.
+BLOOD_WB	j19	Cycling cells	Under-call made specific (accepted as "Immune cells"): Mki67 1,011, Top2a, Cdk1, Ube2c; NK/T genes (Nkg7 4,078, Cd3e 776).
+BLOOD_BM	j1	Neutrophil progenitors	Under-call made specific (accepted as "Immune cells"): Camp 29,345, Np4, RatNP-3b, Defa5, Retn, Olfm4 (secondary-granule myelocytes); S100a8/9 high. Marrow is used only for the §12 fallbacks, not the composite.
+BLOOD_BM	j3	Myeloid progenitors	Under-call made specific (accepted as "Immune cells"): Mpo 23,067, Ctsg, Prss57, Ms4a3 (promyelocytes/GMP).
+BLOOD_BM	j4	Pro-B and pre-B cells	Rag1, Polm, Lig4, Fcrla, Cd79a 3,697 (B-cell precursors).
+BLOOD_BM	j5	Classical monocytes	Fcnb 4,193, S100a4, S100a6, Fn1, Ifi30; median 439 genes.
+BLOOD_BM	j8	Monocyte progenitors	Under-call made specific (accepted as "Immune cells"): Irf8, Ms4a6a, Fcnb 7,738, Mnda, Tifab, Mpo 4,423 (monocyte progenitors).
+BLOOD_BM	j11	Pro-B and pre-B cells	Under-call made specific (accepted as "Immune cells"): Igll1, Vpreb1a, Vpreb1b, Dntt-negative, Cd24, Il7r.
+BLOOD_BM	j14	Erythroblasts	Car1, Klf1, Car2 7,631, Alad, Hmbs, Blvrb (erythroblasts).
+BLOOD_BM	j16	Erythroblasts	Car1, Tfr2, Pklr, Cited4, Car2 8,204, Kit 80 (early erythroblasts); median 3,821 genes.
+BLOOD_BM	j17	Macrophages	C1qa, C1qb, C1qc, Cd163, Vcam1, Spic, Folr2 (marrow macrophages).
+BLOOD_BM	j18	Pro-B and pre-B cells	Rag2, Blnk, Cd24, Dlk1, Cd79a 2,077 with Mki67/Top2a (cycling pre-B cells).
+BLOOD_BM	j21	Eosinophils	Prg2 159,600, Epx 32,636, Prg3, Ear1, Il5ra.
+BLOOD_BM	j22	Plasma cells	Jchain, Mzb1, Ighm, Prdm1, Sdc1, Txndc5.
+SPLEEN	j3	Non-classical monocytes	OVERRIDE of the accepted label "Macrophages": Treml4 1,056, Adgre4 291, Nr4a1 799, Fcgr3a, Csf1r 1,766 CPM with C1qa 6 and C1qb 11 (red-pulp macrophages 5,107/6,248): patrolling monocytes, not tissue macrophages.
+SPLEEN	j4	Plasma cells	No panel >= 0.5 (score 0.19): Jchain, Mzb1, Bhlha15, Txndc5, Sdc1, Irf4, Iglc1 top markers; Cd79a 834, Ms4a1 128 (B clusters 2,600/1,000).
+SPLEEN	j7	DROP	Under-call "Immune cells": interferon program (Mx2, Isg15, Rtp4, Usp18, Ifi44) on mixed lineages, Cd3e 988 and Cd79a 954 CPM, Hbb 4,833; not decidable to one cell type.
+SPLEEN	j9	Cycling cells	OVERRIDE of the accepted label "T cells": Mki67 957, Top2a, Cdk1, Plk1 with mixed lineage genes (Cd3e 809, Nkg7 1,622, Lyz2 1,220, Cd79a 174): cycling lymphocytes, as BLOOD_PBMC j12.
+SPLEEN	j11	DROP	Possible doublet (Fibroblasts 0.79 from trace Dcn 57, Col1a1 2 CPM): T-cell genes (Themis, Satb1, Prkcq; Cd3e 871) with Hbb 25,336 and Pf4 471, median 480 genes against ~1,000 for T clusters: T-erythrocyte/platelet aggregates, low quality.
+SPLEEN	j18	Non-classical monocytes	Under-call "Immune cells": Treml4 1,121, Adgre4 560, Aoah, Mnda, Hck, Lyz2 22,989; C1qa 8 (not macrophages); Fcnb 1,614 below the classical cluster j14 (4,288).
+SPLEEN	j19	Red-pulp macrophages	No panel >= 0.5 (0.39): Spic 438, Vcam1 1,345, Hmox1 3,451, Cd163, C1qa 5,107, C1qb 6,248 CPM; the red-pulp panel genes are the top markers.
+SPLEEN	j20	Dendritic cells	Under-call "Immune cells": Clec10a, Flt3, Tmem176a/b, Dnase1l3, Il18, RT1-Db1 (cDC2); C1qa 251 (low against red-pulp macrophages).
+SPLEEN	j22	Erythroid progenitors	OVERRIDE of the accepted label "Megakaryocytes and platelets": Klf1 481, Epor 159, Car1, Ahsp, Spta1, Kel, Tfr2 (committed erythroid progenitors) with Itga2b 8 and Gp9 11 CPM; Pf4 704 only. Hemoglobin not yet expressed (Hbb 11, Alas2 1), so not the mature erythroid panel.
+SPLEEN	j23	Neutrophils	No panel >= 0.5 (Immune 0.46; median 352 genes, typical of neutrophils): Cxcr2 844, Csf3r 851, Clec4e, Clec4d, Nlrp12, Il1b top markers.
+SPLEEN	j24	DROP	Under-call "Immune cells": B-cell genes (Cd79a 1,106, Ms4a1 455) with T-cell genes (Cd3e 848, Cd3g 975), median 1,424 genes against 787 for B and ~1,000 for T clusters: B-T doublets (as BLOOD_PBMC j17).
+OVARY	j0	Granulosa cells	No panel >= 0.5 (best Erythroid 0.39 from ambient Hba-a2 2,330): Fshr 14 CPM (non-granulosa clusters <= 3 except smooth muscle 7), Gja1 1,201, Amhr2 74, Amh 60, Foxo1 top marker; collagens absent (Col1a1 19). Cyp19a1 0; Pawr, Cidea, Ccn1/Ccn2 suggest atretic-follicle granulosa.
+OVARY	j2	Stromal cells	Near-tie with Ovarian surface epithelial cells (0.82/0.82): Dcn 2,822, Col1a1 5,883, Col3a1 7,271, Tcf21 649 against Upk3b 3, Lrrn4 15, Msln 105, Krt8 42 CPM.
+OVARY	j11	Theca cells	OVERRIDE of the accepted label "Luteal cells": Cyp17a1 2,327 (theca-specific; luteal cluster j19 0), Lhcgr 326, Star 539, Cyp11a1 1,126 with Akr1c3 24 and Ptgfr 1 (luteal j19 21,805 / 233).
+OVARY	j15	Granulosa cells	No panel >= 0.5 (Granulosa 0.45): Amh 666, Inha 863, Gja1 1,651, Ihh 189, Amhr2 245, Fst 273 with Mki67 298, Top2a: cycling granulosa of growing follicles.
+OVARY	j18	Granulosa cells	OVERRIDE of the accepted label "Oocytes": Amh 686, Inha 991, Gja1 1,408, Ihh 201, Amhr2 305, Fst 246 (granulosa of preantral/small antral follicles) against oocyte genes Gdf9 0, Bmp15 0, Nobox 1, Zp3 25 CPM.
+OVARY	j19	Luteal cells	Near-tie with Hepatocytes (non-ovarian) (1.0/0.97): Akr1c3 (20alpha-HSD) 21,805, Star 2,675, Cyp11a1 2,265, Ptgfr 233; Alb 0, Fgb 0, Apoh 0 (the guard score came from Apoa1 88 CPM).
+OVARY	j20	Non-classical monocytes	Under-call "Immune cells": Cx3cr1 227, Nr4a1 961, Spn, Fcgr3a, Treml4 16, Itgb2; Fcnb 24 and Ccr2 5 (classical cluster j3 1,109 / 344).
+OVARY	j21	Plasmacytoid dendritic cells	Under-call "Immune cells": Siglech, Ccr9, Spib, Irf8, Ptcra, Flt3 top markers (OVARY uses the shared immune panel, which has no pDC class).
+OVARY	j22	Smooth muscle cells	OVERRIDE of the accepted label "Stromal cells": Myh11 2,065, Actg2 660, Cnn1 381, Lmod1, Tagln, Mylk top markers, Rgs5 0 (not pericytes): visceral-type smooth muscle.
+OVARY	j24	Dendritic cells	Under-call "Immune cells": Xcr1, Clec9a, Flt3, Wdfy4, Ccl17, RT1-Ba/Bb top markers (cDC1).
+HEART_GSE307551	j9	DROP	Near-tie Mural/Endothelial (0.57/0.50): pericyte genes (Rgs5 701, Kcnj8 216, Pdgfrb 1,325) with endothelial genes (Cdh5 245, Emcn 706, Kdr 441) each near half the pure clusters (j15, j7), median 1,085 genes against 570 and 512: pericyte-endothelial doublets.
+HEART_GSE307551	j12	Endothelial cells	No panel >= 0.5 (0.41): lymphatic endothelium (Mmrn1, Reln, Ccl21 497, Prox1 2,907 CPM, Flt4, Tbx1); coarse class Endothelial cells (production "Lymphatic endothelial cells" maps there).
+HEART_GSE307551	j13	DROP	Near-tie Fibroblasts/Endothelial (0.67/0.63): Pdgfra 358, Col1a1 401, Dcn 315 with Cdh5 297, Emcn 774, Kdr 552, about half of each pure cluster; median 1,123 genes against 665 (fibroblasts) and 512 (endothelium): fibroblast-endothelial doublets.
+HEART_GSE307551	j16	Endothelial cells	No panel >= 0.5 (0.37): endocardial endothelium, Npr3 595, Vwf 3,150, Cdh11 2,076, Emcn 987, Cdh5 210 CPM, Pkhd1l1, Cgnl1 top markers.

@@ -1,0 +1,4 @@
+# Clusters re-clustered on their own (REFERENCE_RELABEL_PREREG.md §9, 2026-10-27 (c)).
+reference	cluster	reason
+CORTEX	j24	T cells (Lef1, Ptprc, Lcp1; old CD8/CD4 T 124) and vascular cells (Slc6a20a, Colec12, Igfbp7, Ebf1; old "Radial glial cells" 49) in one cluster, median 749 genes, not doublets
+HIPPOC	j13	endothelial cells (Flt1 1,193 CPM, Slco1a5) and meningeal fibroblasts (Slc6a13 684, Pdgfra 319, Dcn, Col4a5) in one cluster, median 735 genes

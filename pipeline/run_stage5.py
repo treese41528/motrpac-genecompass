@@ -3,7 +3,9 @@
 run_stage5.py — Stage 5 Orchestrator: Reference Assembly & Tokenization
 
 Runs two steps in sequence:
-  Step 1: tokenize_corpus.py   (scatter — all files, single task locally)
+  Step 1: tokenize_corpus.py   (scatter — reference_assembly.n_tokenize_tasks tasks, run serially;
+                                v2: 50. The count fixes the corpus row order: change it and the
+                                assembled dataset's rows come out in a different order)
   Step 2: assemble_corpus.py   (gather  — Arrow shards → HuggingFace dataset)
 
 Architecture:
@@ -260,16 +262,19 @@ def run_step(
         logger.error(f"Script not found: {script_path}")
         return False
 
-    cmd = [sys.executable, str(script_path)]
-
-    # Step 1 (scatter): run as task 0 of 1 — processes all files serially
-    if step['num'] == 1:
-        cmd += ['--task-id', '0', '--n-tasks', '1']
-
+    # Step 1 (scatter) runs tasks 0..N-1 one after another, N = config reference_assembly.n_tokenize_tasks
+    # (the same split a SLURM array uses). N decides which files each task reads, and
+    # so the order of rows in the assembled corpus; v2 used 50.
+    base = [sys.executable, str(script_path)]
     if dry_run:
-        cmd.append('--dry-run')
+        base.append('--dry-run')
     if verbose:
-        cmd.append('-v')
+        base.append('-v')
+    if step['num'] == 1:
+        n_tasks = int(config.get('reference_assembly', {}).get('n_tokenize_tasks', 1))
+        cmds = [base + ['--task-id', str(t), '--n-tasks', str(n_tasks)] for t in range(n_tasks)]
+    else:
+        cmds = [base]
 
     logger.info("=" * 70)
     logger.info(f"STEP {step['num']}: {step['name']}")
@@ -278,7 +283,10 @@ def run_step(
     logger.info("=" * 70)
 
     t0     = time.time()
-    result = subprocess.run(cmd, cwd=str(_PROJECT_ROOT))
+    for cmd in cmds:
+        result = subprocess.run(cmd, cwd=str(_PROJECT_ROOT))
+        if result.returncode != 0:
+            break
     elapsed = time.time() - t0
 
     if result.returncode != 0:

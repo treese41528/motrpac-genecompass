@@ -1,0 +1,19 @@
+# Same values as config/profiles/refs4_14.yaml (the 14-tissue refs4 arm); the default since 2026-11-01 is all 16 tissues.
+# Rebuilt-reference profile (2026-10-28, REFERENCE_RELABEL_PREREG.md §8): Stage 8 onward with the jointly
+# re-annotated references (references_v4/, tissue_references.yaml) and the BLOOD composite, with the v2
+# model. Every output goes to a _refs4 folder so the July-reference v2 results stay untouched for the
+# comparison §8 registers.
+#   export PIPELINE_PROFILE=config/profiles/refs_v4.yaml
+# Tissues whose reference did not change (BAT, HEART, HYPOTH, TESTES) are linked in from the v2 folders
+# (slurm/analysis/refs4_setup.sh), so the cross-tissue steps (gate BH, pooled IHW) see all 14 tissues.
+deconvolution:
+  results_dir: data/deconvolution/results_refs4
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs4/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs4
+  grn_dir: data/deconvolution/grn_v2_refs4
+  grn_human_dir: data/deconvolution/grn_v2_refs4_human
+  # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
+  # deconvolution/reference/posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11).
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

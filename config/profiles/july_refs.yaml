@@ -1,0 +1,15 @@
+# July-reference profile: the v2 model on the July consensus-label references (references_v3/, each
+# tissue's previous_reference_dir in tissue_references.yaml; BLOOD = the one-rat PBMC GSE285476), i.e. the
+# v2 results of 2026-10-25 (docs/RETRAIN_V2_RESULTS.md: 172 blocks, 13 hotspots). The default since
+# 2026-10-31 is the jointly re-annotated references (config/pipeline_config.yaml).
+#   export PIPELINE_PROFILE=config/profiles/july_refs.yaml
+# Stage 8 takes --ref-dir explicitly; to rebuild this arm pass each tissue's previous_reference_dir.
+deconvolution:
+  results_dir: data/deconvolution/results
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2
+  hotspots_table: data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2
+  grn_dir: data/deconvolution/grn_v2
+  grn_human_dir: data/deconvolution/grn_v2_human
+  posctrl_prereg: deconvolution/reference/posctrl_prereg.tsv
+  validation_dir: data/deconvolution/validation   # Stage 14 sweeps as before 2026-11-03 (default moved to the rebuild's)

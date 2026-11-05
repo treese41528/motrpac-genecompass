@@ -372,6 +372,11 @@ Run before Stage 5 scatter:
         },
         fallback    = {'mode': args.fallback_rescale, 'scale': round(scale, 6), 'n_shared_genes': n_shared},
     )
+    if not args.dry_run:
+        from provenance import write_provenance
+        write_provenance(output_dir, md5=True, params=vars(args), config=config,
+                         inputs=[median_dir / 'rat_gene_medians.pickle',
+                                 orth_dir / 'rat_to_human_mapping.pickle', gc_medians])
 
     elapsed = time.time() - t_start
     logger.info("=" * 70)

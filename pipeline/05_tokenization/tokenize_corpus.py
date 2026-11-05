@@ -740,7 +740,7 @@ Examples:
     )
     parser.add_argument('--task-id',  type=int, required=True,
                         help='SLURM_ARRAY_TASK_ID (0-indexed)')
-    parser.add_argument('--n-tasks',  type=int, required=True,
+    parser.add_argument('--n-tasks',  type=int, default=None,
                         help='Total number of scatter tasks')
     parser.add_argument('--dry-run',  action='store_true',
                         help='Validate inputs; skip h5ad loading and writing')
@@ -760,7 +760,6 @@ Examples:
     t_start = time.time()
     logger.info("=" * 70)
     logger.info("STAGE 5 SCATTER: Corpus Tokenization")
-    logger.info(f"  Task {args.task_id} of {args.n_tasks}")
     logger.info("=" * 70)
 
     # ── Config ───────────────────────────────────────────────────────────────
@@ -772,6 +771,19 @@ Examples:
             "Set PIPELINE_ROOT or run from project root."
         )
         sys.exit(1)
+
+    # The task count fixes which files each task reads (stride assignment) and so the order of
+    # rows in the assembled corpus: v2 was built with 50 (reference_assembly.n_tokenize_tasks).
+    if args.n_tasks is None:
+        args.n_tasks = config.get('reference_assembly', {}).get('n_tokenize_tasks')
+        if args.n_tasks is None:
+            logger.error("--n-tasks not given and config reference_assembly.n_tokenize_tasks is not set")
+            sys.exit(1)
+        args.n_tasks = int(args.n_tasks)
+    if not 0 <= args.task_id < args.n_tasks:
+        logger.error(f"--task-id {args.task_id} out of range [0, {args.n_tasks})")
+        sys.exit(1)
+    logger.info(f"  Task {args.task_id} of {args.n_tasks}")
 
     paths     = config['paths']
     ref_cfg   = config.get('reference_assembly', {})
@@ -887,6 +899,14 @@ Examples:
         t_start       = t_start,
         dry_run       = args.dry_run,
     )
+    if not args.dry_run:
+        from provenance import write_provenance
+        small = [orth_dir / 'rat_tokens.pickle', median_dir / 'hybrid_gene_medians.pickle']
+        if paths.get('qc_file_list'):
+            small.append(resolve_path(config, paths['qc_file_list']))
+        write_provenance(manifest_dir, inputs=[qc_h5ad_dir], md5_inputs=small,
+                         params=vars(args), config=config,
+                         name=f'provenance_tokenize_corpus_task{args.task_id:04d}.json')
 
     # ── Summary ──────────────────────────────────────────────────────────────
     n_cells_out = sum(r.get('n_cells_written', 0) for r in file_results)

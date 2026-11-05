@@ -3,7 +3,7 @@
 run_stage4.py — Stage 4 Orchestrator: Gene Medians (Scatter / Gather)
 
 Runs two steps in sequence:
-  Step 1: compute_gene_medians.py   (scatter — all files, single task)
+  Step 1: compute_gene_medians.py   (scatter — medians.n_scatter_tasks tasks, run serially; v2: 16)
   Step 2: gather_gene_medians.py    (gather — merge → rat_gene_medians.pickle)
 
 Architecture:
@@ -185,14 +185,19 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
         logger.error(f"Script not found: {script_path}")
         return False
 
-    # Step 1 (scatter) runs as task 0 of 1 — processes all files in one pass
-    cmd = [sys.executable, str(script_path)]
-    if step['num'] == 1:
-        cmd += ['--task-id', '0', '--n-tasks', '1']
+    # Step 1 (scatter) runs tasks 0..N-1 one after another, N = config medians.n_scatter_tasks
+    # (the same split a SLURM array uses). N decides which files each task reads, and
+    # the scatter files (and the float sums gathered from them); v2 used 16.
+    base = [sys.executable, str(script_path)]
     if dry_run:
-        cmd.append('--dry-run')
+        base.append('--dry-run')
     if verbose:
-        cmd.append('-v')
+        base.append('-v')
+    if step['num'] == 1:
+        n_tasks = int(config.get('medians', {}).get('n_scatter_tasks', 1))
+        cmds = [base + ['--task-id', str(t), '--n-tasks', str(n_tasks)] for t in range(n_tasks)]
+    else:
+        cmds = [base]
 
     logger.info("=" * 70)
     logger.info(f"STEP {step['num']}: {step['name']}")
@@ -201,7 +206,10 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
     logger.info("=" * 70)
 
     t0 = time.time()
-    result = subprocess.run(cmd, cwd=str(_PROJECT_ROOT))
+    for cmd in cmds:
+        result = subprocess.run(cmd, cwd=str(_PROJECT_ROOT))
+        if result.returncode != 0:
+            break
     elapsed = time.time() - t0
 
     if result.returncode != 0:

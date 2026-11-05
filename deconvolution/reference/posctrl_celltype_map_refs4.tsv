@@ -1,0 +1,13 @@
+# Positive-control targets renamed for the jointly re-annotated references (REFERENCE_RELABEL_PREREG.md §11,
+# 2026-10-28, written before any refs4 DE result). Genes, directions and thresholds are unchanged.
+# BLOOD: the composite has no naive/memory/ISG split (the joint clusters merge those states), so those
+# targets become the broader type that contains them.
+tissue	old	new
+SKMGN	Skeletal myocytes	Skeletal muscle cells
+SKMVL	Skeletal myocytes	Skeletal muscle cells
+KIDNEY	Distal tubule cells	Distal convoluted tubule cells|Connecting tubule cells
+BLOOD	Natural killer cells	NK cells
+BLOOD	Memory T cells	CD4+ T cells|CD8+ T cells|T cells
+BLOOD	ISG-expressing T cells	CD4+ T cells|CD8+ T cells|T cells
+BLOOD	Naive B cells	B cells
+BLOOD	Naive CD4+ T cells	CD4+ T cells

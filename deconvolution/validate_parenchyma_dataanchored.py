@@ -23,13 +23,15 @@ ROOT = os.environ.get('PIPELINE_ROOT', '.')
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'lib'))
 from gene_utils import load_config, resolve_path  # noqa: E402
 _cfg = load_config()
-BULK = os.path.join(ROOT, 'data/deconvolution/motrpac_bulk')
+BULK = str(resolve_path(_cfg, _cfg['deconvolution']['motrpac_bulk_out']))
 DE   = os.environ.get('DE_DIR') or str(resolve_path(_cfg, _cfg['deconvolution']['genecompass_input_dir']) / 'pseudobulk_de')
 print(f'DE folder: {DE}')
-PH   = os.path.join(ROOT, 'deconvolution/reference/motrpac_sample_pheno.tsv')
+PH   = str(resolve_path(_cfg, _cfg['deconvolution']['sample_pheno']))
 THR_LFC, ALPHA, MINNZ = 0.25, 0.05, 25
-PAR = {'SKMGN': ['Skeletal myocytes'],
-       'SKMVL': ['Skeletal myocytes'],
+# Parenchyma label per tissue; muscle is 'Skeletal muscle cells' in the jointly re-annotated reference
+# (references_v4) and 'Skeletal myocytes' before it. A tissue matching none of its names is an error.
+PAR = {'SKMGN': ['Skeletal myocytes', 'Skeletal muscle cells'],
+       'SKMVL': ['Skeletal myocytes', 'Skeletal muscle cells'],
        'HEART': ['Cardiomyocytes'], 'LIVER': ['Hepatocytes']}
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
 ph = pd.read_csv(PH, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')
@@ -74,6 +76,9 @@ for TIS, cts in PAR.items():
                          n_testable=len(present), n_recovered=len(rec),
                          recovery_rate=round(rate, 3)))
 res = pd.DataFrame(rows)
+missing = sorted(set(PAR) - set(res.tissue if len(res) else []))
+if missing:
+    sys.exit(f'ERROR: no parenchyma DE block found for {missing} (renamed cell type? update PAR)')
 res.to_csv(os.path.join(DE, 'parenchyma_dataanchored_validation.tsv'), sep='\t', index=False)
 print(res.to_string(index=False))
 print('\nREAD: high recovery_rate => the parenchyma DE faithfully recovers REAL bulk dose movers')

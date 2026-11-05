@@ -6,7 +6,7 @@ Pipeline position:
     Stage 6, Step 1: build_coexp_embedding.py
     Stage 6, Step 2: build_family_embedding.py
     Stage 6, Step 3: build_promoter_embedding.py   ← THIS SCRIPT
-    Stage 6, Step 4: build_grn_embedding.py
+    Stage 6, Step 4: build_grn_transfer.py
 
 Status: IN DEVELOPMENT — test mode available.
 
@@ -19,7 +19,7 @@ Purpose:
 
       1. For each rat gene in rat_token_mapping.tsv, retrieve a 2,500 bp
          window centred on its annotated TSS from the Ensembl rat genome
-         assembly (mRatBN7.2):
+         assembly (GRCr8, Ensembl 115 — the BioMart release of Stage 2):
            - 500 bp upstream of TSS   (proximal promoter)
            - 2,000 bp downstream of TSS (5' UTR + transcription initiation)
 
@@ -41,7 +41,8 @@ Purpose:
 
 Design decisions:
     - TSS coordinates are fetched from Ensembl BioMart (the same release used
-      in Stage 2, pinned in config: biomart.ensembl_release = "113").
+      in Stage 2, pinned in config: biomart.ensembl_release = "115", fetched
+      from the release-115 archive host harvesting.biomart_server).
     - DNABert model weights are loaded from HuggingFace Hub unless a local
       path is supplied via config (prior_knowledge.promoter.dnabert_model).
     - The script processes genes in configurable batches for GPU efficiency.
@@ -66,6 +67,7 @@ Config additions required in pipeline_config.yaml:
       promoter:
         enabled: true
         dnabert_model: "zhihan1996/DNA_bert_6"   # HuggingFace model ID or local path
+        dnabert_revision: "c56e67ea..."           # HF commit hash (pinned; default below)
         window_upstream: 500                      # bp upstream of TSS
         window_downstream: 2000                   # bp downstream of TSS
         max_n_fraction: 0.10                      # exclude sequences with > 10% Ns
@@ -75,7 +77,11 @@ Config additions required in pipeline_config.yaml:
     paths:
       # Rat genome FASTA is large (~2.9 GB uncompressed). If pre-downloaded,
       # set this path. Otherwise the script will download it from Ensembl FTP.
-      rat_genome_fasta: data/references/genome/Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz
+      rat_genome_fasta: data/references/genome/Rattus_norvegicus.GRCr8.dna.toplevel.fa.gz
+
+    The on-disk promoter_embeddings.pkl (2026-03-18) was built from the release-113 mRatBN7.2
+    FASTA and live (then-current) BioMart TSS coordinates; v2's init takes no promoter rows
+    (T4 promoter rows are zeroed, T3 rows come from the ortholog), so the pin changes nothing in v2.
 
 Usage:
     # Validate pipeline on 200 genes first
@@ -139,14 +145,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Ensembl FTP URL for rat genome FASTA (mRatBN7.2, release 113)
+# Ensembl FTP URL for rat genome FASTA (GRCr8, release 115 — the release of data/references/biomart/)
 _ENSEMBL_GENOME_FTP = (
-    'https://ftp.ensembl.org/pub/release-113/fasta/rattus_norvegicus/dna/'
-    'Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz'
+    'https://ftp.ensembl.org/pub/release-115/fasta/rattus_norvegicus/dna/'
+    'Rattus_norvegicus.GRCr8.dna.toplevel.fa.gz'
 )
 
-# BioMart REST endpoint for TSS coordinate retrieval
-_BIOMART_REST = 'https://www.ensembl.org/biomart/martservice'
+# BioMart REST endpoint for TSS coordinate retrieval: the Ensembl 115 archive host, not the live
+# www.ensembl.org (which serves whatever release is current). Overridden by harvesting.biomart_server.
+_BIOMART_REST = 'https://sep2025.archive.ensembl.org/biomart/martservice'
+
+# DNABERT-6 HuggingFace revision (commit hash of the snapshot used, from the local HF cache).
+# Overridden by prior_knowledge.promoter.dnabert_revision.
+_DNABERT_REVISION = 'c56e67ea5827e0ddc67ef059addcf71569b1216e'
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -527,6 +538,7 @@ def build_promoter_embeddings(
     dnabert_model_name: str,
     batch_size: int,
     kmer: int = 6,
+    revision: Optional[str] = _DNABERT_REVISION,
 ) -> Dict[str, np.ndarray]:
     """Run DNABert inference on promoter sequences to produce 768-dim embeddings.
 
@@ -566,9 +578,11 @@ def build_promoter_embeddings(
             "On Gilbreth, request a GPU node:  --gres=gpu:1"
         )
 
-    logger.info(f"  Loading DNABert model: {dnabert_model_name}")
-    tokenizer = AutoTokenizer.from_pretrained(dnabert_model_name)
-    model     = AutoModel.from_pretrained(dnabert_model_name)
+    # revision pins the Hub commit; it is ignored for a local model directory
+    rev = revision if (revision and not Path(dnabert_model_name).exists()) else None
+    logger.info(f"  Loading DNABert model: {dnabert_model_name} (revision {rev or 'local/unpinned'})")
+    tokenizer = AutoTokenizer.from_pretrained(dnabert_model_name, revision=rev)
+    model     = AutoModel.from_pretrained(dnabert_model_name, revision=rev)
     model.to(device)
     model.eval()
 
@@ -662,6 +676,9 @@ def write_manifest(
             'max_n_fraction':    prom.get('max_n_fraction', 0.10),
             'batch_size':        prom.get('batch_size', 32),
             'dnabert_model':     prom.get('dnabert_model', 'zhihan1996/DNA_bert_6'),
+            'dnabert_revision':  prom.get('dnabert_revision', _DNABERT_REVISION),
+            'genome_fasta_url':  _ENSEMBL_GENOME_FTP,
+            'biomart_rest':      _BIOMART_REST,
             'kmer':              6,
             'n_test_genes':      prom.get('n_test_genes', 200) if test_mode else None,
         },
@@ -753,8 +770,10 @@ On Gilbreth (GPU recommended for DNABert inference):
     genome_fasta  = resolve_path(
         config,
         paths_cfg.get('rat_genome_fasta',
-                      'data/references/genome/Rattus_norvegicus.mRatBN7.2.dna.toplevel.fa.gz'),
+                      'data/references/genome/Rattus_norvegicus.GRCr8.dna.toplevel.fa.gz'),
     )
+    global _BIOMART_REST
+    _BIOMART_REST = config.get('harvesting', {}).get('biomart_server', _BIOMART_REST)
 
     # ── Parameters ────────────────────────────────────────────────────────────
     upstream_bp   = int(prom_cfg.get('window_upstream',   500))
@@ -762,6 +781,7 @@ On Gilbreth (GPU recommended for DNABert inference):
     max_n_frac    = float(prom_cfg.get('max_n_fraction',  0.10))
     batch_size    = int(prom_cfg.get('batch_size',        32))
     dnabert_model = str(prom_cfg.get('dnabert_model',     'zhihan1996/DNA_bert_6'))
+    dnabert_rev   = prom_cfg.get('dnabert_revision',      _DNABERT_REVISION)
     n_test_genes  = int(prom_cfg.get('n_test_genes',      200)) if args.test else None
     vector_size   = 768  # Fixed — DNABert hidden size
 
@@ -788,14 +808,8 @@ On Gilbreth (GPU recommended for DNABert inference):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.dry_run:
-        logger.info("Dry run complete — all inputs validated.")
-        write_manifest(
-            output_dir, config,
-            n_genes_input=0, n_sequences_extracted=0,
-            n_skipped=0, n_embeddings=0, vector_size=vector_size,
-            test_mode=args.test, elapsed=time.time() - t_start,
-            dry_run=True, status='dry_run',
-        )
+        # No manifest: a dry run must not overwrite the manifest of the real outputs
+        logger.info("Dry run complete — all inputs validated (nothing written).")
         return
 
     # ── Check DNABert dependencies ────────────────────────────────────────────
@@ -834,7 +848,7 @@ On Gilbreth (GPU recommended for DNABert inference):
 
         rat_ids = [g['rat_gene'] for g in genes]
         tss_cache = output_dir / 'tss_coordinates_cache.pkl'
-        tss_coords = fetch_tss_coordinates(rat_ids, bm_cfg.get('ensembl_release', '113'), tss_cache)
+        tss_coords = fetch_tss_coordinates(rat_ids, bm_cfg.get('ensembl_release', '115'), tss_cache)
 
         genome_fasta = ensure_genome_fasta(genome_fasta)
 
@@ -864,7 +878,7 @@ On Gilbreth (GPU recommended for DNABert inference):
     logger.info("-" * 60)
 
     embeddings = build_promoter_embeddings(
-        sequences, rat_to_human, dnabert_model, batch_size,
+        sequences, rat_to_human, dnabert_model, batch_size, revision=dnabert_rev,
     )
 
     # ═══════════════════════════════════════════════════════════════════════════

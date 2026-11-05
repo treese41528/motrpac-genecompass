@@ -1,5 +1,17 @@
 # Retrain v2 — results
 
+> **2026-10-31 note.** The downstream (C5 and rerun) figures here are v2 on the **July** references (172 blocks,
+> 13 hotspots). The default is now v2 on the refs4 references (165 blocks, 124 analysable, 11 hotspots,
+> 11/11 preserved in transfer, GRN self-consistency median ρ 0.310): `deconvolution/REFS4_RERUN_RESULTS.md`.
+> The GRN decoy null (`deconvolution/GRN_DECOY_NULL_RESULTS.md`) finds no TF-specific signal, so the regulator
+> lists in "Stage 13 steps 1–3" are expression-driven model readouts, not regulators. The C1–C4 results and the
+> per-tier loss section (last) do not depend on the references.
+>
+> **2026-11-01 note.** The default is now refs4 over all 16 tissues (SPLEEN and OVARY added): 197 blocks, 151
+> analysable, 9 hotspots, 9/9 preserved in transfer, 6 GRNs, self-consistency median ρ 0.310
+> (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`). The refs4 figures above are the 14-tissue arm
+> (`config/profiles/refs4_14.yaml`).
+
 Scored against `docs/RETRAIN_V2_PREREGISTRATION.md` (registered 2026-10-08; its §6 logs every change
 since). C1–C2 ask whether the retrained model learned rat expression without losing what GeneCompass
 knew about human and mouse (pass/fail). C3–C5 ask whether the analyses built on it hold up at least as
@@ -418,7 +430,7 @@ Method as in April's production run. Each hotspot that makes up at least 1% of i
   the control arm. A TF's hub strength is the sum of |Δ| over its edges.
 - The human-space network repeats this on the same cells re-expressed as human (`build_grn_human.py`).
 - Conservation (`compare_grn_conservation.py`) is, per TF, the Spearman between its rat and human Δ over
-  its confident rat targets (|z| ≥ 2). Both networks are the same cells through the same model. So
+  its rat targets with |z| ≥ 2. Both networks are the same cells through the same model. So
   conservation measures how consistent the model is across the two token sets of the same cells. It is
   not evidence about human biology.
 
@@ -460,7 +472,7 @@ the differences there come from the weights alone:
 | Hub strength, Spearman | 0.783–0.950 | 0.991–0.997 |
 | Top-10 hubs shared | 4–9 | 8–10 |
 | Edge Δ, Spearman over the edges both have | 0.075–0.207 | 0.414–0.565 |
-| Confident edges (\|z\| ≥ 2), Jaccard | 0.075–0.145 | 0.265–0.452 |
+| Edges with \|z\| ≥ 2, Jaccard | 0.075–0.145 | 0.265–0.452 |
 
 Hub strength mostly follows the TF's own value in the profile, its expression relative to the gene's
 corpus median. The Spearman between the two has a median of 0.83 over April's networks in both spaces,
@@ -513,7 +525,7 @@ What this shows:
   space). Most of that agreement comes from the inputs. Hub strength largely follows each TF's value
   in the profile, and on the same tokens the two models rank hubs almost identically.
 - **Edges.** The two models disagree on most individual edges. Even on the same tokens, only 27–45% of
-  the edges confident in either model are confident in both, and Δ agrees at Spearman 0.41–0.57.
+  the edges with |z| ≥ 2 in either model reach it in both, and Δ agrees at Spearman 0.41–0.57.
 - **Self-consistency.** v2's networks agree less between the rat and the human tokens. Per TF the median
   ρ is 0.292 against April's 0.451, and 49% of TF scores reach ρ ≥ 0.3 against 76%.
   - The drop is largest in BLOOD classical and non-classical monocytes and ISG-expressing T cells, to
@@ -626,3 +638,34 @@ model, init and inputs it was given (30b69f2). The v2 report was regenerated fro
 
 Outputs: `reports/aim1_validation_v2/` (`AIM1_VALIDATION_REPORT.md`, `metrics.json`, `figures/`); inputs
 and embeddings in `data/validation/aim1_v2/`.
+
+### Aim-1 per-tier loss: which kinds of rat gene did training teach? (2026-10-31, job 12103793)
+
+The C1 probe and masks, with the rat gene-ID loss split by the ortholog tier of the masked token
+(`eval_mlm.py --by-tier`; tiers from `rat_token_mapping.tsv`). Descriptive, not a criterion. The probe is drawn
+from the training mix (there is no held-out set), so this measures what each model learned, not how it
+generalises. The totals equal C1's.
+
+| Tier (masked tokens) | v2 init | April | v2 phase 1 | **v2** | v2 top-1 (init) |
+|---|---|---|---|---|---|
+| T1 tri-species one-to-one (235,467) | 4.23 | 3.54 | 3.33 | **3.26** | 21.7% (15.5%) |
+| T2a human-only one-to-one (11,185) | 4.54 | 3.47 | 3.01 | **2.89** | 28.2% (16.4%) |
+| T2b mouse-only one-to-one (43,842) | 19.97 | 13.77 | 2.58 | **2.41** | 38.4% (8.1%) |
+| T3a human one-to-many (11,989) | 4.47 | 3.22 | 2.86 | **2.76** | 29.3% (4.6%) |
+| T3b mouse one-to-many (4,495) | 19.18 | 12.22 | 2.49 | **2.25** | 42.4% (2.7%) |
+| T4 new rat-only token (10,641) | 19.20 | 11.00 | 2.50 | **2.20** | 43.0% (0.0%) |
+| All (317,619) | 7.13 | 5.31 | 3.16 | **3.06** | 25.5% (13.4%) |
+
+(Gene-ID cross-entropy, nats.)
+
+- **Where v2's gain over its init comes from.** It comes almost entirely from the tokens the init could not
+  predict: mouse-ortholog (T2b, T3b) and new rat-only (T4) tokens fall from ~19–20 to 2.2–2.4. Tokens with a
+  human ortholog start near 4.3–4.5 and fall by about a quarter.
+- **April never learned these tokens.** Its loss on T2b, T3b and T4 stays at 11–14, against 2.2–2.4 for v2
+  after phase 1 alone. That is a difference in what the model can predict, not only in value scale (April was
+  trained on scheme-A values and the probe holds scheme-B, as C1 notes, but its human-ortholog tiers are within
+  0.3–0.5 of v2's).
+- **Read with V3.** v2 predicts its T4 tokens well in context (43% top-1), yet V3 finds no family structure in
+  their input embeddings. The model uses them; it has not placed them near their human/mouse family peers.
+
+Outputs: `data/results/retrain_v2/mlm_by_tier/` (one JSON per model).

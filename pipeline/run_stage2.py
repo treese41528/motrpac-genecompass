@@ -182,7 +182,7 @@ def validate_inputs(config: dict, from_step: int) -> bool:
 
 
 def run_step(step: dict, config: dict, dry_run: bool = False,
-             verbose: bool = False) -> bool:
+             verbose: bool = False, allow_reference_drift: bool = False) -> bool:
     """Run a single pipeline step as a subprocess."""
     script_path = STAGE_DIR / step['script']
 
@@ -191,6 +191,8 @@ def run_step(step: dict, config: dict, dry_run: bool = False,
         return False
 
     cmd = [sys.executable, str(script_path)]
+    if allow_reference_drift and step['script'] == 'build_gene_universe.py':
+        cmd.append('--allow-reference-drift')
     if dry_run:
         cmd.append('--dry-run')
     if verbose:
@@ -244,16 +246,23 @@ Examples:
   python run_stage2.py              # Run all 3 steps
   python run_stage2.py --from 2     # Skip gene universe building
   python run_stage2.py --from 3     # Skip to pruning
+  python run_stage2.py --to 1       # Gene universe only (then scripts/restore_rawslot_studies.sh, then --from 2)
   python run_stage2.py --dry-run    # Validate only
         """,
     )
     parser.add_argument('--from', dest='from_step', type=int, default=1,
                         choices=[s['num'] for s in STEPS],
                         help='Start from this step (default: 1)')
+    parser.add_argument('--to', dest='to_step', type=int, default=3,
+                        choices=[s['num'] for s in STEPS],
+                        help='Stop after this step (default: 3)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Validate config and inputs, pass --dry-run to steps')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Verbose (DEBUG) logging')
+    parser.add_argument('--allow-reference-drift', action='store_true',
+                        help='Step 1: proceed even if the reference files differ from '
+                             'config/reference_md5sums.tsv')
     args = parser.parse_args()
 
     if args.verbose:
@@ -289,13 +298,16 @@ Examples:
     logger.info("Input validation passed")
 
     t_total = time.time()
-    steps_to_run = [s for s in STEPS if s['num'] >= args.from_step]
+    steps_to_run = [s for s in STEPS if args.from_step <= s['num'] <= args.to_step]
+    if not steps_to_run:
+        parser.error('--to must not be below --from')
 
     if args.from_step > 1:
         logger.info(f"Starting from Step {args.from_step} (skipping earlier steps)")
 
     for step in steps_to_run:
-        ok = run_step(step, config, dry_run=args.dry_run, verbose=args.verbose)
+        ok = run_step(step, config, dry_run=args.dry_run, verbose=args.verbose,
+                      allow_reference_drift=args.allow_reference_drift)
         if not ok:
             logger.error(f"Stage 2 aborted at Step {step['num']}")
             sys.exit(1)
@@ -318,7 +330,7 @@ Examples:
             logger.info("  Stage 3 → Ortholog Mapping (reads pruned_gene_universe.tsv)")
             logger.info("  Stage 4 → Gene Medians (reads QC'd h5ad, normalizes, computes medians)")
             logger.info("  Stage 5 → Tokenization (median-divide → log2 → rank → top-2048)")
-        elif args.from_step <= 3:
+        elif args.to_step == 3:
             logger.warning(f"Expected output not found: {pruned}")
 
 

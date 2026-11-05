@@ -144,7 +144,7 @@ def main():
             continue
         expressed.append(g)
         point[g] = d
-        ks = sorted(d, key=lambda k: -abs(d[k]))
+        ks = sorted(d, key=lambda k: (-abs(d[k]), k))   # ties by id, so a --top-edges cut does not follow the hash seed
         if args.top_edges and args.top_edges > 0:      # 0 = no cap (default); see build_grn_pooled.py
             ks = ks[:args.top_edges]
         cand[g] = ks
@@ -186,7 +186,7 @@ def main():
             sd = float(sds[i])
             z = d / sd if sd > 0 else 0.0
             edges.append((g, sym.get(g, ""), r2h.get(g, ""), k, round(d, 6), round(sd, 6), round(z, 2)))
-    edges.sort(key=lambda e: -abs(e[6]))
+    edges.sort(key=lambda e: (-abs(e[6]), e[0], e[3]))   # ties by (tf, target): set order follows the hash seed
     conf = [e for e in edges if abs(e[6]) >= 2]
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
@@ -194,7 +194,7 @@ def main():
         f.write("tf\ttf_symbol\ttf_human_ensg\ttarget_human_ensg\tdelta\tboot_sd\tz\n")
         for e in edges:
             f.write("\t".join(str(x) for x in e) + "\n")
-    print(f"wrote {len(edges)} human-space edges ({len(conf)} confident |z|>=2) from {len(expressed)} TFs -> {args.out}")
+    print(f"wrote {len(edges)} human-space edges ({len(conf)} with |z|>=2) from {len(expressed)} TFs -> {args.out}")
 
 
 if __name__ == "__main__":

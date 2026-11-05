@@ -25,8 +25,9 @@ Usage:
   python pipeline/run_stage10.py                      # full experiment (all tissues)
   python pipeline/run_stage10.py --tissues BLOOD SKMVL # debug subset (DE only; comparison still global)
   python pipeline/run_stage10.py --from 2             # re-run only the comparison
-  python pipeline/run_stage10.py --hotspots data/deconvolution/genecompass_input_v2/gate_rcv10/corroboration_merged.tsv
+  python pipeline/run_stage10.py --hotspots data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv
   python pipeline/run_stage10.py --dry-run
+  python pipeline/run_stage10.py --sensitivities 100 0   # + the registered DE_MIN_MEDIAN_LIBSIZE sensitivities
 
 HPC: step 1 is an R job (limma/IHW/repfdr on existing pred_z; NO run.prism, NO GPU compute,
 but this cluster needs a compute node -- submit via slurm/analysis/run_pseudobulk_de.slurm or
@@ -138,6 +139,11 @@ def main() -> None:
     p.add_argument('--alpha', type=float, default=0.05)
     p.add_argument('--min-fraction', type=float, default=0.01, help='power floor for the comparison')
     p.add_argument('--min-nonzero', type=int, default=25, help='power floor for the comparison')
+    p.add_argument('--sensitivities', type=int, nargs='*', default=[],
+                   help='after step 1, rerun the DE with DE_MIN_MEDIAN_LIBSIZE = each value into '
+                        '<pseudobulk_de>_minlib<L> (registered: 100 0)')
+    p.add_argument('--seed', type=int, default=None,
+                   help='IHW fold seed for the DE step (default: deconvolution.de_seed, else 1 = IHW\'s own default)')
     p.add_argument('--from', dest='from_step', type=int, default=1, choices=[1, 2])
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('-v', '--verbose', action='store_true')
@@ -150,11 +156,15 @@ def main() -> None:
     gc_input = resolve_path(config, d['genecompass_input_dir'])
     de_dir = gc_input / 'pseudobulk_de'
     results_root = resolve_path(config, d['results_dir']) / 'motrpac'
-    prereg = resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv'
+    # The frozen positive-control spec; a profile whose references renamed cell types points at its own
+    # renamed copy (deconvolution.posctrl_prereg, e.g. config/profiles/refs_v4.yaml).
+    prereg = (resolve_path(config, d['posctrl_prereg']) if d.get('posctrl_prereg')
+              else resolve_path(config, d['reference_dir']) / 'posctrl_prereg.tsv')
     hotspots = (Path(args.hotspots).resolve() if args.hotspots
                 else resolve_path(config, d['hotspots_table']) if d.get('hotspots_table')
                 else gc_input / 'corroboration_merged.tsv')
 
+    seed = args.seed if args.seed is not None else int(d.get('de_seed', 1))
     ctx = {
         'de_dir': de_dir,
         'hotspots': hotspots,
@@ -173,6 +183,7 @@ def main() -> None:
     logger.info(f"  de_dir = {de_dir}")
     logger.info(f"  hotspots = {hotspots}")
     logger.info(f"  prereg = {prereg}")
+    logger.info(f"  IHW seed = {seed}")
     if ctx['tissues']:
         logger.warning("  NOTE: tissue subset given -- global IHW/repfdr and the comparison are still "
                        "experiment-wide; a subset DE changes the global FDR pool (use for debugging only).")
@@ -184,15 +195,26 @@ def main() -> None:
         if not args.dry_run:
             sys.exit(1)
 
-    # The R wrapper's own defaults come from config only when its python3 can read the YAML, so pass
-    # the output dir and the hotspot table explicitly.
-    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), OUT_DIR=str(de_dir), HOTSPOTS=str(hotspots))
+    # The R wrapper reads the config itself (fatal on failure); the output dir, hotspot table and seed are
+    # passed explicitly so a CLI override wins.
+    env = dict(os.environ, PIPELINE_ROOT=str(_PROJECT_ROOT), OUT_DIR=str(de_dir), HOTSPOTS=str(hotspots),
+               DE_SEED=str(seed))
+    env.setdefault('DECONV_PYTHON', PY)   # the wrappers read the config with this interpreter
     steps = [s for s in build_steps(ctx) if s['num'] >= args.from_step]
     t_total = time.time()
     for step in steps:
         if not run_step(step, env, args.dry_run):
             logger.error(f"Stage 10 aborted at step {step['num']}")
             sys.exit(1)
+        if step['num'] == 1:
+            for lib in args.sensitivities:      # registered §6 sensitivities, written beside the primary DE
+                out = Path(str(de_dir) + f'_minlib{lib}')
+                sens = {'num': 1, 'name': f'DE sensitivity: median library >= {lib}',
+                        'desc': f'run_pseudobulk_de.sh -> {out.name}/', 'cmd': step['cmd'],
+                        'key': out / 'de_summary.tsv'}
+                if not run_step(sens, dict(env, OUT_DIR=str(out), DE_MIN_MEDIAN_LIBSIZE=str(lib)), args.dry_run):
+                    logger.error(f"Stage 10 aborted at the minlib {lib} sensitivity")
+                    sys.exit(1)
 
     logger.info("=" * 70)
     logger.info(f"STAGE 10 COMPLETE -- {len(steps)} step(s) in {time.time() - t_total:.1f}s")

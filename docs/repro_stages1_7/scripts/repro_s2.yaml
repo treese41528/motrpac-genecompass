@@ -1,0 +1,4 @@
+# Reproducibility check 2026-10-31: Stage 2 outputs to scratch
+paths:
+  gene_universe_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s2/gene_universe
+  qc_h5ad_dir: /scratch/gilbreth/reese18/motrpac_repro_20261031/s2/qc_h5ad

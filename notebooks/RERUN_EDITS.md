@@ -1,3 +1,109 @@
+> **Markdown prose (2026-11-04).** No markdown cell of notebooks 1–12 quotes a result any more. Every figure the prose
+> used to state is printed by a code cell from the outputs or the config. Notebooks 8–12 end with a "Results for this
+> config" cell that renders the summary sentences from the gate, DE and transfer tables. What the markdown still
+> holds: method descriptions and constants (thresholds, the gate method), history, and SLURM job IDs labelled as
+> coming from SLURM accounting. Comparisons with other arms (refs4, July, April) point to their committed results docs.
+> A rerun therefore needs no hand edits.
+> - **New computed values:**
+>   - nb6: the T4 family and GRN non-zero counts, from the Stage 6 files (0 and 36 of 2,474, equal to the v2 init log).
+>   - nb7: the C1/C2 table from `data/results/retrain_v2/mlm/*.json`, and phase coverage (steps × global batch ÷ rows).
+>   - nb9: the cell-type silhouette. Its median over the 16 tissues is 0.810; the prose had quoted a 14-tissue value.
+>   - nb12: the rat→human cosine, as `translation/transfer_cosine.py` defines it. The median over tissues of the
+>     per-tissue mean is 0.974 on 16 tissues (0.969 on the 14 the prose quoted); the median of medians is 0.976. A
+>     different cell of the same tissue sits at 0.993 in rat space.
+> - **Wrong statements corrected while doing this:**
+>   - nb1 and nb3 said BioMart 113 / mRatBN7.2; the config says 115 / GRCr8.
+>   - nb3:
+>     - The confidence rule was misdescribed: "high = T1/T2" is not the code.
+>     - Stage 4 was said to use mouse medians, which it does not.
+>     - The token-space plot labelled reuse as T1–T3 and new tokens as T4. Reuse is T1+T2, and the new tokens are
+>       T3+T4.
+>     - The ortholog-type counts came out blank, from a wrong column name.
+>   - nb2: the code printed "expected: 895" files and a pruning "Universe (in)" equal to its output.
+>   - nb5: the run was given 13 CPUs / 256 GB and a conda env; SLURM accounting says 4 CPUs / 64 GB, and the env is a
+>     venv. "Total scatter time … wall-clock" was a sum of task times.
+>   - nb6: the claim that the promoter no-TSS set is "dominated by T4 and lncRNAs" was false; it is mostly T1
+>     protein-coding (the table is now printed). The zero GRN vectors are not all T4.
+>   - nb8:
+>     - The bulk source is Rnor_6.0 (~rel-96), not rel-104.
+>     - The exclusion list is 247 genes, not 190.
+>     - "BayesPrism without a fixed seed, so the archived rds are needed" contradicted the rebuild, which reproduced
+>       every θ and Z.
+>   - nb9: Stage 5 was said to use normalize_total(10,000). v2's corpus divides raw counts by the hybrid medians; only
+>     Stage 9 normalizes, to `pseudocell_target_sum`.
+>   - nb10: the DE was described as TMM + voom, keeping genes in ≥3 samples, with Storey BH. The code fits limma-trend
+>     on log-CPM, keeps every gene expressed in at least one sample, and uses BH.
+>   - nb11:
+>     - The `group` factor was called four-class; it has five levels.
+>     - Dose was said to cover training animals only; it includes control = 0.
+>     - Blocks need ≥6 pseudo-cells, not ≥10.
+>     - The BH penalty does not depend on how many blocks a tissue has.
+>
+> **Notebooks 2, 3, 6, 7 (2026-11-02).** Their hand-typed data values now come from the files that record them:
+> - **nb2:** the Stage 2 parameters come from the config. Its "BioMart 113 / mRatBN7.2" was the wrong label; the
+>   config says 115 / GRCr8. The QC cascade is summed from `preprocessing_report.json`, plus the cells
+>   `corpus_v2_plan.tsv` keeps.
+>   - The hand values (14.49M → 10.24M cells, "73 studies, 895 samples") matched neither source.
+>   - The recorded run: 9.47M cells after empty-droplet removal → 8.93M final, 810 samples from 80 studies.
+>   - The v2 plan keeps 6.80M cells: 584 samples from 81 studies.
+> - **nb3:** the tier counts come from `rat_token_mapping.tsv`, and the base vocabulary from
+>   `human_mouse_tokens.pickle`.
+> - **nb6:** coverage and elapsed times come from the Stage 6 manifests; the universe size from
+>   `pruned_gene_universe.tsv`.
+> - **nb7:** vocabulary, architecture, steps and loss means come from the init config and the final
+>   `trainer_state.json` files. Wall times and job IDs exist only in the SLURM logs, and are labelled as such.
+> - **Label fixes:**
+>   - The 4,717 new tokens are 2,243 T3 + 2,474 T4, not all T4: corrected in the nb3 markdown, the nb3 print
+>     and the nb7 config comment.
+>   - The nb6 GRN row said "22,213/22,213 embedded", which counted the 3,463 zero vectors. It now reads
+>     18,750 non-zero (+3,463 zero). `grn_embeddings.pkl` has 21,455 keys because it is keyed by unified ID,
+>     which several rat genes share.
+>
+> The markdown prose elsewhere still quoted figures by hand (fixed 2026-11-04, above).
+>
+> **Config-driven (2026-11-01, later).** Notebooks 8–12 no longer hardcode paths or per-tissue numbers. They import
+> `notebooks/nb_config.py`, which reads the active config (`PIPELINE_PROFILE` honoured), so running a profile with
+> `run_notebooks.py` shows that profile's outputs. Sources:
+> - **Paths:** `deconvolution.results_dir`, `genecompass_input_dir` (+ `_human`) and `hotspots_table`.
+> - **Tissue lists:** the tissues deconvolved in `results_dir`.
+> - **nb8 run.prism minutes:** each run's provenance (`params.run_prism_minutes`, recorded since 2026-11-01). Older
+>   runs read `deconvolution/reference/run_prism_minutes_backfill.tsv`, values from the SLURM logs.
+> - **nb9 minimum token length:** the tokenized datasets. It now reports the shortest *kept* cell: LUNG shows 200
+>   where the hand-copied value was the pre-drop 156.
+> - **nb12 transfer stats:** `transfer_summary.json`, `tokenize_summary.json` and the rows of `cell_embeddings.npy`.
+>
+> Checked against the old hand-copied values: all equal, except TESTES run.prism. The notebook had 4.73 min, taken
+> from the raw-ID reference run in the same log; the production (lifted) run took 4.98. What still needs a hand edit
+> after a rerun that changes results is the prose in the markdown cells; the computed cells are authoritative.
+>
+> **Runner (2026-11-01).** Re-execute with `python notebooks/run_notebooks.py [N ...]` from the project venv
+> (nbclient, the venv's own `python3` kernel; no user kernel registration). It passes `PIPELINE_PROFILE` to the
+> kernel and records it in each notebook's `metadata.rerun`, BUT notebooks 8-12 do not read the config yet: their
+> paths are hardcoded to the default 16-tissue arm (`genecompass_input_v2_refs4all[_human]`,
+> `results_refs4all/motrpac`; nb8 c1, nb9 c1/c3-c13, nb10 c1-c13, nb11 c1-c14, nb12 c1-c12), so a profile changes
+> nothing until those cells derive paths from `lib/gene_utils.load_config()`. Hand-copied constants to re-source
+> after any rerun that changes results: nb8 c1 and nb10 c1/c13 `TISSUES`/`tissues` lists; nb8 c3 run.prism
+> minutes per tissue (`jobs = {...}`, from SLURM logs); nb9 minimum token lengths (from Stage 8/9 logs); nb12 c3
+> `TRANSFER` stats (from `<human>/<tissue>/{transfer,tokenize}_summary.json`); the prose figures in each notebook
+> (from `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`). Run Stages 8-14 first; the notebooks only read outputs.
+>
+> **Superseded 2026-11-01.** Notebooks 8–12 now show all 16 tissues (refs4 plus SPLEEN and OVARY; default since
+> c3b27c7) with the v2 model, re-executed on the `_refs4all` outputs (SLURM 12114610, 12114613, 12114617, 12114627; all
+> clean). Paths `genecompass_input_v2_refs4[_human]` → `genecompass_input_v2_refs4all[_human]`, `results_refs4/` →
+> `results_refs4all/`; SPLEEN/OVARY added to every tissue list and colour dict. Hand constants were re-sourced from
+> logs/JSON: nb8 run.prism minutes (refs4 array 12041931, CORTEX 12042040_3, SPLEEN/OVARY 12107800), nb9 minimum token
+> length (same logs), nb12 transfer stats (from `_refs4all_human/<tissue>/{transfer,tokenize}_summary.json`; the old
+> dict held July values). Code fixes: nb8 fraction grid 3×5 → 4×4; nb9 dropped-cell count read from JSON (LUNG 18);
+> nb12 rat–human Spearman with `nan_policy="omit"` (LUNG goblet has no human block). Prose from the executed outputs
+> and `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`: 197 blocks / 151 analysable, 9 hotspots, 53,084 dose genes, Augur–PLS
+> 0.785 (130), embedding > PCA 82/151 p 0.15, transfer 9/9, sex 0.743 → 0.745. The silhouette (0.810) and the
+> rat–human cosine (0.969) are not computed in the notebooks and are marked "(14 tissues, refs4)".
+>
+> **Superseded 2026-10-31.** Notebooks 8–12 now show the refs4 references (default since 904dfb2) with the v2
+> model, re-executed on the refs4 outputs. The refs4 rerun changed paths only (`genecompass_input_v2` →
+> `genecompass_input_v2_refs4`, `results/` → `results_refs4/`), restricted Stage 11 to the 124 blocks analysable
+> under the §6 rule, and rewrote the prose figures from `deconvolution/REFS4_RERUN_RESULTS.md`.
+>
 > **Superseded 2026-10-25.** Notebooks 4–7 and 9–12 now show the retrained v2 model and were re-executed on
 > v2's outputs (e833c15, cef2394); the edit map below is the July April-model refresh, kept for the record.
 > v2 figures: `docs/RETRAIN_V2_RESULTS.md`.

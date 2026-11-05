@@ -1,0 +1,15 @@
+{
+  "script": "deconvolution/R/soupx_correct_reference.R",
+  "created": "2026-10-30T00:00:39-0400",
+  "git_commit": "f52cf0310dcf0b4afa7a953537bc00f3645a599a",
+  "git_modified_tracked_files": [],
+  "ref_dir": "data/deconvolution/references_v4/HIPPOC_GSE295314",
+  "soup_source_dir": "data/deconvolution/references_v3/HIPPOC_GSE295314",
+  "merges": ["Endothelial cells,Mural cells,Vascular leptomeningeal cells=Vascular cells", "Excitatory neurons,Inhibitory neurons,Thalamic neurons,Dentate gyrus granule cells=Neurons"],
+  "mode": "percell",
+  "soupx_version": "1.6.2",
+  "r_version": "R version 4.4.1 (2024-06-14)",
+  "n_soup_barcodes": 254663,
+  "umi_removed": 0.0875,
+  "host": "gilbreth-n015.rcac.purdue.edu"
+}

@@ -1,0 +1,9 @@
+cells=23892 genes=17895 cell_types=6 cell_states=20
+
+cell_type
+Neurons                             12595
+Oligodendrocytes                    4815
+Oligodendrocyte precursor cells     2146
+Microglia                           2139
+Astrocytes                          1631
+Vascular cells                      566

@@ -510,9 +510,8 @@ Usage:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.dry_run:
-        logger.info("\nDry run complete — all required inputs validated.")
-        write_manifest(output_dir, config, 0, 0, 0, 0,
-                       time.time() - t_start, True, 'dry_run')
+        # No manifest: a dry run must not overwrite the manifest of the real outputs
+        logger.info("\nDry run complete — all required inputs validated (nothing written).")
         return
 
     # =========================================================================

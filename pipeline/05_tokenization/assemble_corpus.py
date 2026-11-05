@@ -516,7 +516,8 @@ Examples:
     )
     parser.add_argument(
         '--expected-tasks', type=int, default=None,
-        help='Expected number of scatter tasks (validates manifest count)',
+        help='Expected number of scatter tasks (validates manifest count; default: config '
+             'reference_assembly.n_tokenize_tasks, 50 for v2)',
     )
     parser.add_argument(
         '--dry-run', action='store_true',
@@ -547,6 +548,10 @@ Examples:
             "Set PIPELINE_ROOT or run from project root."
         )
         sys.exit(1)
+
+    if args.expected_tasks is None and \
+            config.get('reference_assembly', {}).get('n_tokenize_tasks') is not None:
+        args.expected_tasks = int(config['reference_assembly']['n_tokenize_tasks'])
 
     corpus_dir   = resolve_path(config, config['paths']['tokenized_corpus_dir'])
     shard_dir    = corpus_dir / 'shards'
@@ -638,6 +643,11 @@ Examples:
         t_start      = t_start,
         dry_run      = args.dry_run,
     )
+
+    from provenance import write_provenance
+    write_provenance(corpus_dir, inputs=[shard_dir],
+                     md5_inputs=[m for m in sorted(manifest_dir.glob('task_*_manifest.json'))],
+                     params=vars(args), config=config)
 
     elapsed = time.time() - t_start
     logger.info("=" * 70)

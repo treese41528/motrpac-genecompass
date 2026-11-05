@@ -1,5 +1,10 @@
 # Reference study dossier — GSE137869 (Ma et al., *Cell* 2020)
 
+> **2026-10-31 note.** Since refs4 became the default, the WATSC and shared muscle references built from this study
+> carry joint re-annotation labels (`references_v4/WATSC_GSE137869_Y`, 13 types; `references_v4/MUSCLE_GSE137869_Y`,
+> 9 types, no longer the merged 5). Block counts below (172) are from the July references; refs4 has 165 blocks
+> (`REFS4_RERUN_RESULTS.md`). The dossier is otherwise kept as written.
+
 **Caloric Restriction Reprograms the Single-Cell Transcriptional Landscape of *Rattus Norvegicus* Aging**
 Ma S, Sun S, Geng L, Song M, *et al.* **Cell** 2020 Mar 5;180(5):984–1001.e22. **PMID 32109414.**
 

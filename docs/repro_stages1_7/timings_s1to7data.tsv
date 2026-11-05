@@ -1,0 +1,29 @@
+step	exit	seconds
+stage1_verify	0	57
+stage3	0	3
+token_dict	0	0
+cmp_stage3	0	0
+stage6_dryrun	1	0
+stage6_family	0	461
+stage6_grn	0	2
+cmp_stage6	0	2
+init	0	9
+cmp_init	0	5
+init2	0	5
+cmp_init_self	0	4
+stage4_scatter	0fails	293
+stage4_gather	0	2791
+stage5_hybrid	0	0
+cmp_stage4	0	1
+cmp_stage4_scatter	0	19
+stage5_tokenize	0fails	1236
+stage5_assemble	0	1345
+cmp_stage5_top	0	0
+cmp_stage5_manifests	0	1
+cmp_stage5_shards	0	68
+cmp_stage5_dataset	0	68
+209G	/scratch/gilbreth/reese18/motrpac_repro_20261031/s5
+mix	0	16927
+cmp_mix	0	319
+probe	0	5839
+probe md5 diff rc=1

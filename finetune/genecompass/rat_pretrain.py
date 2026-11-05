@@ -250,6 +250,30 @@ def get_phase_config(ft_config: dict, phase: int) -> dict:
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _record_launch(args, ft_config, training_output_dir, phase, inputs):
+    """Copy the training YAML next to the checkpoints and write a provenance record (rank 0).
+
+    One copy and one record per launch (timestamped), so a phase resumed across several jobs
+    keeps the config and git commit of every launch.
+    """
+    import datetime
+    import shutil
+    stamp = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+    config_path = args.config or os.path.join(_PROJECT_ROOT, 'config', 'pipeline_config.yaml')
+    try:
+        shutil.copy2(config_path, os.path.join(training_output_dir,
+                                               f'training_config_phase{phase}_{stamp}.yaml'))
+    except OSError as e:
+        logger.warning(f"Could not copy the training config: {e}")
+    try:
+        from lib.provenance import write_provenance
+        write_provenance(training_output_dir, inputs=[config_path, *inputs], md5=True,
+                         params=vars(args), config=ft_config,
+                         name=f'provenance_rat_pretrain_phase{phase}_{stamp}.json')
+    except ImportError:
+        logger.warning("lib.provenance not importable; no provenance record written")
+
+
 def main(args):
     # ── Load pipeline config ─────────────────────────────────────────────
     ft_config = load_pipeline_config(args.config)
@@ -334,6 +358,11 @@ def main(args):
     if args.world_rank == 0:
         os.makedirs(training_output_dir, exist_ok=True)
         os.makedirs(model_output_dir, exist_ok=True)
+        _record_launch(args, ft_config, training_output_dir, phase,
+                       inputs=[os.path.join(init_checkpoint_dir, 'pytorch_model.bin'),
+                               token_dict_path, homologous_gene_path,
+                               os.path.join(dataset_dir, 'dataset_info.json'),
+                               os.path.join(dataset_dir, 'sorted_length.pickle')])
 
     # ── Load token dictionary ────────────────────────────────────────────
     with open(token_dict_path, 'rb') as f:

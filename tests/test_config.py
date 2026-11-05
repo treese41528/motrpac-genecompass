@@ -65,7 +65,7 @@ def test_v2_is_the_default_and_april_is_the_profile(committed):
     v2, april = committed
     assert v2["deconvolution"]["pseudocell_target_sum"] == 6400
     assert april["deconvolution"]["pseudocell_target_sum"] == 6500
-    assert "genecompass_input_v2/" in v2["deconvolution"]["hotspots_table"]
+    assert "/genecompass_input_v2" in v2["deconvolution"]["hotspots_table"]   # v2 model, any reference arm
     assert "genecompass_input/" in april["deconvolution"]["hotspots_table"]
 
 

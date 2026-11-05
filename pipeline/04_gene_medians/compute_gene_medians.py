@@ -700,8 +700,9 @@ Memory budget:
     )
     parser.add_argument('--task-id', type=int, required=True,
                         help='0-indexed task ID (= $SLURM_ARRAY_TASK_ID)')
-    parser.add_argument('--n-tasks', type=int, required=True,
-                        help='Total number of scatter tasks (= SLURM array size)')
+    parser.add_argument('--n-tasks', type=int, default=None,
+                        help='Total number of scatter tasks (= SLURM array size; default: '
+                             'config medians.n_scatter_tasks, 16 for v2)')
     parser.add_argument('--target-sum', type=float, default=None,
                         help='normalize_total target (overrides config; default: 10000)')
     parser.add_argument('--dry-run', action='store_true',
@@ -713,15 +714,22 @@ Memory budget:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    if args.task_id < 0 or args.task_id >= args.n_tasks:
-        logger.error(f"--task-id {args.task_id} out of range [0, {args.n_tasks})")
-        sys.exit(1)
-
     try:
         config = load_config()
     except FileNotFoundError:
         logger.error("pipeline_config.yaml not found. "
                       "Set PIPELINE_ROOT or run from project root.")
+        sys.exit(1)
+
+    if args.n_tasks is None:
+        args.n_tasks = config.get('medians', {}).get('n_scatter_tasks')
+        if args.n_tasks is None:
+            logger.error("--n-tasks not given and config medians.n_scatter_tasks is not set")
+            sys.exit(1)
+        args.n_tasks = int(args.n_tasks)
+
+    if args.task_id < 0 or args.task_id >= args.n_tasks:
+        logger.error(f"--task-id {args.task_id} out of range [0, {args.n_tasks})")
         sys.exit(1)
 
     # Allow command-line override of target_sum
@@ -741,6 +749,18 @@ Memory budget:
         n_tasks=args.n_tasks,
         dry_run=args.dry_run,
     )
+
+    if not args.dry_run:
+        # git hash + config + small inputs (md5). The QC h5ads' md5s are in the corpus plan.
+        from provenance import write_provenance
+        paths = config['paths']
+        small = [resolve_path(config, paths['ortholog_dir']) / 'rat_token_mapping.tsv']
+        if paths.get('qc_file_list'):
+            small.append(resolve_path(config, paths['qc_file_list']))
+        write_provenance(resolve_path(config, paths['median_dir']) / 'scatter',
+                         inputs=[resolve_path(config, paths['qc_h5ad_dir'])], md5_inputs=small,
+                         params=vars(args), config=config,
+                         name=f'provenance_compute_gene_medians_task{args.task_id:04d}.json')
 
 
 if __name__ == '__main__':
