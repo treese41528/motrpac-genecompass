@@ -7,8 +7,9 @@ Pre-registration: `GRN_DECOY_NULL_PREREG.md`, committed before any decoy network
 
 > **2026-11-01 note.** This null was run on the eight refs4 (14-tissue) networks. In the all-tissue (16) default
 > (`ALL_TISSUE_RERUN_RESULTS.md`) six of those eight are the current networks, unchanged edge for edge; the two
-> LUNG networks (endothelial, mesothelial) drop out because those blocks are no longer hotspots. The result
-> below is not rerun.
+> LUNG networks (endothelial, mesothelial) drop out because those blocks are no longer hotspots. **Rerun on the
+> default's six networks on 2026-11-05: FDR(2) = 1.03, 0/723 TFs q < 0.10, decoys identical to these
+> (`GRN_DECOY_NULL_16_RESULTS.md`).**
 
 **Question.** Is the GRN's `|z| ≥ 2` "confident edge" an error rate, or only a ranking? And does any TF's
 hub strength exceed that of a random gene of the same expression?
