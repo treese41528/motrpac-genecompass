@@ -204,6 +204,9 @@ def main():
     ap.add_argument("--ref-source", help="holdout mode: split this already-BUILT reference dir (the production "
                     "reference_dir, labels as built) instead of rebuilding from --study; ignores --study/"
                     "--conditions/--sample-ids/--label-scheme")
+    ap.add_argument("--harmonization-override", help="cross mode: TSV (set, source_label, ref_type) of reviewed "
+                    "changes to the automatic map; an empty ref_type sets the source label unmapped (dropped)")
+    ap.add_argument("--override-set", help="cross mode: the set name whose rows of --harmonization-override apply")
     ap.add_argument("--holdout-frac", type=float, default=0.30)
     ap.add_argument("--n-mixtures", type=int, default=50)
     ap.add_argument("--cells-per-mixture", type=int, default=1000)
@@ -247,6 +250,16 @@ def main():
         pool.obs["cell_type"] = canonicalize_labels(pool.obs["cell_type"], args.label_scheme)
         pool = clean_cells(pool)
         hmap = build_harmonization(sorted(pool.obs["cell_type"].unique()), ref_types)
+        if args.harmonization_override:
+            ov = pd.read_csv(args.harmonization_override, sep="\t", dtype=str, keep_default_na=False)
+            ov = ov[ov["set"] == args.override_set]
+            for lab, tgt in zip(ov["source_label"], ov["ref_type"]):
+                if lab not in hmap:
+                    sys.exit(f"ERROR: override for {lab!r}: not a source label of {args.override_set}")
+                if tgt and tgt not in ref_types:
+                    sys.exit(f"ERROR: override target {tgt!r} is not a reference type")
+                print(f"  [override] {lab!r}: {hmap[lab]!r} -> {tgt or None!r}")
+                hmap[lab] = tgt or None
         pool.obs["ref_type"] = pool.obs["cell_type"].map(hmap)
         hm = (pool.obs.groupby("cell_type")
               .agg(n_cells=("ref_type", "size"),
