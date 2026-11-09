@@ -1,0 +1,20 @@
+set	n_built	n_in_reference	n_benchmarked	lost_at_split	not_benchmarked
+BAT_holdout	6	6	6		
+BLOOD_holdout	13	13	13		
+CORTEX_holdout	12	11	8	Vascular leptomeningeal cells	Border-associated macrophages; Neutrophils; T cells
+HEART_holdout	16	16	16		
+HIPPOC_holdout	11	11	10		Mural cells
+HYPOTH_holdout	13	13	10		Dopaminergic neurons; Endothelial cells; Ependymal cells
+KIDNEY_holdout	15	15	15		
+LIVER_holdout	8	8	7		Mesothelial cells
+LUNG_holdout	21	21	21		
+MUSCLE_holdout	9	9	8		Schwann cells
+OVARY_holdout	18	18	16		Lymphatic endothelial cells; Plasmacytoid dendritic cells
+SMLINT_holdout	13	13	13		
+SPLEEN_holdout	14	14	13		Endothelial cells
+TESTES_holdout	6	5	5	Sertoli cells	
+WATSC_holdout	13	12	9	Mural cells	Glandular epithelial cells; Mammary luminal epithelial cells; Plasmacytoid dendritic cells
+CORTEX_cross	12	12	6		Border-associated macrophages; Inhibitory neurons; Medium spiny neurons; Neuroblasts; Neutrophils; Vascular leptomeningeal cells
+HIPPOC_cross	11	11	6		Dentate gyrus granule cells; Inhibitory neurons; Mural cells; Thalamic neurons; Vascular leptomeningeal cells
+KIDNEY_cross	15	15	7		Connecting tubule cells; Cycling cells; Fibroblasts; Injured proximal tubule cells; Podocytes; Thick ascending limb cells; Thin limb cells; Type B intercalated cells
+MUSCLE_cross	9	9	4		Fibro-adipogenic progenitors; Pericytes; Satellite cells; Tenocytes; Vascular smooth muscle cells

@@ -57,7 +57,9 @@ differentially only. Outputs: `genecompass_input_v2_refs4all/` (+ `_human/`), `a
 | Pooled sex check, rat → human (floor 0.70) | 0.743 → 0.745, PASS; block-level Spearman 0.930 (173 blocks) | 0.717 → 0.730, PASS; 0.918 | same |
 | GRNs (hotspots with mean fraction ≥ 0.01) | 6 (identical to six of refs4's 8; the two LUNG endothelial/mesothelial networks drop out) | 8 | `grn_v2_refs4all/` |
 | GRN rat–human self-consistency, median ρ | 0.310 over 633 TFs | 0.310 over 859 TFs | `ALL_TISSUE_RERUN_RESULTS.md` |
-| E.3 atlas anchoring | not rerun (run on the 14-tissue hotspots) | 0.404 vs null 0.084, PASS | `translation/ATLAS_PROJECTION_RESULTS.md` |
+| E.3 atlas anchoring | **0.430** vs null 0.086 over 120 types in 13 tissues, p = 0.0001, PASS (SPLEEN 0.553, OVARY 0.653; the first run's 103 types reproduce exactly) | 0.404 vs null 0.084, PASS | `translation/ATLAS_PROJECTION_16_RESULTS.md` |
+| GRN decoy null (`\|z\|` ≥ 2 vs expression-matched random genes) | FDR(2) = 1.03; 0/723 TFs beat their decoys: **no TF-specific signal** | FDR(2) = 1.03; 0/981 | `GRN_DECOY_NULL_16_RESULTS.md` |
+| Known-truth mixtures: BayesPrism median per-type r, 15 holdout / 4 cross sets | 0.989–0.999 / 0.973–0.996; all 19 ≥ 0.85 (6 methods; monocyte sink in KIDNEY_cross, pooled 0.163) | earlier panel on the June/July references | `MIXTURE_PANEL_REFS4ALL_RESULTS.md` |
 
 ¹ Structural, not biology: `R/run_pseudobulk_de.R` (line ~255) sets the Fisher sex-combined p to missing when
 either sex is absent, so single-sex tissues (OVARY, TESTES) can never have a dose-significant gene. TESTES's 0
@@ -120,9 +122,11 @@ cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
   biology.
 - Rat blood lymphocytes, hippocampal composition (an ambient-RNA sink; `HIPPOC_REFS4_DIAGNOSIS.md`) and DE in
   the dominant parenchyma remain unreliable under either reference set.
-- Not re-derived for refs4 in this report: the per-tissue deconvolution validation (holdout/cross r, purity
-  sweeps) of the relabelled references, and whether repfdr's fit is still degenerate. The figures in the body
-  for those come from earlier references.
+- Not re-derived for refs4 in this report: whether repfdr's fit is still degenerate. Both validations of the
+  references have since been rerun on the current ones, while the body's figures for them are the earlier
+  references':
+  - the purity sweeps, by the clean rebuild (`REFS4ALL_REBUILD_RESULTS.md`; all 11 meet the Chu-2022 bar);
+  - the holdout/cross mixture panel, on 2026-11-08 (`MIXTURE_PANEL_REFS4ALL_RESULTS.md`).
 
 ## Executive summary
 

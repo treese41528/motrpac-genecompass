@@ -1,0 +1,8 @@
+set	method	cell_type	note
+BLOOD_holdout	music	Erythroid cells	not estimated (absent from output)
+BLOOD_holdout	music	Neutrophils	not estimated (absent from output)
+CORTEX_holdout	music	Medium spiny neurons	not estimated (absent from output)
+HEART_holdout	music	CD8+ T cells	not estimated (absent from output)
+HIPPOC_cross	music	Excitatory neurons	constant estimate (r undefined)
+HIPPOC_cross	scdc	Excitatory neurons	constant estimate (r undefined)
+HIPPOC_cross	cibersortx	Excitatory neurons	constant estimate (r undefined)
