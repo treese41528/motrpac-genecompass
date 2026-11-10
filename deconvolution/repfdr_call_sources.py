@@ -89,6 +89,8 @@ def main():
         parts = []
         for _, r in man.iterrows():
             t = pd.read_csv(os.path.join(d, r["file"]), sep="\t", usecols=COLS, low_memory=False)
+            # R writes the state "null" (never NA); pandas reads the string "null" as missing by default
+            t["sexcons_8w"] = t["sexcons_8w"].fillna("null")
             t["tissue"] = r["tissue"]
             parts.append(t)
         df = pd.concat(parts, ignore_index=True)
