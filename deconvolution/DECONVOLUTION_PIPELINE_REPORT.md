@@ -46,6 +46,7 @@ differentially only. Outputs: `genecompass_input_v2_refs4all/` (+ `_human/`), `a
 | Embedding vs PCA-50 (analysable) | higher in 82/151; median Δ +0.009; Wilcoxon **p 0.15** (not significant) | 71/124; +0.019; p 0.013 | `gate_rcv10/pca_control.tsv` |
 | DE blocks run / skipped near-empty | 151 / 46 | 124 / 41 | `pseudobulk_de/de_methods.tsv` |
 | Fisher meta-tests | 1,755,187 | 1,598,503 | same |
+| repfdr 8-week sex-consistency fit | not degenerate (degenerate again with no library rule); poor density fit (f(z) misfit 678 / 614). 5,126 calls, 4,982 of them on repfdr alone; **144** by per-sex concordance (HEART 120, SKMVL 23, SKMGN 1) | not degenerate; 5,704 calls, 5,560 on repfdr alone; 144 by concordance | `REPFDR_STATUS_16_RESULTS.md` |
 | Dose-significant genes (FDR_IHW < 0.05) | **53,084** (BLOOD 19,358; SPLEEN 6,439; OVARY 0 ¹) | 48,522 | `pseudobulk_de/de_summary.tsv` |
 | Positive controls recovered (Tier A / Ai / B) | 6/45 / 2/14 / 7/22 (Tier A adds SKMGN Mfn1 via the pooled refit) | 5 / 2 / 7 | `ALL_TISSUE_RERUN_RESULTS.md` |
 | Composition confound (all blocks) QUIET / PASS_EXPRESSION / FLAG | 112 / 62 / 23 (hotspot flagged: SKMVL VSMC) | 91 / 56 / 18 | `composition_confound_table.tsv` |
@@ -122,9 +123,10 @@ cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
   biology.
 - Rat blood lymphocytes, hippocampal composition (an ambient-RNA sink; `HIPPOC_REFS4_DIAGNOSIS.md`) and DE in
   the dominant parenchyma remain unreliable under either reference set.
-- Not re-derived for refs4 in this report: whether repfdr's fit is still degenerate. Both validations of the
-  references have since been rerun on the current ones, while the body's figures for them are the earlier
-  references':
+- Since re-derived on the current references (the body's figures for these are the earlier references'):
+  - repfdr's fit, on 2026-11-10 (`REPFDR_STATUS_16_RESULTS.md`). It is not degenerate under the §6 library rule,
+    but its density fit is poor and it supplies 4,982 of the 5,126 sex-consistency calls. Only the 144
+    concordance calls should be read as sex-consistent.
   - the purity sweeps, by the clean rebuild (`REFS4ALL_REBUILD_RESULTS.md`; all 11 meet the Chu-2022 bar);
   - the holdout/cross mixture panel, on 2026-11-08 (`MIXTURE_PANEL_REFS4ALL_RESULTS.md`).
 

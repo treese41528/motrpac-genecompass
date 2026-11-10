@@ -5,7 +5,7 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-11-08. The working model is **retrain v2** and the working references are **refs4**
+**Last updated:** 2026-11-10. The working model is **retrain v2** and the working references are **refs4**
 (the jointly re-annotated references, `references_v4/`) over **all 16 tissues** (refs4's 14 plus SPLEEN and
 OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
 `config/profiles/refs4_14.yaml`; the July references are `config/profiles/july_refs.yaml`; April's model is
@@ -13,7 +13,7 @@ OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
 16-tissue ones (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`), with the 14-tissue refs4 figures as comparison. **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked
 (external) · ⊘ out-of-scope.
 
-**Recently closed (2026-11-04 to 11-08): the last checks still on older data, rerun on the 16-tissue default.**
+**Recently closed (2026-11-04 to 11-10): the last checks still on older data, rerun on the 16-tissue default.**
 - **E.3 Tabula Sapiens: PASS** (`translation/ATLAS_PROJECTION_16_RESULTS.md`). The macro accuracy is 0.430 over
   120 types in 13 tissues, against 0.086 by chance (p = 0.0001). The first run's 103 types reproduce exactly. SPLEEN
   scores 0.553 and OVARY 0.653.
@@ -24,6 +24,12 @@ OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
     0.973–0.996 on 4 cross sets, with six methods including CIBERSORTx.
   - Absolute fractions are weaker: a monocyte sink in KIDNEY_cross (pooled 0.163) and overestimated liver
     hepatocytes.
+- **repfdr's sex-consistency fit (2026-11-10)** (`deconvolution/REPFDR_STATUS_16_RESULTS.md`).
+  - The fit is not degenerate on the default. It is degenerate again with no library rule, as in July.
+  - It fits poorly (f(z) misfit 678 / 614) and supplies 4,982 of the 5,126 calls.
+  - Only the 144 per-sex concordance calls (HEART 120, SKMVL 23, SKMGN 1) are read as sex-consistent.
+  - A usable repfdr needs a registered refit, for example MoTrPAC's practice of running it only on IHW-significant
+    features. Open, for the user to decide.
 
 **Closed 2026-11-01.**
 - **All-tissue (16) rerun: done, now the default** (c3b27c7, `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`).

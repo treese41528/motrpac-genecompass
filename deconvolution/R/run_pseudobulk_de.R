@@ -38,10 +38,12 @@
 #     absent from motrpac_sample_pheno.tsv, and Z is a deconvolved expectation (not raw reads),
 #     so per-read technical artifacts are largely upstream/absorbed. Flagged as a limitation.
 #   * repfdr is run GLOBALLY on the assembled (z_M_8w, z_F_8w) matrix (more features -> stable
-#     EM, and closer to Vetr's single cross-dataset analysis) rather than per block. In practice
-#     that fit is degenerate: on ~2M mostly-null gene-blocks ztobins put the female column at
-#     100% null (2026-10-05), so the 8w calls were per-sex BH concordance alone. PASS 2 detects
-#     this and says so in de_methods.tsv. MoTrPAC itself runs repfdr only on features already
+#     EM, and closer to Vetr's single cross-dataset analysis) rather than per block. With the
+#     near-empty blocks included that fit is degenerate: ztobins puts the female column at 100%
+#     null (2026-10-05, July references), so the 8w calls are per-sex BH concordance alone. PASS 2
+#     detects this and says so in de_methods.tsv. Under the analysable-block rule it is not
+#     degenerate but fits the density poorly (f(z) misfit ~600-800) and supplies ~97% of the calls
+#     (REPFDR_STATUS_16_RESULTS.md). MoTrPAC itself runs repfdr only on features already
 #     training-regulated at 5% IHW FDR (MotrpacRatTraining6moData::REPFDR_RES), which is the
 #     likely replacement.
 #   * Effect MAGNITUDES are expected to be SMALL (Vetr: ~52 genes/tissue >2 SDpheno; 56% of
