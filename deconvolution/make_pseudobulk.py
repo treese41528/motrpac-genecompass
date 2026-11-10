@@ -36,6 +36,9 @@ Usage (project venv):
   # V0
   python deconvolution/make_pseudobulk.py --mode holdout --study GSE220075 \
       --tissue liver --holdout-frac 0.30 --out data/deconvolution/validation/V0_liver
+  # V0 on an already-built PRODUCTION reference (its labels as built: joint labels, deposited labels, composites)
+  python deconvolution/make_pseudobulk.py --mode holdout --tissue kidney \
+      --ref-source data/deconvolution/references_v4/KIDNEY_GSE240658 --out <panel>/KIDNEY_holdout
   # V1
   python deconvolution/make_pseudobulk.py --mode cross --source-study GSE285476 \
       --tissue liver --conditions "syngeneic group,healthy control group" \
@@ -114,6 +117,23 @@ def build_harmonization(source_labels, ref_types):
     return mapping
 
 
+def load_built_reference(ref_dir):
+    """A built reference dir (reference_counts.mtx cells x genes, genes.tsv, cells_meta.tsv) as AnnData with
+    the obs columns build_reference.clean_cells / export_reference use."""
+    import anndata as ad
+    ref_dir = Path(ref_dir)
+    X = sp.csr_matrix(sio.mmread(str(ref_dir / "reference_counts.mtx")))
+    genes = pd.read_csv(ref_dir / "genes.tsv", header=None, dtype=str)[0].values
+    obs = pd.read_csv(ref_dir / "cells_meta.tsv", sep="\t", dtype=str, keep_default_na=False)
+    if X.shape != (len(obs), len(genes)):
+        sys.exit(f"ERROR: {ref_dir}: matrix {X.shape} does not match {len(obs)} cells x {len(genes)} genes")
+    obs.index = [f"c{i}" for i in range(len(obs))]
+    a = ad.AnnData(X=X, obs=obs, var=pd.DataFrame(index=genes))
+    print(f"built reference {ref_dir}: {a.n_obs} cells x {a.n_vars} genes, "
+          f"{a.obs['cell_type'].nunique()} cell types")
+    return a
+
+
 def generate_mixtures(pool, types, rng, n_mix, cells_per_mix, alpha, return_z=False):
     """Dirichlet-proportioned pseudobulk. Returns (counts mixtures x genes, true_frac DataFrame).
 
@@ -181,6 +201,12 @@ def main():
                     help="merge collinear consensus-label fragments on the source/holdout cells "
                     "(must match the scheme the --ref-dir reference was built with, so the "
                     "harmonized labels exact-match the reference's; e.g. 'brain')")
+    ap.add_argument("--ref-source", help="holdout mode: split this already-BUILT reference dir (the production "
+                    "reference_dir, labels as built) instead of rebuilding from --study; ignores --study/"
+                    "--conditions/--sample-ids/--label-scheme")
+    ap.add_argument("--harmonization-override", help="cross mode: TSV (set, source_label, ref_type) of reviewed "
+                    "changes to the automatic map; an empty ref_type sets the source label unmapped (dropped)")
+    ap.add_argument("--override-set", help="cross mode: the set name whose rows of --harmonization-override apply")
     ap.add_argument("--holdout-frac", type=float, default=0.30)
     ap.add_argument("--n-mixtures", type=int, default=50)
     ap.add_argument("--cells-per-mixture", type=int, default=1000)
@@ -196,10 +222,13 @@ def main():
 
     # ---- obtain mixture-pool cells + reference cell types/genes ----
     if args.mode == "holdout":
-        assert args.study, "--study required for holdout mode"
-        adata = load_study(args.study, args.tissue, conds, sample_ids=sids)
-        adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
-        adata = clean_cells(adata)
+        if args.ref_source:
+            adata = load_built_reference(args.ref_source)        # already labelled + cleaned at build time
+        else:
+            assert args.study, "--study or --ref-source required for holdout mode"
+            adata = load_study(args.study, args.tissue, conds, sample_ids=sids)
+            adata.obs["cell_type"] = canonicalize_labels(adata.obs["cell_type"], args.label_scheme)
+            adata = clean_cells(adata)
         # stratified split by cell_type
         is_mix = np.zeros(adata.n_obs, dtype=bool)
         for t, idx in adata.obs.groupby("cell_type").indices.items():
@@ -221,6 +250,16 @@ def main():
         pool.obs["cell_type"] = canonicalize_labels(pool.obs["cell_type"], args.label_scheme)
         pool = clean_cells(pool)
         hmap = build_harmonization(sorted(pool.obs["cell_type"].unique()), ref_types)
+        if args.harmonization_override:
+            ov = pd.read_csv(args.harmonization_override, sep="\t", dtype=str, keep_default_na=False)
+            ov = ov[ov["set"] == args.override_set]
+            for lab, tgt in zip(ov["source_label"], ov["ref_type"]):
+                if lab not in hmap:
+                    sys.exit(f"ERROR: override for {lab!r}: not a source label of {args.override_set}")
+                if tgt and tgt not in ref_types:
+                    sys.exit(f"ERROR: override target {tgt!r} is not a reference type")
+                print(f"  [override] {lab!r}: {hmap[lab]!r} -> {tgt or None!r}")
+                hmap[lab] = tgt or None
         pool.obs["ref_type"] = pool.obs["cell_type"].map(hmap)
         hm = (pool.obs.groupby("cell_type")
               .agg(n_cells=("ref_type", "size"),

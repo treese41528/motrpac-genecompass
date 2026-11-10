@@ -1,5 +1,9 @@
 # omnideconv Cross-Method Panel — Results
 
+> **Current references: see `MIXTURE_PANEL_REFS4ALL_RESULTS.md` (2026-11-08).** The panel below certifies the
+> June/July references. It was rerun on the 15 references of the 16-tissue default (15 holdout and 4 cross sets,
+> the same six methods): BayesPrism's median per-type r is 0.973–0.999 on all 19 sets.
+
 **Status:** Core fraction benchmark (paper Fig-2 analog) COMPLETE + PRODUCTION-ALIGNED; **SimBu mRNA-bias
 battery + dose-response COMPLETE** (all 10 tissues + corrected liver/lung); agreement with the omnideconv
 paper documented; **downstream-claims bias guidance** added below. Last updated 2026-07-02.

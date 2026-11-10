@@ -1,0 +1,22 @@
+ts_cell_type	n_pseudobulks	n_cells
+B cell	6	15814
+CD4-positive, alpha-beta T cell	6	2552
+CD8-positive, alpha-beta T cell	6	10387
+T cell	2	116
+classical monocyte	6	3936
+endothelial cell	6	1323
+erythrocyte	4	385
+hematopoietic precursor cell	2	57
+innate lymphoid cell	4	141
+intermediate monocyte	4	366
+macrophage	6	2775
+mature NK T cell	6	908
+monocyte	6	3113
+naive thymus-derived CD4-positive, alpha-beta T cell	5	2197
+naive thymus-derived CD8-positive, alpha-beta T cell	4	619
+natural killer cell	6	3841
+neutrophil	6	14733
+non-classical monocyte	2	89
+plasma cell	6	3753
+platelet	1	22
+regulatory T cell	3	237

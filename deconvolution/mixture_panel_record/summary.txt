@@ -1,0 +1,123 @@
+Known-truth mixture panel on the current references (truth = rnafrac). Median per-type Pearson r:
+
+                bp_rna   dwls  music   scdc bisque  cibersortx
+BAT_holdout      0.998  0.996  0.997  0.991  0.959       0.990
+BLOOD_holdout    0.989  0.979  0.968  0.925  0.771       0.987
+CORTEX_holdout   0.999  0.938  0.932  0.954  0.982       0.997
+HEART_holdout    0.997  0.987  0.986  0.927  0.969       0.993
+HIPPOC_holdout   0.998  0.980  0.972  0.970  0.965       0.993
+HYPOTH_holdout   0.995  0.993      -  0.993      -       0.993
+KIDNEY_holdout   0.995  0.990  0.982  0.979  0.951       0.993
+LIVER_holdout    0.992  0.985  0.988  0.987  0.929       0.990
+LUNG_holdout     0.991  0.985  0.979  0.962  0.671       0.990
+MUSCLE_holdout   0.997  0.995  0.995  0.994  0.969       0.996
+OVARY_holdout    0.995  0.966      -  0.946      -       0.993
+SMLINT_holdout   0.992  0.966  0.965  0.950  0.874       0.984
+SPLEEN_holdout   0.990  0.964      -  0.960      -       0.991
+TESTES_holdout   0.999  0.983  0.982  0.977  0.983       0.996
+WATSC_holdout    0.994  0.976  0.984  0.975  0.936       0.984
+CORTEX_cross     0.983  0.913  0.926  0.965  0.961       0.973
+HIPPOC_cross     0.996  0.951  0.975  0.985  0.961       0.997
+KIDNEY_cross     0.973  0.708  0.588  0.737  0.768       0.944
+MUSCLE_cross     0.986  0.934  0.962  0.965  0.901       0.944
+
+Pooled Pearson r:
+
+                bp_rna   dwls  music   scdc bisque  cibersortx
+BAT_holdout      0.957  0.958   0.97  0.624  0.061       0.895
+BLOOD_holdout    0.981  0.832  0.807  0.369  0.465       0.941
+CORTEX_holdout   0.999  0.631  0.466  0.786  0.604       0.997
+HEART_holdout    0.973  0.853  0.789  0.516  0.578       0.932
+HIPPOC_holdout   0.997  0.864  0.794  0.843  0.545       0.981
+HYPOTH_holdout   0.964  0.970      -  0.944      -       0.896
+KIDNEY_holdout   0.974  0.916  0.685  0.781  0.332       0.893
+LIVER_holdout    0.841  0.896  0.899  0.859  0.262       0.808
+LUNG_holdout     0.948  0.822  0.701  0.771  0.421       0.959
+MUSCLE_holdout   0.958  0.979  0.977  0.962  0.212       0.874
+OVARY_holdout    0.995  0.564      -  0.191      -       0.986
+SMLINT_holdout   0.979  0.722  0.739  0.709  0.243       0.938
+SPLEEN_holdout   0.987  0.781      -  0.794      -       0.950
+TESTES_holdout   0.997  0.899  0.902  0.944  0.253       0.983
+WATSC_holdout    0.953  0.845  0.855  0.846  0.199       0.915
+CORTEX_cross     0.896  0.435  0.222  0.242  0.404       0.866
+HIPPOC_cross     0.828  0.642  0.737  0.819  0.374       0.783
+KIDNEY_cross     0.163  0.158  0.034  0.046  0.318       0.659
+MUSCLE_cross     0.830  0.715  0.708  0.698  0.069       0.756
+
+BayesPrism reading (median per-type r >= 0.85):
+  BAT_holdout      0.998  recovers
+  BLOOD_holdout    0.989  recovers
+  CORTEX_holdout   0.999  recovers
+  HEART_holdout    0.997  recovers
+  HIPPOC_holdout   0.998  recovers
+  HYPOTH_holdout   0.995  recovers
+  KIDNEY_holdout   0.995  recovers
+  LIVER_holdout    0.992  recovers
+  LUNG_holdout     0.991  recovers
+  MUSCLE_holdout   0.997  recovers
+  OVARY_holdout    0.995  recovers
+  SMLINT_holdout   0.992  recovers
+  SPLEEN_holdout   0.990  recovers
+  TESTES_holdout   0.999  recovers
+  WATSC_holdout    0.994  recovers
+  CORTEX_cross     0.983  recovers
+  HIPPOC_cross     0.996  recovers
+  KIDNEY_cross     0.973  recovers
+  MUSCLE_cross     0.986  recovers
+
+BayesPrism vs the earlier panel (same production tissue; descriptive). comparable = same design and,
+for cross sets, the same mixture source; the other rows set a holdout against an earlier cross set:
+
+           set  design  earlier_set earlier_design  comparable  earlier_median  now_median  change  drop_gt_0.05
+ BLOOD_holdout holdout PBMC_holdout        holdout        True           0.970       0.989   0.019         False
+CORTEX_holdout holdout    CTX_union          cross       False           0.940       0.999   0.059         False
+ HEART_holdout holdout  HRT_holdout        holdout        True           0.950       0.997   0.048         False
+HIPPOC_holdout holdout   HIP_merged          cross       False           0.994       0.998   0.004         False
+KIDNEY_holdout holdout    KID_cross          cross       False           0.852       0.995   0.144         False
+ LIVER_holdout holdout  LIV_holdout        holdout        True           0.992       0.992   0.000         False
+  LUNG_holdout holdout    LNG_cross          cross       False           0.705       0.991   0.286         False
+MUSCLE_holdout holdout    GAS_cross          cross       False           0.948       0.997   0.049         False
+MUSCLE_holdout holdout        SKMVL          cross       False           0.996       0.997   0.001         False
+ WATSC_holdout holdout  WAT_holdout        holdout        True           0.972       0.994   0.023         False
+  CORTEX_cross   cross    CTX_union          cross        True           0.940       0.983   0.043         False
+  HIPPOC_cross   cross   HIP_merged          cross        True           0.994       0.996   0.002         False
+  KIDNEY_cross   cross    KID_cross          cross        True           0.852       0.973   0.122         False
+  MUSCLE_cross   cross    GAS_cross          cross       False           0.948       0.986   0.038         False
+  MUSCLE_cross   cross        SKMVL          cross        True           0.996       0.986  -0.010         False
+
+BayesPrism best on 17/19 sets; within 0.02 of the best on 19/19 (sets with >= 2 methods scored).
+On pooled r (descriptive), BayesPrism is best on 13/19.
+
+Types left out of a method's median (scored on the rest):
+
+           set     method            cell_type                               note
+ BLOOD_holdout      music      Erythroid cells not estimated (absent from output)
+ BLOOD_holdout      music          Neutrophils not estimated (absent from output)
+CORTEX_holdout      music Medium spiny neurons not estimated (absent from output)
+ HEART_holdout      music         CD8+ T cells not estimated (absent from output)
+  HIPPOC_cross      music   Excitatory neurons    constant estimate (r undefined)
+  HIPPOC_cross       scdc   Excitatory neurons    constant estimate (r undefined)
+  HIPPOC_cross cibersortx   Excitatory neurons    constant estimate (r undefined)
+
+Coverage (types in the deconvolution reference / benchmarked; holdout: types lost at the split):
+
+           set  n_built  n_in_reference  n_benchmarked                 lost_at_split                                                                                                                                                       not_benchmarked
+   BAT_holdout        6               6              6                                                                                                                                                                                                    
+ BLOOD_holdout       13              13             13                                                                                                                                                                                                    
+CORTEX_holdout       12              11              8 Vascular leptomeningeal cells                                                                                                                   Border-associated macrophages; Neutrophils; T cells
+ HEART_holdout       16              16             16                                                                                                                                                                                                    
+HIPPOC_holdout       11              11             10                                                                                                                                                                                         Mural cells
+HYPOTH_holdout       13              13             10                                                                                                                                            Dopaminergic neurons; Endothelial cells; Ependymal cells
+KIDNEY_holdout       15              15             15                                                                                                                                                                                                    
+ LIVER_holdout        8               8              7                                                                                                                                                                                   Mesothelial cells
+  LUNG_holdout       21              21             21                                                                                                                                                                                                    
+MUSCLE_holdout        9               9              8                                                                                                                                                                                       Schwann cells
+ OVARY_holdout       18              18             16                                                                                                                                           Lymphatic endothelial cells; Plasmacytoid dendritic cells
+SMLINT_holdout       13              13             13                                                                                                                                                                                                    
+SPLEEN_holdout       14              14             13                                                                                                                                                                                   Endothelial cells
+TESTES_holdout        6               5              5                 Sertoli cells                                                                                                                                                                      
+ WATSC_holdout       13              12              9                   Mural cells                                                                            Glandular epithelial cells; Mammary luminal epithelial cells; Plasmacytoid dendritic cells
+  CORTEX_cross       12              12              6                                                                    Border-associated macrophages; Inhibitory neurons; Medium spiny neurons; Neuroblasts; Neutrophils; Vascular leptomeningeal cells
+  HIPPOC_cross       11              11              6                                                                                       Dentate gyrus granule cells; Inhibitory neurons; Mural cells; Thalamic neurons; Vascular leptomeningeal cells
+  KIDNEY_cross       15              15              7                               Connecting tubule cells; Cycling cells; Fibroblasts; Injured proximal tubule cells; Podocytes; Thick ascending limb cells; Thin limb cells; Type B intercalated cells
+  MUSCLE_cross        9               9              4                                                                                                   Fibro-adipogenic progenitors; Pericytes; Satellite cells; Tenocytes; Vascular smooth muscle cells

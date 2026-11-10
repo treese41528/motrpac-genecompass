@@ -61,24 +61,7 @@ import scipy.sparse as sp
 
 from build_reference import load_study, clean_cells, export_reference, canonicalize_labels
 from celltype_names import safe, assert_injective, purge_stale   # shared filename contract
-from make_pseudobulk import build_harmonization
-
-
-def load_built_reference(ref_dir):
-    """A built reference dir (reference_counts.mtx cells x genes, genes.tsv, cells_meta.tsv) as AnnData with
-    the obs columns build_reference.clean_cells / export_reference use."""
-    import anndata as ad
-    ref_dir = Path(ref_dir)
-    X = sp.csr_matrix(sio.mmread(str(ref_dir / "reference_counts.mtx")))
-    genes = pd.read_csv(ref_dir / "genes.tsv", header=None, dtype=str)[0].values
-    obs = pd.read_csv(ref_dir / "cells_meta.tsv", sep="\t", dtype=str, keep_default_na=False)
-    if X.shape != (len(obs), len(genes)):
-        sys.exit(f"ERROR: {ref_dir}: matrix {X.shape} does not match {len(obs)} cells x {len(genes)} genes")
-    obs.index = [f"c{i}" for i in range(len(obs))]
-    a = ad.AnnData(X=X, obs=obs, var=pd.DataFrame(index=genes))
-    print(f"built reference {ref_dir}: {a.n_obs} cells x {a.n_vars} genes, "
-          f"{a.obs['cell_type'].nunique()} cell types")
-    return a
+from make_pseudobulk import build_harmonization, load_built_reference
 
 
 def generate_purity_sweep(pool, types, focal, rng, purity_grid, reps,

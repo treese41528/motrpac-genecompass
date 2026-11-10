@@ -1,0 +1,13 @@
+set	source_label	ref_type	reason
+KIDNEY_cross	Naive B cells		B lymphocytes matched to Type B intercalated cells on the token 'b'
+KIDNEY_cross	β-intercalated cells		beta = type B, matched to Type A intercalated cells
+KIDNEY_cross	Intercalated cells		type A + B mix, matched to Type A only
+CORTEX_cross	GABAergic neurons		inhibitory neurons matched to Excitatory neurons
+CORTEX_cross	Adrenergic neurons		monoaminergic, not excitatory (glutamatergic)
+CORTEX_cross	Dopaminergic neurons		monoaminergic, not excitatory (glutamatergic)
+CORTEX_cross	Vascular smooth muscle cells		mural cells matched to Vascular leptomeningeal cells (fibroblast-like)
+HIPPOC_cross	Purkinje neurons		GABAergic (cerebellar) matched to Excitatory neurons
+HIPPOC_cross	Adrenergic neurons		monoaminergic, not excitatory (glutamatergic)
+HIPPOC_cross	Vascular smooth muscle cells		mural cells matched to Vascular leptomeningeal cells (fibroblast-like)
+MUSCLE_cross	Muscle fibroblasts		fibroblasts matched to Skeletal muscle cells
+MUSCLE_cross	Progenitor cells		unspecified progenitor (satellite or FAP), matched to Fibro-adipogenic progenitors
