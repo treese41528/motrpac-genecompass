@@ -3,6 +3,16 @@
 > **Current references: see `MIXTURE_PANEL_REFS4ALL_RESULTS.md` (2026-11-08).** The panel below certifies the
 > June/July references. It was rerun on the 15 references of the 16-tissue default (15 holdout and 4 cross sets,
 > the same six methods): BayesPrism's median per-type r is 0.973–0.999 on all 19 sets.
+>
+> **mRNA-bias battery on the current references: see `SIMBU_BIAS_REFS4ALL_RESULTS.md` (2026-11-11).** The battery
+> and dose-response below are July's, on the earlier references. Rerun on the 15 current references with the
+> protocol unchanged (pre-registered):
+> - **The corrector ranking is not reproduced.** Mean ΔRMSE on the 12 references where all six methods ran:
+>   Bisque +0.002, SCDC +0.022, CIBERSORTx +0.022, BayesPrism +0.025, MuSiC +0.025, DWLS +0.028.
+> - **BayesPrism still degrades on every reference** (15 of 15).
+> - **The driver is the highest-mRNA type on 10 of 15 references**, not always.
+> - **The driver table and the cross-check advice in the guidance section below are updated** to the current
+>   references.
 
 **Status:** Core fraction benchmark (paper Fig-2 analog) COMPLETE + PRODUCTION-ALIGNED; **SimBu mRNA-bias
 battery + dose-response COMPLETE** (all 10 tissues + corrected liver/lung); agreement with the omnideconv
@@ -133,6 +143,9 @@ no definitive ranking (context-specific); *"run and compare a few top-performing
 
 ## mRNA-bias battery — RESULTS (SimBu ±expressed-genes, all 10 tissues + dose-response)
 
+> **Earlier references (July).** For the current references read `SIMBU_BIAS_REFS4ALL_RESULTS.md`: by the same
+> statistic MuSiC and SCDC are no longer below BayesPrism and CIBERSORTx, and the drivers differ.
+
 Self-simulated ±mRNA-bias per reference (500 cells/type, pinned composition), scored vs cell-fraction
 truth. `deconvolution/omnideconv_bench/{simulate_simbu,bias_delta,dose_response}` ; jobs 11167195
 (battery), 11167410 (dose-response), 11176839 (corrected liver+lung).
@@ -156,6 +169,30 @@ bisque +0.003  <  scdc +0.016  <  music +0.018  <  dwls +0.024 ≈ cibersortx +0
 heart→Cardiomyocytes, cortex→Cholinergic/Excitatory neurons, hippocampus→Excitatory neurons,
 kidney→β-intercalated/Proximal-tubule, blood→Classical monocytes, lung→Alveolar macrophages,
 skmvl→Skeletal-muscle/Progenitor, skmgn→Muscle fibroblasts, WAT→Fibroblasts. Always the highest-mRNA type.
+
+**Current references (2026-11-11; this table replaces the list above for the 16-tissue default).** BayesPrism's
+driver per tissue, from `SIMBU_BIAS_REFS4ALL_RESULTS.md`. The rank is by mean expressed genes in the reference
+(1 = most).
+
+| Tissue | Driver to distrust in absolute terms | mRNA rank | Effect of the added bias on its estimate |
+|---|---|---|---|
+| BAT | Brown adipocytes | 6 of 6 (types differ only 1.1-fold) | inflated |
+| BLOOD | Plasmacytoid dendritic cells | 1 of 13 | inflated |
+| CORTEX | Excitatory neurons | 1 of 12 | inflated |
+| HEART | Cardiomyocytes | 1 of 16 | inflated |
+| HIPPOC | Dentate gyrus granule cells | 1 of 11 | inflated |
+| HYPOTH | Neurons | 1 of 13 | inflated |
+| KIDNEY | Proximal tubule cells | 3 of 15 | inflated |
+| LIVER | NK cells (the reference's most RNA-rich type; hepatocytes have the fewest expressed genes) | 1 of 8 | inflated |
+| LUNG | Alveolar macrophages | 5 of 21 | inflated |
+| SKMGN, SKMVL | Skeletal muscle cells | 1 of 9 | inflated |
+| OVARY | Luteal cells | 1 of 18 | inflated |
+| SMLINT | Transit-amplifying cells | 3 of 13 | inflated |
+| SPLEEN | Erythroid progenitors | 1 of 14 | inflated |
+| TESTES | Condensed spermatids | 6 of 6 | deflated |
+| WATSC | Cycling cells | 1 of 13 | inflated |
+
+The highest-mRNA type is the driver on 10 of the 15 references.
 
 **Corrected liver + lung (on the production references, job 11176839):**
 - **liver: bp ΔRMSE 0.081 → 0.040 (HALVED)**, driver shifted Hepatocytes→Endothelial. The Visium
@@ -201,6 +238,18 @@ RNA-fractions and a distortable Z. Gate claims accordingly:
 the driver-type fraction against a **corrector** (MuSiC/SCDC — agreement ⇒ confidence); (3) for
 parenchyma DE, validate against bulk controls or flag it low-confidence; (4) prefer embedding-based
 (Stage 9+) over fraction-based statements for the driver types.
+
+**Changed on the current references (2026-11-11, `SIMBU_BIAS_REFS4ALL_RESULTS.md`):**
+- **Step (2): cross-check against DWLS or MuSiC, not MuSiC or SCDC.**
+  - No method is protected from the added bias: mean ΔRMSE is +0.021 to +0.028 for all five methods that
+    respond.
+  - DWLS and MuSiC are the closest to cell fractions, without the added bias (mean RMSE 0.010 and 0.021, against
+    BayesPrism's 0.047) and with it (0.038 and 0.046, against 0.072).
+  - SCDC is no closer than BayesPrism (0.053 and 0.075).
+  - MuSiC cannot run on the one-sample references (HYPOTH, OVARY, SPLEEN).
+- **The driver types are the table in the battery section**, not July's list. In particular LIVER's driver is no
+  longer hepatocytes, so the hepatocyte caveat rests on the positive-control result, not on this battery.
+- **The safe and risky classes are unchanged.**
 
 ## Open items
 - **Cross-method panel + full mRNA-bias battery + dose-response: COMPLETE** (all 10 tissues, corrected

@@ -61,6 +61,7 @@ differentially only. Outputs: `genecompass_input_v2_refs4all/` (+ `_human/`), `a
 | E.3 atlas anchoring | **0.430** vs null 0.086 over 120 types in 13 tissues, p = 0.0001, PASS (SPLEEN 0.553, OVARY 0.653; the first run's 103 types reproduce exactly) | 0.404 vs null 0.084, PASS | `translation/ATLAS_PROJECTION_16_RESULTS.md` |
 | GRN decoy null (`\|z\|` ≥ 2 vs expression-matched random genes) | FDR(2) = 1.03; 0/723 TFs beat their decoys: **no TF-specific signal** | FDR(2) = 1.03; 0/981 | `GRN_DECOY_NULL_16_RESULTS.md` |
 | Known-truth mixtures: BayesPrism median per-type r, 15 holdout / 4 cross sets | 0.989–0.999 / 0.973–0.996; all 19 ≥ 0.85 (6 methods; monocyte sink in KIDNEY_cross, pooled 0.163) | earlier panel on the June/July references | `MIXTURE_PANEL_REFS4ALL_RESULTS.md` |
+| SimBu mRNA-bias battery, mean ΔRMSE on the 12 references with all six methods | BayesPrism +0.025 (> 0 on 15 of 15 references), CIBERSORTx +0.022, DWLS +0.028, MuSiC +0.025, SCDC +0.022, Bisque +0.002: July's "MuSiC and SCDC correct, BayesPrism and CIBERSORTx do not" is **not reproduced**. The driver is the highest-mRNA type on 10 of 15 references | July battery on the earlier references | `SIMBU_BIAS_REFS4ALL_RESULTS.md` |
 
 ¹ Structural, not biology: `R/run_pseudobulk_de.R` (line ~255) sets the Fisher sex-combined p to missing when
 either sex is absent, so single-sex tissues (OVARY, TESTES) can never have a dose-significant gene. TESTES's 0
@@ -129,6 +130,12 @@ cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
     concordance calls should be read as sex-consistent.
   - the purity sweeps, by the clean rebuild (`REFS4ALL_REBUILD_RESULTS.md`; all 11 meet the Chu-2022 bar);
   - the holdout/cross mixture panel, on 2026-11-08 (`MIXTURE_PANEL_REFS4ALL_RESULTS.md`).
+  - the SimBu mRNA-bias battery and dose-response, on 2026-11-11 (`SIMBU_BIAS_REFS4ALL_RESULTS.md`).
+    - BayesPrism still degrades under the added bias on every reference.
+    - July's corrector ranking is not reproduced: MuSiC and SCDC are no longer below BayesPrism and CIBERSORTx.
+    - The driver is the highest-mRNA type on 10 of 15 references, and LIVER's is the reference's NK cells, not
+      hepatocytes.
+    - The driver table and the cross-check advice in `OMNIDECONV_RESULTS.md` are updated.
 
 ## Executive summary
 

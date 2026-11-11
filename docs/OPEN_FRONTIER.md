@@ -5,7 +5,7 @@ MoTrPAC rat endurance-exercise study, translated to human). It maps every Aim/mo
 effort, and blockers, and is meant to be updated as work lands. Per-module build specs (file names,
 dependency graph, recommended order) live in [`deconvolution/DOWNSTREAM_BUILD_PLAN.md`](../deconvolution/DOWNSTREAM_BUILD_PLAN.md).
 
-**Last updated:** 2026-11-10. The working model is **retrain v2** and the working references are **refs4**
+**Last updated:** 2026-11-11. The working model is **retrain v2** and the working references are **refs4**
 (the jointly re-annotated references, `references_v4/`) over **all 16 tissues** (refs4's 14 plus SPLEEN and
 OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
 `config/profiles/refs4_14.yaml`; the July references are `config/profiles/july_refs.yaml`; April's model is
@@ -13,7 +13,7 @@ OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
 16-tissue ones (`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`), with the 14-tissue refs4 figures as comparison. **Legend:** ✅ done · ◐ partial · ☐ unbuilt · ⛔ blocked
 (external) · ⊘ out-of-scope.
 
-**Recently closed (2026-11-04 to 11-10): the last checks still on older data, rerun on the 16-tissue default.**
+**Recently closed (2026-11-04 to 11-11): the last checks still on older data, rerun on the 16-tissue default.**
 - **E.3 Tabula Sapiens: PASS** (`translation/ATLAS_PROJECTION_16_RESULTS.md`). The macro accuracy is 0.430 over
   120 types in 13 tissues, against 0.086 by chance (p = 0.0001). The first run's 103 types reproduce exactly. SPLEEN
   scores 0.553 and OVARY 0.653.
@@ -30,6 +30,17 @@ OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
   - Only the 144 per-sex concordance calls (HEART 120, SKMVL 23, SKMGN 1) are read as sex-consistent.
   - A usable repfdr needs a registered refit, for example MoTrPAC's practice of running it only on IHW-significant
     features. Open, for the user to decide.
+- **SimBu mRNA-bias battery and dose-response (2026-11-11)** (`deconvolution/SIMBU_BIAS_REFS4ALL_RESULTS.md`;
+  pre-registered, July's protocol unchanged, 15 references, six methods).
+  - BayesPrism still degrades under the added bias on 15 of 15 references (mean ΔRMSE +0.025).
+  - July's corrector ranking is **not reproduced**: MuSiC (+0.025) and SCDC (+0.022) are no longer below
+    BayesPrism (+0.025) and CIBERSORTx (+0.022).
+  - The driver is the highest-mRNA type on 10 of 15 references. LIVER's is the reference's NK cells, not
+    hepatocytes.
+  - The driver table and the cross-check advice in `OMNIDECONV_RESULTS.md` are updated (cross-check against DWLS
+    or MuSiC).
+  - Open, for the user to decide: the NK label on the liver reference's most RNA-rich cells, and a registered
+    rerun whose baseline removes the references' native mRNA differences.
 
 **Closed 2026-11-01.**
 - **All-tissue (16) rerun: done, now the default** (c3b27c7, `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`).
@@ -144,7 +155,7 @@ The three checks promised in `reports/pipeline_report.md §3.6`, run on v2 (2026
 
 | Status | Item | Effort |
 |---|---|---|
-| ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`). **Rerun on the current references 2026-11-08** (`MIXTURE_PANEL_REFS4ALL_RESULTS.md`): 15 holdout + 4 cross sets × 6 methods (CIBERSORTx included); BayesPrism median per-type r 0.973–0.999 on all 19, best on 17; KIDNEY_cross pooled 0.163 (monocyte sink); 170 of 188 reference types benchmarked (TESTES Sertoli cells not among them) | — |
+| ✅ | **omnideconv** multi-method θ cross-check — DONE: 11-tissue panel × 6 methods + SimBu mRNA-bias battery + dose-response; agreement with the omnideconv paper + downstream-claims bias guidance (`OMNIDECONV_RESULTS.md`); **the battery was rerun on the current references 2026-11-11** (`SIMBU_BIAS_REFS4ALL_RESULTS.md`: the corrector ranking is not reproduced, BayesPrism degrades on 15 of 15). **Panel rerun on the current references 2026-11-08** (`MIXTURE_PANEL_REFS4ALL_RESULTS.md`): 15 holdout + 4 cross sets × 6 methods (CIBERSORTx included); BayesPrism median per-type r 0.973–0.999 on all 19, best on 17; KIDNEY_cross pooled 0.163 (monocyte sink); 170 of 188 reference types benchmarked (TESTES Sertoli cells not among them) | — |
 | ✅ | **Reference integrity** — DONE (2026-07): `reference_qc.py` gate (wired into `build_reference`), `tissue_references.yaml`, `run_deconv_all.py`; liver Visium contamination + engineered→native lung fixed (`REFERENCE_QC.md`) | — |
 | ✅ | **Lung** — DONE: engineered GSE178405 → native pooled reference; lung went from 0 exercise hotspots to real immune/stromal ones (16 tissues: vascular smooth muscle cells, preserved rat→human; refs4 (14 tissues): endothelial, mesothelial and vascular smooth muscle cells, all preserved; July: endothelial cells + macrophages) (was ◐ weak) | — |
 | ✅ | Per-tissue expression **purity sweeps** — DONE (Stage 14; model-independent; 13 sweeps on disk across 12 tissues). We **meet the Chu-2022 bar** (>0.95 above ~50% focal purity) on all **12 tissues swept** (of the 14-tissue panel): ≥0.985 at 50% purity, ≥0.99 at 85%. The 4 tissues added in the 2026-07-16 rebuild (BAT/HYPOTH/SMLINT/TESTES) were **swept 2026-07-27 and all pass** (focal VST ≥0.992 at 50% purity, HYPOTH lowest; an earlier "≥0.998" / "HYPOTH 1.000 throughout" here was wrong). **Current references (2026-11-02, clean rebuild):** these July/October sweeps predate the refs4 relabel and the TESTES lift for 8 of 11 sweeps; the rebuild re-swept all 11 on the production references and all meet the bar (≥0.992 at 50%, ≥0.998 at 85%; `deconvolution/REFS4ALL_REBUILD_RESULTS.md`, data in `validation_refs4all_rebuild/`). Only BLOOD and subcutaneous fat remain unswept — neither has a capturable dominant parenchyma. | — |

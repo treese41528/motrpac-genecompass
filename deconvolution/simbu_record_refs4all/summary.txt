@@ -1,0 +1,52 @@
+SimBu mRNA-bias battery: 15 references under data/deconvolution/simbu_bench_refs4all
+paired (bias and nobias references byte-identical): 15/15; same cell-fraction truth: 15/15
+dose BLOOD: 6 alphas; references identical: True; cell-fraction truth identical: True
+dose LIVER: 6 alphas; references identical: True; cell-fraction truth identical: True
+
+not scored (set/method/status): 6
+  HYPOTH   music      not scored
+  HYPOTH   bisque     not scored
+  OVARY    music      not scored
+  OVARY    bisque     not scored
+  SPLEEN   music      not scored
+  SPLEEN   bisque     not scored
+
+== Reading 1: corrector ranking, mean dRMSE (bias - nobias), lower = corrects ==
+common set (12 references with all six methods scored): BAT, BLOOD, CORTEX, HEART, HIPPOC, KIDNEY, LIVER, LUNG, MUSCLE, SMLINT, TESTES, WATSC
+  bisque     common +0.0024 (n=12)   all +0.0024 median +0.0017 (n=12, 12 > 0)
+  scdc       common +0.0215 (n=12)   all +0.0206 median +0.0149 (n=15, 14 > 0)
+  cibersortx common +0.0220 (n=12)   all +0.0224 median +0.0211 (n=15, 15 > 0)
+  bp_rna     common +0.0251 (n=12)   all +0.0255 median +0.0254 (n=15, 15 > 0)
+  music      common +0.0254 (n=12)   all +0.0254 median +0.0191 (n=12, 12 > 0)
+  dwls       common +0.0283 (n=12)   all +0.0279 median +0.0240 (n=15, 15 > 0)
+paper's core finding (MuSiC and SCDC below BayesPrism and CIBERSORTx): NOT REPRODUCED (music +0.0254, scdc +0.0215; bp_rna +0.0251, cibersortx +0.0220; dwls +0.0283)
+July (10 panel tissues): bp_rna +0.0262 (n=10), cibersortx +0.0239 (n=10), dwls +0.0245 (n=9), music +0.0179 (n=9), scdc +0.0159 (n=9), bisque +0.0033 (n=9)
+
+== Reading 2: BayesPrism dRMSE > 0 on 15/15 references ==
+
+== Reading 3: bias driver (largest per-type dRMSE) vs mRNA content rank (1 = most expressed genes) ==
+BayesPrism driver is the highest-mRNA type (expressed genes) on 10/15 references; highest by total counts on 9/15
+  BAT      Brown adipocytes                   rank 6/6 (counts rank 6) inflated dRMSE +0.0136 (rest median +0.0051); true 0.185 est 0.169->0.215; top-mRNA: ASPC
+  BLOOD    Plasmacytoid dendritic cells       rank 1/13 (counts rank 1) inflated dRMSE +0.0618 (rest median +0.0122); true 0.084 est 0.172->0.229; top-mRNA: Plasmacytoid dendritic cells
+  CORTEX   Excitatory neurons                 rank 1/12 (counts rank 1) inflated dRMSE +0.1421 (rest median +0.0200); true 0.092 est 0.354->0.492; top-mRNA: Excitatory neurons
+  HEART    Cardiomyocytes                     rank 1/16 (counts rank 1) inflated dRMSE +0.1324 (rest median +0.0132); true 0.066 est 0.181->0.303; top-mRNA: Cardiomyocytes
+  HIPPOC   Dentate gyrus granule cells        rank 1/11 (counts rank 1) inflated dRMSE +0.0696 (rest median +0.0204); true 0.111 est 0.218->0.284; top-mRNA: Dentate gyrus granule cells
+  HYPOTH   Neurons                            rank 1/13 (counts rank 1) inflated dRMSE +0.0381 (rest median +0.0085); true 0.067 est 0.088->0.125; top-mRNA: Neurons
+  KIDNEY   Proximal tubule cells              rank 3/15 (counts rank 3) inflated dRMSE +0.0516 (rest median +0.0118); true 0.063 est 0.097->0.149; top-mRNA: Cycling cells
+  LIVER    NK cells                           rank 1/8 (counts rank 1) inflated dRMSE +0.0940 (rest median +0.0312); true 0.142 est 0.268->0.350; top-mRNA: NK cells
+  LUNG     Alveolar macrophages               rank 5/21 (counts rank 3) inflated dRMSE +0.0523 (rest median +0.0098); true 0.045 est 0.074->0.128; top-mRNA: Basal cells
+  MUSCLE   Skeletal muscle cells              rank 1/9 (counts rank 1) inflated dRMSE +0.0650 (rest median +0.0127); true 0.113 est 0.160->0.224; top-mRNA: Skeletal muscle cells
+  OVARY    Luteal cells                       rank 1/18 (counts rank 1) inflated dRMSE +0.1281 (rest median +0.0147); true 0.059 est 0.247->0.370; top-mRNA: Luteal cells
+  SMLINT   Transit-amplifying cells           rank 3/13 (counts rank 2) inflated dRMSE +0.0544 (rest median +0.0143); true 0.087 est 0.162->0.215; top-mRNA: Epithelial cells
+  SPLEEN   Erythroid progenitors              rank 1/14 (counts rank 1) inflated dRMSE +0.0968 (rest median +0.0206); true 0.066 est 0.131->0.214; top-mRNA: Erythroid progenitors
+  TESTES   Condensed spermatids               rank 6/6 (counts rank 4) deflated dRMSE +0.0479 (rest median +0.0121); true 0.179 est 0.132->0.087; top-mRNA: Spermatocytes
+  WATSC    Cycling cells                      rank 1/13 (counts rank 2) inflated dRMSE +0.0369 (rest median +0.0171); true 0.080 est 0.129->0.160; top-mRNA: Cycling cells
+methods sharing the most common driver per set: BAT 6/6, BLOOD 3/6, CORTEX 5/6, HEART 5/6, HIPPOC 6/6, HYPOTH 4/4, KIDNEY 4/6, LIVER 5/6, LUNG 3/6, MUSCLE 4/6, OVARY 2/4, SMLINT 2/6, SPLEEN 4/4, TESTES 4/6, WATSC 3/6
+
+== Reading 4: dose-response (pooled RMSE vs alpha; composition pinned) ==
+BLOOD: bp_rna base 0.052 slope +0.0238 non-decreasing; cibersortx base 0.063 slope +0.0203 non-decreasing; dwls base 0.009 slope +0.0271 non-decreasing; music base 0.033 slope +0.0238 non-decreasing; scdc base 0.069 slope +0.0121 not monotone; bisque base 0.099 slope +0.0038 not monotone
+  DWLS lowest baseline of the six: True (lowest: dwls); steepest slope of the correctors: True (steepest: dwls)
+  July counterpart: PBMC_holdout (earlier reference)
+LIVER: bp_rna base 0.051 slope +0.0408 non-decreasing; cibersortx base 0.090 slope +0.0266 non-decreasing; dwls base 0.010 slope +0.0388 non-decreasing; music base 0.011 slope +0.0384 non-decreasing; scdc base 0.033 slope +0.0333 non-decreasing; bisque base 0.109 slope +0.0024 non-decreasing
+  DWLS lowest baseline of the six: True (lowest: dwls); steepest slope of the correctors: True (steepest: dwls)
+  July counterpart: LIV_holdout (earlier reference)
