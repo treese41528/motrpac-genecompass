@@ -41,6 +41,12 @@ OVARY), the default in `config/pipeline_config.yaml`. The 14-tissue refs4 arm is
     or MuSiC).
   - Open, for the user to decide: the NK label on the liver reference's most RNA-rich cells, and a registered
     rerun whose baseline removes the references' native mRNA differences.
+- **Full methods audit (2026-11-11)** (`docs/audit/README.md`).
+  - A stage-by-stage record of what is done: models, thresholds, flags, statistical procedures and references,
+    each tied to a code line or result file.
+  - `docs/audit/FINDINGS.md` collects what a reviewer would question, classed by whether it changes how a reported
+    result should be read. `docs/audit/REFERENCES.md` holds the reference list, checked against Crossref.
+  - The audit changed no code, configuration or result. Its findings are open, for the user to decide.
 
 **Closed 2026-11-01.**
 - **All-tissue (16) rerun: done, now the default** (c3b27c7, `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`).
