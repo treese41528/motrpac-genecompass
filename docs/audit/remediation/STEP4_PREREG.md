@@ -25,6 +25,11 @@ variance-stabilised values, the measure of the BayesPrism paper [chu2022].
 | Every tissue with a reference (16), dominant type | As configured; LIVER hepatocytes, BLOOD erythroid cells, SPLEEN, OVARY, WATSC and HIPPOC are added | 0.05 to 0.9, as now |
 | Every refs5 hotspot and borderline block | That block's cell type | 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9 |
 
+**Correction (2026-11-14, before any refs5 sweep was built).** The first row's grid is Stage 14's own, 0.1, 0.3,
+0.5, 0.7, 0.85, 0.95. "0.05 to 0.9" is the default of the sweep builder, which Stage 14 does not use; "as now"
+is what was meant. The dominant type of a tissue is the type with the highest mean estimated fraction in
+the refs5 Stage 8 output.
+
 **Pass rule, fixed now.** From the BayesPrism benchmark, which reports correlation above 0.95 above about 50%
 purity [chu2022]:
 - **PASS:** median correlation of at least 0.95 at every purity of 0.5 and above.
