@@ -3,7 +3,7 @@
 """
 build_rat_token_dictionary.py — Merge the human/mouse token dict with the new rat tokens.
 
-Produces a single merged dictionary (55,275 entries for v2; 53,032 for April) for Stage 7 fine-tuning:
+Produces a single merged dictionary (55,275 entries, for April's model and for v2) for Stage 7 fine-tuning:
 
   human_mouse_tokens.pickle (50,558 entries)
     <pad>      → 0
@@ -12,11 +12,17 @@ Produces a single merged dictionary (55,275 entries for v2; 53,032 for April) fo
     ENSMUSG... → 23115–50557 (27,443 mouse genes)
 
   + every rat_tokens.pickle entry with a token ID of 50,558 or more
-    ENSRNOG... → 50558–55274 for v2: 4,717 new tokens = T3a 1,351 + T3b 892 + T4 2,474
-                 (April's Stage 3 gave only T4 genes a new token: 2,474 entries, 50558–53031.
-                 The code below calls the whole new block "T4" for that reason.)
+    ENSRNOG... → 50558–55274: 4,717 new tokens = T3a 1,351 + T3b 892 + T4 2,474
+                 (An earlier design, before the 2026-04-01 Stage 3 outputs, gave only T4 genes a new
+                 token: 2,474 entries, 50558–53031, 53,032 in all. No model was trained on it: the
+                 config.json of April's initial checkpoint and of v2's both record vocab_size 55,275.
+                 The code below still calls the whole new block "T4" from that design.)
 
-  = rat_human_mouse_tokens.pickle (50,558 + number of new tokens; v2: 55,275)
+  = rat_human_mouse_tokens.pickle (50,558 + number of new tokens = 55,275)
+
+  Correction, 2026-11-14: between commit 532f7cc and this one, this header said April's Stage 3 gave
+  only T4 genes a new token and that April's dictionary had 53,032 entries. That was not checked
+  against April's checkpoint and is wrong (docs/audit/remediation/STEP6_HYGIENE.md).
 
 T1 and T2 rat genes are intentionally excluded — they reuse existing human/mouse
 token IDs, so adding them would create duplicate values and inflate len().
@@ -49,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 ORIGINAL_VOCAB_SIZE = 50_558
 T4_START = ORIGINAL_VOCAB_SIZE
-EXPECTED_MERGED_SIZE = 53_032   # April's vocabulary (unused; v2 = 55,275)
+EXPECTED_MERGED_SIZE = 53_032   # the pre-April design's size (unused; April's model and v2 both have 55,275)
 
 
 def build_merged_dictionary(

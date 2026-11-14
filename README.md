@@ -138,6 +138,8 @@ python pipeline/run_stage6.py --from 2                  # family (8 min; determi
                                                         #   needs `pip install pyfaidx`, not in the lock),
                                                         # GRN transfer (seconds)
 python pipeline/run_stage6.py --from 1                  # + co-expression (~49 h; refuses the default config)
+#   Since 2026-11-14 a step whose <name>_embeddings.pkl already exists stops unless --overwrite is given:
+#   rerun into a fresh paths.prior_knowledge_dir, not over the deposited folder.
 #   v2's init takes only 36 T4 GRN rows from Stage 6 (GRN reproduces byte for byte). DEPOSITED: the whole folder
 #   (the family vectors were built with 8 gensim threads and cannot be regenerated).
 
@@ -147,10 +149,11 @@ python pipeline/run_stage7.py --from 1 --to 1           # init (seconds): rat_mo
 python pipeline/run_stage7.py --from 2 --to 2           # training mix (4.7 h, 546 GB; seed 42; 40/45/15 rat/human/mouse)
 python pipeline/run_stage7.py --from 3 --to 3           # evaluation probe (1.6 h; seed 20261008; md5s: data/training/eval_probe_v2.md5)
 #   Both reproduce byte for byte (state.json differs only in the HF fingerprint).
-PHASE=1 bash scripts/train_stage7.sh                    # phase 1: 517,793 steps on 4 x A100-40GB (about a week); rerun to resume
+PHASE=1 bash scripts/train_stage7.sh                    # phase 1: 517,793 steps on 4 x A100-40GB (4 days 23.6 h for v2); rerun to resume
 PHASE=2 bash scripts/train_stage7.sh                    # phase 2: 591,763 steps
 #   (= python pipeline/run_stage7.py --from 4 --phase N). GPU kernels are nondeterministic: a restart tracks
-#   v2's loss to 4 decimals but is not bit-identical. DEPOSITED: the phase 1 and phase 2 checkpoints.
+#   v2's loss to 4 decimals but is not bit-identical. DEPOSITED: the phase-2 final model (and the initial
+#   checkpoint above). No phase-1 checkpoint is in the deposit (config/deposit_md5.tsv).
 ```
 
 `pipeline/README.md` describes each stage. SLURM wrappers for this cluster are kept locally (`slurm/`, not in

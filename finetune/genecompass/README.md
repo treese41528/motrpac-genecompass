@@ -5,9 +5,12 @@
 Stage 7 adapts GeneCompass (12-layer BERT, GeneCompass_Base) to rat transcriptomics by continuing
 masked-language-model pre-training on a rat/human/mouse mix. The working model is **v2**
 (`docs/RETRAIN_V2_RESULTS.md`): 6,803,206 rat cells (584 QC files kept by `config/corpus_v2_plan.tsv`)
-interleaved 40/45/15 with GeneCompass's 0.5M human and mouse cells. The vocabulary grows from 50,558 to
-**55,275** tokens: 2,243 T3 rat tokens (warm-started from their human/mouse ortholog) and 2,474 T4
-rat-specific tokens (random rows). April's model (`configs/rat_finetune.yaml`) had 53,032.
+interleaved 40/45/15 with GeneCompass's human and mouse sets (5,000,000 and 4,969,697 cells; the folders
+are named `randsel_500w_*`, and upstream's table labels that download "0.5M"). The vocabulary grows from
+50,558 to **55,275** tokens: 2,243 T3 rat tokens (warm-started from their human/mouse ortholog) and 2,474
+T4 rat-specific tokens (random rows). April's model (`configs/rat_finetune.yaml`) has the same 55,275-token
+vocabulary (`vocab_size` in its checkpoints' `config.json`); this page said 53,032 until 2026-11-14, the
+size of an earlier design that no model was trained on.
 
 ## Quick start (v2 config: `configs/rat_finetune_v2.yaml`)
 
