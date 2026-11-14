@@ -1,0 +1,44 @@
+check	item	compared_with	reference_md5	new_md5	result	detail
+vst	sweeps on disk	/depot/reese18/apps/motrpac-genecompass/tmp/wt_step6/tmp/step6/final_12379200/new_tree/data/deconvolution/validation_refs4all_rebuild			INFO	11: SWEEP_bat_holdout, SWEEP_cortex_holdout, SWEEP_heart_holdout, SWEEP_hippoc_holdout, SWEEP_hypoth_holdout, SWEEP_kidney_holdout, SWEEP_lung_at2_holdout, SWEEP_lung_club_holdout, SWEEP_skmgn_holdout, SWEEP_smlint_holdout, SWEEP_testes_holdout
+vst	SWEEP_bat_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	8ecf46eb6b9c4dae666dee484b23c99b	8ecf46eb6b9c4dae666dee484b23c99b	IDENTICAL	
+vst	SWEEP_bat_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	8ecf46eb6b9c4dae666dee484b23c99b	8ecf46eb6b9c4dae666dee484b23c99b	IDENTICAL	
+vst	SWEEP_bat_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Brown adipocytes; 60 mixtures; median Pearson-VST 0.9982 truncated, 0.9983 rounded; change per mixture: min -0.0006, median +0.0000, max +0.0002
+vst	SWEEP_cortex_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	3e552385d4eb0cac75f178262ac89063	3e552385d4eb0cac75f178262ac89063	IDENTICAL	
+vst	SWEEP_cortex_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	3e552385d4eb0cac75f178262ac89063	3e552385d4eb0cac75f178262ac89063	IDENTICAL	
+vst	SWEEP_cortex_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Excitatory neurons; 60 mixtures; median Pearson-VST 0.9998 truncated, 0.9999 rounded; change per mixture: min +0.0000, median +0.0000, max +0.0002
+vst	SWEEP_heart_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	47fda99bbc178f5f2f884e4fb299cec4	47fda99bbc178f5f2f884e4fb299cec4	IDENTICAL	
+vst	SWEEP_heart_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	47fda99bbc178f5f2f884e4fb299cec4	47fda99bbc178f5f2f884e4fb299cec4	IDENTICAL	
+vst	SWEEP_heart_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Cardiomyocytes; 60 mixtures; median Pearson-VST 0.9991 truncated, 0.9991 rounded; change per mixture: min -0.0003, median +0.0001, max +0.0003
+vst	SWEEP_hippoc_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	622c8ce97e16a73078b4dfbb60a727fd	622c8ce97e16a73078b4dfbb60a727fd	IDENTICAL	
+vst	SWEEP_hippoc_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	622c8ce97e16a73078b4dfbb60a727fd	622c8ce97e16a73078b4dfbb60a727fd	IDENTICAL	
+vst	SWEEP_hippoc_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Excitatory neurons; 60 mixtures; median Pearson-VST 0.9994 truncated, 0.9995 rounded; change per mixture: min +0.0000, median +0.0001, max +0.0004
+vst	SWEEP_hypoth_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	81e6715ba0d768d33b3a35b7a85ccc66	81e6715ba0d768d33b3a35b7a85ccc66	IDENTICAL	
+vst	SWEEP_hypoth_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	81e6715ba0d768d33b3a35b7a85ccc66	81e6715ba0d768d33b3a35b7a85ccc66	IDENTICAL	
+vst	SWEEP_hypoth_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Glutamatergic neurons; 60 mixtures; median Pearson-VST 0.9950 truncated, 0.9952 rounded; change per mixture: min +0.0000, median +0.0003, max +0.0019
+vst	SWEEP_kidney_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	3581cf8ab870e2cab1850ae8397fe93a	3581cf8ab870e2cab1850ae8397fe93a	IDENTICAL	
+vst	SWEEP_kidney_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	3581cf8ab870e2cab1850ae8397fe93a	3581cf8ab870e2cab1850ae8397fe93a	IDENTICAL	
+vst	SWEEP_kidney_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Proximal tubule cells; 60 mixtures; median Pearson-VST 0.9987 truncated, 0.9988 rounded; change per mixture: min -0.0002, median +0.0001, max +0.0002
+vst	SWEEP_lung_at2_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	30ba8ce742c45f97c162678f9a4100e2	30ba8ce742c45f97c162678f9a4100e2	IDENTICAL	
+vst	SWEEP_lung_at2_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	30ba8ce742c45f97c162678f9a4100e2	30ba8ce742c45f97c162678f9a4100e2	IDENTICAL	
+vst	SWEEP_lung_at2_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Alveolar type II cells; 60 mixtures; median Pearson-VST 0.9975 truncated, 0.9977 rounded; change per mixture: min +0.0002, median +0.0003, max +0.0015
+vst	SWEEP_lung_club_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	0105e2e239a2e9bf4f16ca874bb95ee0	0105e2e239a2e9bf4f16ca874bb95ee0	IDENTICAL	
+vst	SWEEP_lung_club_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	0105e2e239a2e9bf4f16ca874bb95ee0	0105e2e239a2e9bf4f16ca874bb95ee0	IDENTICAL	
+vst	SWEEP_lung_club_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Club cells; 60 mixtures; median Pearson-VST 0.9972 truncated, 0.9973 rounded; change per mixture: min +0.0000, median +0.0001, max +0.0005
+vst	SWEEP_skmgn_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	c60b1fd16c8aa4a9ef2f35a7a5cf17c7	c60b1fd16c8aa4a9ef2f35a7a5cf17c7	IDENTICAL	
+vst	SWEEP_skmgn_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	c60b1fd16c8aa4a9ef2f35a7a5cf17c7	c60b1fd16c8aa4a9ef2f35a7a5cf17c7	IDENTICAL	
+vst	SWEEP_skmgn_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Skeletal muscle cells; 60 mixtures; median Pearson-VST 0.9961 truncated, 0.9963 rounded; change per mixture: min -0.0006, median +0.0001, max +0.0008
+vst	SWEEP_smlint_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	71ecf21f0062adf5d2e1a01f81be0e9f	71ecf21f0062adf5d2e1a01f81be0e9f	IDENTICAL	
+vst	SWEEP_smlint_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	71ecf21f0062adf5d2e1a01f81be0e9f	71ecf21f0062adf5d2e1a01f81be0e9f	IDENTICAL	
+vst	SWEEP_smlint_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Enterocytes; 60 mixtures; median Pearson-VST 0.9990 truncated, 0.9991 rounded; change per mixture: min +0.0000, median +0.0001, max +0.0003
+vst	SWEEP_testes_holdout/scores/z_vst_focal.tsv (default)	old script (44332e6)	16f6b6c6af7b08be2f2e9452be48175d	16f6b6c6af7b08be2f2e9452be48175d	IDENTICAL	
+vst	SWEEP_testes_holdout/scores/z_vst_focal.tsv against the scores on disk	validation_refs4all_rebuild	16f6b6c6af7b08be2f2e9452be48175d	16f6b6c6af7b08be2f2e9452be48175d	IDENTICAL	
+vst	SWEEP_testes_holdout: rounding instead of truncation (switch, off by default)	truncation (default)			INFO	focal Round spermatids; 60 mixtures; median Pearson-VST 0.9997 truncated, 0.9997 rounded; change per mixture: min -0.0000, median +0.0000, max +0.0000
+sweepgen	mixtures/pseudobulk_counts.mtx	old script (44332e6)	d77b9418cad8f70b9bc25d217efccff5	d77b9418cad8f70b9bc25d217efccff5	IDENTICAL	
+sweepgen	mixtures/true_fractions.tsv	old script (44332e6)	eeeade2ac7283567ba60ea77649842db	eeeade2ac7283567ba60ea77649842db	IDENTICAL	
+sweepgen	mixtures/true_z_focal.csv	old script (44332e6)	327ece5ecc5a1053e19bfa2faa2837a7	327ece5ecc5a1053e19bfa2faa2837a7	IDENTICAL	
+sweepgen	33 files of the sweep (mixtures, true Z, split reference)	old script (44332e6)			IDENTICAL	33 of 33 identical
+sweepgen	mixtures/true_fractions.tsv against the sweep on disk	validation_refs4all_rebuild/SWEEP_lung_at2_holdout	eeeade2ac7283567ba60ea77649842db	eeeade2ac7283567ba60ea77649842db	IDENTICAL	
+sweepgen	mixtures/pseudobulk_counts.mtx against the sweep on disk	validation_refs4all_rebuild/SWEEP_lung_at2_holdout	d77b9418cad8f70b9bc25d217efccff5	d77b9418cad8f70b9bc25d217efccff5	IDENTICAL	
+sweepgen	mixtures/sweep_design.tsv against the sweep on disk	validation_refs4all_rebuild/SWEEP_lung_at2_holdout	4e6191eee03e0c76952d403195c60328	4e6191eee03e0c76952d403195c60328	IDENTICAL	
+sweepgen	printed note names the mixtures with a negative cell fraction	true_fractions.tsv			IDENTICAL	negative in ['mix7', 'mix26', 'mix32']; note: NOTE: 3 of 60 mixtures have a background type with a negative cell count after the rounding-drift repair (mix7, mix26, mix32): their cellfrac__ columns are off 
+sweepgen	old script prints no such note	-			IDENTICAL	
