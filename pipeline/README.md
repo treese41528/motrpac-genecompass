@@ -2,9 +2,9 @@
 
 Each stage has a `run_stageN.py` orchestrator that validates config + inputs and
 runs its steps as subprocesses (`--dry-run` / `--from N` / `-v` supported). Stage
-workers live in `NN_*/` here, except the deconvolution and downstream-analysis
-stages (8, 9, 10, 12–14), which drive the scripts in `deconvolution/` and
-`finetune/genecompass/` in place.
+workers live in `NN_*/` here, except the fine-tuning (7), deconvolution and
+downstream-analysis stages (8–14), which drive the scripts in `finetune/genecompass/`,
+`deconvolution/` and `translation/` in place.
 
 | Stage | Orchestrator | What it does |
 |---|---|---|
@@ -14,24 +14,42 @@ stages (8, 9, 10, 12–14), which drive the scripts in `deconvolution/` and
 | 4 | `run_stage4.py` | Gene medians (scatter / gather). The divisor Stage 5 and Stage 9 use is the hybrid of these and GeneCompass's human medians: [`docs/SCHEME_B_MEDIANS.md`](../docs/SCHEME_B_MEDIANS.md) |
 | 5 | `run_stage5.py` | Reference assembly & tokenization |
 | 6 | `run_stage6.py` | Prior-knowledge embeddings |
-| 7 | `run_stage7.py` | Fine-tuning |
+| 7 | `run_stage7.py` | Fine-tuning, in four steps: initial checkpoint for the rat vocabulary, the rat/human/mouse training mix, the fixed evaluation probe, then training (phase 1 with the encoder frozen, phase 2 unfrozen). It never regenerates an existing checkpoint, mix or probe |
 | **8** | `run_stage8.py` | **Deconvolution** (MoTrPAC bulk → pseudo-cells; drives `deconvolution/`) |
 | **9** | `run_stage9.py` | **Tokenize + embed** (pseudo-cells → GeneCompass embeddings) |
 | **10** | `run_stage10.py` | **Aim-2 analysis** — per-cell-type DE + pre-registered positive-control comparison (whole-experiment) |
+| **11** | `run_stage11.py` | **Aim-2 gate** — which cell types carry a detectable training signal: the supervised probe with its permutation test over every tissue's embeddings, the Augur and PCA corroboration, and the merge that defines the hotspots (run once, after every tissue is embedded) |
 | **12** | `run_stage12.py` | **Cross-species transfer** — re-express rat pseudo-cells in human embedding space |
 | **13** | `run_stage13.py` | **Mechanism** — differential GRN (rat + human space) → rat–human self-consistency score → pathway enrichment |
 | **14** | `run_stage14.py` | **Hardening** — per-tissue expression-Z purity sweeps, composition-confound + RIN/globin DE robustness |
 
-*(Stage 11 is the Aim-2 gate, `run_stage11.py`: the 10 splits × 10,000 permutations probe that defines the
-hotspots. This table omitted it until 2026-11-14.)*
+The order in which the stages are run is 8, 9, 11, 10, 12, 13, 14: Stage 10 reads the hotspot table that
+Stage 11 writes (`deconvolution/DECONV_REBUILD_RUNBOOK.md` gives the commands). The table omitted Stage 11
+until 2026-11-14.
 
-**Default configuration (2026-11-01): the v2 model on the refs4 references, all 16 tissues.**
-`config/pipeline_config.yaml` selects the jointly re-annotated references (`data/deconvolution/references_v4/`,
-BLOOD as a whole-blood composite, plus SPLEEN and OVARY) and writes to `data/deconvolution/results_refs4all/`,
-`genecompass_input_v2_refs4all/` (+ `_human/`), `augur_input_v2_refs4all/` and `grn_v2_refs4all/` (+ `_human/`).
-Other arms are profiles: `PIPELINE_PROFILE=config/profiles/refs4_14.yaml` (refs4 on 14 tissues, the default
-2026-10-31 to 11-01), `config/profiles/july_refs.yaml` (v2 on the July references) and
-`config/profiles/april.yaml` (April's model); `config/profiles/refs_v4all.yaml` is now a no-op.
+**Where the outputs are.** The folders change with each arm of the analysis, so they are not listed here:
+read them from `config/pipeline_config.yaml`. This paragraph named folders of a superseded arm until
+2026-11-14.
+
+| Config key | Holds |
+|---|---|
+| `deconvolution/tissue_references.yaml`, `reference_dir` of each tissue | The single-cell reference Stage 8 deconvolves that tissue against |
+| `deconvolution.results_dir` | Stage 8: fractions, expression (Z) and the sample key of each tissue, under `motrpac/<TISSUE>/` |
+| `deconvolution.genecompass_input_dir` | Stages 8–9: pseudo-cells, tokenized datasets and embeddings per tissue; Stage 10's `pseudobulk_de/` |
+| `deconvolution.hotspots_table` | Stage 11: the gate's merged table; its folder holds every gate output |
+| `deconvolution.augur_input_dir` | Stage 11: the exports for Augur |
+| `deconvolution.genecompass_input_dir` + `_human` | Stage 12: the same pseudo-cells re-expressed as human, and their gate |
+| `deconvolution.grn_dir`, `deconvolution.grn_human_dir` | Stage 13: the network tables in rat and human space |
+| `deconvolution.validation_dir` | Stage 14: the purity sweeps |
+
+The default arm is the one `config/pipeline_config.yaml` names. Another arm is selected with
+`PIPELINE_PROFILE=config/profiles/<name>.yaml`, a file of overrides whose header says what it is:
+`refs5.yaml` (the audit-remediation rerun, `docs/audit/remediation/STEP3_PREREG.md`), `refs4_14.yaml` (14
+tissues), `july_refs.yaml` (the July references), `april.yaml` (April's model). Several profiles now repeat
+the default and change nothing; their headers say so.
+
+**The table below quotes the default arm as it stood before the refs5 rerun.** It is rewritten when that
+rerun is adopted.
 
 | Stage | Question | Current result (16 tissues; `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`; refs4 14-tissue figures in brackets) |
 |---|---|---|
