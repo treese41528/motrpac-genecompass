@@ -1,11 +1,23 @@
 #!/usr/bin/env Rscript
-# de_technical_covariate_robustness.R -- Aim 2 hardening: is the per-cell-type exercise (dose)
-# signal robust to RNA-quality technical covariates? The main DE (run_pseudobulk_de.R) omitted
-# RIN / % globin because motrpac_sample_pheno.tsv lacked them -- but they ARE in the local
-# MotrpacRatTraining6moData::TRNSCRPT_META (RIN, pct_globin, per viallabel). For every HOTSPOT
-# block we re-fit the ordinal dose slope on log2-CPM of the BayesPrism Z with and without
-# {RIN + pct_globin} as covariates and compare the per-gene dose statistic. High agreement =
-# the exercise signal is not a technical-quality artifact.
+# de_technical_covariate_robustness.R -- the earlier RIN / percent-globin check, on the ORDINAL SLOPE.
+#
+# What it tests. For every hotspot block it fits the ordinal dose model (~ sex + week, week numeric
+# 0, 1, 2, 4, 8) on log2-CPM of the BayesPrism Z twice, without and with RIN and pct_globin as covariates,
+# and compares the week coefficient: Spearman correlation of the moderated t over genes, Pearson correlation
+# of the slopes, and the share of genes with per-block BH < 0.05 that stay significant. The verdict is
+# ROBUST when the correlation is at least 0.9 and the retained share is at least 0.8 (or undefined because
+# the base model has no significant gene), otherwise CHECK.
+#
+# What it does not test. The headline of Stage 10 is not the ordinal slope: "dose-significant" is the Fisher
+# combination of the per-sex omnibus F over factor(week), adjusted by one IHW fit pooled over all blocks.
+# This script refits a different model with a different multiplicity rule, on hotspots only, passes a hotspot
+# that has no significant gene, and does not look at calls gained (audit finding 7.6). The check on the
+# headline statistic is deconvolution/compare_de_runs.py (STEP3_PREREG.md 6.4): the whole DE is rerun with
+# the covariates in every model (pipeline/run_stage10.py --covariate-variants A B) and compared with the
+# headline per block. This script is kept unchanged as the earlier ordinal-slope check.
+#
+# The covariates come from the vendored MotrpacRatTraining6moData submodule (TRNSCRPT_META.rda, columns RIN
+# and pct_globin, per viallabel), not from the installed package.
 #
 # Out: <DE folder>/rin_globin_robustness.tsv (DE folder: $DE_DIR, which pipeline/run_stage14.py sets, else
 # <genecompass_input_dir>/pseudobulk_de from the config, else the repo default)
