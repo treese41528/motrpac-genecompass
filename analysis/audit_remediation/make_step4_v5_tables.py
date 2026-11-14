@@ -80,7 +80,14 @@ def references(root):
     return ss.battery_sets(str(root), ARMS)
 
 
-def status_table(root, sets):
+def same_as_previous(now, then):
+    """'identical', 'different' or 'absent' (either file missing): md5 of two files."""
+    if not (now.exists() and then.exists()):
+        return "absent"
+    return "identical" if ss.md5(str(now)) == ss.md5(str(then)) else "different"
+
+
+def status_table(root, sets, previous=None):
     rows = []
     for s in sets:
         ref_md5, truth_md5, row = set(), set(), {"reference": s}
@@ -100,6 +107,16 @@ def status_table(root, sets):
                           "total_read_counts", "simbu_version"):
                     row[k] = meta.get(k)
         row["arms_built"] = "".join(present)
+        # arms B and C make the simulate call of 2026-11-11's nobias and bias arms: on a reference that did not
+        # change, their mixtures should be the same files
+        if previous is not None:
+            for arm, old in (("B", "nobias"), ("C", "bias")):
+                row[f"{arm}_mixtures_vs_20261111_{old}"] = same_as_previous(
+                    root / s / arm / "mixtures" / "pseudobulk_counts.mtx",
+                    Path(previous) / s / old / "mixtures" / "pseudobulk_counts.mtx")
+            row["truth_vs_20261111"] = same_as_previous(root / s / "B" / "mixtures" / "true_fractions.tsv",
+                                                        Path(previous) / s / "nobias" / "mixtures" / "true_fractions.tsv")
+            row["reference_since_20261111"] = CHANGED.get(s, "byte-identical")
         row["same_reference"] = len(present) == 3 and len(ref_md5) == 1
         row["same_truth"] = len(present) == 3 and len(truth_md5) == 1
         for a in ARMS:
@@ -274,7 +291,7 @@ def main():
         sys.exit(f"no references with arms A, B or C under {root}")
     w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.5f")
 
-    status = status_table(root, sets); w(status, "v5_status.tsv")
+    status = status_table(root, sets, a.previous if Path(a.previous).is_dir() else None); w(status, "v5_status.tsv")
     rmse = rmse_table(root, sets); w(rmse, "v5_rmse.tsv")
     bp = rmse[rmse["method"] == "bp_rna"].drop(columns="method"); w(bp, "v5_bayesprism.tsv")
     common = common_set(rmse)
@@ -297,6 +314,11 @@ def main():
              f"one cell-fraction truth: {int(status['same_truth'].sum())}/{len(sets)}; "
              f"simulate call as registered: " + ", ".join(
                  f"{arm} {int(status[f'call_{arm}_as_registered'].sum())}/{len(sets)}" for arm in ARMS))
+    if "B_mixtures_vs_20261111_nobias" in status:
+        same = status[status["reference_since_20261111"] == "byte-identical"]
+        L.append(f"Arms B and C against the nobias and bias mixtures of 2026-11-11, on the {len(same)} references that did "
+                 f"not change: B identical {int((same['B_mixtures_vs_20261111_nobias'] == 'identical').sum())}/{len(same)}, "
+                 f"C identical {int((same['C_mixtures_vs_20261111_bias'] == 'identical').sum())}/{len(same)}")
     nots = rmse[rmse["status"] != "ok"]
     L.append(f"Method runs scored: {int((rmse['status'] == 'ok').sum())} of {len(rmse)} reference x method (all three arms). "
              f"Not complete: {len(nots)}")

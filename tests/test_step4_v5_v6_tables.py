@@ -138,6 +138,25 @@ def test_v5_common_set_is_over_all_three_arms_and_a_differing_contrast_is_shown(
     assert rmse[(rmse["reference"] == "R3") & (rmse["method"] == "dwls")]["status"].iloc[0] == "not scored in A"
 
 
+def test_v5_compares_arms_b_and_c_with_the_earlier_battery_files(tmp_path, monkeypatch, capsys):
+    root, prev, out = tmp_path / "simbu", tmp_path / "prev", tmp_path / "rec"
+    _v5_reference(root, "LIVER", {m: (0.01, 0.02, 0.03) for m in METHODS})
+    _v5_reference(root, "HEART", {m: (0.01, 0.02, 0.03) for m in METHODS})
+    for code in ("LIVER", "HEART"):
+        for arm, old, body in (("B", "nobias", "same"), ("C", "bias", "same" if code == "LIVER" else "other")):
+            (root / code / arm / "mixtures" / "pseudobulk_counts.mtx").write_text("same")
+            d = prev / code / old / "mixtures"; d.mkdir(parents=True)
+            (d / "pseudobulk_counts.mtx").write_text(body)
+    monkeypatch.setattr(sys, "argv", ["x", "--root", str(root), "--previous", str(prev), "--out", str(out)])
+    v5.main()
+    txt = capsys.readouterr().out
+    st = pd.read_csv(out / "v5_status.tsv", sep="\t").set_index("reference")
+    assert st.loc["LIVER", "B_mixtures_vs_20261111_nobias"] == "identical" and st.loc["LIVER", "C_mixtures_vs_20261111_bias"] == "identical"
+    assert st.loc["HEART", "C_mixtures_vs_20261111_bias"] == "different" and st.loc["HEART", "truth_vs_20261111"] == "absent"
+    assert st.loc["HEART", "reference_since_20261111"].startswith("labels changed")
+    assert "on the 1 references that did not change: B identical 1/1, C identical 1/1" in txt     # HEART is not counted
+
+
 def test_v5_flags_arms_that_do_not_share_a_truth_or_were_simulated_otherwise(tmp_path, monkeypatch, capsys):
     root, out = tmp_path / "simbu", tmp_path / "rec"
     _v5_reference(root, "R1", {m: (0.01, 0.02, 0.03) for m in METHODS},
