@@ -192,3 +192,11 @@ from and any modified tracked file. Three lanes, so at most three of these jobs 
 | D, E, F | 12380296, 12380297, 12380298 | V6 DWLS (9, 7 and 3 sets), after A, B and C |
 | tables | 12380299 | the three table and figure commands, after D, E and F |
 | smoke tables | 12380311 | regression of `simbu_summary.py` and `mixture_panel_summary.py` against their committed records; tables of the smoke runs |
+
+**Scheduling change, 2026-11-14 16:32, before any of these jobs had started.** The partition was saturated
+(about 250 eligible jobs of other groups at the same or higher priority) and the build job had waited an hour.
+Jobs A, B and C were made eligible at once instead of after the build job: the first task to run in any of them
+now builds the battery's sets if they are missing, under a lock so that only one builder runs
+(`slurm/analysis/v56_ensure_build.sh`); the build job, if it starts later, finds the sets built and ends. The
+build commands, the sets and every per-task setting are unchanged. Time limits were shortened (A 9 h, B to F
+12 h) so the jobs fit more gaps in the schedule.
