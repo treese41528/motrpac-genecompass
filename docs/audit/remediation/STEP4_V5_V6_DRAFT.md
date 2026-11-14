@@ -241,6 +241,11 @@ One job ran the offline test suite and then both batteries on TESTES with the re
 - **The table and figure commands ran on the smoke outputs.** One defect was found and fixed (`7b014d9`): a
   table with no rows was written without its header, which stopped the figure script.
 
+- **The changed summary scripts reproduce the earlier records** (job 12380311, commit `ddccec7`).
+  `simbu_summary.py`, which now takes the two arms to compare, rewrites the nine files of
+  `deconvolution/simbu_record_refs4all/` byte for byte from the 2026-11-11 battery; `mixture_panel_summary.py`
+  rewrites the seven files of `deconvolution/mixture_panel_record/` byte for byte from the 2026-11-08 panel.
+
 After the smoke run one setting of the job scripts changed, before any full run started: `PROVENANCE_MD5=1`,
 so that the Stage 8 runner also records the md5 of its inputs. It changes no computation.
 
