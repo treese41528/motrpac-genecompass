@@ -135,10 +135,13 @@ def main():
          "max_study_count_share_different": float(st.count_share_different.max()),
          "studies_above_0.5pct_counts_different": int((st.count_share_different > 0.005).sum()), "studies": len(st)}
     pd.Series(o).to_csv(out / "id_symbol_overall.tsv", sep="\t", header=["value"]); print(pd.Series(o).to_string(), flush=True)
-    conf = {}
+    conf, by_study = {}, {}
     for (r, cs) in res:
         for g, fsym, s115, w in cs:
             c = conf.setdefault((g, fsym, s115), [0, 0.0, set()]); c[0] += 1; c[1] += w; c[2].add(r["study"])
+            k = (r["study"], g, fsym, s115); by_study[k] = by_study.get(k, 0.0) + w
+    pd.DataFrame([{"study": k[0], "ensembl_id": k[1], "file_symbol": k[2], "release115_symbol": k[3], "counts": v}
+                  for k, v in by_study.items()]).to_csv(out / "id_symbol_conflicts_by_study.tsv.gz", sep="\t", index=False)
     cf = pd.DataFrame([{"ensembl_id": g, "file_symbol": f, "release115_symbol": s, "n_samples": v[0], "counts": v[1],
                         "n_studies": len(v[2]), "studies": ",".join(sorted(v[2])[:8])} for (g, f, s), v in conf.items()])
     if len(cf):
