@@ -44,8 +44,27 @@ B   <- file.path("data/deconvolution/motrpac_bulk", TIS)
 mat <- readMM(file.path(B,"bulk.mtx"))
 bg  <- readLines(file.path(B,"bulk_genes.tsv"))
 bs  <- readLines(file.path(B,"bulk_samples.tsv"))
-mat <- as.matrix(mat); if (nrow(mat)!=length(bg)) mat <- t(mat)
+bg <- bg[trimws(bg) != ""]; bs <- trimws(bs); bs <- bs[bs != ""]
+# Orientation and names (2026-11-14). The matrix is put genes x samples by comparing its shape with the two
+# name files. A shape that fits neither way, or both ways (as many genes as samples), stops the run: the
+# rows and columns would be named by position with nothing to check them against.
+mat <- as.matrix(mat)
+if (length(bg) == length(bs) || !(all(dim(mat) == c(length(bg), length(bs))) || all(dim(mat) == c(length(bs), length(bg)))))
+  stop(sprintf("bulk.mtx is %d x %d but bulk_genes.tsv has %d lines and bulk_samples.tsv %d: cannot name its rows and columns",
+               nrow(mat), ncol(mat), length(bg), length(bs)))
+if (nrow(mat)!=length(bg)) mat <- t(mat)
 rownames(mat) <- bg; colnames(mat) <- bs
+# Sample key: where the BayesPrism run this is compared with wrote one, it must agree with bulk_samples.tsv
+# (deconvolution/R/sample_key.R; audit finding 6.9). A results folder without the key is reported, not fatal,
+# because the proportions below are named by vial label through CDSeq's own column names, not by position.
+RES_TIS <- file.path("data/deconvolution/results/motrpac", TIS)
+if (file.exists(file.path(RES_TIS, "mixture_samples.tsv"))) {
+  source(file.path(local({
+    a <- commandArgs(trailingOnly = FALSE); f <- sub("^--file=", "", a[grep("^--file=", a)])
+    if (length(f)) dirname(normalizePath(f[1])) else "deconvolution/R" }), "sample_key.R"))
+  invisible(read_sample_key(file.path(B, "bulk_samples.tsv"), RES_TIS, TIS))
+  cat("sample key: mixture_samples.tsv of the BayesPrism run equals bulk_samples.tsv, in order\n")
+} else cat(sprintf("sample key: no mixture_samples.tsv in %s; not checked\n", RES_TIS))
 
 # same gene axis BayesPrism used -> directly comparable, no extra filtering
 gfile <- file.path("data/deconvolution/results/motrpac", TIS, "pred_z", "genes.txt")
@@ -53,7 +72,8 @@ if (file.exists(gfile)) {
   keep <- intersect(readLines(gfile), rownames(mat))
   mat  <- mat[keep, , drop=FALSE]
   cat(sprintf("restricted to BayesPrism's gene axis: %d genes\n", nrow(mat)))
-}
+} else cat(sprintf("NOTE: %s not found: the bulk is NOT restricted to BayesPrism's gene axis (%d genes kept)\n",
+                   gfile, nrow(mat)))
 mat <- round(mat); mode(mat) <- "integer"
 
 cat(sprintf("bulk: %d genes x %d samples | K=%d | iters=%d\n", nrow(mat), ncol(mat), K, ITER))
@@ -73,9 +93,19 @@ res <- CDSeq(bulk_data       = mat,
              print_progress_msg_to_file = 1)
 cat(sprintf("CDSeq(RR) wall time: %.1f min\n", as.numeric(difftime(Sys.time(), t0, units="mins"))))
 
-prop <- res$estProp; gep <- res$estGEP
-if (nrow(prop) != ncol(mat)) prop <- t(prop)
-colnames(prop) <- paste0("CDSeq_", seq_len(ncol(prop))); rownames(prop) <- colnames(mat)
+# Name the proportions through CDSeq's own sample names, not by position (2026-11-14). CDSeq returns estProp
+# as cell types x samples with the bulk matrix's column names on its columns. Until this date the script
+# transposed "if the row count is not the sample count" and then wrote the names on by position, which is
+# wrong without a message when K equals the number of samples or CDSeq reorders samples. When the names are
+# right the table is the same as before.
+cdseq_samples_by_type <- function(est, sample_names) {
+  if (is.null(colnames(est)) || !identical(colnames(est), sample_names))
+    stop("CDSeq's estProp does not carry the bulk matrix's sample names, in order, on its columns; ",
+         "refusing to name the proportions by position")
+  t(est)                                    # samples x K, rows = vial labels
+}
+prop <- cdseq_samples_by_type(res$estProp, colnames(mat)); gep <- res$estGEP
+colnames(prop) <- paste0("CDSeq_", seq_len(ncol(prop)))
 colnames(gep)  <- paste0("CDSeq_", seq_len(ncol(gep)))
 
 # genes that survived the random block draw (the ONLY thing this run can drop)
