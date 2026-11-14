@@ -1,0 +1,12 @@
+kind	files	same
+bp_result.rds	16	16
+celltype_files.tsv	16	16
+estimated_fractions.csv	16	16
+genes.txt	16	16
+mixture_samples.tsv	16	16
+predz__*.csv	194	194
+provenance_extract_z.json	16	0
+provenance_run_deconvolution.json	16	0
+pseudocells.h5ad	16	16
+summary.txt	16	16
+types.txt	16	16

@@ -165,20 +165,38 @@ Written stage by stage. Sections that have no numbers yet say so.
 
 ### B1. Stage 8: deconvolution
 
-**The run.** All 16 tissues (749 samples) were deconvolved from one commit, `32bb97b`, with no modified
-tracked file (jobs 12376310 to 12376325).
+**The run, and its repeat.** All 16 tissues (749 samples) were deconvolved from one commit, `32bb97b`, with no
+modified tracked file (jobs 12376310 to 12376325). The comparison and the target sum below come from that
+run. The target sum can only be set after Stage 8, and setting it is a commit. So that every stage of the
+rerun comes from one commit, which is the registered condition for refs5 to become the default, Stage 8 was
+then repeated together with Stage 9 from the commit that carries the target sum, `44332e6` (jobs 12377805 to
+12377820).
+
+**The repeat reproduced the first run byte for byte.**
+
+| File | Tissues or files | Identical md5 |
+|---|---|---|
+| Estimated fractions | 16 | 16 |
+| Per-cell-type expression (Z) | 194 | 194 |
+| The fitted BayesPrism object | 16 | 16 |
+| Pseudo-cells | 16 | 16 |
+| Gene list, type list, sample key, summary | 16 each | 16 each |
+| Provenance records (they hold the commit and the time) | 32 | 0, as expected |
+
+Record: `record/step3/stage8/stage8_md5_first_run_vs_rerun.tsv` and its summary. The outputs on disk are the
+repeat's; every number in this section is unchanged by it.
 
 | Check | Result |
 |---|---|
-| Commit recorded by each tissue | `32bb97b` in 16 of 16 |
+| Commit recorded by each tissue | `32bb97b` in 16 of 16 (first run); `44332e6` in 16 of 16 (repeat) |
 | Tissues run from a tree with uncommitted changes | 0 |
 | Exclusion list | `rat_exclude_genes_v2.tsv`, md5 `61a5f0b0...`, in 16 of 16 |
 | Sampler settings, read back from the fitted object | chain 1,000, burn-in 500, thinning 2, seed 123, alpha 1, in 16 of 16 |
 | Sample key written beside the fractions | 16 of 16 |
 | Sample-join check of Step 1, repeated on this tree | Links A to D pass in 16 of 16; lowest male Y-linked expression 21.4 CPM, highest female 7.9 |
 
-Record: `record/step3/stage8/stage8_provenance_refs5.tsv`, `sample_join_summary.tsv`,
-`sample_join_per_sample.tsv`.
+Record: `record/step3/stage8/stage8_provenance_refs5.tsv` (first run),
+`stage8_provenance_refs5_rerun_44332e6.tsv` (repeat), `sample_join_summary.tsv`, `sample_join_per_sample.tsv`.
 
 **Genes.** Each tissue loses 58 to 122 genes to the rebuilt exclusion list and gains 8 or 9: the S6 kinases
 and Mrps36 (Kgd4), which the old list had filed as ribosomal proteins. In LIVER all 74 genes that left are on
@@ -258,7 +276,7 @@ control-only reference "Sertoli cells" has 21 cells, one above the 20-cell rule.
 Record: `record/step3/stage8/testes_controlonly_vs_primary_by_type.tsv` (job 12376328, same commit). The
 primary stays the pooled reference, as registered. The choice is the PI's and the collaborator's.
 
-### B3. Stage 9: the target sum
+### B3. Stage 9: the target sum, tokenization and embedding
 
 The registered formula (`RETRAIN_V2_PREREGISTRATION.md`, lines 155-164; `STEP3_PREREG.md` 3) fixes one target
 sum for every tissue from the LIVER pseudo-cells.
@@ -275,6 +293,40 @@ sum for every tissue from the LIVER pseudo-cells.
 The registration's estimate on the old LIVER pseudo-cells was "about 6,800". The value is the formula's on
 the refs5 pseudo-cells; it was set in `config/profiles/refs5.yaml` before any tissue was tokenized for
 analysis. Record: `record/step3/stage8/target_sum.json` (job 12376341).
+
+**Stage 9 ran for all 16 tissues from `44332e6`, clean tree.** LIVER's median at 6,700 is 0.9100, the
+formula's prediction.
+
+| Tissue | Pseudo-cells embedded | Dropped (fewer than 200 genes) | Genes eligible for a token | Median non-zero value |
+|---|---|---|---|---|
+| BAT | 300 | 0 | 14,102 | 0.868 |
+| BLOOD | 650 | 0 | 14,811 | 0.878 |
+| CORTEX | 600 | 0 | 15,306 | 1.027 |
+| HEART | 750 | 0 | 15,765 | 0.919 |
+| HIPPOC | 550 | 0 | 15,243 | 1.056 |
+| HYPOTH | 550 | 0 | 13,985 | 0.990 |
+| KIDNEY | 750 | 0 | 14,833 | 1.022 |
+| LIVER | 400 | 0 | 12,701 | 0.910 |
+| LUNG | 1,028 | 22 | 15,158 | 1.131 |
+| OVARY | 432 | 0 | 14,095 | 0.996 |
+| SKMGN | 450 | 0 | 13,093 | 0.898 |
+| SKMVL | 450 | 0 | 13,092 | 0.916 |
+| SMLINT | 650 | 0 | 12,790 | 0.884 |
+| SPLEEN | 700 | 0 | 13,065 | 0.977 |
+| TESTES | 150 | 0 | 13,623 | 1.130 |
+| WATSC | 650 | 0 | 12,781 | 0.938 |
+| **All** | **9,060** | **22** | | |
+
+- **The model weights loaded completely in every tissue:** 234 of 234 tensors, none missing, none unexpected,
+  none differing after the load. This is the guard added in Step 1 (finding 6.7), now recorded in each
+  tissue's embedding provenance.
+- **22 LUNG pseudo-cells are dropped at tokenization** because they express fewer than 200 eligible genes (the
+  current default dropped 18). All 22 are goblet-cell pseudo-cells, so LUNG goblet cells enter the gate with
+  28 of 50 samples. No other tissue loses a pseudo-cell.
+- **One target sum for 16 tissues is a compromise, as registered.** It puts LIVER on the training corpus's
+  median (0.9145); other tissues sit between 0.868 (BAT) and 1.131 (LUNG).
+
+Record: `record/step3/stage9/stage9_by_tissue_refs5.tsv`.
 
 ### B4 to B7. Gate, differential expression, transfer, networks
 
