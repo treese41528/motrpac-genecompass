@@ -20,6 +20,9 @@ Nothing under data/ is written.
             runs, not the p-values).
   atlas     translation/project_to_atlas.py score and prep (Kidney), OLD against NEW; the files on disk
             against translation/tabula_sapiens_md5.tsv.
+  vst       deconvolution/R/score_z_vst.R on every purity sweep on disk, OLD against NEW and against the
+            scores on disk; then NEW with SCORE_Z_VST_ROUND=1, to measure what rounding instead of
+            truncation would change (the switch is off by default).
 
   python analysis/audit_remediation/step6_neutrality_checks.py --old-tree DIR --new-tree DIR --scratch DIR \
          --record-dir docs/audit/remediation/record/step6 [--only refs stage3 ...]
@@ -338,8 +341,65 @@ def check_atlas(a):
     row("atlas", "prep provenance record", "-", "", "", "WRITTEN" if prov else "NOT WRITTEN", ", ".join(prov))
 
 
+# ----------------------------------------------------------------------------- purity-sweep scoring (VST)
+def check_vst(a):
+    """deconvolution/R/score_z_vst.R on every purity sweep on disk (config: deconvolution.validation_dir).
+    The script writes into <stage>/scores, so each run gets a scratch stage folder whose mixtures/ and
+    results/ are links to the sweep's own. Three runs per sweep: OLD, NEW (default) and NEW with
+    SCORE_Z_VST_ROUND=1. The first two must be identical, and equal to the scores on disk. The third is a
+    measurement: how far the Pearson-VST moves when counts are rounded instead of truncated."""
+    S = a.scratch / "vst"
+    val = Path(subprocess.run(
+        [PY, "-c", "import sys; sys.path.insert(0, 'lib'); from gene_utils import load_config, resolve_path;"
+                   "c = load_config(); print(resolve_path(c, c['deconvolution']['validation_dir']))"],
+        cwd=a.new_tree, env=dict(os.environ, PIPELINE_ROOT=str(a.new_tree)), capture_output=True, text=True,
+        check=True).stdout.strip())
+    script, out = "deconvolution/R/score_z_vst.R", "z_vst_focal.tsv"
+    sweeps = sorted(p for p in val.glob("SWEEP_*") if (p / "sweep_spec.json").exists()
+                    and (p / "mixtures/true_z_focal.csv").exists() and (p / "results/pred_z").is_dir())
+    row("vst", "sweeps on disk", str(val), "", "", "INFO", f"{len(sweeps)}: " + ", ".join(p.name for p in sweeps))
+
+    def scores(path):
+        with open(path) as fh:
+            return {r["mixture"]: float(r["pearson_vst"]) for r in csv.DictReader(fh, delimiter="\t")
+                    if r["pearson_vst"] not in ("", "NA")}
+
+    for sw in sweeps:
+        focal = json.load(open(sw / "sweep_spec.json"))["focal"]
+        runs = {}
+        for tag, tree, env in (("old", a.old_tree, {}), ("new", a.new_tree, {}),
+                               ("new_round", a.new_tree, {"SCORE_Z_VST_ROUND": "1"})):
+            stage = S / sw.name / tag
+            stage.mkdir(parents=True, exist_ok=True)
+            for sub in ("mixtures", "results"):
+                if not (stage / sub).exists():
+                    os.symlink(sw / sub, stage / sub)
+            rc, _ = run(rscript(tree, script) + [stage, focal], tree, S / sw.name / f"{tag}.log", env=env)
+            runs[tag] = stage / "scores" / out if rc == 0 else None
+        if runs["old"] is None or runs["new"] is None:
+            row("vst", f"{sw.name}: run", "-", "", "", "RUN FAILED", f"focal {focal}")
+            continue
+        compare_file("vst", f"{sw.name}/scores/{out} (default)", runs["old"], runs["new"], "old script (44332e6)")
+        if (sw / "scores" / out).exists():
+            compare_file("vst", f"{sw.name}/scores/{out} against the scores on disk", sw / "scores" / out,
+                         runs["new"], str(val.name))
+        if runs["new_round"] is not None:
+            t, r = scores(runs["new"]), scores(runs["new_round"])
+            common = sorted(set(t) & set(r))
+            if common:
+                d = [r[m] - t[m] for m in common]
+                med = lambda v: sorted(v)[len(v) // 2]                                   # noqa: E731
+                row("vst", f"{sw.name}: rounding instead of truncation (switch, off by default)",
+                    "truncation (default)", "", "", "INFO",
+                    f"focal {focal}; {len(common)} mixtures; median Pearson-VST {med([t[m] for m in common]):.4f} "
+                    f"truncated, {med([r[m] for m in common]):.4f} rounded; change per mixture: "
+                    f"min {min(d):+.4f}, median {med(d):+.4f}, max {max(d):+.4f}")
+        else:
+            row("vst", f"{sw.name}: rounding run", "-", "", "", "RUN FAILED", f"focal {focal}")
+
+
 CHECKS = {"refs": check_refs, "stage3": check_stage3, "rin": check_rin, "pheno": check_pheno,
-          "augur": check_augur, "atlas": check_atlas}
+          "augur": check_augur, "atlas": check_atlas, "vst": check_vst}
 GOOD = {"IDENTICAL", "WRITTEN", "STOPPED", "INFO", "COUNT", "KEYS", "PATH ONLY", "EXPECTED DIFFERENCE"}
 
 
