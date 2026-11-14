@@ -1,16 +1,23 @@
 # provenance.R -- write a small JSON record of how an output was produced. The R twin of
 # lib/provenance.py, with the same fields: git commit (plus modified tracked files), command
-# line, time, host, run parameters, and the size and mtime of each input file.
+# line, time, host, run parameters, and the size, mtime and md5 of each input file.
 #
-# It never stops the run: a failure only prints a warning. md5 = TRUE (or env PROVENANCE_MD5=1) also records
-# each input file's md5 (tools::md5sum; directories are skipped) -- off by default because inputs can be GB.
+# It never stops the run: a failure only prints a warning. It is called after the outputs it describes are
+# written and never reads or changes them.
+#
+# md5. Since 2026-11-14 each regular input file under 2 GB also gets its md5 (tools::md5sum), as in
+# lib/provenance.py; size and mtime are kept. Larger files carry md5_skipped, directories carry neither.
+# Before that date the md5 was off unless PROVENANCE_MD5=1, so the records held size and time only (audit,
+# cross-stage "provenance"). md5 = FALSE, or env PROVENANCE_MD5=0, turns it off.
 #
 #   source(file.path(.script_dir, "provenance.R"))
 #   write_provenance(out_dir, inputs = c(pheno_tsv), params = list(alpha = ALPHA))
 #   # -> <out_dir>/provenance_<script>.json
 
+PROVENANCE_MD5_MAX_BYTES <- 2 * 1024^3   # as MD5_MAX_BYTES in lib/provenance.py
+
 write_provenance <- function(out_dir, inputs = character(), params = list(), name = NULL,
-                             md5 = identical(Sys.getenv("PROVENANCE_MD5"), "1")) {
+                             md5 = !identical(Sys.getenv("PROVENANCE_MD5"), "0")) {
   tryCatch({
     args_all <- commandArgs(trailingOnly = FALSE)
     script <- sub("^--file=", "", grep("^--file=", args_all, value = TRUE))
@@ -27,7 +34,14 @@ write_provenance <- function(out_dir, inputs = character(), params = list(), nam
       i <- file.info(p)
       rec <- list(path = p, exists = TRUE, bytes = unname(i$size),
                   mtime = format(i$mtime, "%Y-%m-%dT%H:%M:%S"))
-      if (isTRUE(md5) && !isTRUE(i$isdir)) rec$md5 <- unname(tools::md5sum(p))
+      if (isTRUE(md5) && !isTRUE(i$isdir)) {
+        if (isTRUE(i$size < PROVENANCE_MD5_MAX_BYTES)) {
+          rec$md5 <- tryCatch(unname(tools::md5sum(p)), error = function(e) NA_character_)
+        } else {
+          rec["md5"] <- list(NULL)
+          rec$md5_skipped <- sprintf("file >= %.0f bytes", PROVENANCE_MD5_MAX_BYTES)
+        }
+      }
       rec
     }
     record <- list(
