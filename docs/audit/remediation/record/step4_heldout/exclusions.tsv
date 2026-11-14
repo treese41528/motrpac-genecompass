@@ -1,0 +1,46 @@
+level	accession	file	kind	rule	detail
+series	GSE304911		note	sibling_of_training_under_superseries	sub-series of GSE304998, which is also the super-series of training series GSE284698
+series	GSE304998		exclusion	shares_gsm_with_training	41 of 71 samples are samples of training series GSE284698 (e.g. GSM8690733,GSM8690734,GSM8690735)
+series	GSE304998		exclusion	superseries_of_training	SuperSeries of GSE284698
+file	GSE169301	GSE169301_sample1 (GSM5194912_A2_control_matrix.mtx.gz)	no QC output	no_cells	Stage 2: load_failed; cells passing QC: 0
+file	GSE169301	GSE169301_sample2 (GSM5194913_1Ah_matrix.mtx.gz)	no QC output	no_cells	Stage 2: no_genes_mapped; cells passing QC: 0
+file	GSE169301	GSE169301_sample3 (GSM5194914_2Ah_matrix.mtx.gz)	no QC output	no_cells	Stage 2: no_genes_mapped; cells passing QC: 0
+file	GSE169301	GSE169301_sample4 (GSM5884076_Donor2_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	GEO organism: Homo sapiens; cells passing QC: 3596
+file	GSE169301	GSE169301_sample5 (GSM5884077_Donor3_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	GEO organism: Homo sapiens; cells passing QC: 3989
+file	GSE169301	GSE169301_sample6 (GSM5884078_Donor4_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	GEO organism: Homo sapiens; cells passing QC: 4075
+file	GSE169301	GSE169301_sample7 (GSM5884079_Donor5_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	GEO organism: Homo sapiens; cells passing QC: 961
+file	GSE202244	GSE202244_sample0 (GSE202244_NaikCounts_dgCMatrix.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 44855
+file	GSE202244	GSE202244_sample1 (GSE202244_NaikCounts_dgCMatrix.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 44855
+file	GSE202244	GSE202244_sample7 (GSM6106949_SM08_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE202244_sample5 in another processing (identical totals 0.00, log-total r 0.981; held-out safeguard); cells passing QC: 13482
+file	GSE236400	GSE236400_sample0 (GSM7530782_filtered_feature_bc_matrix_Chimera1.h5)	no QC output	no_cells	Stage 2: no_genes_mapped; cells passing QC: 0
+file	GSE236400	GSE236400_sample1 (GSM7530783_filtered_feature_bc_matrix_Chimera2.h5)	no QC output	no_cells	Stage 2: no_genes_mapped; cells passing QC: 0
+file	GSE263307	GSE263307_sample0 (GSM8189418_Acute02_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample1 in another processing (identical totals 0.00, log-total r 0.999; held-out safeguard); cells passing QC: 63931
+file	GSE263307	GSE263307_sample1 (GSM8189419_Acute04_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample3 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 77615
+file	GSE263307	GSE263307_sample2 (GSM8189420_Acute06_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample5 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 72905
+file	GSE263307	GSE263307_sample3 (GSM8189421_Acute08_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample7 in another processing (identical totals 0.00, log-total r 0.999; held-out safeguard); cells passing QC: 65001
+file	GSE263307	GSE263307_sample4 (GSM8189422_Acute10_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample9 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 75474
+file	GSE263307	GSE263307_sample5 (GSM8189423_Chronic01_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample10 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 72832
+file	GSE263307	GSE263307_sample6 (GSM8189424_Chronic03_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample12 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 64704
+file	GSE263307	GSE263307_sample7 (GSM8189425_Chronic05_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample14 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 63919
+file	GSE263307	GSE263307_sample8 (GSM8189426_Chronic07_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample16 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 65410
+file	GSE263307	GSE263307_sample9 (GSM8189427_Chronic09_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample18 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 69282
+file	GSE263307	GSE263307_sample10 (GSM8189428_Chronic11_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE171165_sample20 in another processing (identical totals 0.00, log-total r 0.998; held-out safeguard); cells passing QC: 62447
+file	GSE268104	GSE268104_sample0 (GSE268104_Count_output_mouse1_unselected_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 8478
+file	GSE268104	GSE268104_sample1 (GSE268104_Count_output_mouse2_unselected_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 8675
+file	GSE268104	GSE268104_sample19 (GSE268104_Multiome5merge_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 8338
+file	GSE268104	GSE268104_sample20 (GSE268104_multiomeC57A_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 4994
+file	GSE268104	GSE268104_sample21 (GSE268104_multiomeC57B_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 6104
+file	GSE268104	GSE268104_sample22 (GSE268104_multiomeC57Eunselected_filtered_feature_bc_matrix.h5)	exclusion	drop_nonrat	feature names are annotated with a mouse genome (held-out safeguard); cells passing QC: 4647
+file	GSE272794	GSE272794_sample0 (GSE272794_LCRMCV1.h5ad)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 74124
+file	GSE293074	GSE293074_sample5 (GSM8875826_SINS2_matrix.mtx.gz)	exclusion	drop_duplicate	same cells as GSE293074_sample4 in another processing (identical totals 0.00, log-total r 1.000; held-out safeguard); cells passing QC: 3010
+file	GSE301731	GSE301731_sample0 (GSE301731_IgG_IL17a_expression.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 6
+file	GSE301731	GSE301731_sample1 (GSE301731_IgG_IL17a_expression.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 6
+file	GSE301731	GSE301731_sample2 (GSE301731_LPS_DHT_LPS_expression.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 6
+file	GSE301731	GSE301731_sample3 (GSE301731_LPS_DHT_LPS_expression.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 6
+file	GSE301731	GSE301731_sample4 (GSE301731_PBS_CPA_expression.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 9
+file	GSE301731	GSE301731_sample5 (GSE301731_PBS_CPA_expression.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 9
+file	GSE301731	GSE301731_sample8 (GSE301731_WT_SRG_expression.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 8
+file	GSE301731	GSE301731_sample9 (GSE301731_WT_SRG_expression.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 8
+file	GSE301731	GSE301731_sample10 (GSE301731_main_groups_expression.csv)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 12
+file	GSE301731	GSE301731_sample11 (GSE301731_main_groups_expression.csv.gz)	exclusion	drop_not_raw_counts	source matrix is not integer counts; Stage 2 reverse-normalised it (no such file is in v2); cells passing QC: 12
+file	GSE307675	GSE307675_sample3 (GSM9285306_filtered_feature_bc_matrix_libB_2.h5)	exclusion	drop_duplicate	identical QC content to GSE307675_sample2; cells passing QC: 16511

@@ -1,0 +1,31 @@
+quantity	value	status
+v2_probe_id_loss	3.0589878566859188	registered
+v2_heldout_id_loss	3.199135110808296	registered
+ratio_v2_heldout_over_v2_probe_id_loss	1.0458149102540772	registered
+registered_reading	Generalises	registered: Generalises <= 1.10; Partly <= 1.25; Does not above
+heldout_studies	33	reported with it
+heldout_cells	66000	reported with it
+heldout_masked_tokens	13805095	reported with it
+probe_cells	2000	reported with it
+probe_studies	77	reported with it
+v2_probe_value_loss	0.00024770560525922184	reported with it
+v2_heldout_value_loss	0.0003745559632739544	reported with it
+ratio_v2_value_loss	1.512101282011704	reported with it (no registered threshold)
+april_probe_id_loss	5.3102290960526055	comparison (April was trained on other values; context)
+april_heldout_id_loss	5.3998890395379195	comparison
+ratio_april_heldout_over_april_probe_id_loss	1.0168843833031542	comparison
+april_probe_value_loss	0.000391625427248737	comparison
+april_heldout_value_loss	0.0005653653448662136	comparison
+context_per_study_ratio_median	1.053500847950798	not registered
+context_per_study_ratio_min	0.934207 (GSE286034)	not registered
+context_per_study_ratio_max	1.200662 (GSE268104)	not registered
+context_studies_at_or_under_1.10	28	not registered
+context_studies_1.10_to_1.25	5	not registered
+context_studies_above_1.25	0	not registered
+context_leave_one_study_out_ratio_range	1.041670 to 1.048948	not registered
+context_study_bootstrap_95pct_interval_of_ratio	1.026344 to 1.065428	not registered: 10,000 resamples of the held-out studies, probe loss fixed
+context_probe_per_study_ratio_range_studies_with_20_cells	0.901353 to 1.100225 (median 1.011383, 28 studies)	not registered: in-sample studies' loss over the pooled probe loss
+context_ratio_without_GSE304911	1.0479528909260725	not registered: without the series that shares a SuperSeries with a training series
+context_spatial_assay_cells_in_evaluation_set	243	not registered: cells of files whose GEO sample names a spatial assay (spots, not cells)
+context_spatial_assay_id_loss	3.092625293750863	not registered
+context_ratio_without_spatial_assay_cells	1.0459513421789348	not registered

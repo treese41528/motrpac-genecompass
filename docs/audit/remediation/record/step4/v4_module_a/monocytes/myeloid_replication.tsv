@@ -1,0 +1,3 @@
+factor	gene	n_cells	n_cells_of_type	mean_value	shift	n_null	null_median_shift	null_p90_shift	percentile	reading
+Spi1	ENSRNOG00000012172	50.0	50.0	1.427990894317627	2.3496149879065342e-06	232.0	1.3470649378177768e-06	4.424572080097278e-06	81.03448275862068	does not replicate
+Cebpa	ENSRNOG00000010918									not testable (coverage: token absent from the cells)

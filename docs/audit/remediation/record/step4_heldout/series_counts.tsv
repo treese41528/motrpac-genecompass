@@ -1,0 +1,17 @@
+step	n
+GEO series in the single-cell query (master_catalog.json)	292
+returned by both the single-cell and the bulk query	108
+  of those, typed 'bulk' in unified_studies.json	108
+  of those, in config/corpus_v2_plan.tsv	0
+LLM verdict rat and single-cell	79
+  with a matrix file row in the Stage 2 step 1 scan	52
+  with a file that passed the step 1 match gate	40
+  with a usable MTX, H5 or h5ad matrix (the candidates)	35
+  usable tabular file only (not in the registered set)	5
+candidates excluded: shares a GEO sample with a training series	1
+candidates excluded: SuperSeries or SubSeries of a training series	1
+candidates excluded, total	1
+held-out series entering cell QC	34
+training-side sample accessions compared	1120
+series in the corpus plan compared	89
+corpus-plan series with no SOFT file on disk	2

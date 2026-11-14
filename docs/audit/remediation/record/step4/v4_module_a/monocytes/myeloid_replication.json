@@ -1,0 +1,40 @@
+{
+  "factors": [
+    {
+      "factor": "Spi1",
+      "gene": "ENSRNOG00000012172",
+      "n_cells": 50.0,
+      "n_cells_of_type": 50.0,
+      "mean_value": 1.4279908943,
+      "shift": 2.3496e-06,
+      "n_null": 232.0,
+      "null_median_shift": 1.3471e-06,
+      "null_p90_shift": 4.4246e-06,
+      "percentile": 81.0344827586,
+      "reading": "does not replicate"
+    },
+    {
+      "factor": "Cebpa",
+      "gene": "ENSRNOG00000010918",
+      "n_cells": null,
+      "n_cells_of_type": null,
+      "mean_value": null,
+      "shift": null,
+      "n_null": null,
+      "null_median_shift": null,
+      "null_p90_shift": null,
+      "percentile": null,
+      "reading": "not testable (coverage: token absent from the cells)"
+    }
+  ],
+  "spearman_shift_value": {
+    "rho": 0.22260512363527285,
+    "p": 0.0006200435212940263,
+    "n": 233
+  },
+  "rule": {
+    "tolerance": 0.15,
+    "percentile": 90.0,
+    "min_cells": 20
+  }
+}

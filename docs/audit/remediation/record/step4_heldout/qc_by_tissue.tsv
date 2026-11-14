@@ -1,0 +1,22 @@
+tissue_group	series	files	cells_kept	series_list	geo_tissue_strings	motrpac_tissue_match
+blood / bone marrow	1	6	33780	GSE293074	blood:6	blood RNA:6
+blood vessel	1	5	43669	GSE202244	mesenteric artery - large (> 300 um):2; mesenteric artery - small (< 150 um):2; mesenteric artery - large (>300 um):1	none:5
+brain borders (meninges, choroid plexus, CSF)	1	1	24730	GSE165153	unknown:1	none:1
+brain: cortex / hippocampus	2	6	157597	GSE185538,GSE253358	cortex and hippocampus:4; orbitofrontal cortex:2	hippocampus:4; cortex:2
+brain: hypothalamus	1	2	8469	GSE221002	hypothalamus:2	hypothalamus:2
+brain: nucleus accumbens / striatum	5	44	1606357	GSE137759,GSE168599,GSE171165,GSE222418,GSE269490	frozen postmortem brain:22; nucleus accumbens:8; unknown:8; nucleus accumbens shell:4; brain:2	none:34; hippocampus:8; cortex:2
+brain: other or unspecified	1	12	123668	GSE272794	locus coeruleus:12	none:12
+brain: ventral tegmental area	2	18	70713	GSE168156,GSE308304	ventral tegmental area:18	none:18
+dorsal root ganglion	3	6	95744	GSE147615,GSE169301,GSE294564	l4-l6 drg:4; dorsal root ganglion (l4,5):1; unknown:1	none:6
+eye	1	1	7245	GSE282446	optic nerve head:1	none:1
+heart	3	27	392385	GSE182422,GSE236400,GSE299772	cardiac:24; heart:2; embrionic heart:1	none:24; heart:3
+intestine	1	7	26455	GSE293074	small intestine:7	small intestine:7
+joint / bone / cartilage	1	2	16552	GSE286034	meniscus:2	none:2
+lung	2	11	216504	GSE211914,GSE307675	lung:8; dissociated lung:3	lung:11
+mammary gland / tumour	1	6	42596	GSE304911	mammary gland:6	none:6
+peripheral nerve	1	33	123681	GSE216665	sciatic nerve:33	none:33
+skin	3	10	96591	GSE193564,GSE228235,GSE301731	skin:7; skin tissue:3	none:10
+spinal cord	1	3	5226	GSE207200	spinal cord:3	none:3
+spleen	1	1	13978	GSE288793	sars-cov-2:1	spleen:1
+testis	1	17	99606	GSE268104	testis:17	testis:17
+tooth	1	2	94025	GSE217465	first mandibular molar:1; second mandibular molar:1	none:2
