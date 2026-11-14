@@ -73,6 +73,9 @@ def read_run(de_dir):
     de_dir = Path(de_dir)
     summ = pd.read_csv(de_dir / "de_summary.tsv", sep="\t")
     summ["is_hotspot"] = is_true(summ["is_hotspot"])
+    if "gate_class" not in summ.columns:              # a summary written before the gate had classes
+        summ["gate_class"] = np.where(summ["is_hotspot"], "hotspot", "")
+    summ["gate_class"] = summ["gate_class"].fillna("").astype(str)
     if "low_fraction" in summ.columns:
         low = summ["low_fraction"].astype(str).str.strip().str.upper()
         summ["low_fraction"] = low.map({"TRUE": True, "FALSE": False})      # missing stays missing
@@ -152,9 +155,11 @@ def compare(headline_dir, variants):
     rows = []
     for key, s in h_summ.iterrows():
         analysed = key in h_files
-        if not analysed and not s["is_hotspot"]:
+        called = bool(s["is_hotspot"]) or s["gate_class"] == "borderline"
+        if not analysed and not called:
             continue                                  # an unanalysed block has nothing to compare
         row = {"tissue": s["tissue"], "cell_type": s["cell_type"], "is_hotspot": bool(s["is_hotspot"]),
+               "gate_class": s["gate_class"],
                "low_fraction": s["low_fraction"], "mean_fraction": s["mean_fraction"],
                "status_headline": "ok" if analysed else str(s["status"]),
                "n_genes_headline": np.nan, "n_sig_headline": np.nan}
@@ -179,7 +184,10 @@ def compare(headline_dir, variants):
                 row[f"{k}_{label}"] = v
         rows.append(row)
     out = pd.DataFrame(rows)
-    out["verdict"] = [hotspot_verdict(r, set(variants)) if r["is_hotspot"] else "" for _, r in out.iterrows()]
+    # The registered verdict is per hotspot. A borderline block gets the same reading, so that it is carried
+    # through this table by name (STEP3 §5.2); summaries count the two classes apart.
+    out["verdict"] = [hotspot_verdict(r, set(variants)) if (r["is_hotspot"] or r["gate_class"] == "borderline") else ""
+                      for _, r in out.iterrows()]
     out = out.sort_values(["is_hotspot", "n_sig_headline"], ascending=[False, False], kind="stable")
     count_cols = [c for c in out.columns if c.startswith(("n_genes", "n_sig", "n_retained", "n_lost", "n_gained"))]
     out[count_cols] = out[count_cols].astype("Int64")
@@ -203,8 +211,13 @@ def summarise(table, variants, alpha):
     L.append(f"hotspots: {len(hot)}; " + ", ".join(f"{k} {n}" for k, n in hot["verdict"].value_counts().items()))
     if not all(v in variants for v in REGISTERED_VARIANTS):
         L.append("  the registered verdict needs reruns A and B; hotspots with calls are NOT ASSESSED")
-    for r in hot.itertuples():
-        parts = [f"  {r.tissue} {r.cell_type}: {r.verdict}; headline {r.n_sig_headline}"]
+    border = table[table["gate_class"] == "borderline"]
+    if len(border):
+        L.append(f"borderline blocks (not hotspots; same reading, counted apart): {len(border)}; "
+                 + ", ".join(f"{k} {n}" for k, n in border["verdict"].value_counts().items()))
+    for r in pd.concat([hot, border]).itertuples():
+        tag = "" if r.is_hotspot else " [borderline]"
+        parts = [f"  {r.tissue} {r.cell_type}{tag}: {r.verdict}; headline {r.n_sig_headline}"]
         for v in variants:
             if getattr(r, f"status_{v}") == "ok":
                 parts.append(f"{v}: retained {getattr(r, f'n_retained_{v}')} "

@@ -49,5 +49,54 @@ def fig_hypoth():
     fs.save(fig, FIG / "step3_hypoth_labels.png")
 
 
+def fig_stage8():
+    """Figure B1: estimated fractions under refs5 against the current default, per tissue x cell type."""
+    f = REC / "stage8" / "fractions_refs5_vs_default_by_type.tsv"
+    if not f.exists():
+        return
+    t = pd.read_csv(f, sep="\t").dropna(subset=["pearson_r"])
+    kind = t["tissue"].map(lambda x: "HYPOTH" if x == "HYPOTH" else "HEART" if x == "HEART" else "other")
+    col = {"other": fs.BLUE, "HYPOTH": fs.ORANGE, "HEART": fs.AQUA}
+    lab = {"other": "14 tissues: only the exclusion list changed", "HYPOTH": "HYPOTH: reference re-annotated",
+           "HEART": "HEART: CD8+ T cells merged into T cells"}
+    fig, (a, b) = plt.subplots(1, 2, figsize=(11.2, 5.4), gridspec_kw={"width_ratios": [1, 1.15], "wspace": 0.42})
+
+    lo = 2e-5
+    for k in ["other", "HEART", "HYPOTH"]:
+        d = t[kind == k]
+        a.scatter(d["mean_old"].clip(lower=lo), d["mean_new"].clip(lower=lo), s=26, color=col[k], edgecolor=fs.SURFACE,
+                  linewidth=0.6, label=f"{lab[k]} ({len(d)})", zorder=3 if k != "other" else 2)
+    a.plot([lo, 1], [lo, 1], color=fs.NEUTRAL, linewidth=0.8, zorder=1)
+    a.set_xscale("log"); a.set_yscale("log"); a.set_xlim(lo, 1); a.set_ylim(lo, 1); a.set_aspect("equal")
+    a.set_xlabel("mean estimated fraction, current default"); a.set_ylabel("mean estimated fraction, refs5")
+    a.set_title("a. Mean fraction of each cell type")
+    a.legend(loc="upper left", bbox_to_anchor=(0.0, -0.16), ncol=1, handletextpad=0.3, borderaxespad=0)
+    for name in ["Neurons", "Oligodendrocyte precursor cells"]:
+        r = t[(t["tissue"] == "HYPOTH") & (t["cell_type"] == name)]
+        if len(r):
+            r = r.iloc[0]
+            a.annotate("HYPOTH " + ("OPC" if name.startswith("Oligo") else name.lower()), (r["mean_old"], r["mean_new"]),
+                       xytext=(-7, 5), textcoords="offset points", ha="right", fontsize=7.5, color=fs.INK2)
+
+    order = t.groupby("tissue")["pearson_r"].median().sort_values().index.tolist()
+    xmin = 0.80
+    for i, tis in enumerate(order):
+        d = t[t["tissue"] == tis]
+        k = "HYPOTH" if tis == "HYPOTH" else "HEART" if tis == "HEART" else "other"
+        b.scatter(d["pearson_r"].clip(lower=xmin), np.full(len(d), i), s=24, color=col[k], edgecolor=fs.SURFACE,
+                  linewidth=0.6, zorder=3, alpha=0.9)
+        off = d[d["pearson_r"] < xmin]
+        for _, r in off.iterrows():
+            b.annotate(f"{'OPC' if r['cell_type'].startswith('Oligodendrocyte p') else r['cell_type']}: r = {r['pearson_r']:.2f}",
+                       (xmin, i), xytext=(8, 7), textcoords="offset points", fontsize=7.5, color=fs.INK2)
+    b.set_yticks(range(len(order))); b.set_yticklabels(order)
+    b.set_xlim(xmin - 0.006, 1.004); b.set_ylim(-0.7, len(order) - 0.3)
+    b.set_xlabel("Pearson r across a tissue's samples, default against refs5\n(one dot per cell type)")
+    b.set_title("b. Do samples keep their order?")
+    b.grid(axis="y", visible=False)
+    fs.save(fig, FIG / "step3_stage8_fractions.png")
+
+
 if __name__ == "__main__":
     fig_hypoth()
+    fig_stage8()

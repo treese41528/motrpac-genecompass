@@ -14,6 +14,9 @@ deconvolution:
   grn_human_dir: data/deconvolution/grn_v2_refs5_human
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
   validation_dir: data/deconvolution/validation_refs5
-  # Stage 9 target sum: NOT SET YET. It is fixed by the registered formula from the refs5 LIVER pseudo-cells
-  # (deconvolution/calibrate_target_sum.py) after Stage 8 and before any tissue is tokenized. Until then this
-  # profile keeps the default's 6,400, which is also the T0 the formula starts from.
+  # Stage 9 target sum, fixed by the registered formula (RETRAIN_V2_PREREGISTRATION.md:155-164; STEP3_PREREG.md 3)
+  # before any refs5 tissue was tokenized for analysis: the 400 refs5 LIVER pseudo-cells tokenized at 6,400 have
+  # a median non-zero value of 0.87944; 6,400 x (2^0.91453 - 1) / (2^0.87944 - 1) = 6,745.2, rounded to the
+  # nearest 100. Record: docs/audit/remediation/record/step3/stage8/target_sum.json
+  # (deconvolution/calibrate_target_sum.py, job 12376341).
+  pseudocell_target_sum: 6700

@@ -111,6 +111,43 @@ def test_compare_counts_and_verdicts(runs):
     assert "pairs at FDR_IHW < 0.05: 40" in text and "ROBUST 1" in text and "NO CALLS 1" in text
 
 
+def test_borderline_blocks_are_carried_with_their_class(tmp_path):
+    """STEP3 5.2: a borderline block is not a hotspot, is named in the table, and gets the same reading."""
+    head = write_run(tmp_path / "h", {("T", "hot"): block(10), ("T", "edge"): block(10), ("T", "quiet"): block(10)},
+                     hotspots={("T", "hot")})
+    summ = pd.read_csv(head / "de_summary.tsv", sep="\t")
+    summ["gate_class"] = ["hotspot", "borderline", "none"]
+    summ.to_csv(head / "de_summary.tsv", sep="\t", index=False, na_rep="NA")
+    same = {("T", "hot"): block(10), ("T", "edge"): block(10), ("T", "quiet"): block(10)}
+    a = write_run(tmp_path / "a", same, covariates="rin, pct_globin")
+    b = write_run(tmp_path / "b", same, covariates="rin, pct_globin, pct_umi_dup, median_5_3_bias")
+    table, alpha = cdr.compare(head, {"A": a, "B": b})
+    t = table.set_index("cell_type")
+    assert t["gate_class"].to_dict() == {"hot": "hotspot", "edge": "borderline", "quiet": "none"}
+    assert t.loc["hot", "verdict"] == "ROBUST" and t.loc["edge", "verdict"] == "ROBUST" and t.loc["quiet", "verdict"] == ""
+    assert not t.loc["edge", "is_hotspot"]
+    text = "\n".join(cdr.summarise(table, {"A": a, "B": b}, alpha))
+    assert "hotspots: 1;" in text and "borderline blocks" in text and "T edge [borderline]" in text
+
+
+def test_a_summary_without_gate_class_reads_as_before(runs):
+    head, a, b = runs
+    table, _ = cdr.compare(head, {"A": a, "B": b})
+    assert set(table["gate_class"]) <= {"hotspot", ""}
+    assert (table["gate_class"] == "hotspot").equals(table["is_hotspot"])
+
+
+def test_confound_table_carries_the_gate_class():
+    base = {"sup_trained_auc": np.nan, "mean_fraction": 0.1, "n_sig_interaction": 0, "frac_week_slope": 0.0,
+            "frac_week_p": 0.5, "n_male": 5, "n_female": 5, "n_dose_tests": 100, "n_sig_dose_IHW": 3, "status": "ok"}
+    df = pd.DataFrame([dict(base, tissue="T", cell_type="a", is_hotspot="FALSE", gate_class="borderline"),
+                       dict(base, tissue="T", cell_type="b", is_hotspot="TRUE", gate_class="hotspot")])
+    out = confound.build_table(df)
+    assert list(out.columns[:4]) == ["tissue", "cell_type", "is_hotspot", "gate_class"]
+    assert out.set_index("cell_type")["gate_class"].to_dict() == {"a": "borderline", "b": "hotspot"}
+    assert "gate_class" not in confound.build_table(df.drop(columns="gate_class")).columns
+
+
 def test_verdict_needs_both_registered_reruns(runs):
     head, a, _ = runs
     t = cdr.compare(head, {"A": a})[0].set_index(["tissue", "cell_type"])

@@ -59,6 +59,8 @@ def build_table(df):
     """de_summary.tsv (one row per block) -> the composition-confound table, hotspots first."""
     keep = ["tissue", "cell_type", "is_hotspot", "sup_trained_auc", "mean_fraction",
             "n_sig_dose_IHW", "n_sig_interaction", "frac_week_slope", "frac_week_p"]
+    if "gate_class" in df.columns:          # hotspot / borderline / none, copied from the gate table by Stage 10
+        keep.insert(3, "gate_class")
     out = df[keep].copy()
     for c in ("frac_week_p", "frac_week_slope", "mean_fraction", "sup_trained_auc"):
         out[c] = pd.to_numeric(out[c], errors="coerce")

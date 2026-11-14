@@ -162,8 +162,12 @@ rownames(ph) <- ph$viallabel
 # The gate table of the refs5 rerun carries a boolean column is_hotspot (STEP3 §5.2: a call that more
 # permutations could not reverse). When the column is present it is the flag. Earlier gate tables have no
 # such column; for them the flag is q_sup_trained < 0.05, as before.
+# The same table's gate_class (hotspot / borderline / none) is copied into de_summary.tsv, so that borderline
+# blocks are carried through the DE tables by name (STEP3 §5.2). It is NA when the gate table has no such
+# column or does not list the block. The gate AUC is printed for hotspot and borderline blocks.
 as_flag <- function(x) toupper(trimws(as.character(x))) %in% c("TRUE", "T", "1")
 hot_key <- character(0); hot_auc <- numeric(0); hotspot_rule <- "no gate table read"
+gate_cls <- character(0); gate_auc <- numeric(0)
 hs <- tryCatch(read.delim(hotspots_tsv, stringsAsFactors = FALSE), error = function(e) NULL)
 if (!is.null(hs) && all(c("tissue", "cell_type") %in% names(hs)) &&
     any(c("is_hotspot", "q_sup_trained") %in% names(hs))) {
@@ -178,8 +182,19 @@ if (!is.null(hs) && all(c("tissue", "cell_type") %in% names(hs)) &&
   hot_auc <- if ("sup_trained_auc" %in% names(hh)) suppressWarnings(as.numeric(hh$sup_trained_auc))
              else rep(NA_real_, nrow(hh))
   names(hot_auc) <- hot_key
+  all_key <- paste(toupper(hs$tissue), hs$cell_type, sep = "||")
+  if ("gate_class" %in% names(hs)) gate_cls <- setNames(trimws(as.character(hs$gate_class)), all_key)
+  if ("sup_trained_auc" %in% names(hs)) gate_auc <- setNames(suppressWarnings(as.numeric(hs$sup_trained_auc)), all_key)
 }
-cat(sprintf("hotspot blocks (%s): %d\n", hotspot_rule, length(hot_key)))
+# gate class and printed AUC of one block (key = "TISSUE||cell type")
+block_gate_class <- function(key) if (key %in% names(gate_cls)) unname(gate_cls[key]) else NA_character_
+block_gate_auc   <- function(key, is_hot) {
+  if (is_hot) return(unname(hot_auc[key]))
+  if (block_gate_class(key) %in% "borderline" && key %in% names(gate_auc)) return(unname(gate_auc[key]))
+  NA_real_
+}
+cat(sprintf("hotspot blocks (%s): %d; borderline blocks (gate_class): %d\n", hotspot_rule, length(hot_key),
+            sum(gate_cls %in% "borderline")))
 
 # ---- tissues with Z; hotspot tissues first ----
 all_tis <- list.dirs(results_root, recursive = FALSE, full.names = FALSE)
@@ -432,8 +447,8 @@ for (TIS in tissues) {
 
       block_tabs[[key]] <- out
       block_nsex[[key]] <- nlevels(sexf)
-      list(tissue = TIS, cell_type = ct, is_hotspot = is_hot,
-           sup_trained_auc = if (is_hot) unname(hot_auc[key]) else NA_real_,
+      list(tissue = TIS, cell_type = ct, is_hotspot = is_hot, gate_class = block_gate_class(key),
+           sup_trained_auc = block_gate_auc(key, is_hot),
            n_samples = nrow(m), n_male = sum(m$sex == "male"), n_female = sum(m$sex == "female"),
            n_genes_tested = nrow(out), n_genes_dropped_allzero = n_drop,
            mean_fraction = mean_frac, low_fraction = mean_frac < LOW_FRACTION,
@@ -447,8 +462,8 @@ for (TIS in tissues) {
     }, error = function(e) {
       if (inherits(e, "sample_key_error")) stop(e)   # a broken sample key stops the run, not the block
       dg <- inherits(e, "degenerate_block")   # §6: keep the numbers that decided the skip
-      list(tissue = TIS, cell_type = ct, is_hotspot = is_hot,
-           sup_trained_auc = if (is_hot) unname(hot_auc[key]) else NA_real_,
+      list(tissue = TIS, cell_type = ct, is_hotspot = is_hot, gate_class = block_gate_class(key),
+           sup_trained_auc = block_gate_auc(key, is_hot),
            n_samples = if (dg) e$n_samples else NA_integer_, n_male = NA_integer_, n_female = NA_integer_,
            n_genes_tested = NA_integer_, n_genes_dropped_allzero = NA_integer_,
            mean_fraction = if (dg) e$mean_fraction else NA_real_,
@@ -605,7 +620,7 @@ summ <- do.call(rbind, lapply(summary_rows, function(r) {
   as.data.frame(r, stringsAsFactors = FALSE)
 }))
 # column order: descriptors, then counts
-ord <- c("tissue","cell_type","is_hotspot","sup_trained_auc","n_samples","n_male","n_female",
+ord <- c("tissue","cell_type","is_hotspot","gate_class","sup_trained_auc","n_samples","n_male","n_female",
          "n_genes_tested","n_genes_dropped_allzero","mean_fraction","low_fraction","median_libsize","frac_zero",
          "n_dose_tests","n_sig_dose_IHW","n_sig_dose_fisher_BHblock","n_sig_interaction",
          "n_sexcons_concordance_8w","n_sexcons_repfdr_8w","n_sexcons_union_8w",
