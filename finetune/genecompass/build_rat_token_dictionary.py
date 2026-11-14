@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-build_rat_token_dictionary.py — Merge human/mouse and T4 rat token dicts.
+build_rat_token_dictionary.py — Merge the human/mouse token dict with the new rat tokens.
 
 Produces a single merged dictionary (55,275 entries for v2; 53,032 for April) for Stage 7 fine-tuning:
 
@@ -11,12 +11,14 @@ Produces a single merged dictionary (55,275 entries for v2; 53,032 for April) fo
     ENSG...    → 2–23114     (23,113 human genes)
     ENSMUSG... → 23115–50557 (27,443 mouse genes)
 
-  + T4 entries from rat_tokens.pickle (2,474 entries)
-    ENSRNOG... → 50558–53031 (rat-specific genes, no human/mouse ortholog)
+  + every rat_tokens.pickle entry with a token ID of 50,558 or more
+    ENSRNOG... → 50558–55274 for v2: 4,717 new tokens = T3a 1,351 + T3b 892 + T4 2,474
+                 (April's Stage 3 gave only T4 genes a new token: 2,474 entries, 50558–53031.
+                 The code below calls the whole new block "T4" for that reason.)
 
-  = rat_human_mouse_tokens.pickle (50,558 + number of T4 tokens; v2: 55,275)
+  = rat_human_mouse_tokens.pickle (50,558 + number of new tokens; v2: 55,275)
 
-T1-T3 rat genes are intentionally excluded — they reuse existing human/mouse
+T1 and T2 rat genes are intentionally excluded — they reuse existing human/mouse
 token IDs, so adding them would create duplicate values and inflate len().
 The merged dict has exactly one entry per token position.
 
