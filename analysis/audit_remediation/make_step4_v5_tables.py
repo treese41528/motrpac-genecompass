@@ -31,6 +31,8 @@ Tables (all TSV, under --out):
   v5_ranking.tsv           per contrast and method: mean difference on the common set, over all scored, counts
   v5_corrector_rule.tsv    per contrast: the four means the rule uses, the verdict, the common set, and how many
                            leave-one-reference-out subsets give the same verdict (descriptive)
+  v5_method_arm_rmse.tsv   per method: mean pooled RMSE in arms A, B and C over the common set, and the arm in
+                           which the method's error is lowest on each reference (descriptive)
   v5_driver.tsv            per contrast, reference and method: the type with the largest per-type difference
   v5_mrna_content.tsv      per reference and type: mean expressed genes and mean counts per cell, with ranks
   v5_arm_library_size.tsv  per reference, type and arm: mean library size of the cells as SimBu sums them
@@ -211,6 +213,22 @@ def ranking_and_rule(rmse, common):
     return R, pd.DataFrame(rule_rows)
 
 
+def method_arm_rmse(rmse, common):
+    """Per method, over the common set: mean pooled RMSE in each arm, and on how many references each arm is the
+    one with the method's lowest error. Descriptive: it shows which arm a method is closest to cell fractions in."""
+    rows = []
+    for m in ss.METHODS:
+        d = rmse[(rmse["method"] == m) & rmse["reference"].isin(common) & (rmse["status"] == "ok")]
+        row = {"method": m, "n_references": len(d)}
+        for a in ARMS:
+            row[f"mean_rmse_{a}"] = d[f"rmse_{a}"].mean()
+        best = d[[f"rmse_{a}" for a in ARMS]].idxmin(axis=1).str[-1] if len(d) else pd.Series(dtype=str)
+        for a in ARMS:
+            row[f"n_lowest_in_{a}"] = int((best == a).sum())
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def driver_tables(root, sets, content):
     out = []
     for name, (hi, lo, _) in CONTRASTS.items():
@@ -314,6 +332,7 @@ def main():
     bp = rmse[rmse["method"] == "bp_rna"].drop(columns="method"); w(bp, "v5_bayesprism.tsv")
     common = common_set(rmse)
     rank, rule = ranking_and_rule(rmse, common); w(rank, "v5_ranking.tsv"); w(rule, "v5_corrector_rule.tsv")
+    marm = method_arm_rmse(rmse, common); w(marm, "v5_method_arm_rmse.tsv")
     content = {s: ss.expressed_genes(str(root / s / "A" / "reference")) for s in sets
                if (root / s / "A" / "reference" / "reference_counts.mtx").exists()}
     if content:
@@ -398,6 +417,11 @@ def main():
 
     L += ["", "== Reading 3. Correctors: the registered rule on RMSE(C) - RMSE(A), mean over the common set =="]
     L += rule_lines("C-A")
+    L += ["", f"   Mean pooled RMSE by arm over the common set ({len(common)} references), and the number of references "
+              "where each arm is the method's lowest (descriptive):"]
+    for r in marm.sort_values("mean_rmse_A").itertuples():
+        L.append(f"    {NAMES[r.method]:10s} A {r.mean_rmse_A:.4f}  B {r.mean_rmse_B:.4f}  C {r.mean_rmse_C:.4f}   "
+                 f"lowest in A {r.n_lowest_in_A}, B {r.n_lowest_in_B}, C {r.n_lowest_in_C}")
     L += ["", "   The native bias alone, RMSE(B) - RMSE(A), per method (a ranking; no rule is registered for it):"]
     L += rule_lines("B-A")
     L += ["", "== Reading 4. The 2026-11-11 readings, RMSE(C) - RMSE(B), on these references =="]

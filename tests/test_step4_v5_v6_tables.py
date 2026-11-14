@@ -110,6 +110,9 @@ def test_v5_readings_on_a_made_up_battery(tmp_path, monkeypatch, capsys):
     ms = pd.read_csv(out / "v5_method_status.tsv", sep="\t").set_index(["reference", "arm", "method"])["status"]
     assert len(ms) == 54 and (ms == "scored").sum() == 48
     assert ms[("R3", "A", "music")] == "not run"                 # no score and no record of a run
+    ma = pd.read_csv(out / "v5_method_arm_rmse.tsv", sep="\t").set_index("method")
+    assert ma.loc["music", "n_references"] == 2 and ma.loc["music", "mean_rmse_B"] == pytest.approx(0.012)
+    assert ma.loc["bp_rna", "n_lowest_in_A"] == 2 and ma.loc["bp_rna", "n_lowest_in_B"] == 0   # R3 is not in the common set
     st = pd.read_csv(out / "v5_status.tsv", sep="\t").set_index("reference")
     assert st["same_truth"].all() and st["same_reference"].all()
     assert st["call_A_as_registered"].all() and st["call_B_as_registered"].all() and st["call_C_as_registered"].all()

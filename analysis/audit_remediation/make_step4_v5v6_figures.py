@@ -9,6 +9,7 @@ the record TSVs that make_step4_v5_tables.py and make_step4_v6_tables.py write.
 Each figure is drawn only if its table exists and has rows, so the script can be rerun as the batteries finish.
   step4_v5_bayesprism_arms.png   BayesPrism's pooled RMSE in arms A, B, C, per reference      (v5_bayesprism.tsv)
   step4_v5_corrector_rule.png    mean RMSE difference per method on the common set, C - A and C - B  (v5_ranking.tsv)
+  step4_v5_methods_arms.png      mean pooled RMSE of each method in arms A, B, C over the common set  (v5_method_arm_rmse.tsv)
   step4_v5_arm_check.png         spread of library size across cell types as each arm sums cells  (v5_arm_library_size_summary.tsv)
   step4_v6_median_r.png          median per-type r per set against the registered floor      (v6_floor.tsv, panel_median.tsv)
   step4_v6_heart_hypoth.png      per-type r in HEART and HYPOTH, 2026-11-08 and now          (v6_heart_hypoth_types.tsv)
@@ -118,6 +119,29 @@ def fig_v5_rule(rec, fig):
          [("MuSiC and SCDC", fs.BLUE), ("BayesPrism and CIBERSORTx", fs.ORANGE), ("not part of the rule", fs.NEUTRAL)]]
     f.legend(handles=h, loc="lower left", bbox_to_anchor=(0.125, -0.035), ncol=3, handletextpad=0.3, columnspacing=1.4)
     fs.save(f, fig / "step4_v5_corrector_rule.png")
+
+
+def fig_v5_methods(rec, fig):
+    t = read(rec / "v5_method_arm_rmse.tsv")
+    if t is None:
+        return
+    t = t.dropna(subset=["mean_rmse_A", "mean_rmse_B", "mean_rmse_C"]).sort_values("mean_rmse_B", ascending=False)
+    if not len(t):
+        return
+    f, ax = plt.subplots(figsize=(7.4, 0.42 * len(t) + 1.9))
+    y = np.arange(len(t))
+    cols = [f"mean_rmse_{a}" for a in "ABC"]
+    ax.hlines(y, t[cols].min(axis=1), t[cols].max(axis=1), color=fs.GRID, linewidth=2.0, zorder=1)
+    for a in "ABC":
+        ax.scatter(t[f"mean_rmse_{a}"], y, s=62, color=ARM_COL[a], zorder=3, **RING)
+    ax.set_yticks(y); ax.set_yticklabels([NAMES[m] for m in t["method"]])
+    ax.set_xlim(0, float(t[cols].max().max()) * 1.08); ax.set_ylim(-0.7, len(t) - 0.3)
+    ax.set_xlabel(f"mean pooled RMSE against cell fractions over the {int(t['n_references'].max())} references every method ran")
+    ax.grid(axis="y", visible=False)
+    ax.set_title("Each method's error in the three arms", pad=30)
+    dot_legend(ax, [(ARM_LAB[a], ARM_COL[a], 8) for a in "ABC"], loc="lower left", bbox_to_anchor=(0, 1.01), ncol=3,
+               columnspacing=1.4)
+    fs.save(f, fig / "step4_v5_methods_arms.png")
 
 
 def fig_v5_check(rec, fig):
@@ -235,7 +259,7 @@ def main():
     a = ap.parse_args()
     v5, v6, fig = Path(a.v5), Path(a.v6), Path(a.fig)
     fig.mkdir(parents=True, exist_ok=True)
-    fig_v5_arms(v5, fig); fig_v5_rule(v5, fig); fig_v5_check(v5, fig)
+    fig_v5_arms(v5, fig); fig_v5_rule(v5, fig); fig_v5_methods(v5, fig); fig_v5_check(v5, fig)
     fig_v6_floor(v6, fig); fig_v6_types(v6, fig)
 
 
