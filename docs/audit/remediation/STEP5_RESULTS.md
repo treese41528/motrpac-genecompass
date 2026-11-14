@@ -9,7 +9,7 @@ against a reading rule written first (`STEP5_PREREG.md`), and each is disclosed 
 | M1 | The same in the deconvolution references | SMLINT 50.6% and KIDNEY 16.7% of reference cells above 15%; every cell type of both is flagged. HIPPOC and SPLEEN have two flagged types each. LUNG cannot be measured | **To the expert review plan**; references not rebuilt in this pass |
 | M2 | 79 single-cell series never entered the corpus | *(filled in when the held-out set is built)* | Used as the held-out set of Step 4 |
 | M3 | Gene IDs carried over from earlier annotations | 1.04% of counts in ID-keyed corpus files sit under another gene's token; 43 of 53 studies are above the 0.5% bound. In the bulk, 2.24% of counts | **Not negligible.** Studies and genes listed; four reference studies above the bound go to the review plan |
-| M4 | Genes that cannot be tokenized | *(filled in from the refs5 pseudo-cells)* | Reported per tissue; no threshold |
+| M4 | Genes that cannot be tokenized | At most 0.01% of a tissue's pseudo-cell counts (TESTES); zero in 12 of 16 tissues | Reported per tissue; no threshold |
 
 ## M1. Mitochondrial fraction (findings 1.2, 1.3)
 
@@ -218,12 +218,68 @@ The bulk's IDs were carried over directly from the consortium's annotation where
 
 ## M4. Genes that cannot be tokenized (finding 2.6)
 
-*(filled in from the refs5 pseudo-cells when Stage 9 finishes)*
+**What was measured.** A gene reaches the model only if it has both a token and a median: 21,222 of the 22,213
+tokens do. For every refs5 tissue, the share of pseudo-cell counts on genes outside that set
+(`analysis/audit_remediation/measure_untokenizable_share.py`, job 12378185).
+
+| Tissues | Genes in the pseudo-cells that cannot be tokenized | Share of the tissue's counts on them |
+|---|---|---|
+| 12 of 16 | 0 | 0 |
+| CORTEX | 3 | under 0.00001% |
+| OVARY | 1 | under 0.00001% |
+| SPLEEN | 2 | 0.00002% |
+| TESTES | 10 | 0.0096% (largest single pseudo-cell 0.028%) |
+
+**Reading.** Finding 2.6 does not touch the pseudo-cells in any measurable way. The deconvolution keeps
+protein-coding genes of the universe, and nearly all of those have a token and a median. The 991 genes with a
+token and no median matter for the training corpus, not for what Stages 9 to 13 see. Record:
+`record/step5/untokenizable_share_by_tissue.tsv`, `untokenizable_top_genes.tsv`.
 
 ## Code repaired for a future corpus
 
-*(filled in with Step 6: the switches of the registration, each off by default so that the committed code
-still describes the v2 corpus)*
+Each repair is a switch in `config/pipeline_config.yaml` that is off, so the committed code still describes
+the v2 corpus. All are recommended for any new corpus.
+
+| Finding | Switch | What it does when on |
+|---|---|---|
+| 1.3 | `gene_universe.preprocessing.mito_by_id` | Mitochondrial genes are also recognised by Ensembl ID (chromosome MT), so the rules below work in files keyed by ID |
+| 1.2 | `gene_universe.preprocessing.apply_max_mito_fraction` | Cells above `max_mito_fraction` (0.15) are dropped |
+| 1.8 | `gene_universe.preprocessing.outlier_on_n_genes` | The 3 SD rule is also applied to the number of expressed genes |
+| 1.6 | `gene_universe.preprocessing.walk_each_file_once` | A matrix under `<GSE>_RAW` is read once, not twice |
+| 1.1 | `harvesting.prefer_single_cell_on_conflict` | A series returned by both GEO queries keeps its single-cell row |
+
+**One departure from the registration.** It said the file-walk repair needed no switch, because the second
+read only made copies that v2 drops. The Stage 2 reproduction check counts all 868 files of
+`config/corpus_v2_plan.tsv`, copies included, so a default that stopped making them would no longer describe
+that list. It is a switch like the others.
+
+**Off means v2.** Stage 2 was rerun on three studies with the committed configuration and compared with the
+QC files the corpus was built from (job 12378047).
+
+| Check | Result |
+|---|---|
+| Same cells in the same order, same genes, equal counts | 4 of 4 files |
+| Same file md5 | 0 of 4 (the file's bytes are not reproducible, which is finding 1.7; the content is) |
+
+**On does what it says.** The same three studies with the first three switches and the file-walk switch on:
+
+| Study | Keyed by | Cells, default | Above 15% mitochondrial | Cells, switches on | Above 15% |
+|---|---|---|---|---|---|
+| GSE181979 | Ensembl ID (the rule saw 0 mitochondrial genes) | 4,631 | 616 | 4,015 | 0 |
+| GSE272895 | Ensembl ID (0 genes) | 95,948 | 19,140 | 76,760 | 0 |
+| GSE260849 | symbol (13 genes) | 3,174 per file | 0 | 3,174 per file | 0 |
+
+- With `mito_by_id` the two ID-keyed files find all 13 mitochondrial protein-coding genes, and the stored
+  mitochondrial percentage is no longer zero.
+- Every cell kept with the switches on is a cell of the default output.
+- GSE260849's second file is a copy that does not come from the double read (two source files with the same
+  content), so the file-walk switch leaves it. The switch is checked on a study with true double reads below.
+
+*(file-walk check on GSE214388: filled in when job 12379033 finishes)*
+
+Tests: `tests/test_stage2_switches.py` (every switch is off in the committed configuration; each rule's
+boundary; the catalog merge). Record: `record/step5/stage2_switches_check.tsv`. The profile used for "on" sets
+the four `preprocessing` switches to true and nothing else.
 
 ## Disclosed without measurement
 
