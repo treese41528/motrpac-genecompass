@@ -23,6 +23,8 @@ Nothing under data/ is written.
   vst       deconvolution/R/score_z_vst.R on every purity sweep on disk, OLD against NEW and against the
             scores on disk; then NEW with SCORE_Z_VST_ROUND=1, to measure what rounding instead of
             truncation would change (the switch is off by default).
+  sweepgen  deconvolution/make_purity_sweep.py, OLD against NEW, with Stage 14's command for the LUNG
+            alveolar-type-II sweep (the NEW script only prints a note about a known bookkeeping defect).
 
   python analysis/audit_remediation/step6_neutrality_checks.py --old-tree DIR --new-tree DIR --scratch DIR \
          --record-dir docs/audit/remediation/record/step6 [--only refs stage3 ...]
@@ -398,8 +400,63 @@ def check_vst(a):
             row("vst", f"{sw.name}: rounding run", "-", "", "", "RUN FAILED", f"focal {focal}")
 
 
+# ----------------------------------------------------------------------------- purity-sweep generation
+def check_sweepgen(a, sweep="SWEEP_lung_at2_holdout"):
+    """deconvolution/make_purity_sweep.py, OLD against NEW, with the command pipeline/run_stage14.py builds
+    for one sweep (LUNG alveolar type II cells: the one default sweep in which the rounding-drift repair
+    leaves a negative background count). The NEW script only adds a printed note; every output file must be
+    identical to the OLD script's, and the note must name the mixtures whose true_fractions.tsv holds a
+    negative cell fraction. The on-disk sweep is compared too, for information."""
+    S = a.scratch / "sweepgen"
+    val = Path(subprocess.run(
+        [PY, "-c", "import sys; sys.path.insert(0, 'lib'); from gene_utils import load_config, resolve_path;"
+                   "c = load_config(); print(resolve_path(c, c['deconvolution']['validation_dir']))"],
+        cwd=a.new_tree, env=dict(os.environ, PIPELINE_ROOT=str(a.new_tree)), capture_output=True, text=True,
+        check=True).stdout.strip())
+    spec = json.load(open(val / sweep / "sweep_spec.json"))
+    tissue = sweep.split("_")[1]
+    logs = {}
+    for tag, tree in (("old", a.old_tree), ("new", a.new_tree)):
+        out = S / tag
+        cmd = [PY, "deconvolution/make_purity_sweep.py", "--mode", "holdout",
+               "--ref-source", a.main_root / spec["reference_dir"], "--tissue", tissue,
+               "--focal-type", spec["focal"], "--out", out, "--purity-grid", spec["purity_grid"],
+               "--reps", str(spec["reps"]), "--cells-per-mixture", str(spec["cells_per_mixture"])]
+        rc, logs[tag] = run(cmd, tree, S / f"{tag}.log")
+        if rc != 0:
+            row("sweepgen", f"{tag} run", "-", "", "", "RUN FAILED", f"exit {rc}")
+            return
+    files = sorted(str(p.relative_to(S / "old")) for p in (S / "old").rglob("*") if p.is_file())
+    n_same = 0
+    for f in files:
+        x, y = md5(S / "old" / f), (md5(S / "new" / f) if (S / "new" / f).exists() else "")
+        n_same += x == y
+        if x != y or f.endswith(("true_fractions.tsv", "pseudobulk_counts.mtx", "true_z_focal.csv")):
+            row("sweepgen", f, "old script (44332e6)", x, y, "IDENTICAL" if x == y else "DIFFERENT")
+    row("sweepgen", f"{len(files)} files of the sweep (mixtures, true Z, split reference)", "old script (44332e6)",
+        "", "", "IDENTICAL" if n_same == len(files) else "DIFFERENT", f"{n_same} of {len(files)} identical")
+    for f in ("mixtures/true_fractions.tsv", "mixtures/pseudobulk_counts.mtx", "mixtures/sweep_design.tsv"):
+        x, y = md5(val / sweep / f), md5(S / "new" / f)
+        row("sweepgen", f"{f} against the sweep on disk", f"{val.name}/{sweep}", x, y,
+            "IDENTICAL" if x == y else "INFO", "" if x == y else "differs from the sweep on disk (informative only)")
+    with open(S / "new/mixtures/true_fractions.tsv") as fh:
+        rd = list(csv.DictReader(fh, delimiter="\t"))
+    neg = sorted({r["mixture"] for r in rd for c in r if c.startswith("cellfrac__") and float(r[c]) < 0},
+                 key=lambda m: int(m[3:]))
+    note = next((ln for ln in logs["new"].splitlines() if ln.startswith("NOTE: ")), "")
+    named = all(m in note for m in neg) and f"{len(neg)} of {len(rd)} mixtures" in note
+    row("sweepgen", "printed note names the mixtures with a negative cell fraction", "true_fractions.tsv", "", "",
+        "IDENTICAL" if (neg and named) or (not neg and not note) else "DIFFERENT",
+        f"negative in {neg or 'none'}; note: {note[:160] or 'none'}")
+    row("sweepgen", "old script prints no such note", "-", "", "",
+        "IDENTICAL" if "NOTE: " not in logs["old"] else "DIFFERENT", "")
+    for tag in ("old", "new"):                                   # the split references are large
+        for big in (S / tag).rglob("reference_counts.mtx"):
+            big.unlink()
+
+
 CHECKS = {"refs": check_refs, "stage3": check_stage3, "rin": check_rin, "pheno": check_pheno,
-          "augur": check_augur, "atlas": check_atlas, "vst": check_vst}
+          "augur": check_augur, "atlas": check_atlas, "vst": check_vst, "sweepgen": check_sweepgen}
 GOOD = {"IDENTICAL", "WRITTEN", "STOPPED", "INFO", "COUNT", "KEYS", "PATH ONLY", "EXPECTED DIFFERENCE"}
 
 
