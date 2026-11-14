@@ -33,6 +33,7 @@ from datasets import load_from_disk
 
 sys.path.insert(0, str(Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                       # noqa: E402
+from provenance import write_provenance                                # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sample_join import load_viallabels, mix_index                     # noqa: E402
 
@@ -76,6 +77,7 @@ def main():
     rng = np.random.default_rng(0)
 
     rows = []
+    read = []                                    # per-tissue input files, for the provenance record
     for d in sorted(glob.glob(f"{args.gc_root}/*/")):
         tis = os.path.basename(d.rstrip("/"))
         emb_p, ds_p = os.path.join(d, "embeddings", "cell_embeddings.npy"), os.path.join(d, "dataset")
@@ -87,6 +89,7 @@ def main():
         if emb.shape[0] != len(ct):
             print(f"[{tis}] MISALIGNED — skip"); continue
         vls = load_viallabels(args.bulk_root, tis, Path(args.results_root) / "motrpac")   # checked sample key
+        read += [emb_p, bs_p, str(Path(args.results_root) / "motrpac" / tis.upper() / "mixture_samples.tsv")]
         vl = np.array(vls)[mix_index(samp, len(vls), context=tis)]              # mix{i} -> i-th vial label
         grp = np.array([phm.loc[v, gcol] if v in phm.index else None for v in vl], dtype=object)
         sex = np.array([phm.loc[v, "sex"] if v in phm.index else None for v in vl], dtype=object)
@@ -109,6 +112,12 @@ def main():
     if res.empty:
         print("no tissues with embeddings+bulk_samples found"); return
     res.to_csv(args.out, sep="\t", index=False)
+    # Provenance beside the table (audit, cross-stage "provenance": this script wrote none). Written after the
+    # table; it reads nothing the table depends on and draws no random number.
+    write_provenance(Path(args.out).parent, name=f"provenance_{Path(args.out).stem}.json",
+                     inputs=[args.pheno] + read,
+                     params=dict(vars(args), permutation_seed=0, n_blocks=int(len(res)),
+                                 tissues=sorted(res["tissue"].unique())))
     pd.set_option("display.width", 200, "display.max_rows", 300)
     print(res.to_string(index=False))
     sig = res[(res.p_trained < 0.05) | (res.p_group < 0.05)]
