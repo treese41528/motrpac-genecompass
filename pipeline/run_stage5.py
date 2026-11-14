@@ -22,9 +22,9 @@ Architecture:
     │ Step 1: Scatter — tokenize_corpus.py            │
     │ For each cell in each QC'd h5ad:                │
     │   1. Load raw counts (fully into memory)        │
-    │   2. normalize_total(10,000)                    │
-    │   3. Divide by per-gene median                  │
-    │   4. log1p                                      │
+    │   2. (no depth normalisation)                   │
+    │   3. Divide raw counts by hybrid gene median    │
+    │   4. log2(1 + x)                                │
     │   5. Rank non-zero genes descending             │
     │   6. Take top 2,048                             │
     │   7. Map to token IDs                           │

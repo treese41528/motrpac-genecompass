@@ -1,0 +1,5 @@
+tissue	cell_type	not_significant	not_testable	recovered	wrong_direction	n
+HEART	Cardiomyocytes	2	2	2	0	6
+SKMGN	Skeletal muscle cells	9	3	2	0	14
+SKMVL	Skeletal muscle cells	9	3	1	1	14
+ALL		20	8	5	1	34

@@ -4,7 +4,7 @@ extract_embeddings.py -- Aim-1 validation extractor (GPU).
 
 One forward pass over a tokenized cell dataset with the fine-tuned rat GeneCompass
 checkpoint, producing BOTH:
-  (1) CLS cell embeddings  [n_cells, 768]   (position 0) -- for V1 (held-out clustering)
+  (1) CLS cell embeddings  [n_cells, 768]   (position 0) -- for V1 (clustering of sampled corpus cells; not held out)
   (2) per-gene CONTEXTUAL embeddings = mean over cells of the last-hidden-state at each
       target token's position -- for V2 (homolog similarity, init-free)
 
@@ -59,7 +59,9 @@ def load_model(model_dir, device):
     cfg["emb_warmup_steps"] = 1
     model = BertForMaskedLM(BertConfig(**cfg), knowledges=knowledges)
     model.bert.cls_embedding = nn.Embedding(3, cfg["hidden_size"])
-    model.load_state_dict(state, strict=False)
+    sys.path.insert(0, str(_ROOT / "finetune" / "genecompass"))
+    from checked_load import load_state_checked          # raises on an incomplete load (audit finding 6.7)
+    load_state_checked(model, state)
     return model.eval().to(device)
 
 

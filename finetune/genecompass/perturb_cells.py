@@ -68,7 +68,9 @@ def load_model(model_dir, device="cuda"):
     cfg["emb_warmup_steps"] = 1
     model = BertForMaskedLM(BertConfig(**cfg), knowledges=knowledges)
     model.bert.cls_embedding = nn.Embedding(3, cfg["hidden_size"])   # (c) 3 species: 0=human 1=mouse 2=rat
-    model.load_state_dict(state, strict=False)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from checked_load import load_state_checked          # raises on an incomplete load (audit finding 6.7)
+    load_state_checked(model, state, log=log)
     return model.eval().to(device)
 
 

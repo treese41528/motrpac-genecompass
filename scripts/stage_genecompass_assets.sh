@@ -12,10 +12,12 @@
 #   GeneCompass_Base checkpoint        pretrained_models/GeneCompass_Base/      https://www.scidb.cn/en/anonymous/SUZOdk1y
 #   prior-knowledge embeddings/tokens  prior_knowledge/                         https://drive.google.com/drive/folders/1a8jhpyw4jmAifK6Ui6u1RJtRFlbsdx08
 #     (the PECA2vec, co-expression, family and promoter pickles are also in the submodule's git tree)
-#   0.5M human pretraining cells       data/randsel_500w_human/                 https://www.scidb.cn/file?fid=d46129ce14de622c4a07a1d1574dddaa&mode=front
-#   0.5M mouse pretraining cells       data/randsel_500w_mouse/                 https://www.scidb.cn/file?fid=65ff1a08ea3292dbbb2ca113f5041ae8&mode=front
+#   5M human pretraining cells         data/randsel_500w_human/                 https://www.scidb.cn/file?fid=d46129ce14de622c4a07a1d1574dddaa&mode=front
+#   5M mouse pretraining cells         data/randsel_500w_mouse/                 https://www.scidb.cn/file?fid=65ff1a08ea3292dbbb2ca113f5041ae8&mode=front
 #   human gene medians + token dict    scdata/dict/                             in the submodule's git tree
-#   (links as listed in vendor/GeneCompass/README.md, "Download Checkpoints" and the 0.5M data row)
+#   (links as listed in vendor/GeneCompass/README.md, "Download Checkpoints" and the row it labels 0.5M.
+#   The folders hold 5,000,000 human and 4,969,697 mouse cells: "500w" is 500 wan = 5 million, so the
+#   upstream label is ten times too small. Corrected here 2026-11-14, audit finding 2.3.)
 #
 # The mouse-shard edit (2026-03-31): the downloaded randsel_500w_mouse lacks data-00107-of-00165.arrow
 # (164 of 165 shards arrived), so its state.json was edited to drop that entry; the upstream original is

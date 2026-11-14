@@ -372,7 +372,11 @@ def load_model(ckpt_info, device):
     if num_species != 2:
         model.bert.cls_embedding = nn.Embedding(num_species, 768)
 
-    model.load_state_dict(state, strict=False)
+    # This script also loads the 2-species base model, whose key set differs from the rat model's, so the load
+    # is reported and not enforced here (checked_load.py; audit finding 6.7).
+    sys.path.insert(0, str(PROJECT_ROOT / "finetune" / "genecompass"))
+    from checked_load import load_state_checked
+    load_state_checked(model, state, raise_on_error=False)
     model = model.eval().to(device)
 
     return model

@@ -1,5 +1,11 @@
 # Module A pre-registration -- RESULTS
 
+> **Read this first (2026-11-14).** This file is the April model's scoring only. The retrained model (v2, the
+> default) passes criteria 1, 3 and 4 and **fails criterion 2** (0 of 25; `docs/RETRAIN_V2_RESULTS.md`, Module A).
+> Criterion 2's curated set was written after the smoke run had shown the targets, so it cannot validate
+> them, and it is **withdrawn as a test of the predicted targets**. "ALL PASS" below describes April only.
+> The registered myeloid replication was never scored. See `docs/audit/remediation/STEP2_STATEMENTS.md`.
+
 Scored on Skeletal muscle pseudo-cells (50 cells; background = 2549 expressed genes). Panel: 80 genes (Mef2c + 52 expression-matched null + value-spanning). See `PERTURB_PREREG.md` for the frozen criteria.
 
 | Criterion | Result | Verdict |

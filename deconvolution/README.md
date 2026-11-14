@@ -14,8 +14,9 @@ OVARY (`references_v4/OVARY_GSE343214`), selected by `config/pipeline_config.yam
 `grn_v2_refs4all_rebuild_human/` (Stage 13), `validation_refs4all_rebuild/` (Stage 14 sweeps). These are the
 clean rebuild (2026-11-03), identical to the earlier assembled `_refs4all` tree through Stage 13
 (`REFS4ALL_REBUILD_RESULTS.md`). Current figures: 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 blocks (151 analysable under the §6 rule, median per-sample library
-≥ 1,000), **9 exercise hotspots** (none in SPLEEN or OVARY), 53,084 dose-significant genes, 9 of 9 hotspots
-preserved in human transfer and RIN/globin-robust, 6 GRNs. The embedding does not beat PCA-50 significantly
+≥ 1,000), **9 exercise hotspots** (none in SPLEEN or OVARY), 53,084 dose-significant gene × block pairs (9,671 distinct
+genes), 9 of 9 hotspots meeting the registered transfer rule (7 of 9 under BH over the 151 blocks) and
+RIN/globin-robust, 6 GRNs. How to read each figure: `docs/audit/remediation/STEP2_STATEMENTS.md`. The embedding does not beat PCA-50 significantly
 (p 0.15). Single-sex tissues (TESTES, OVARY) cannot have a dose-significant gene (the Fisher sex combine needs
 both sexes), so their 0 genes is structural. The GRNs carry no TF-specific signal (`GRN_DECOY_NULL_RESULTS.md`).
 Results: `ALL_TISSUE_RERUN_RESULTS.md`. The 14-tissue refs4 arm (8,100 pseudo-cells, 165 blocks, 124

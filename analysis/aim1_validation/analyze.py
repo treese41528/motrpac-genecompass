@@ -2,7 +2,7 @@
 """
 analyze.py -- Aim-1 validation analysis + report (CPU).
 
-V1 held-out clustering: silhouette(cell_type) vs silhouette(study) on the rat CLS embeddings,
+V1 clustering of cells sampled from the training corpus (not held out): silhouette(cell_type) vs silhouette(study) on the rat CLS embeddings,
    ARI(kmeans, cell_type), study-mixing -> do cells cluster by BIOLOGY not BATCH? (+ UMAP figure)
 V2 homolog similarity:
    - input embeddings: T1 share tokens (=1.0 by design); T3a/T3b were WARM-STARTED from the ortholog,
@@ -96,7 +96,7 @@ def v1(inp, fig_dir, k=15):
         for a, key, title in [(ax[0], ct, "cell type (biology)"), (ax[1], st, "study (batch)")]:
             a.scatter(emb[:, 0], emb[:, 1], c=pd.Categorical(key).codes, cmap="tab20", s=2, alpha=0.5)
             a.set_title(f"UMAP coloured by {title}"); a.set_xticks([]); a.set_yticks([])
-        fig.suptitle("V1: held-out rat cells — biology vs batch")
+        fig.suptitle("V1: sampled corpus rat cells (not held out) — biology vs batch")
         fig.savefig(fig_dir / "v1_umap.png", dpi=110, bbox_inches="tight"); plt.close(fig)
         fig_ok = True
     except Exception as e:
@@ -311,11 +311,11 @@ def md(v1r, v2r, v3r, inp, final, init):
     L.append("The three checks promised in `reports/pipeline_report.md §3.6`, run on the fine-tuned rat "
              f"model `{_rel(final)}` (init `{_rel(init)}`, inputs `{_rel(inp)}`), {date.today().isoformat()}.\n")
 
-    L.append("\n## V1 — held-out cell-type clustering (biology vs batch)\n")
+    L.append("\n## V1 — cell-type clustering of sampled corpus cells, not held out (biology vs batch)\n")
     L.append("Global silhouette is confounded here (each study ≈ one tissue, so 'study' and coarse biology "
              "co-vary), so we use LOCAL kNN metrics: cell-type purity vs its chance baseline (biology), and — "
              "the real batch test — cross-study mixing *within* each cell type.\n")
-    L.append(f"- **{v1r['verdict']}** — {v1r['n_cells']} held-out rat cells, {v1r['n_cell_types']} cell types, "
+    L.append(f"- **{v1r['verdict']}** — {v1r['n_cells']} rat cells sampled from the training corpus (not held out), {v1r['n_cell_types']} cell types, "
              f"{v1r['n_studies']} studies ({v1r['n_celltypes_multistudy']} cell types span ≥2 studies); k={v1r['k']}.\n")
     L.append(f"- **kNN cell-type purity = {v1r['knn_purity_celltype']:.3f}** vs chance {v1r['chance_celltype']:.3f} "
              f"(**{v1r['knn_purity_celltype']/max(v1r['chance_celltype'],1e-9):.1f}×** enrichment ⇒ neighbourhoods are biology-coherent).\n")

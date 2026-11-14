@@ -99,7 +99,7 @@ ln -s ../geo_datasets data/raw/geo/bulk/geo_datasets
 #   https://ngdc.cncb.ac.cn/omix/release/OMIX767 (files under https://download.cncb.ac.cn/OMIX/OMIX767/)
 #   into data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/.
 python pipeline/run_stage1.py --from 4                  # metadata, matrix analysis, LLM study analysis, catalog
-#   -> data/catalog/unified_studies.json (the study list Stage 2 reads). The LLM step (Claude Haiku) is not
+#   -> data/catalog/unified_studies.json (the study list Stage 2 reads). The LLM step (Claude Sonnet 4.5 and Haiku 4.5 in the deposited run) is not
 #   deterministic: DEPOSITED: data/catalog/.
 
 # ── Stage 2. Gene universe + cell QC (data/training/gene_universe/, qc_h5ad/; ~23 h, 16 CPUs, 200 GB) ──
@@ -189,7 +189,7 @@ Raw data is not committed to this repository. All datasets are publicly availabl
 | Rat scRNA-seq corpus | ~27 GB | GEO (+ OMIX767 from NGDC) | v2: 584 QC files from 81 studies, 6,803,206 cells (`config/corpus_v2_plan.tsv`, 868 files listed) |
 | Rat bulk RNA-seq (MoTrPAC) | ~26 GB | [MotrpacRatTraining6moData](https://github.com/MoTrPAC/MotrpacRatTraining6moData) | 18 tissues, 8 timepoints |
 | BioMart + RGD reference | ~170 MB | [Ensembl 115 archive](https://sep2025.archive.ensembl.org/biomart), [RGD](https://download.rgd.mcw.edu/data_release/) | Gene annotations, orthologs, symbols (md5s: `config/reference_md5sums.tsv`) |
-| GeneCompass base assets | ~2 GB + 0.5M-cell sets | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Weights, prior knowledge, human/mouse cells (`scripts/stage_genecompass_assets.sh`) |
+| GeneCompass base assets | ~2 GB + two 5M-cell sets | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Weights, prior knowledge, human/mouse cells (`scripts/stage_genecompass_assets.sh`) |
 
 ### Obtaining data
 

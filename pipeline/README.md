@@ -22,7 +22,8 @@ stages (8, 9, 10, 12–14), which drive the scripts in `deconvolution/` and
 | **13** | `run_stage13.py` | **Mechanism** — differential GRN (rat + human space) → rat–human self-consistency score → pathway enrichment |
 | **14** | `run_stage14.py` | **Hardening** — per-tissue expression-Z purity sweeps, composition-confound + RIN/globin DE robustness |
 
-*(There is no Stage 11; the numbering skips it.)*
+*(Stage 11 is the Aim-2 gate, `run_stage11.py`: the 10 splits × 10,000 permutations probe that defines the
+hotspots. This table omitted it until 2026-11-14.)*
 
 **Default configuration (2026-11-01): the v2 model on the refs4 references, all 16 tissues.**
 `config/pipeline_config.yaml` selects the jointly re-annotated references (`data/deconvolution/references_v4/`,
@@ -36,8 +37,8 @@ Other arms are profiles: `PIPELINE_PROFILE=config/profiles/refs4_14.yaml` (refs4
 |---|---|---|
 | 8–9 | Can bulk be split into per-cell-type pseudo-cells the model separates? | 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 cell-type blocks [14 tissues, 8,100 pseudo-cells (8,082 embedded), 165 blocks] |
 | gate | Which cell types carry a detectable exercise signal? (10 splits × 10,000 permutations, BH q < 0.05, blocks with median library ≥ 1,000) | 9 hotspots of 151 analysable blocks [11 of 124] |
-| 10 | Which genes respond to training dose, per cell type? | 53,084 dose-significant genes (FDR_IHW < 0.05) [48,522]; single-sex tissues (TESTES, OVARY) cannot have any (Fisher sex combine) |
-| 12 | Does the exercise signal survive re-expression as human? | 9 of 9 hotspots preserved [11 of 11]; E.3 atlas anchoring PASS on the 14-tissue hotspots (0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`) |
+| 10 | Which genes respond to training dose, per cell type? | 53,084 dose-significant gene × block pairs (FDR_IHW < 0.05; 9,671 distinct genes) [48,522]; single-sex tissues (TESTES, OVARY) cannot have any (Fisher sex combine) |
+| 12 | Does the exercise signal survive re-expression as human? | 9 of 9 hotspots meet the registered rule (uncorrected, same cells and seeds as the rat test); 7 of 9 under BH over 151 blocks [11 of 11 by the registered rule]; E.3 atlas anchoring PASS on the 14-tissue hotspots (0.404 vs null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`) |
 | 13 | Does the model name exercise regulators? | 6 GRNs [8]; no TF-specific signal (\|z\| ≥ 2 FDR 1.03, 0/981 TFs beat expression-matched decoys; `deconvolution/GRN_DECOY_NULL_RESULTS.md`); rat–human self-consistency median ρ 0.310 (model self-consistency, not cross-species biology) |
 | 14 | Are the hotspots robust to composition and technical covariates? | 9 of 9 RIN/globin ROBUST; 1 hotspot composition-flagged (SKMVL VSMC) [11 of 11; 2 flagged] |
 

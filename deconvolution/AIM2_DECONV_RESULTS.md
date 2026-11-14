@@ -84,7 +84,7 @@ The question Aim 2 asks of those embeddings: **does within-cell-type variation t
 | Aim-2 validation gate | ✅ | 16 tissues: **197** (tissue × cell-type) blocks, 151 analysable under §6 (refs4, 14 tissues: 165 / 124; July refs: 172) |
 | Interactive viewer | ✅ | self-contained, offline 3-tab `viewer.html` (Atlas / Signal / Focus) |
 | **Supervised re-measurement** (§3b) | ✅ | exercise is concentrated, **not** absent: v2 + refs4 held-out AUC up to **0.887**; **9** FDR-significant hotspots over 16 tissues (10 splits × 10,000 permutations, §6 rule; refs4 14 tissues 11; July refs 13) |
-| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** reproduces it (16 tissues: Spearman **0.785** with PLS-1 over 130 analysable blocks, just under the registered 0.80; 9 of 9 hotspots at AUC ≥ 0.73; refs4 14 tissues 0.788 over 118); the embedding does **not** beat PCA-50 significantly across analysable blocks (16 tissues p 0.15; the 14-tissue refs4 run alone reached p 0.013; July refs 0.073) |
+| **Cross-method corroboration** (§3b) | ✅ | canonical **Augur** agrees with it (16 tissues: Spearman **0.785** with PLS-1 over 130 analysable blocks; an earlier version of this row called 0.80 a registered threshold, but no pre-registration states one, so the figure is reported without a verdict; 9 of 9 hotspots at AUC ≥ 0.73; refs4 14 tissues 0.788 over 118); the embedding does **not** beat PCA-50 significantly across analysable blocks (16 tissues p 0.15; the 14-tissue refs4 run alone reached p 0.013; July refs 0.073) |
 | **External + cross-species validation** (§3c) | ✅ | same-data **Vetr 2024** corroborates hotspot geography + supplies the DE recipe & rat→human blueprint; human PBMC scRNA (**Yu 2023**) validates the immune hotspot; per-gene magnitude is modest → "reliably detectable," not "large" |
 | **Atlas anchoring of the transfer (E.3)** | ✅ | pre-registered PASS 2026-10-31: transferred rat cells land on their Tabula Sapiens counterpart at macro top-1 accuracy **0.404** vs null 0.084 (p = 0.0001); `translation/ATLAS_PROJECTION_RESULTS.md` |
 
@@ -260,7 +260,8 @@ The §3b re-measurement and §3c external validation settle the gate's question:
 > recovery: SKMGN 0.394, SKMVL 0.582, HEART 0.917, so the dominant-parenchyma problem is unchanged. Outputs:
 > `genecompass_input_v2_refs4/pseudobulk_de/`. The §4a text below (June/July references) is kept as written.
 >
-> **All 16 tissues (2026-11-01, default).** 197 blocks, 151 run; **53,084 dose-significant genes**, of which
+> **All 16 tissues (2026-11-01, default).** 197 blocks, 151 run; **53,084 dose-significant gene × block pairs**
+> (9,671 distinct genes; 9,277 pairs in 45 blocks with mean fraction < 0.01), of which
 > SPLEEN 6,439 (spread evenly over its 12 analysable types: shared deconvolved-bulk signal, not a
 > cell-type-specific response) and OVARY 0. Positive controls: Tier A 6/45 (SKMGN Mfn1, IHW 0.058 → 0.048,
 > via the pooled refit), Ai 2/14, B 7/22. **Single-sex tissues cannot have dose-significant genes:**
@@ -364,7 +365,9 @@ SKMVL/cortex re-deconvolutions). `DOWNSTREAM_BUILD_PLAN.md` = the GRN/perturbati
 > `translation/ATLAS_PROJECTION_RESULTS.md`); three hotspots do not land on their human counterpart (SKMGN
 > tenocytes, LUNG vascular smooth muscle, BLOOD erythroid).
 >
-> **All 16 tissues (2026-11-01, default).** 9 of 9 hotspots preserved; whole table 44 / 29 / 123 (one block has
+> **All 16 tissues (2026-11-01, default).** 9 of 9 hotspots meet the registered rule (human AUC ≥ 0.65, raw
+> p < 0.05, same cells and seeds as the rat test); 7 of 9 under BH over the 151 blocks, the exceptions being LUNG
+> vascular smooth muscle (q 0.070) and HYPOTH OPC (q 0.182), which also lose their dose trend; whole table 44 / 29 / 123 (one block has
 > no human counterpart; most of the extra weakened blocks are new SPLEEN/OVARY blocks with near-chance rat
 > AUCs); rat ~ human Spearman of the trained AUC 0.766, of the dose ρ 0.725; pooled sex check PASS (0.743 →
 > 0.745; block-level Spearman 0.930 over 173 blocks). Outputs:

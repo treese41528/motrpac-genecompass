@@ -21,7 +21,8 @@ from `genecompass_input_v2_refs4all/pseudobulk_de/` (16 tissues; 14-tissue refs4
 ## 0a. Current per-tissue DE (refs4, 16 tissues, §6 rule)
 
 Question: where does the dose response sit at cell-type resolution, and does it follow MoTrPAC's tissue
-ranking? Dose-significant = FDR_IHW < 0.05 on the ordinal-dose test. "Analysable" = median per-sample library
+ranking? Dose-significant = FDR_IHW < 0.05 on the Fisher combination of the two sexes' omnibus F tests over
+`factor(week)` (not the ordinal slope; corrected 2026-11-14). Counts are gene × block pairs. "Analysable" = median per-sample library
 ≥ 1,000. MoTrPAC counts are unique training-regulated transcript features in
 `MotrpacRatTraining6moData::TRAINING_REGULATED_FEATURES` (rank of 19 tissues), from `REFS4_RERUN_RESULTS.md`.
 

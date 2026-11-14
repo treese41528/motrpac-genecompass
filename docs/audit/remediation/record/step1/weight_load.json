@@ -1,0 +1,26 @@
+{
+ "v2": {
+  "n_model_tensors": 234,
+  "n_checkpoint_tensors": 234,
+  "n_loaded": 234,
+  "missing": [],
+  "unexpected": [],
+  "n_loaded_but_different": 0,
+  "different": [],
+  "model_dir": "data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/models",
+  "n_parameters": 136229358,
+  "missing_in_encoder": []
+ },
+ "april": {
+  "n_model_tensors": 234,
+  "n_checkpoint_tensors": 234,
+  "n_loaded": 234,
+  "missing": [],
+  "unexpected": [],
+  "n_loaded_but_different": 0,
+  "different": [],
+  "model_dir": "data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models",
+  "n_parameters": 136229358,
+  "missing_in_encoder": []
+ }
+}

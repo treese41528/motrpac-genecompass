@@ -1,0 +1,17 @@
+tissue	n_bulk_samples	n_pseudocells_h5ad	n_genes	F_cells_compared	F_cells_identical	F_max_abs_diff	F_types_without_predz	G_dataset_rows	G_ids_in_h5ad	G_fields_match_id	G_order_kept	G_sample_index_in_range	H_embedding_rows	I_human_rows	I_human_embedding_rows	I_rat_only	I_human_only	I_shared_order_equal
+bat	50	300	14162	300	300	0.0	0	300	True	300	True	True	300	300	300	0	0	True
+blood	50	650	14920	650	650	0.0	0	650	True	650	True	True	650	650	650	0	0	True
+cortex	50	600	15385	600	600	0.0	0	600	True	600	True	True	600	600	600	0	0	True
+heart	50	800	15864	800	800	0.0	0	800	True	800	True	True	800	800	800	0	0	True
+hippoc	50	550	15313	550	550	0.0	0	550	True	550	True	True	550	550	550	0	0	True
+hypoth	50	650	14061	650	650	0.0	0	650	True	650	True	True	650	650	650	0	0	True
+kidney	50	750	14892	750	750	0.0	0	750	True	750	True	True	750	750	750	0	0	True
+liver	50	400	12766	400	400	0.0	0	400	True	400	True	True	400	400	400	0	0	True
+lung	50	1050	15233	1050	1050	0.0	0	1032	True	1032	True	True	1032	1012	1012	20	0	True
+ovary	24	432	14176	432	432	0.0	0	432	True	432	True	True	432	432	432	0	0	True
+skmgn	50	450	13142	450	450	0.0	0	450	True	450	True	True	450	450	450	0	0	True
+skmvl	50	450	13141	450	450	0.0	0	450	True	450	True	True	450	450	450	0	0	True
+smlint	50	650	12874	650	650	0.0	0	650	True	650	True	True	650	650	650	0	0	True
+spleen	50	700	13181	700	700	0.0	0	700	True	700	True	True	700	700	700	0	0	True
+testes	25	150	13711	150	150	0.0	0	150	True	150	True	True	150	150	150	0	0	True
+watsc	50	650	12865	650	650	0.0	0	650	True	650	True	True	650	650	650	0	0	True
