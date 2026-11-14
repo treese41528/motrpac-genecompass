@@ -38,7 +38,7 @@ Each departure was found on re-opening the evidence. Each is conservative and is
 
 | Plan said | Done instead | Why |
 |---|---|---|
-| Remove the 11 non-ribosomal genes from the exclusion list | Remove 10 | BayesPrism's own lists contain RPS19BP1 under `other_Rb` in human and mouse. The file exists to reproduce BayesPrism's cleanup for rat, so Rps19bp1 stays |
+| Remove the 11 non-ribosomal genes from the exclusion list | Rebuild the whole list by rule in the current annotation: 10 kinases and Kgd4 leave, 57 dead IDs leave, 285 genes enter | Rps19bp1 stays (BayesPrism lists it). Building the list showed its IDs came from an earlier annotation: 47 to 116 ribosomal protein genes per tissue were never excluded (`STEP3_PREREG.md`, Amendment 1) |
 | Drop the EDS arm from TESTES | Keep the pooled reference as primary; build a control-only reference as a sensitivity | The pooling is a recorded decision of the collaborator ("normal-testosterone arms"). The audit showed the validator does not document it, not that it is wrong |
 | A minimum-fraction rule for analysable blocks | A reporting tier at mean fraction 0.01, beside the registered rule | The top hotspot (SKMVL satellite cells, 0.0023) is below it, and that was known when the rule was written. A primary rule chosen with the result in view is the practice the audit criticised |
 

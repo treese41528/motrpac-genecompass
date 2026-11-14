@@ -387,6 +387,52 @@ borderline or model-only, the documents and the manuscript say so.
 Step 4 (purity sweeps for hotspot types, held-out model test, Module A rerun, SimBu baseline, mixture panel
 settings) and Step 5 (corpus measurements) are registered separately before they run.
 
+## Amendment 1 (2026-11-14, before any refs5 output): the exclusion list is rebuilt in the pipeline's own ID space
+
+**Supersedes the rule of section 2.1.** Section 2.1 said the built list "must equal the current list minus the
+ten kinases" and that any other difference keeps the current membership. Writing the builder that 2.1 called
+for showed that the current list cannot be kept:
+
+| What was found | Number |
+|---|---|
+| IDs of the committed list that do not exist in Ensembl release 115, the ID space of the references and the bulk | 57 of 247 (51 ribosomal, 6 hemoglobin) |
+| IDs that exist in release 115 under another symbol | 39 |
+| Ribosomal protein genes (by release-115 description) still in each tissue's deconvolution | 47 (HYPOTH) to 116 (SPLEEN) |
+| Their share of the bulk counts over the deconvolved genes | 0.13% (HIPPOC) to 1.76% (BLOOD) |
+| Tissues with a hemoglobin gene still in the deconvolution | 5 |
+
+The list had been made from gene symbols on an earlier annotation. A list that names genes absent from the ID
+space does nothing for them, so the cleanup the manuscript describes was only partly applied. This is a
+repair in the sense of section 0: the list must be in the ID space it is applied to. Keeping "the current
+membership" would keep the defect.
+
+**Rule, replacing 2.1.** `deconvolution/build_exclude_genes.py` builds the list from the release-115 gene
+table by description, so that a gene is recognised whatever symbol the release gives it:
+
+| Category | Rule | Genes |
+|---|---|---|
+| ribosomal | description contains "ribosomal protein" or "ribosomal subunit protein", and not "kinase" | 415 |
+| mito | on chromosome MT | 37 |
+| hemoglobin | description starts with "hemoglobin" | 12 |
+
+This follows BayesPrism's groups Rb, Mrp, other_Rb, chrM and hb [chu2022]. Rps19bp1 and Fau are included, as
+in BayesPrism's lists.
+
+**Against the committed list (247 genes):** 179 stay; 285 enter (251 ribosomal, 24 mitochondrial RNA genes
+that the protein-coding filter already removed, 10 hemoglobin); 68 leave. Of the 68, 57 do not exist in
+release 115; ten are the S6 kinases; one is Kgd4, which the committed list carried as "Mrps36" and which
+release 115 annotates as a subunit of alpha-ketoglutarate dehydrogenase.
+
+**Expected effect, stated now.** Larger than the kinases alone: up to 1.8% of a tissue's deconvolved counts
+leave the model (BLOOD and SPLEEN most). Fractions may move by more than the "far less than a percentage
+point" that 2.1 expected for the kinases; the comparison of section 10 reports it per tissue and cell type.
+
+**Kept for reproduction.** The new list is `deconvolution/reference/rat_exclude_genes_v2.tsv`. The committed
+list stays in place for the current default and its profiles; refs5 names the new one, and the default
+configuration moves to it when refs5 becomes the default.
+
+**Not seen when this was written:** any deconvolution, fraction or expression table made with the new list.
+
 ## 12. References
 
 Looked up on Crossref on 2026-11-14 unless marked as already in `docs/audit/REFERENCES.md` (REF).
