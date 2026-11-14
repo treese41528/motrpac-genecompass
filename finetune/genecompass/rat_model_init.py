@@ -175,7 +175,7 @@ def init_t4_family_mean(
     word_emb : Tensor [vocab_size, 768]
         Word embedding tensor (modified in-place).
     rat_token_dict : dict
-        {gene_str: token_id} for all 53,032 tokens.
+        {gene_str: token_id} for all tokens (55,275 in the merged dictionary).
     family_dict : dict
         {family_name: [gene_str, ...]} mapping gene families to members.
     std : float
@@ -239,6 +239,7 @@ def extend_checkpoint(
     t3_prior_source: str = 'ortholog',
     t4_zero_priors: tuple = ('promoter', 'coexp'),
     overwrite: bool = False,
+    allow_legacy_t3_priors: bool = False,
 ) -> Path:
     """
     Extend GeneCompass_Base checkpoint for rat fine-tuning.
@@ -246,6 +247,10 @@ def extend_checkpoint(
     t3_prior_source: 'ortholog' copies each T3 token's prior rows from its ortholog's
         pre-trained rows (human for T3a, mouse for T3b); 'stage6' is the pre-October
         behaviour (rat-ID lookup in Stage 6, which leaves T3a rows zero).
+    allow_legacy_t3_priors: 'stage6' reproduces the defect that gave all 1,351 T3a tokens zero
+        prior vectors in April's model (audit findings 2.7, 2.8). It is kept only so April's
+        initial checkpoint can be described and rebuilt, and it is refused unless this is set
+        (CLI: --allow-legacy-t3-priors). The default path is unchanged.
     t4_zero_priors: knowledge types left at zero for T4 tokens. Promoter (2026-10-05): the Stage 6
         vectors are not in GeneCompass's space. Co-expression (2026-10-06): neither the Stage 6 gene2vec
         nor an anchored rebuild on the clean corpus recovered held-out genes' GeneCompass rows
@@ -263,6 +268,13 @@ def extend_checkpoint(
             f"(or pass overwrite=True / --overwrite if replacing it is really intended).")
     if t3_prior_source not in ('ortholog', 'stage6'):
         raise ValueError(f"t3_prior_source must be 'ortholog' or 'stage6', got {t3_prior_source!r}")
+    if t3_prior_source == 'stage6' and not allow_legacy_t3_priors:
+        # Checked before anything is created or loaded, so a refused call leaves no folder behind.
+        raise ValueError(
+            "t3_prior_source='stage6' is the pre-October lookup of T3 prior rows by rat gene ID. It leaves "
+            "every T3a row zero in all four priors, the defect fixed for v2 (audit findings 2.7, 2.8). "
+            "It is kept only to rebuild April's initial checkpoint: pass allow_legacy_t3_priors=True "
+            "(--allow-legacy-t3-priors) if that is what you intend.")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # ── 1. Load pre-trained state dict ───────────────────────────────────
@@ -497,7 +509,12 @@ def main():
     parser.add_argument(
         '--t3-priors', default='ortholog', choices=['ortholog', 'stage6'],
         help="T3 prior rows: copy the ortholog's pre-trained rows (default) or the "
-             "pre-October Stage 6 lookup"
+             "pre-October Stage 6 lookup (refused without --allow-legacy-t3-priors)"
+    )
+    parser.add_argument(
+        '--allow-legacy-t3-priors', action='store_true',
+        help="Permit --t3-priors stage6, which leaves every T3a prior row zero (April's defect; "
+             "audit findings 2.7, 2.8). Off by default."
     )
     parser.add_argument(
         '--t4-zero-priors', default='promoter,coexp',
@@ -532,6 +549,7 @@ def main():
         t3_prior_source=args.t3_priors,
         t4_zero_priors=tuple(p.strip() for p in args.t4_zero_priors.split(',') if p.strip()),
         overwrite=args.overwrite,
+        allow_legacy_t3_priors=args.allow_legacy_t3_priors,
     )
 
 

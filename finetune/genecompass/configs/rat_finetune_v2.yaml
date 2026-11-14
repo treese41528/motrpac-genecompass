@@ -1,5 +1,6 @@
 # Retrain v2 (2026-10-08). Same model design and hyperparameters as rat_finetune.yaml (the
-# April model, kept read-only); only the inputs and outputs change:
+# April model, kept read-only; that file does not record April's prior policy, see its header);
+# only the inputs and outputs change:
 #   - init: a NEW checkpoint built with the fixed priors (rat_model_init.py, options under
 #     initialization: below); data/models/rat_genecompass_init (old priors) is not reused
 #   - data: mixed_species_dataset_v2 (clean corpus, scheme-B medians, per-row source refs)
@@ -72,9 +73,14 @@ training:
 initialization:
   t4_word_emb_init: random
   t4_word_emb_std: 0.02
-  t3_warm_start: true          # NEW: clone from ortholog
-  t3_noise_std: 0.001          # NEW: symmetry-breaking noise
-  species_init: mouse_plus_noise
+  # The next three keys are read by no code (audit finding 3.7). What they describe is fixed in
+  # rat_model_init.py: T3 word rows are always cloned from the ortholog with noise 0.001, and the rat species
+  # row is always the mouse row plus noise of species_noise_std. Changing them here changes nothing.
+  # (Likewise model.hidden_size ... max_position_embeddings above: the architecture is set in rat_pretrain.py;
+  # model.vocab_size is used only by run_stage7.py's prerequisite check.)
+  t3_warm_start: true          # not read
+  t3_noise_std: 0.001          # not read
+  species_init: mouse_plus_noise   # not read
   species_noise_std: 0.02
   coexp_rescale_factor: 3.9    # applied only to prior rows filled from Stage 6
   t3_prior_source: ortholog    # T3 prior rows = ortholog's pre-trained rows (T3a human, T3b mouse); 2026-10-05
