@@ -16,9 +16,17 @@ Per-tissue chain (steps 1-2, like Stage 9), then whole-experiment (steps 3-4, li
        GeneCompass checkpoint -> <human-root>/<label>/embeddings/cell_embeddings.npy
   3. subspace_probe.py --gc-root <human-root>   (py, CPU)  PLS-1 CV: sup_trained_auc + sup_dose_rho
        on the HUMAN-space embeddings (primary E.2 detector), by the rat gate's method (default
-       10 splits x 10,000 permutations, pre-registration §6) -> <human-gate>/subspace_probe.tsv
+       10 splits x 10,000 permutations, pre-registration §6; sequential sampling and classes as in
+       Stage 11) -> <human-gate>/subspace_probe.tsv. The family is the rat gate's: the `analysable`
+       column of its corroboration_merged.tsv, so the human side is classified over the same blocks
+       (docs/audit/remediation/STEP3_PREREG.md section 7).
   4. compare_transfer.py             (py, CPU)  rat vs human per (tissue,cell_type): does the axis
-       survive? -> <human-gate>/transfer_comparison.tsv + transfer_comparison.md
+       survive? -> <human-gate>/transfer_comparison.tsv + transfer_comparison.md, with the registered
+       status, the human-side BH q and class, the corrected verdict and the dose-trend flag, and
+       rat_only_pseudocells.tsv (cells tokenized in rat space only).
+
+The human test reuses the rat test's cells, labels, folds and seeds. It shows that the model's
+human-species reading keeps the structure. It is not a replication.
 
 The rat gate is deconvolution.hotspots_table's folder (default config: genecompass_input_v2_refs4all_rebuild/gate_rcv10/); its
 corroboration_merged.tsv defines the hotspots and its subspace_probe.tsv the rat side of the
@@ -119,7 +127,10 @@ def global_steps(ctx: dict) -> list:
             'cmd':  [PY, str(PROBE), '--gc-root', str(hr),
                      '--out', str(hg / 'subspace_probe.tsv'),
                      '--perms', str(ctx['perms']), '--folds', '5', '--repeats', str(ctx['repeats']),
-                     '--jobs', str(ctx['jobs'])],
+                     '--jobs', str(ctx['jobs']),
+                     # section 7: the classes of 5.2 on the human side, over the rat gate's family
+                     '--sequential', '--family-table', str(ctx['rat_gate'] / 'corroboration_merged.tsv'),
+                     '--scorer', ctx.get('scorer', 'kernel')],
             'key':  hg / 'subspace_probe.tsv',
         },
         {
@@ -130,6 +141,8 @@ def global_steps(ctx: dict) -> list:
                      '--rat-probe', str(ctx['rat_gate'] / 'subspace_probe.tsv'),
                      '--human-probe', str(hg / 'subspace_probe.tsv'),
                      '--human-corr', str(hg / 'corroboration_merged.tsv'),
+                     # the two tokenized trees, for the list of pseudo-cells in rat space only
+                     '--rat-root', str(ctx['rat_root']), '--human-root', str(hr),
                      '--out', str(hg)],
             'key':  hg / 'transfer_comparison.md',
         },
@@ -181,6 +194,9 @@ def main() -> None:
     p.add_argument('--repeats', type=int, default=10,
                    help='subspace_probe fold splits (default 10, the rat gate method)')
     p.add_argument('--jobs', type=int, default=8, help='subspace_probe parallel jobs')
+    p.add_argument('--scorer', choices=['kernel', 'loop'], default='kernel',
+                   help="subspace_probe permutation scorer (default 'kernel', as the rat gate; 'loop' = the "
+                        "original loop)")
     p.add_argument('--device', default='cuda')
     p.add_argument('--from', dest='from_step', type=int, default=1, choices=[1, 2, 3, 4])
     p.add_argument('--dry-run', action='store_true')
@@ -216,6 +232,7 @@ def main() -> None:
                       else float(d.get('pseudocell_target_sum', 6500.0)),
         'n_cells': args.n_cells if args.n_cells is not None else _FALLBACK_N_CELLS,
         'perms': args.perms, 'repeats': args.repeats, 'jobs': args.jobs, 'device': args.device,
+        'scorer': args.scorer,
     }
 
     logger.info("=" * 70)

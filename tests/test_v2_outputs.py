@@ -54,12 +54,20 @@ def test_cell_type_filenames_are_unique_in_every_tissue(roots, tissues):
 
 
 def test_human_transfer_mirrors_the_rat_run(roots, tissues, require):
+    """The human run uses the rat run's target sum, and its pseudo-cells are a subset of the rat run's: the
+    transfer drops a cell with too few mapped genes after orthology (20 LUNG goblet cells on the 16-tissue
+    default; docs/audit/remediation/STEP3_PREREG.md section 7), and can never add one."""
+    from datasets import load_from_disk
     require(roots[1])
     for t in tissues:
         rat, human = _summary(roots[0] / t), _summary(roots[1] / t)
         assert human["species"] == 0, t
         assert human["target_sum"] == rat["target_sum"], t
-        assert human["n_pseudocells"] == rat["n_pseudocells"], t
+        assert human["n_pseudocells"] <= rat["n_pseudocells"], t
+        rat_ids = load_from_disk(str(roots[0] / t / "dataset"))["cell_id"]
+        human_ids = load_from_disk(str(roots[1] / t / "dataset"))["cell_id"]
+        assert len(rat_ids) == rat["n_pseudocells"] and len(human_ids) == human["n_pseudocells"], t
+        assert len(set(human_ids)) == len(human_ids) and set(human_ids) <= set(rat_ids), t
 
 
 def test_stage12_verdicts_cover_every_rat_hotspot(config, roots, require):

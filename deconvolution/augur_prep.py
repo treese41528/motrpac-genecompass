@@ -18,7 +18,8 @@ Two outputs:
       separate exercise better than a plain PCA baseline? (cf. "one PCA still rules them all",
       arXiv 2410.13956). Writes pca_control.tsv.
 
-Join + alignment identical to pheno_merge_test.py / subspace_probe.py (mix{i} -> viallabel -> pheno;
+Join + alignment identical to pheno_merge_test.py / subspace_probe.py (mix{i} -> viallabel -> pheno, through
+deconvolution/sample_join.py, which checks the sample key against the Stage 8 output under --results-root;
 h5ad reindexed to the embedding row order by pseudocell_id).
 """
 import os
@@ -27,7 +28,7 @@ import os
 # joblib processes (--jobs), so results no longer depend on the calling script's environment.
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ[_v] = "1"
-import argparse, glob, re, sys
+import argparse, glob, sys
 from pathlib import Path
 
 import numpy as np, pandas as pd
@@ -40,6 +41,7 @@ from sklearn.decomposition import PCA
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from subspace_probe import block_seed, make_fold_sets, supervised         # reuse the CV probe
+from sample_join import load_viallabels, mix_index                        # checked sample key (STEP3_PREREG 2.5)
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
@@ -74,6 +76,9 @@ def main():
                     help="fold splits per probe, as in subspace_probe.py (1 = a single split)")
     ap.add_argument("--jobs", type=int, default=16)
     ap.add_argument("--ctl-out", default=os.path.join(gc, "pca_control.tsv"))
+    ap.add_argument("--results-root", default=str(resolve_path(cfg, dc["results_dir"])),
+                    help="deconvolution results root (holds motrpac/<TISSUE>/); the sample key is checked "
+                         "against it where it is on disk (default: config results_dir)")
     args = ap.parse_args()
 
     ph = pd.read_csv(pheno, sep="\t", dtype=str); ph["viallabel"] = ph["viallabel"].astype(str)
@@ -96,9 +101,8 @@ def main():
         pos = {str(n): i for i, n in enumerate(A.obs_names)}
         ridx = np.array([pos[o] for o in order])                          # align h5ad -> embedding order
         Xraw = A.X[ridx]; genes = list(map(str, A.var_names))
-        vls = [l.strip() for l in open(bs_p) if l.strip()]
-        idx = np.array([int(re.sub(r"\D", "", s)) - 1 for s in samp])
-        vl = np.array([vls[i] if 0 <= i < len(vls) else "" for i in idx])
+        vls = load_viallabels(bulk, tis, Path(args.results_root) / "motrpac")
+        vl = np.array(vls)[mix_index(samp, len(vls), context=tis)]
         grp = np.array([phm.loc[v, gcol] if v in phm.index else None for v in vl], dtype=object)
         sex = np.array([phm.loc[v, "sex"] if v in phm.index else None for v in vl], dtype=object)
         trained = np.array([None if g is None else

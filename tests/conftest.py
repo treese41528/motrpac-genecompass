@@ -44,4 +44,6 @@ def require():
 def pytest_configure(config):
     """Keep tmp_path folders in the project's tmp/, not the shared cluster's /tmp."""
     if not config.option.basetemp:
-        config.option.basetemp = str(ROOT / "tmp" / "pytest")
+        # one folder per pytest process: pytest empties its basetemp at start, so two sessions sharing one
+        # folder (several people, or several jobs, on this cluster) delete each other's files mid-run
+        config.option.basetemp = str(ROOT / "tmp" / "pytest" / f"run_{os.getpid()}")

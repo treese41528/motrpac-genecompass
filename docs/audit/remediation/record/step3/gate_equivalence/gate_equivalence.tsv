@@ -1,0 +1,198 @@
+tissue	cell_type	n	in_tables	auc_old	auc_new	auc_equal	p_old	p_new	p_equal	b_old_implied	b_new	d_b	n_scored_by_loop	b_loop	d_b_loop
+bat	ASPC	50	both	0.558	0.558	True	0.3013	0.3013	True	3012	3012	0	7	3012	0
+bat	Brown adipocytes	50	both	0.473	0.473	True	0.5251	0.5251	True	5251	5251	0	9	5251	0
+bat	Endothelial cells	50	both	0.49	0.49	True	0.4831	0.4831	True	4830	4830	0	8	4830	0
+bat	Immune cells	50	both	0.45	0.45	True	0.5993	0.5993	True	5993	5993	0	6	5993	0
+bat	Neuronal-like cells	50	both	0.516	0.516	True	0.3858	0.3858	True	3857	3857	0	4	3857	0
+bat	SMCs & Pericytes	50	both	0.464	0.464	True	0.56	0.56	True	5600	5600	0	13	5600	0
+blood	B cells	50	both	0.599	0.599	True	0.2215	0.2215	True	2214	2214	0	13	2214	0
+blood	CD4+ T cells	50	both	0.358	0.358	True	0.8266	0.8266	True	8266	8266	0	9	8266	0
+blood	CD8+ T cells	50	both	0.265	0.265	True	0.9887	0.9887	True	9887	9887	0	2	9887	0
+blood	Classical monocytes	50	both	0.821	0.821	True	0.001	0.001	True	9	9	0	1	9	0
+blood	Cycling cells	50	both	0.774	0.774	True	0.0075	0.0075	True	74	74	0	0	74	0
+blood	Erythroid cells	50	both	0.828	0.828	True	0.0012	0.0012	True	11	11	0	0	11	0
+blood	Megakaryocytes and platelets	50	both	0.837	0.837	True	0.0009	0.0009	True	8	8	0	1	8	0
+blood	NK cells	50	both	0.727	0.727	True	0.0165	0.0165	True	164	164	0	1	164	0
+blood	Neutrophils	50	both	0.819	0.819	True	0.0014	0.0014	True	13	13	0	0	13	0
+blood	Non-classical monocytes	50	both	0.769	0.769	True	0.0077	0.0077	True	76	76	0	0	76	0
+blood	Plasmacytoid dendritic cells	50	both	0.745	0.745	True	0.0161	0.0161	True	160	160	0	0	160	0
+blood	Regulatory T cells	50	both	0.65	0.65	True	0.0988	0.0988	True	987	987	0	4	987	0
+blood	T cells	50	both	0.549	0.549	True	0.3201	0.3201	True	3200	3200	0	9	3200	0
+cortex	Astrocytes	50	both	0.566	0.566	True	0.3036	0.3036	True	3035	3035	0	12	3035	0
+cortex	Border-associated macrophages	50	both	0.604	0.604	True	0.2026	0.2026	True	2025	2025	0	7	2025	0
+cortex	Excitatory neurons	50	both	0.62	0.62	True	0.1699	0.1699	True	1698	1698	0	5	1698	0
+cortex	Inhibitory neurons	50	both	0.358	0.358	True	0.8199	0.8199	True	8199	8199	0	4	8199	0
+cortex	Medium spiny neurons	50	both	0.508	0.508	True	0.4566	0.4566	True	4565	4565	0	8	4565	0
+cortex	Microglia	50	both	0.638	0.638	True	0.1066	0.1066	True	1065	1065	0	6	1065	0
+cortex	Neuroblasts	50	both	0.434	0.434	True	0.6509	0.6509	True	6509	6509	0	8	6509	0
+cortex	Neutrophils	50	both	0.43	0.43	True	0.6758	0.6758	True	6758	6758	0	3	6758	0
+cortex	Oligodendrocyte precursor cells	50	both	0.569	0.569	True	0.2942	0.2942	True	2941	2941	0	10	2941	0
+cortex	Oligodendrocytes	50	both	0.654	0.654	True	0.1056	0.1056	True	1055	1055	0	6	1055	0
+cortex	T cells	50	both	0.698	0.698	True	0.0522	0.0522	True	521	521	0	3	521	0
+cortex	Vascular leptomeningeal cells	50	both	0.551	0.551	True	0.343	0.343	True	3429	3429	0	6	3429	0
+heart	B cells	50	both	0.392	0.392	True	0.7551	0.7551	True	7551	7551	0	13	7551	0
+heart	CD8+ T cells	50	both	0.4	0.4	True	0.7437	0.7437	True	7437	7437	0	10	7437	0
+heart	Cardiac fibroblasts	50	both	0.644	0.644	True	0.1014	0.1014	True	1013	1013	0	4	1013	0
+heart	Cardiac neurons	50	both	0.748	0.748	True	0.0129	0.0129	True	128	128	0	0	128	0
+heart	Cardiomyocytes	50	both	0.603	0.603	True	0.2104	0.2104	True	2103	2103	0	7	2103	0
+heart	Dendritic cells	50	both	0.76	0.76	True	0.0129	0.0129	True	128	128	0	2	128	0
+heart	Endothelial cells	50	both	0.515	0.515	True	0.4136	0.4136	True	4135	4135	0	7	4135	0
+heart	Lymphatic endothelial cells	50	both	0.566	0.566	True	0.3056	0.3056	True	3055	3055	0	4	3055	0
+heart	Macrophages	50	both	0.666	0.666	True	0.0767	0.0767	True	766	766	0	5	766	0
+heart	Mast cells	50	both	0.47	0.47	True	0.5477	0.5477	True	5477	5477	0	8	5477	0
+heart	Mesothelial cells	50	both	0.574	0.574	True	0.2794	0.2794	True	2793	2793	0	5	2793	0
+heart	Monocytes	50	both	0.685	0.685	True	0.0654	0.0654	True	653	653	0	6	653	0
+heart	NK cells	50	both	0.645	0.645	True	0.1128	0.1128	True	1127	1127	0	8	1127	0
+heart	Pericytes	50	both	0.348	0.348	True	0.8548	0.8548	True	8548	8548	0	7	8548	0
+heart	T cells	50	both	0.747	0.747	True	0.0182	0.0182	True	181	181	0	2	181	0
+heart	Vascular smooth muscle cells	50	both	0.748	0.748	True	0.0158	0.0158	True	157	157	0	2	157	0
+hippoc	Astrocytes	50	both	0.608	0.608	True	0.1787	0.1787	True	1786	1786	0	6	1786	0
+hippoc	Dentate gyrus granule cells	50	both	0.562	0.562	True	0.2824	0.2824	True	2823	2823	0	5	2823	0
+hippoc	Endothelial cells	50	both	0.501	0.501	True	0.4725	0.4725	True	4724	4724	0	11	4724	0
+hippoc	Excitatory neurons	50	both	0.574	0.574	True	0.2556	0.2556	True	2555	2555	0	4	2555	0
+hippoc	Inhibitory neurons	50	both	0.579	0.579	True	0.2494	0.2494	True	2493	2493	0	6	2493	0
+hippoc	Microglia	50	both	0.441	0.441	True	0.6389	0.6389	True	6389	6389	0	18	6389	0
+hippoc	Mural cells	50	both	0.496	0.496	True	0.4165	0.4165	True	4164	4164	0	5	4164	0
+hippoc	Oligodendrocyte precursor cells	50	both	0.615	0.615	True	0.1702	0.1702	True	1701	1701	0	10	1701	0
+hippoc	Oligodendrocytes	50	both	0.449	0.449	True	0.6163	0.6163	True	6163	6163	0	12	6163	0
+hippoc	Thalamic neurons	50	both	0.356	0.356	True	0.8308	0.8308	True	8308	8308	0	4	8308	0
+hippoc	Vascular leptomeningeal cells	50	both	0.456	0.456	True	0.5835	0.5835	True	5835	5835	0	5	5835	0
+hypoth	Astrocytes	50	both	0.655	0.655	True	0.0936	0.0936	True	935	935	0	1	935	0
+hypoth	Dopaminergic neurons	50	both	0.415	0.415	True	0.6895	0.6895	True	6895	6895	0	3	6895	0
+hypoth	Endothelial cells	50	both	0.588	0.588	True	0.2301	0.2301	True	2300	2300	0	6	2300	0
+hypoth	Ependymal cells	50	both	0.778	0.778	True	0.0075	0.0075	True	74	74	0	0	74	0
+hypoth	GABAergic neurons	50	both	0.569	0.569	True	0.2877	0.2877	True	2876	2876	0	4	2876	0
+hypoth	Glutamatergic neurons	50	both	0.698	0.698	True	0.0366	0.0366	True	365	365	0	1	365	0
+hypoth	Microglia	50	both	0.754	0.754	True	0.0121	0.0121	True	120	120	0	5	120	0
+hypoth	Neuroendocrine cells	50	both	0.658	0.658	True	0.0738	0.0738	True	737	737	0	2	737	0
+hypoth	Neurons	50	both	0.301	0.301	True	0.9265	0.9265	True	9265	9265	0	6	9265	0
+hypoth	Oligodendrocyte precursor cells	50	both	0.798	0.798	True	0.0022	0.0022	True	21	21	0	2	21	0
+hypoth	Oligodendrocytes	50	both	0.755	0.755	True	0.0114	0.0114	True	113	113	0	0	113	0
+hypoth	Radial glial cells	50	both	0.564	0.564	True	0.2974	0.2974	True	2973	2973	0	6	2973	0
+hypoth	Tanycytes	50	both	0.683	0.683	True	0.0597	0.0597	True	596	596	0	4	596	0
+kidney	Connecting tubule cells	50	both	0.459	0.459	True	0.5822	0.5822	True	5822	5822	0	5	5822	0
+kidney	Cycling cells	50	both	0.273	0.273	True	0.9658	0.9658	True	9658	9658	0	0	9658	0
+kidney	Distal convoluted tubule cells	50	both	0.501	0.501	True	0.4226	0.4226	True	4225	4225	0	7	4225	0
+kidney	Endothelial cells	50	both	0.516	0.516	True	0.3941	0.3941	True	3940	3940	0	11	3940	0
+kidney	Fibroblasts	50	both	0.608	0.608	True	0.1546	0.1546	True	1545	1545	0	4	1545	0
+kidney	Immune cells	50	both	0.597	0.597	True	0.187	0.187	True	1869	1869	0	5	1869	0
+kidney	Injured proximal tubule cells	50	both	0.365	0.365	True	0.797	0.797	True	7970	7970	0	8	7970	0
+kidney	Monocytes	50	both	0.65	0.65	True	0.099	0.099	True	989	989	0	5	989	0
+kidney	Podocytes	50	both	0.655	0.655	True	0.0841	0.0841	True	840	840	0	2	840	0
+kidney	Principal cells	50	both	0.716	0.716	True	0.0308	0.0308	True	307	307	0	5	307	0
+kidney	Proximal tubule cells	50	both	0.559	0.559	True	0.2919	0.2919	True	2918	2918	0	5	2918	0
+kidney	Thick ascending limb cells	50	both	0.504	0.504	True	0.4556	0.4556	True	4555	4555	0	2	4555	0
+kidney	Thin limb cells	50	both	0.676	0.676	True	0.072	0.072	True	719	719	0	4	719	0
+kidney	Type A intercalated cells	50	both	0.376	0.376	True	0.7704	0.7704	True	7704	7704	0	6	7704	0
+kidney	Type B intercalated cells	50	both	0.325	0.325	True	0.8771	0.8771	True	8771	8771	0	3	8771	0
+liver	Cholangiocytes	50	both	0.354	0.354	True	0.8337	0.8337	True	8337	8337	0	6	8337	0
+liver	Hepatic stellate cells	50	both	0.436	0.436	True	0.6212	0.6212	True	6212	6212	0	4	6212	0
+liver	Hepatocytes	50	both	0.543	0.543	True	0.3057	0.3057	True	3056	3056	0	5	3056	0
+liver	Kupffer cells	50	both	0.583	0.583	True	0.2128	0.2128	True	2127	2127	0	7	2127	0
+liver	Liver sinusoidal endothelial cells	50	both	0.443	0.443	True	0.5754	0.5754	True	5754	5754	0	12	5754	0
+liver	Mesothelial cells	50	both	0.63	0.63	True	0.1294	0.1294	True	1293	1293	0	6	1293	0
+liver	NK cells	50	both	0.474	0.474	True	0.5192	0.5192	True	5192	5192	0	8	5192	0
+liver	Vascular endothelial cells	50	both	0.483	0.483	True	0.5323	0.5323	True	5323	5323	0	13	5323	0
+lung	Alveolar macrophages	50	both	0.556	0.556	True	0.3115	0.3115	True	3114	3114	0	5	3114	0
+lung	Alveolar type II cells	50	both	0.487	0.487	True	0.4997	0.4997	True	4996	4996	0	8	4996	0
+lung	B cells	50	both	0.331	0.331	True	0.8694	0.8694	True	8694	8694	0	5	8694	0
+lung	Basal cells	50	both	0.41	0.41	True	0.7102	0.7102	True	7102	7102	0	10	7102	0
+lung	CD4+ T cells	50	both	0.714	0.714	True	0.0307	0.0307	True	306	306	0	4	306	0
+lung	Ciliated cells	50	both	0.728	0.728	True	0.0227	0.0227	True	226	226	0	2	226	0
+lung	Club cells	50	both	0.616	0.616	True	0.1784	0.1784	True	1783	1783	0	9	1783	0
+lung	Dendritic cells	50	both	0.77	0.77	True	0.0064	0.0064	True	63	63	0	0	63	0
+lung	Endothelial cells	50	both	0.786	0.786	True	0.0037	0.0037	True	36	36	0	0	36	0
+lung	Fibroblasts	50	both	0.781	0.781	True	0.0055	0.0055	True	54	54	0	1	54	0
+lung	Goblet cells	32	both	0.633	0.633	True	0.1829	0.1829	True	1828	1828	0	14	1828	0
+lung	Interstitial macrophages	50	both	0.585	0.585	True	0.2274	0.2274	True	2273	2273	0	7	2273	0
+lung	Mesothelial cells	50	both	0.785	0.785	True	0.0039	0.0039	True	38	38	0	1	38	0
+lung	Monocytes	50	both	0.611	0.611	True	0.1789	0.1789	True	1788	1788	0	6	1788	0
+lung	NK cells	50	both	0.482	0.482	True	0.5102	0.5102	True	5102	5102	0	6	5102	0
+lung	Neutrophils	50	both	0.572	0.572	True	0.2787	0.2787	True	2786	2786	0	7	2786	0
+lung	Non-classical monocytes	50	both	0.786	0.786	True	0.0032	0.0032	True	31	31	0	1	31	0
+lung	Plasmacytoid dendritic cells	50	both	0.66	0.66	True	0.0863	0.0863	True	862	862	0	5	862	0
+lung	T cells	50	both	0.661	0.661	True	0.0913	0.0913	True	912	912	0	5	912	0
+lung	Tuft cells	50	both	0.339	0.339	True	0.8653	0.8653	True	8653	8653	0	10	8653	0
+lung	Vascular smooth muscle cells	50	both	0.817	0.817	True	0.0018	0.0018	True	17	17	0	0	17	0
+ovary	B cells	24	both	0.737	0.737	True	0.0753	0.0753	True	752	752	0	20	752	0
+ovary	CD4+ T cells	24	both	0.577	0.577	True	0.319	0.319	True	3189	3189	0	29	3189	0
+ovary	Dendritic cells	24	both	0.736	0.736	True	0.0771	0.0771	True	770	770	0	23	770	0
+ovary	Endothelial cells	24	both	0.714	0.714	True	0.1043	0.1043	True	1042	1042	0	13	1042	0
+ovary	Erythroid cells	24	both	0.622	0.622	True	0.2459	0.2459	True	2458	2458	0	32	2458	0
+ovary	Granulosa cells	24	both	0.731	0.731	True	0.0912	0.0912	True	911	911	0	30	911	0
+ovary	Luteal cells	24	both	0.725	0.725	True	0.0911	0.0911	True	910	910	0	19	910	0
+ovary	Lymphatic endothelial cells	24	both	0.708	0.708	True	0.0904	0.0904	True	903	903	0	10	903	0
+ovary	Macrophages	24	both	0.834	0.834	True	0.0164	0.0164	True	163	163	0	14	163	0
+ovary	Monocytes	24	both	0.72	0.72	True	0.095	0.095	True	949	949	0	21	949	0
+ovary	NK cells	24	both	0.689	0.689	True	0.1224	0.1224	True	1223	1223	0	28	1223	0
+ovary	Neutrophils	24	both	0.258	0.258	True	0.8786	0.8786	True	8786	8786	0	37	8786	0
+ovary	Non-classical monocytes	24	both	0.426	0.426	True	0.5786	0.5786	True	5786	5786	0	40	5786	0
+ovary	Pericytes	24	both	0.825	0.825	True	0.0182	0.0182	True	181	181	0	15	181	0
+ovary	Plasmacytoid dendritic cells	24	both	0.828	0.828	True	0.0198	0.0198	True	197	197	0	16	197	0
+ovary	Smooth muscle cells	24	both	0.845	0.845	True	0.0119	0.0119	True	118	118	0	11	118	0
+ovary	Stromal cells	24	both	0.772	0.772	True	0.05	0.05	True	499	499	0	11	499	0
+ovary	Theca cells	24	both	0.727	0.727	True	0.0777	0.0777	True	776	776	0	25	776	0
+skmgn	Endothelial cells	50	both	0.734	0.734	True	0.0207	0.0207	True	206	206	0	1	206	0
+skmgn	Fibro-adipogenic progenitors	50	both	0.693	0.693	True	0.0555	0.0555	True	554	554	0	5	554	0
+skmgn	Macrophages	50	both	0.65	0.65	True	0.1153	0.1153	True	1152	1152	0	1	1152	0
+skmgn	Pericytes	50	both	0.738	0.738	True	0.0183	0.0183	True	182	182	0	2	182	0
+skmgn	Satellite cells	50	both	0.69	0.69	True	0.0552	0.0552	True	551	551	0	1	551	0
+skmgn	Schwann cells	50	both	0.637	0.637	True	0.1426	0.1426	True	1425	1425	0	5	1425	0
+skmgn	Skeletal muscle cells	50	both	0.772	0.772	True	0.0084	0.0084	True	83	83	0	1	83	0
+skmgn	Tenocytes	50	both	0.825	0.825	True	0.0006	0.0006	True	5	5	0	0	5	0
+skmgn	Vascular smooth muscle cells	50	both	0.714	0.714	True	0.0311	0.0311	True	310	310	0	0	310	0
+skmvl	Endothelial cells	50	both	0.775	0.775	True	0.0088	0.0088	True	87	87	0	0	87	0
+skmvl	Fibro-adipogenic progenitors	50	both	0.599	0.599	True	0.215	0.215	True	2149	2149	0	4	2149	0
+skmvl	Macrophages	50	both	0.776	0.776	True	0.0071	0.0071	True	70	70	0	0	70	0
+skmvl	Pericytes	50	both	0.602	0.602	True	0.1912	0.1912	True	1911	1911	0	7	1911	0
+skmvl	Satellite cells	50	both	0.887	0.887	True	0.0002	0.0002	True	1	1	0	1	1	0
+skmvl	Schwann cells	50	both	0.659	0.659	True	0.1031	0.1031	True	1030	1030	0	7	1030	0
+skmvl	Skeletal muscle cells	50	both	0.742	0.742	True	0.02	0.02	True	199	199	0	1	199	0
+skmvl	Tenocytes	50	both	0.749	0.749	True	0.0113	0.0113	True	112	112	0	3	112	0
+skmvl	Vascular smooth muscle cells	50	both	0.874	0.874	True	0.0002	0.0002	True	1	1	0	0	1	0
+smlint	B cells	50	both	0.63	0.63	True	0.1256	0.1256	True	1255	1255	0	5	1255	0
+smlint	BEST4+ enterocytes	50	both	0.658	0.658	True	0.0819	0.0819	True	818	818	0	4	818	0
+smlint	CD8+ T cells	50	both	0.522	0.522	True	0.3879	0.3879	True	3878	3878	0	7	3878	0
+smlint	Enterocytes	50	both	0.627	0.627	True	0.1399	0.1399	True	1398	1398	0	5	1398	0
+smlint	Enteroendocrine cells	50	both	0.605	0.605	True	0.1851	0.1851	True	1850	1850	0	4	1850	0
+smlint	Epithelial cells	50	both	0.626	0.626	True	0.1425	0.1425	True	1424	1424	0	3	1424	0
+smlint	Erythroid cells	50	both	0.569	0.569	True	0.2619	0.2619	True	2618	2618	0	5	2618	0
+smlint	Goblet cells	50	both	0.557	0.557	True	0.2825	0.2825	True	2824	2824	0	4	2824	0
+smlint	Macrophages	50	both	0.444	0.444	True	0.6087	0.6087	True	6087	6087	0	7	6087	0
+smlint	NK cells	50	both	0.526	0.526	True	0.3729	0.3729	True	3728	3728	0	8	3728	0
+smlint	Stem cells	50	both	0.628	0.628	True	0.1399	0.1399	True	1398	1398	0	6	1398	0
+smlint	Transit-amplifying cells	50	both	0.61	0.61	True	0.1712	0.1712	True	1711	1711	0	8	1711	0
+smlint	Tuft cells	50	both	0.462	0.462	True	0.5463	0.5463	True	5463	5463	0	5	5463	0
+spleen	B cells	50	both	0.542	0.542	True	0.3388	0.3388	True	3387	3387	0	6	3387	0
+spleen	CD4+ T cells	50	both	0.597	0.597	True	0.2104	0.2104	True	2103	2103	0	8	2103	0
+spleen	CD8+ T cells	50	both	0.515	0.515	True	0.4259	0.4259	True	4258	4258	0	7	4258	0
+spleen	Cycling cells	50	both	0.449	0.449	True	0.6019	0.6019	True	6019	6019	0	2	6019	0
+spleen	Dendritic cells	50	both	0.496	0.496	True	0.4786	0.4786	True	4785	4785	0	6	4785	0
+spleen	Endothelial cells	50	both	0.338	0.338	True	0.8695	0.8695	True	8695	8695	0	4	8695	0
+spleen	Erythroid progenitors	50	both	0.552	0.552	True	0.3431	0.3431	True	3430	3430	0	6	3430	0
+spleen	Monocytes	50	both	0.445	0.445	True	0.6083	0.6083	True	6083	6083	0	6	6083	0
+spleen	NK cells	50	both	0.598	0.598	True	0.2203	0.2203	True	2202	2202	0	2	2202	0
+spleen	Neutrophils	50	both	0.554	0.554	True	0.3253	0.3253	True	3252	3252	0	7	3252	0
+spleen	Non-classical monocytes	50	both	0.525	0.525	True	0.4011	0.4011	True	4010	4010	0	6	4010	0
+spleen	Plasma cells	50	both	0.565	0.565	True	0.3034	0.3034	True	3033	3033	0	6	3033	0
+spleen	Plasmacytoid dendritic cells	50	both	0.46	0.46	True	0.5486	0.5486	True	5486	5486	0	8	5486	0
+spleen	Red-pulp macrophages	50	both	0.663	0.663	True	0.0845	0.0845	True	844	844	0	3	844	0
+testes	Condensed spermatids	25	both	0.587	0.587	True	0.3194	0.3194	True	3193	3193	0	28	3193	0
+testes	Elongating spermatids	25	both	0.689	0.689	True	0.1376	0.1376	True	1375	1375	0	22	1375	0
+testes	Round spermatids	25	both	0.266	0.266	True	0.8639	0.8639	True	8639	8639	0	26	8639	0
+testes	Sertoli cells	25	both	0.511	0.511	True	0.4449	0.4449	True	4448	4448	0	34	4448	0
+testes	Spermatocytes	25	both	0.449	0.449	True	0.5844	0.5844	True	5844	5844	0	30	5844	0
+testes	Spermatogonia	25	both	0.333	0.333	True	0.7815	0.7815	True	7815	7815	0	27	7815	0
+watsc	Adipose stromal progenitor cells	50	both	0.494	0.494	True	0.468	0.468	True	4679	4679	0	9	4679	0
+watsc	B cells	50	both	0.542	0.542	True	0.3159	0.3159	True	3158	3158	0	6	3158	0
+watsc	Cycling cells	50	both	0.505	0.505	True	0.4143	0.4143	True	4142	4142	0	6	4142	0
+watsc	Dendritic cells	50	both	0.508	0.508	True	0.4182	0.4182	True	4181	4181	0	10	4181	0
+watsc	Endothelial cells	50	both	0.506	0.506	True	0.4286	0.4286	True	4285	4285	0	9	4285	0
+watsc	Glandular epithelial cells	50	both	0.412	0.412	True	0.6549	0.6549	True	6549	6549	0	9	6549	0
+watsc	Macrophages	50	both	0.647	0.647	True	0.0874	0.0874	True	873	873	0	6	873	0
+watsc	Mammary luminal epithelial cells	50	both	0.444	0.444	True	0.5615	0.5615	True	5615	5615	0	6	5615	0
+watsc	Mural cells	50	both	0.477	0.477	True	0.5096	0.5096	True	5096	5096	0	6	5096	0
+watsc	NK and cytotoxic T cells	50	both	0.518	0.518	True	0.4002	0.4002	True	4001	4001	0	8	4001	0
+watsc	Non-classical monocytes	50	both	0.453	0.453	True	0.5871	0.5871	True	5871	5871	0	5	5871	0
+watsc	Plasmacytoid dendritic cells	50	both	0.642	0.642	True	0.0988	0.0988	True	987	987	0	7	987	0
+watsc	T cells	50	both	0.49	0.49	True	0.467	0.467	True	4669	4669	0	4	4669	0

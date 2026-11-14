@@ -7,7 +7,9 @@ on these pseudo-cells cannot recover exercise biology, regardless of how clean t
 
 Join: pseudo-cell sample 'mix{i}' -> i-th viallabel in <TISSUE>/bulk_samples.tsv -> PHENO[viallabel].
 (run_deconvolution.R renames mixture rows to mix{i}, discarding viallabels, so they are recovered
-by ROW ORDER -- validated 300/300 on liver, design 2 sex x 5 group.)
+by ROW ORDER -- validated 300/300 on liver, design 2 sex x 5 group.) The join goes through
+deconvolution/sample_join.py, which checks the list against the Stage 8 output under --results-root and
+raises on a sample name outside it (docs/audit/remediation/STEP3_PREREG.md section 2.5).
 
 Per (tissue, cell type) reports multivariate variance-explained (eta^2) of:
   GROUP (control/1w/2w/4w/8w), TRAINED (any training vs control), SEX -- on the 768-d embedding,
@@ -16,12 +18,11 @@ abundant cell types. (Sex-chromosome genes were removed upstream, so SEX signal 
 
 Usage: python deconvolution/pheno_merge_test.py [--gc-root data/deconvolution/genecompass_input]
        [--pheno deconvolution/reference/motrpac_sample_pheno.tsv]
-       [--bulk-root data/deconvolution/motrpac_bulk] [--perms 1000] [--min-per-group 3]
+       [--bulk-root data/deconvolution/motrpac_bulk] [--results-root ...] [--perms 1000] [--min-per-group 3]
 """
 import argparse
 import glob
 import os
-import re
 
 import sys
 from pathlib import Path
@@ -32,6 +33,8 @@ from datasets import load_from_disk
 
 sys.path.insert(0, str(Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                       # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sample_join import load_viallabels, mix_index                     # noqa: E402
 
 
 def eta2(E, labels):
@@ -58,6 +61,9 @@ def main():
     ap.add_argument("--gc-root", default=gc)
     ap.add_argument("--pheno", default=resolve_path(cfg, dc["sample_pheno"]))
     ap.add_argument("--bulk-root", default=resolve_path(cfg, dc["motrpac_bulk_out"]))
+    ap.add_argument("--results-root", default=resolve_path(cfg, dc["results_dir"]),
+                    help="deconvolution results root (holds motrpac/<TISSUE>/); the sample key is checked "
+                         "against it where it is on disk (default: config results_dir)")
     ap.add_argument("--perms", type=int, default=1000)
     ap.add_argument("--min-per-group", type=int, default=3, help="skip cell types with a group cell < this")
     ap.add_argument("--out", default=os.path.join(gc, "pheno_merge_test.tsv"))
@@ -80,9 +86,8 @@ def main():
         ct = np.array(ds["cell_type"]); samp = np.array(ds["sample"])
         if emb.shape[0] != len(ct):
             print(f"[{tis}] MISALIGNED — skip"); continue
-        vls = [l.strip() for l in open(bs_p) if l.strip()]
-        idx = np.array([int(re.sub(r"\D", "", s)) - 1 for s in samp])          # mix{i} -> i-1
-        vl = np.array([vls[i] if 0 <= i < len(vls) else "" for i in idx])
+        vls = load_viallabels(args.bulk_root, tis, Path(args.results_root) / "motrpac")   # checked sample key
+        vl = np.array(vls)[mix_index(samp, len(vls), context=tis)]              # mix{i} -> i-th vial label
         grp = np.array([phm.loc[v, gcol] if v in phm.index else None for v in vl], dtype=object)
         sex = np.array([phm.loc[v, "sex"] if v in phm.index else None for v in vl], dtype=object)
         trained = np.array([None if g is None else ("control" if "control" in str(g).lower() else "trained")

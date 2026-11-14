@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from gene_utils import load_config, resolve_path  # noqa: E402
 _cfg = load_config()
 BULK = str(resolve_path(_cfg, _cfg['deconvolution']['motrpac_bulk_out']))
+RES  = str(resolve_path(_cfg, _cfg['deconvolution']['results_dir']) / 'motrpac')   # Stage 8 output, for the sample-key check
 DE   = os.environ.get('DE_DIR') or str(resolve_path(_cfg, _cfg['deconvolution']['genecompass_input_dir']) / 'pseudobulk_de')
 print(f'DE folder: {DE}')
 PH   = str(resolve_path(_cfg, _cfg['deconvolution']['sample_pheno']))
@@ -34,6 +35,7 @@ PAR = {'SKMGN': ['Skeletal myocytes', 'Skeletal muscle cells'],
        'SKMVL': ['Skeletal myocytes', 'Skeletal muscle cells'],
        'HEART': ['Cardiomyocytes'], 'LIVER': ['Hepatocytes']}
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
+from sample_join import load_viallabels  # noqa: E402  (checked sample key, STEP3_PREREG section 2.5)
 ph = pd.read_csv(PH, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')
 summ = pd.read_csv(os.path.join(DE, 'de_summary.tsv'), sep='\t')
 
@@ -50,7 +52,7 @@ print('\n=== A: do parenchyma DE blocks recover genes that GENUINELY move in the
 print('(bulk movers = 8wk-vs-control BH<0.05 & |log2FC|>=%.2f)' % THR_LFC)
 rows = []
 for TIS, cts in PAR.items():
-    via = [x.strip() for x in open(f'{BULK}/{TIS}/bulk_samples.tsv') if x.strip()]
+    via = load_viallabels(BULK, TIS, RES)
     g = [x.strip() for x in open(f'{BULK}/{TIS}/bulk_genes.tsv') if x.strip()]
     M = np.asarray(mmread(f'{BULK}/{TIS}/bulk.mtx').todense(), float)
     if M.shape[0] != len(g): M = M.T
