@@ -61,3 +61,37 @@ c.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
 c.set_xlabel("share of the reference's cells above 15%"); c.grid(axis="y", visible=False)
 c.set_title("(c) Deconvolution references built from corpus cells")
 fs.save(fig, FIG / "step5_mito.png")
+
+# ------------------------------------------------- Figure 5.2: counts filed under another gene, by study and in the bulk
+k = pd.read_csv(REC / "id_symbol_classes_by_study.tsv", sep="\t").sort_values("other gene", ascending=False).reset_index(drop=True)
+bulk = pd.read_csv(REC / "bulk_direct_ids_other_gene_or_alignment_lost.tsv", sep="\t")
+ref_studies = {"GSE240658": "KIDNEY", "GSE220075": "LIVER", "GSE303115": "CORTEX", "GSE137869": "WATSC, muscle",
+               "GSE244451": "BAT", "GSE272055": "SMLINT", "GSE295314": "HIPPOC", "GSE248413": "HYPOTH", "GSE280111": "HEART",
+               "GSE273062": "LUNG", "GSE252844": "LUNG"}
+fig, (a, b) = plt.subplots(1, 2, figsize=(12.6, 5.2), gridspec_kw={"width_ratios": [1.25, 1], "wspace": 0.5})
+x = np.arange(len(k))
+is_ref = k.study.isin(ref_studies)
+a.bar(x[~is_ref], k.loc[~is_ref, "other gene"], color=fs.BLUE, width=0.72, label=f"other corpus studies ({int((~is_ref).sum())})")
+a.bar(x[is_ref], k.loc[is_ref, "other gene"], color=fs.ORANGE, width=0.72, label=f"studies that feed a deconvolution reference ({int(is_ref.sum())})")
+a.axhline(0.005, color=fs.NEUTRAL, lw=1, ls=(0, (4, 3)))
+a.text(len(k) - 0.5, 0.0062, "registered bound: 0.5%", ha="right", fontsize=7.5, color=fs.INK2)
+for i in range(3):
+    a.annotate(f"{k.study[i]}  {k['other gene'][i]:.1%}", (x[i], k["other gene"][i]), xytext=(8, -2), textcoords="offset points",
+               fontsize=7.5, color=fs.INK2, va="top" if i == 0 else "center")
+a.set_xticks([]); a.set_xlim(-1, len(k)); a.grid(axis="x", visible=False)
+a.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
+a.set_xlabel(f"{len(k)} studies with ID-keyed files, sorted"); a.set_ylabel("share of a study's counts under another gene's token")
+a.set_title(f"(a) Corpus: {int((k['other gene'] > 0.005).sum())} of {len(k)} studies are above the bound")
+a.legend(loc="upper right", bbox_to_anchor=(1.0, 0.9))
+
+top = bulk[bulk["class"] == "other gene"].sort_values("bulk_counts", ascending=False).head(10).iloc[::-1]
+yy = np.arange(len(top))
+b.barh(yy, top.share_of_bulk_counts, color=fs.BLUE, height=0.62)
+for y_, v in zip(yy, top.share_of_bulk_counts):
+    b.text(v + 0.0002, y_, f"{v:.2%}", va="center", fontsize=7.5, color=fs.INK2)
+b.set_yticks(yy); b.set_yticklabels([f"{s_.capitalize()} → {n_}" for s_, n_ in zip(top.symbol, top.release115_symbol)])
+b.set_xlim(0, top.share_of_bulk_counts.max() * 1.25); b.grid(axis="y", visible=False)
+b.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.1%}"))
+b.set_xlabel("share of all MoTrPAC bulk counts")
+b.set_title("(b) Bulk: consortium gene → gene the ID names in release 115")
+fs.save(fig, FIG / "step5_id_drift.png")
