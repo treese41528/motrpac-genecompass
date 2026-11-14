@@ -86,3 +86,16 @@ only: a task killed for memory or time is rerun once with more (DWLS additionall
 into folders of its own (`simbu_bench_refs5_smoke`, `mixture_panel_refs5_smoke`). The smoke outputs are used to
 test the runner, the provenance record and the table-building commands. They are not part of the result: the
 full batteries rebuild and rerun TESTES in the registered output roots.
+
+**N14. V5, what arm A changes besides the bias between types.** Dividing each cell by its own total also
+weights the cells of one type equally. Arms B and C weight them by library size, and so does every method's
+reference profile of a type, which is built from summed counts. A part of any difference between arm A and
+arm B is therefore this change of weighting within a type, not the difference in mRNA content between types.
+SimBu offers no setting that removes one without the other. Not changed; disclosed with the result.
+
+**N15. V5, how the check of the arms is made.** For each reference and cell type, SimBu's own `simulate_bulk`
+draws one sample of 1,000 cells of that type alone, in each arm, with no rescaling to a read total
+(`deconvolution/omnideconv_bench/check_simbu_arms.R`). The sample's total divided by 1,000 is the mean library
+size of that type's cells as the arm sums them. Arm A removes the library-size differences if this number is
+the same for every cell type of a reference. The check runs on all 15 references, not only on the smoke
+reference.
