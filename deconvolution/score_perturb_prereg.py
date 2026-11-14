@@ -14,6 +14,11 @@ null + value-spanning genes, + the Alb/Snap25 negatives):
       Scored only when both are in --results (the July panel lacked them; its PASS came from the smoke
       run); otherwise reported NOT RUN. Both are kept out of #1 and #4.
 Writes --out (markdown) and the same numbers as <out>.json.
+
+--withdraw-criterion-2 (docs/audit/remediation, PI decision of 2026-11-14 on audit finding 9.2): criterion 2 is
+not a test of predicted targets (its gene set was written after the smoke run showed the targets, and top-25
+lists of unrelated genes overlap heavily), so its overlap is printed for the record with no verdict and the
+overall line covers criteria 1, 3 and 4 only. Without the flag the report is as it always was.
 """
 import argparse
 import collections
@@ -58,6 +63,8 @@ def main():
     ap.add_argument("--dataset", default="data/deconvolution/genecompass_input/skmvl/dataset")
     ap.add_argument("--cell-type", default="Skeletal muscle")
     ap.add_argument("--out", default="deconvolution/PERTURB_PREREG_RESULTS.md")
+    ap.add_argument("--withdraw-criterion-2", action="store_true",
+                    help="print criterion 2's overlap with no verdict; overall verdict over criteria 1, 3 and 4")
     args = ap.parse_args()
 
     tok = pickle.load(open(_ROOT / "data" / "training" / "ortholog_mappings" / "rat_tokens.pickle", "rb"))
@@ -130,12 +137,16 @@ def main():
         f"| #4 self-consistency Spearman(shift, value) (>0) | rho=**{rho:.2f}** (p={p4:.1e}) | "
         f"{'PASS' if c4 else 'FAIL'} |",
         f"| #2 Mef2c top-25 targets in curated muscle/mito set | **{k}/{n}** hits "
-        f"(background K={K}/{N}); hypergeom p=**{p2:.1e}** | {'PASS' if c2 else 'FAIL'} |",
+        f"(background K={K}/{N}); hypergeom p=**{p2:.1e}** | "
+        f"{'WITHDRAWN (printed for the record; no verdict)' if args.withdraw_criterion_2 else 'PASS' if c2 else 'FAIL'} |",
         f"| #3 not-expressed negatives (Alb/Snap25) | {res3} | {('PASS' if c3 else 'FAIL') if run3 else 'NOT RUN'} |",
         "",
         f"**Mef2c target hits in the muscle/mito set:** {', '.join(hits) if hits else '(none)'}.",
         "",
-        f"**Overall:** {'ALL PASS' if (c1 and c4 and c2 and c3) else 'MIXED -- see below'}. "
+        (f"**Overall (criteria 1, 3 and 4; criterion 2 withdrawn):** "
+         f"{'1, 3 and 4 pass' if (c1 and c4 and c3) else 'not all of 1, 3 and 4 pass'}. "
+         if args.withdraw_criterion_2 else
+         f"**Overall:** {'ALL PASS' if (c1 and c4 and c2 and c3) else 'MIXED -- see below'}. ") +
         "Note (from the smoke findings): the single-deletion CLS shift is near-noise in absolute terms, so "
         "#1 tests the *ranking* (is Mef2c above matched genes?), and the GRN (Module B) uses the per-gene "
         "TARGET shift, not the cell shift.",
@@ -143,7 +154,8 @@ def main():
     Path(args.out).write_text("\n".join(lines) + "\n")
     summary = {"cell_type": args.cell_type, "n_cells": ncells, "panel": len(shift),
                "c1": {"mef2c_pctile": pct, "n_matched": len(matched), "mef2c_shift": shift[MEF2C], "pass": bool(c1)},
-               "c2": {"hits": k, "n_top": n, "K": K, "N": N, "p": p2, "pass": bool(c2)},
+               "c2": {"hits": k, "n_top": n, "K": K, "N": N, "p": p2,
+                      "pass": None if args.withdraw_criterion_2 else bool(c2), "withdrawn": bool(args.withdraw_criterion_2)},
                "c3": {"detail": c3_detail, "null_median": null_med, "pass": bool(c3), "run": run3},
                "c4": {"rho": float(rho), "p": float(p4), "pass": bool(c4)}}
     Path(args.out).with_suffix(".json").write_text(json.dumps(summary, indent=2))

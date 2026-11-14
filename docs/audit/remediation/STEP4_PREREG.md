@@ -96,6 +96,23 @@ the clustering checks are not repeated on them.
 - **Criterion 2 is withdrawn** as a test of predicted targets (PI decision 4). Its overlap is printed for the
   record and carries no verdict.
 
+**Addendum to V4 (2026-11-14, written before any perturbation on refs5 and before the refs5 BLOOD dataset was
+read for these genes).** V4 as written does not say how the myeloid replication is scored, and the 2026-07-03
+registration froze no null for it. The rules below are fixed now.
+
+| Item | Rule |
+|---|---|
+| Muscle cells | refs5 SKMVL, cell type "Skeletal muscle cells" (the name of the July "Skeletal muscle" type since the joint re-annotation), all pseudo-cells |
+| Muscle panel | The frozen 80-gene panel (`data/deconvolution/perturb_prereg/prereg_genes.txt`) plus Alb and Snap25, unchanged. Its matched null is, as the scorer has always computed it, the panel genes whose mean value in the scored cells is within 15% of Mef2c's |
+| Monocyte cells | refs5 BLOOD, cell type "Classical monocytes", all pseudo-cells |
+| Monocyte null | For each of Spi1 and Cebpa: every gene whose token is in the input of the monocyte pseudo-cells and whose mean value over them is within 15% of the factor's (the scorer's rule for Mef2c). All of them are perturbed; none is drawn at random. The two factors are left out of each other's null |
+| Reading | A factor **replicates** if its cell shift is above the 90th percentile of its null (criterion 1's threshold, one-sided). It is **not testable** if its token is absent from the cells or present in fewer than 20 pseudo-cells (steps 1 and 2 of the registered ladder) |
+| Targets | Not scored. The 2026-07-03 text expects the factors' targets to "enrich for myeloid genes", but froze no myeloid set, and the construct is the one withdrawn as criterion 2 |
+| Also printed, no verdict | Spearman correlation of shift with mean value over every perturbed gene in the monocytes (criterion 4's quantity), and where Mef2c's mean value ranks among the muscle panel on refs5, since the panel was matched on the July pseudo-cells |
+
+The replication is reported and is not a gate, as registered. Code: `analysis/audit_remediation/module_a_v4.py`;
+`deconvolution/score_perturb_prereg.py --withdraw-criterion-2`.
+
 ## V5. mRNA-content bias with a baseline that has no bias (finding 5.2)
 
 **The gap.** In the battery of 2026-11-11 the "no bias" arm summed raw counts, so it kept each reference's
