@@ -25,7 +25,7 @@ a result 47 to 116 ribosomal protein genes stayed in each tissue's deconvolution
 
 `--check` prints how the built list differs from the file at --out and exits non-zero if they differ.
 
-Writes deconvolution/reference/rat_exclude_genes.tsv   (feature_ID, gene_symbol, category)
+Writes deconvolution/reference/rat_exclude_genes_v2.tsv   (feature_ID, gene_symbol, category)
 
 Usage (project venv):  python deconvolution/build_exclude_genes.py [--check] [--out PATH]
 """
@@ -72,7 +72,9 @@ def build(gene_info):
 def main():
     cfg = load_config()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", default=str(resolve_path(cfg, cfg["deconvolution"]["rat_exclude_genes"])))
+    ap.add_argument("--out", default=str(resolve_path(cfg, "deconvolution/reference/rat_exclude_genes_v2.tsv")),
+                    help="default: the v2 list. The first list (rat_exclude_genes.tsv) has no builder and is kept "
+                         "as it was for the runs made with it; do not point --out at it.")
     ap.add_argument("--check", action="store_true", help="compare with the file at --out instead of writing it")
     a = ap.parse_args()
     new = build(resolve_path(cfg, cfg["biomart"]["rat_gene_info"]))

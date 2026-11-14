@@ -1,0 +1,19 @@
+# refs5: the audit-remediation rerun of Stages 8-14 (docs/audit/remediation/STEP3_PREREG.md, registered
+# 2026-11-14). The v2 model on the references rebuilt into references_v5/ (HYPOTH re-annotated, HEART merge
+# applied), with the Stage 8 exclusion list rebuilt in Ensembl 115, the gate's Monte Carlo classes, the
+# single-sex DE repair, and the network difference on shared genes. Every output goes to fresh _refs5 folders;
+# the current default (_refs4all_rebuild) is untouched.
+#   export PIPELINE_PROFILE=config/profiles/refs5.yaml
+deconvolution:
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes_v2.tsv     # Amendment 1
+  results_dir: data/deconvolution/results_refs5
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs5
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs5/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs5
+  grn_dir: data/deconvolution/grn_v2_refs5
+  grn_human_dir: data/deconvolution/grn_v2_refs5_human
+  posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
+  validation_dir: data/deconvolution/validation_refs5
+  # Stage 9 target sum: NOT SET YET. It is fixed by the registered formula from the refs5 LIVER pseudo-cells
+  # (deconvolution/calibrate_target_sum.py) after Stage 8 and before any tissue is tokenized. Until then this
+  # profile keeps the default's 6,400, which is also the T0 the formula starts from.
