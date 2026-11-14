@@ -1,0 +1,88 @@
+# Step 4, V5 and V6: draft
+
+Draft for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) and V6 (mixture panel, findings
+5.5 and 5.6). Results are filled in below as the jobs finish. The notes in the next section were written and
+committed before any simulation, mixture or deconvolution of either battery existed.
+
+## Notes written before any result (2026-11-14)
+
+Each note settles a point the registration leaves open, by the conservative reading, before the output it
+affects exists.
+
+**N1. V5, how arm A removes the bias.** The registration gives `remove_bias_in_counts = TRUE` and names no
+method. SimBu 1.8.0 has a companion argument, `remove_bias_in_counts_method`, with two values:
+- `"read-number"` (SimBu's default): each sampled cell's counts are divided by that cell's own total count
+  before the cells are summed, so every cell contributes the same number of reads;
+- `"gene-number"`: the counts are divided by the cell's number of expressed genes, which leaves library-size
+  differences in place.
+
+Arm A uses `"read-number"`. It is the default and the only value that makes the arm what the registration calls
+it, "no mRNA bias". The exact call is recorded in each set's `mixtures/sim_meta.txt`. Checked in the installed
+package (`SimBu:::simulate_sample`): with `remove_bias_in_counts = TRUE` the division happens before the scaling
+factor is applied, so arm A with scaling NONE sums cells that each total 1.
+
+**N2. V5, a difference between the arms that is not the bias.** SimBu brings every mixture to 1,000,000 reads.
+A mixture whose summed counts exceed that is subsampled to it (`phyloseq::rarefy_even_depth`); a mixture below
+it is multiplied up without sampling. Arm A's mixtures always total 1,000 before this step (1,000 cells of total
+1), so they are multiplied up and then rounded by `simulate_simbu.R`; arms B and C are subsampled wherever
+their sum exceeds 1,000,000. Arm A therefore carries rounding only, and B and C carry sampling noise at
+1,000,000 reads. This is how SimBu works and is not changed. It is disclosed with the result.
+
+**N3. V5, DWLS setting.** `SIMBU_BIAS_REFS4ALL_PREREG.md` names DWLS as `mast` and says no method setting
+changes; it does not state the p cut-off. The battery of 2026-11-11 ran with omnideconv's defaults, which the
+runner did not set: p cut-off 0.01 and fold-change cut-off 0.5. V5 runs DWLS as `mast` with p 0.01 and
+fold-change 0.5, now passed explicitly and recorded. V6's corrected setting (`mast_optimized`, p 0.05) is not
+used in V5, so the comparison with 2026-11-11 stays like for like.
+
+**N4. Both batteries, the gene exclusion list.** The profile `config/profiles/refs5.yaml` is set for every
+method, not only BayesPrism. The cross-check runner applies the same gene clean-up as the Stage 8 runner from
+the same configuration, so all six methods see the exclusion list of the refs5 rerun
+(`deconvolution/reference/rat_exclude_genes_v2.tsv`).
+
+**N5. V5, the common set.** "The references every method can run" is read as the references where all six
+methods are scored in all three arms. One set of references then serves the C minus A ranking and the C minus B
+ranking. If a method fails in only one arm, so that the set would differ by contrast, both versions are
+reported.
+
+**N6. V5, what "the 2026-11-11 result (B against C)" covers.** Readings 1, 2, 3 and 5 of
+`SIMBU_BIAS_REFS4ALL_PREREG.md`, recomputed as arm C minus arm B on the refs5 references: the corrector
+ranking and its rule, the number of references where BayesPrism's RMSE rises, the mRNA rank of the driver, and
+the driver table. Reading 4 (dose-response) is not part of V5 and is not rerun.
+
+**N7. V6, the DWLS patch.** The runner patches DWLS in memory so that a cell type with fewer than two genes
+above the fold-change cut-off does not stop the signature build; such a type is counted as having no marker
+genes of its own and stays a column of the signature. The patch was written for
+`DWLS::buildSignatureMatrixMAST`. `mast_optimized` goes through another function,
+`DWLS::buildSignatureMatrixMASTOptimized`, which stops at the same point for the same reason (read in the
+installed DWLS 0.5.2). The same guard, with the same meaning, is added there. Without it the registered
+setting could not run on a reference with such a type. Every run logs and records the types for which the
+guard fired, so the sets where it mattered can be listed.
+
+**N8. V6, inputs.** The registration lists two corrections. Nothing else about the cross-check changes: every
+method still gets raw counts for the reference and for the mixtures. Finding 5.6 also notes that the benchmark
+plan gave TPM mixtures to MuSiC, SCDC and CIBERSORTx; that is not implemented (the project has no rat
+gene-length table) and is disclosed with the three items the registration lists.
+
+**N9. V6, the earlier panel.** `MIXTURE_PANEL_REFS4ALL_PREREG.md` compares each set with "the earlier panel".
+For V6 that is the panel of 2026-11-08 on the references then in use (`data/deconvolution/mixture_panel_refs4all`),
+which has the same 19 set names. As registered, a drop of more than 0.05 in BayesPrism's median per-type r is
+named. For HEART_holdout and HYPOTH_holdout every type's r is tabled beside its earlier value, because their
+labels changed.
+
+**N10. V6, cross sets.** The four cross sets use the sources and the committed harmonization overrides of the
+earlier panel (`deconvolution/reference/mixture_panel_harmonization_overrides.tsv`). The four references they
+are deconvolved against are byte-identical to the earlier builds, so each `harmonization_map.tsv` must equal
+the one reviewed on 2026-11-04. This is checked before any cross set is deconvolved. If a map differs, the
+cross sets wait for a review on names alone.
+
+**N11. V6, CIBERSORTx.** Its credentials are present, so it runs, with the same cap of 2,000 cells per type as
+the other cross-check methods, as in the earlier panel.
+
+**N12. Both batteries, scheduling.** Sets are run several to a job, and some jobs run sets side by side. Core
+counts per run are the earlier ones: BayesPrism 8 (V5) and 16 (V6), DWLS 4. Retries are the registered ones
+only: a task killed for memory or time is rerun once with more (DWLS additionally at 2 cores).
+
+**N13. Smoke runs.** Each battery is first run on TESTES (the smallest reference with more than one sample)
+into folders of its own (`simbu_bench_refs5_smoke`, `mixture_panel_refs5_smoke`). The smoke outputs are used to
+test the runner, the provenance record and the table-building commands. They are not part of the result: the
+full batteries rebuild and rerun TESTES in the registered output roots.
