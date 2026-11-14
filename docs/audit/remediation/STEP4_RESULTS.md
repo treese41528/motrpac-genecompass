@@ -14,7 +14,106 @@ filled in as their jobs finish.
 
 ## V3. A held-out test of the model (findings 3.2, 3.6)
 
-*(written below when the order of its steps is confirmed)*
+**Result.** On rat cells from 33 studies the model never saw, v2's gene-identity loss is 1.046 times its loss
+on the in-sample probe. The registered bar for "Generalises" is 1.10.
+
+| Model | Cells | Studies | Gene-identity loss | Value loss | Top-1 accuracy |
+|---|---|---|---|---|---|
+| v2, in-sample probe | 2,000 | 77 | 3.0590 | 2.48e-4 | 25.5% |
+| **v2, held-out** | **66,000** | **33** | **3.1991** | 3.75e-4 | 23.5% |
+| April, in-sample probe | 2,000 | 77 | 5.3102 | 3.92e-4 | 18.8% |
+| April, held-out | 66,000 | 33 | 5.3999 | 5.65e-4 | 17.7% |
+
+| Registered quantity | Value | Reading |
+|---|---|---|
+| v2 held-out loss / v2 probe loss | **1.0458** | **Generalises** (at most 1.10) |
+| The same for April (context; April saw none of these cells either) | 1.0169 | - |
+
+Both models scored the same held-out cells under the same masks (13,805,095 masked tokens). The evaluator's
+recorded probe losses were reproduced digit for digit before any held-out cell was scored
+(`record/step4_heldout/probe_reproduction.tsv`).
+
+![Held-out test](figures/step4_v3_heldout.png)
+
+*Figure V3. (a) Each held-out study's loss over the pooled in-sample probe loss; the shaded band is the range
+of the 28 training studies with at least 20 probe cells. (b) The same ratio by token tier. Tables:
+`record/step4_heldout/losses_by_study.tsv`, `losses_by_tier.tsv`, `registered_reading.tsv`.*
+
+### Reported with it, as registered
+
+- **Per study.** The ratio runs from 0.93 to 1.20, median 1.05. 28 of 33 studies are at or under 1.10; five
+  are between 1.10 and 1.25 (testis 1.20, spinal cord 1.14, embryonic heart 1.11, dorsal root ganglion 1.11,
+  cortex and hippocampus 1.11); none is above 1.25. Training studies themselves span 0.90 to 1.10.
+- **Per tier.** The gap grows as tokens lose their cross-species anchor: 1.04 for three-species orthologs,
+  1.07 and 1.05 for one-to-one human and mouse orthologs, 1.10 and 1.12 for multi-mapping ones, and **1.18
+  for rat-only tokens**. Rat-only tokens are learned from rat data alone, and that is where the model
+  transfers least well to a new study.
+- **Value loss.** 1.51 times the probe's. No bar was registered for it. It is largest in cells with fewer
+  than 500 expressed genes (`losses_by_length.tsv`).
+- **Per tissue.** Lowest loss in joint and cartilage (2.86), highest in testis (3.67)
+  (`losses_by_tissue.tsv`).
+
+### How the held-out set was built
+
+| Step | Series |
+|---|---|
+| Returned by both GEO queries and so lost to the corpus (finding 1.1) | 108 |
+| Confirmed rat single-cell by the LLM step | 79 |
+| With a usable MTX, H5 or h5ad matrix (the registered candidates) | 35 |
+| Removed by the registered exclusions | 1 |
+| With cells after QC and the file rules | **33** |
+
+- **The registered exclusion removed one series.** GSE304998 is the SuperSeries of training series GSE284698
+  and shares 41 of its 71 samples with it. 1,120 training-side sample accessions were compared.
+- **Cell QC** is Stage 2's, unchanged, into a folder of its own: 257 files, 4,303,867 cells passing.
+- **File rules.** The registration fixed series-level exclusions only. Reading the files showed that was not
+  enough, so the corpus plan's own file rules were applied, with two safeguards, before any cell was
+  tokenized:
+
+| Action | Files | Cells | Why |
+|---|---|---|---|
+| Kept | 220 | 3,299,571 | 33 series, 21 tissue groups |
+| Dropped: not rat | 10 | 53,857 | 4 human-donor files (by GEO organism); 6 mouse-annotated files with no sample accession (by feature names) |
+| Dropped: not raw counts | 13 | 163,916 | Matrices Stage 2 had "reverse-normalised", including pseudo-bulk group tables |
+| Dropped: duplicate | 14 | 786,523 | 11 are GSE263307, a second deposit of 11 of GSE171165's libraries under new accessions (99.8% shared barcodes) |
+
+- **The draw.** 2,000 cells from each of the 33 studies, fixed seed: 66,000 cells.
+- **Unseen at the level of the cell, not only the accession.** None of the 66,000 token sequences equals any
+  of the 6,803,206 training cells, and the largest barcode overlap of a kept file with a training file is
+  7.8% (`unseen_check.tsv`, `unseen_barcode_check.tsv`).
+
+### The order of steps
+
+The evaluated cells were fixed before any loss on them existed. The evaluation set was written at 13:21 and
+the first evaluation job started at 13:47; both evaluation jobs print the set's checksums at start, and they
+equal the files on disk. One preparation job ran again at 14:07, while the v2 evaluation was running, to add
+two descriptive columns to the file table. Its log prints the same counts per action as the first run, and
+the set itself was not rewritten. No file rule was added or changed after a held-out loss was seen.
+
+### Departures from the registration, and limits
+
+- **The evaluator could not score a rat-only set** (it divides by the number of masked human tokens), and it
+  has no per-study output. A wrapper calls its own masking and model-loading functions and reproduces its
+  recorded numbers exactly; a test shows both facts.
+- **File rules were not registered** (above). They were fixed from file metadata, not from any loss, and they
+  removed 1,004,296 of the 4,303,867 QC-passing cells.
+- **One sibling series is kept.** GSE304911 shares a SuperSeries with a training series but no sample; the
+  registered rule does not remove it. Without it the ratio is 1.048.
+- **The two sets are weighted differently.** The probe is weighted by cell over 77 studies; the held-out set
+  takes 2,000 cells from each study. Held-out cells are also longer (mean 1,395 expressed genes against
+  1,059). Within bins of length the held-out excess is 0.3% to 4.7%.
+- **Not registered, for context:** resampling the 33 studies gives a 95% interval of 1.026 to 1.065 for the
+  ratio; leaving any one study out gives 1.042 to 1.049.
+- **What the test is.** Generalisation to a new rat study that came through the same harvest and the same QC,
+  on the masked-token task the model was trained on. It is not a test on a new kind of data, and it says
+  nothing about the pseudo-cells of Stages 9 to 13, which are not single cells. Held-out cells have no labels,
+  so the clustering checks were not repeated.
+- **243 of the 66,000 cells are Visium spots** (GSE299772), kept because the corpus's own rules keep such
+  files. Without them the ratio is 1.046.
+
+Scripts: `analysis/audit_remediation/heldout/`. Tests: `tests/test_heldout.py`. Record:
+`record/step4_heldout/`. Jobs: 12375158-60 (QC), 12376266 (probe), 12377246 and 12378063 (file plan, tokenize,
+draw), 12377965 (v2), 12377966 (April).
 
 ## V4. Module A on the current model and references (finding 9.2)
 

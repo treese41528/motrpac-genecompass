@@ -7,7 +7,7 @@ against a reading rule written first (`STEP5_PREREG.md`), and each is disclosed 
 |---|---|---|---|
 | M1 | No mitochondrial cut on training cells | 10.4% of the 6.8 million training cells are above 15% | **Material departure** (the rule's top band, above 5%) |
 | M1 | The same in the deconvolution references | SMLINT 50.6% and KIDNEY 16.7% of reference cells above 15%; every cell type of both is flagged. HIPPOC and SPLEEN have two flagged types each. LUNG cannot be measured | **To the expert review plan**; references not rebuilt in this pass |
-| M2 | 79 single-cell series never entered the corpus | *(filled in when the held-out set is built)* | Used as the held-out set of Step 4 |
+| M2 | 79 single-cell series never entered the corpus | 35 have a usable matrix; 33 series (3.3 million cells, 21 tissue groups) form the held-out set. Building it showed six further Stage 2 behaviours | Used as the held-out set of Step 4 (the model generalises to it: ratio 1.046) |
 | M3 | Gene IDs carried over from earlier annotations | 1.04% of counts in ID-keyed corpus files sit under another gene's token; 43 of 53 studies are above the 0.5% bound. In the bulk, 2.24% of counts | **Not negligible.** Studies and genes listed; four reference studies above the bound go to the review plan |
 | M4 | Genes that cannot be tokenized | At most 0.01% of a tissue's pseudo-cell counts (TESTES); zero in 12 of 16 tissues | Reported per tissue; no threshold |
 
@@ -123,8 +123,39 @@ Record: `record/step5/mito_by_reference_refs5_direct.tsv`, `mito_by_reference_re
 
 ## M2. The series that never entered the corpus (finding 1.1)
 
-*(filled in when the held-out set is built; the check for shared samples and the counts of studies, tissues and
-cells are reported here, and the model test in `STEP4_RESULTS.md`, V3)*
+**The audit's counts reproduce.** 108 series were returned by both GEO queries and typed "bulk" by the merge;
+79 are confirmed rat single-cell series; 35 have a usable matrix.
+
+| | Series | Files | Cells |
+|---|---|---|---|
+| Candidates | 35 | | |
+| Removed by the registered check (SuperSeries of a training series, 41 shared samples) | 1 | | |
+| Through Stage 2 cell QC, into a folder of their own | 34 | 257 | 4,303,867 |
+| Kept after the file rules | **33** | **220** | **3,299,571** |
+
+The kept cells span 21 tissue groups; 7 groups match a MoTrPAC tissue. Nucleus accumbens and striatum hold
+1.6 million of the cells, heart 0.39 million, lung 0.22 million. How the set was used, and the model's result
+on it, is `STEP4_RESULTS.md`, V3. Record: `record/step4_heldout/`.
+
+**The trade, recorded as registered.** These series are now the held-out set. Adding them to a retrained
+corpus later would lose it.
+
+### What building the set showed about Stage 2
+
+Putting 34 new series through the unchanged Stage 2 exposed behaviours the audit did not list. Each was seen
+on the held-out series. **None was measured on the training corpus in this pass**; each could apply to it.
+
+| Behaviour | Seen here | What it could mean for the corpus |
+|---|---|---|
+| A file is skipped if its name contains "pca" | 14 matrices of one series were never read: their names contain "EpCAM" | A training study's file with such a name was silently dropped |
+| Non-rat matrices pass as rat | 4 human-donor and 6 mouse-annotated files passed (53,857 cells), through case-insensitive symbol matching | The v2 file list drops 48 non-rat files by GEO organism; a file with no sample accession is not covered by that rule |
+| "Reverse-normalisation" turns non-count tables into cells | 13 files, including pseudo-bulk group tables of 6 to 12 columns | The v2 file list drops 27 log-normalised files; whether others remain was not checked |
+| A second deposit of the same libraries is invisible to accession checks | GSE263307 is 11 of GSE171165's 22 libraries under new accessions | The corpus's duplicate rule needs identical totals; training against training was not tested |
+| Spatial spots count as cells | 12 Visium files, 45,729 spots | Training series GSE220075 holds Visium files |
+| Unfiltered 10x matrices dominate | 1.6 of the 3.3 million kept cells come from 24 unfiltered matrices | Not checked |
+
+These go to the PI with the other corpus findings. Under the no-retrain decision they are disclosures; for
+a future corpus they are a list of things to fix first.
 
 ## M3. Gene IDs carried over from earlier annotations (finding 1.5)
 
