@@ -1,0 +1,13 @@
+	value
+samples_measured	368.0
+samples_not_measurable	18.0
+samples_other_format	195.0
+gene_share_same	0.8633044579065394
+gene_share_rename	0.09095035662429495
+gene_share_different	0.045745185469165624
+count_share_same	0.9021172859084036
+count_share_rename	0.04519135363701696
+count_share_different	0.05269136045457946
+max_study_count_share_different	0.557718567606724
+studies_above_0.5pct_counts_different	53.0
+studies	53.0
