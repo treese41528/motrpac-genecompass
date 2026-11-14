@@ -63,7 +63,8 @@ OUT = ROOT / "data/deconvolution/joint_labels"
 
 # reference key -> tissue_references.yaml key whose spec selects the samples
 REFS = {"KIDNEY": "KIDNEY", "LIVER": "LIVER", "CORTEX": "CORTEX", "WATSC": "WATSC", "MUSCLE": "SKMGN",
-        "SMLINT": "SMLINT", "LUNG": "LUNG", "HIPPOC": "HIPPOC"}
+        "SMLINT": "SMLINT", "LUNG": "LUNG", "HIPPOC": "HIPPOC",
+        "HYPOTH": "HYPOTH"}      # added 2026-11-14 (docs/audit/remediation/STEP3_PREREG.md 2.2-2.3; §10.2 deferred it)
 # BLOOD option B (REFERENCE_RELABEL_PREREG.md §12): external GEO libraries, not corpus samples; all three
 # are labelled with the BLOOD panel. Paths are under data/raw/geo/blood_option_b/.
 BLOOD_RAW = ROOT / "data/raw/geo/blood_option_b"
@@ -150,11 +151,14 @@ def resolve(spec, idx, parent=None, rows=None):
             g = sorted(idx.get(s.lower(), ()))
             (found if g else missing).append(s)
             ids += g
+        # min_genes: a panel may lower the number of genes it needs to be scored (default MIN_PANEL_GENES).
+        # Used once, for the HYPOTH glutamatergic sub-class, whose single class-wide marker is Slc17a6
+        # (docs/audit/remediation/STEP3_PREREG.md 2.3 states the departure from the 3-6 gene rule).
         node = {"compartment": d.get("compartment"), "genes": d["genes"], "ids": sorted(set(ids)),
-                "found": found, "missing": missing}
+                "found": found, "missing": missing, "min_genes": int(d.get("min_genes", MIN_PANEL_GENES))}
         rows.append({"panel": name, "parent": parent or "", "compartment": node["compartment"] or "",
                      "found": ",".join(found), "missing": ",".join(missing),
-                     "scorable": len(found) >= MIN_PANEL_GENES})
+                     "scorable": len(found) >= node["min_genes"]})
         if d.get("sub"):
             node["sub"] = resolve(d["sub"], idx, name, rows)[0]
         out[name] = node
@@ -365,7 +369,7 @@ def scaled_means(means):
 
 def panel_score(scaled, node):
     cols = [g for g in node["ids"] if g in scaled.columns]
-    if len(node["found"]) < MIN_PANEL_GENES or not cols:
+    if len(node["found"]) < node.get("min_genes", MIN_PANEL_GENES) or not cols:
         return pd.Series(np.nan, index=scaled.index)
     return scaled[cols].mean(1)
 

@@ -102,6 +102,24 @@ colnames(mix) <- mgenes
 rownames(mix) <- paste0("mix", seq_len(nrow(mix)))
 cat(sprintf("mixture: %d samples x %d genes\n", nrow(mix), ncol(mix)))
 
+# ---- the sample key (audit finding 6.9; STEP3_PREREG.md 2.5) ----
+# Rows are renamed mix1..N, so the sample behind each row is recovered later from the samples file by position.
+# Write that pairing down here, from the files this run read, so every later stage can verify it instead of
+# trusting file order: <out_dir>/mixture_samples.tsv (mix, viallabel). A samples file with a different number
+# of lines than the matrix has rows stops the run.
+samples_path <- file.path(mix_dir, paste0(genes_base, "_samples.tsv"))
+samples_md5 <- NA_character_
+if (file.exists(samples_path)) {
+  via <- trimws(readLines(samples_path)); via <- via[via != ""]
+  if (length(via) != nrow(mix))
+    stop(sprintf("%s has %d samples but the mixture matrix has %d rows", samples_path, length(via), nrow(mix)))
+  write.table(data.frame(mix = rownames(mix), viallabel = via), file.path(out_dir, "mixture_samples.tsv"),
+              sep = "\t", quote = FALSE, row.names = FALSE)
+  samples_md5 <- unname(tools::md5sum(samples_path))
+  cat(sprintf("sample key: %d samples -> %s/mixture_samples.tsv (md5 of the samples file %s)\n",
+              length(via), out_dir, samples_md5))
+}
+
 # ---- BayesPrism (key=NULL: normal tissue, no malignant reference) ----
 prism <- new.prism(reference = ref, mixture = mix, input.type = "count.matrix",
                    cell.type.labels = cell.type.labels,
@@ -115,7 +133,15 @@ cat(sprintf("run.prism wall time: %.2f min\n", prism_min))
 theta <- get.fraction(bp = bp, which.theta = "final", state.or.type = "type")
 write.csv(theta, file.path(out_dir, "estimated_fractions.csv"))
 saveRDS(bp, file.path(out_dir, "bp_result.rds"))
-# mixture rows are renamed mix1..N above, so record which samples file (and its mtime) they came from
+# The sampler and optimiser settings are never set by this script: they are BayesPrism's defaults. Read them back
+# from the result object, so the record holds the values that ran and not values typed in by hand (audit
+# finding 5.3; STEP3_PREREG.md 2.4).
+ctl <- tryCatch(bp@control_param, error = function(e) list())
+plain <- function(x) lapply(x, function(v) if (is.null(v)) NA else if (is.function(v)) "function" else v)
+gibbs_control <- plain(ctl$gibbs.control); opt_control <- plain(ctl$opt.control)
+cat(sprintf("gibbs.control: %s\n", paste(names(gibbs_control), unlist(lapply(gibbs_control, function(v) paste(v, collapse = ","))), sep = "=", collapse = " ")))
+cat(sprintf("opt.control:   %s\n", paste(names(opt_control), unlist(lapply(opt_control, function(v) paste(v, collapse = ","))), sep = "=", collapse = " ")))
+# mixture rows are renamed mix1..N above, so record which samples file (and its md5) they came from
 write_provenance(out_dir,
   inputs = c(file.path(ref_dir, c("reference_counts.mtx", "cells_meta.tsv", "genes.tsv")),
              file.path(mix_dir, c(paste0(mtx_base, ".mtx"), paste0(genes_base, "_genes.tsv"),
@@ -126,7 +152,12 @@ write_provenance(out_dir,
                 outlier_cut = 0.01, outlier_fraction = 0.1,
                 exclude_sex_chromosomes = sex_on, protein_coding_only = pc_only,
                 n_ref_cells = nrow(ref), n_ref_genes = ncol(ref), n_mixtures = nrow(mix),
-                run_prism_minutes = round(prism_min, 2)))
+                run_prism_minutes = round(prism_min, 2),
+                gibbs_control = gibbs_control, opt_control = opt_control,
+                update_gibbs = if (is.null(ctl$update.gibbs)) NA else ctl$update.gibbs,
+                exclude_list = excl_path, exclude_list_md5 = unname(tools::md5sum(excl_path)),
+                n_excluded_ribo_mito_hb = n_excl,
+                samples_file_md5 = samples_md5))
 cat("\n=== mean estimated cell-type fraction ===\n")
 print(round(sort(colMeans(theta), decreasing = TRUE), 4))
 cat(sprintf("\nWrote: %s/estimated_fractions.csv\n", out_dir))

@@ -182,6 +182,61 @@ HIPPOC:
       Pyramidal neurons:
         genes: [Fibcd1, Spink8, Mpped1, Wfs1]
 
+# HYPOTH (added 2026-11-14, written before any joint clustering of HYPOTH; docs/audit/remediation/STEP3_PREREG.md
+# 2.3). The shared classes are the brain panel's, unchanged. The cortical "Excitatory neurons" and "Inhibitory
+# neurons" classes are replaced by a pan-neuronal class with two transmitter sub-classes, because Slc17a7, Satb2,
+# Neurod6 and Tbr1 are cortical: hypothalamic glutamatergic neurons use VGLUT2 (Slc17a6), and the hypothalamus
+# atlases split neurons on Slc17a6 against Slc32a1 (Chen 2017 Cell Rep 18:3227; Campbell 2017 Nat Neurosci 20:484;
+# Steuernagel 2022 Nat Metab 4:1402). Slc17a6 is the one class-wide glutamatergic marker; the others mark single
+# nuclei, so that sub-class is scored on one gene (min_genes: 1), the stated departure from the 3-6 gene rule.
+# Tanycytes: Rax, Dio2, Col23a1, Crym (Campbell 2017; Chen 2017).
+HYPOTH:
+  Neurons:
+    compartment: neural
+    genes: [Snap25, Syt1, Rbfox3, Stmn2, Syn1]
+    sub:
+      GABAergic neurons:
+        genes: [Slc32a1, Gad1, Gad2]
+      Glutamatergic neurons:
+        genes: [Slc17a6]
+        min_genes: 1
+  Astrocytes:
+    compartment: glial
+    genes: [Aqp4, Gja1, Slc1a2, Aldh1l1, Gfap]
+  Oligodendrocytes:
+    compartment: glial
+    genes: [Mbp, Plp1, Mog, Mobp, St18]
+  Oligodendrocyte precursor cells:
+    compartment: glial
+    genes: [Pdgfra, Cspg4, Vcan, Gpr17]
+  Tanycytes:
+    compartment: glial
+    genes: [Rax, Dio2, Col23a1, Crym]
+  Ependymal cells:
+    compartment: glial
+    genes: [Foxj1, Dynlrb2, Drc12, Rarres2]
+  Microglia:
+    compartment: immune
+    genes: [Cx3cr1, P2ry12, Tmem119, Csf1r, Hexb]
+  Border-associated macrophages:
+    compartment: immune
+    genes: [Mrc1, Lyve1, Cd163, F13a1]
+  Endothelial cells:
+    compartment: vascular
+    genes: [Cldn5, Flt1, Pecam1, Slc2a1, Ly6c]
+  Mural cells:
+    compartment: vascular
+    genes: [Pdgfrb, Rgs5, Kcnj8, Vtn, Myh11]
+  Vascular leptomeningeal cells:
+    compartment: stromal
+    genes: [Dcn, Col1a2, Slc6a13, Ptgds, Lum]
+  Choroid plexus epithelial cells:
+    compartment: epithelial
+    genes: [Ttr, Kl, Folr1, Clic6]
+  T cells:
+    compartment: immune
+    genes: [Cd3e, Cd3g, Cd3d, Cd2, Lck]
+
 WATSC:
   Adipose stromal progenitor cells:
     compartment: stromal

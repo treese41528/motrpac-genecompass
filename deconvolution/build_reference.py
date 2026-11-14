@@ -112,7 +112,18 @@ def _canon_lung(label):
     return label
 
 
-LABEL_SCHEMES = {"brain": _canon_brain, "muscle": _canon_muscle, "lung": _canon_lung}
+def _canon_heart(label):
+    # The HEART reference carries the authors' deposited labels. The label audit's rule gave one MERGE for it:
+    # "CD8+ T cells" (1,624 cells, all from 1 of the 19 samples) is the same population as "T cells"
+    # (best profile match r = 0.49, REFERENCE_LABEL_AUDIT.md, HEART table), split off in a single sample. The
+    # merge was registered and never applied until 2026-11-14 (audit finding 4.9; STEP3_PREREG.md 2.2).
+    # Nothing else changes: author labels take only the MERGE outcome.
+    if str(label).strip() == "CD8+ T cells":
+        return "T cells"
+    return label
+
+
+LABEL_SCHEMES = {"brain": _canon_brain, "muscle": _canon_muscle, "lung": _canon_lung, "heart": _canon_heart}
 
 
 def canonicalize_labels(series, scheme):
