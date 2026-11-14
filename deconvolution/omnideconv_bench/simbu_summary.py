@@ -4,6 +4,13 @@
 
   python deconvolution/omnideconv_bench/simbu_summary.py [--root data/deconvolution/simbu_bench_refs4all]
          [--out <root>/summary] [--july-root data/deconvolution/simbu_bench]
+         [--bias-arm bias] [--nobias-arm nobias]
+
+The two arms compared are folders under each reference. The defaults are the battery of 2026-11-11. The V5
+battery (docs/audit/remediation/STEP4_PREREG.md) has arms A, B and C; its tables are built by
+analysis/audit_remediation/make_step4_v5_tables.py from the functions here, one contrast at a time
+(--bias-arm C --nobias-arm A, and so on). In every table "bias" is the arm with more bias and "nobias" the
+baseline arm, whatever their folder names.
 
 Writes simbu_status.tsv, simbu_delta.tsv, simbu_ranking.tsv, simbu_driver.tsv, simbu_mrna_content.tsv,
 simbu_doseresp.tsv, simbu_doseresp_slope.tsv, simbu_vs_july.tsv and summary.txt. No truncation: every
@@ -85,18 +92,18 @@ def expressed_genes(refdir):
     return g.sort_values("mrna_rank")
 
 
-def battery_sets(root):
+def battery_sets(root, arms=("bias", "nobias")):
     if not os.path.isdir(root):
         return []
     return sorted(d for d in os.listdir(root) if d not in SKIP and os.path.isdir(os.path.join(root, d))
-                  and any(os.path.isdir(os.path.join(root, d, c)) for c in ("bias", "nobias")))
+                  and any(os.path.isdir(os.path.join(root, d, c)) for c in arms))
 
 
-def delta_table(root, sets):
+def delta_table(root, sets, bias="bias", nobias="nobias"):
     rows = []
     for s in sets:
         for m in METHODS:
-            b, nb = os.path.join(root, s, "bias"), os.path.join(root, s, "nobias")
+            b, nb = os.path.join(root, s, bias), os.path.join(root, s, nobias)
             rb, rn = overall(b, m, "overall_pooled_rmse"), overall(nb, m, "overall_pooled_rmse")
             pb, pn = overall(b, m, "overall_pooled_pearson"), overall(nb, m, "overall_pooled_pearson")
             status = "ok" if np.isfinite(rb) and np.isfinite(rn) else \
@@ -107,9 +114,23 @@ def delta_table(root, sets):
     return pd.DataFrame(rows)
 
 
-def ranking(delta):
+def corrector_rule(mean_d_rmse):
+    """The registered rule (SIMBU_BIAS_REFS4ALL_PREREG.md, reading 1): the benchmark paper's finding counts as
+    reproduced if MuSiC's and SCDC's mean dRMSE are BOTH below BayesPrism's AND CIBERSORTx's.
+    mean_d_rmse: mapping method -> mean dRMSE on the common set. A missing or NaN value is not reproduced."""
+    v = {m: float(mean_d_rmse.get(m, np.nan)) for m in ("music", "scdc", "bp_rna", "cibersortx")}
+    if not all(np.isfinite(x) for x in v.values()):
+        return False
+    lowest_noncorrector = min(v["bp_rna"], v["cibersortx"])
+    return bool(v["music"] < lowest_noncorrector and v["scdc"] < lowest_noncorrector)
+
+
+def ranking(delta, common=None):
+    """Per method: mean dRMSE on the common set and over every reference it scored. common = the references to
+    average over; None = those where all six methods scored both arms of this contrast."""
     ok = delta[delta["status"] == "ok"]
-    common = [s for s, g in ok.groupby("set") if set(g["method"]) == set(METHODS)]
+    if common is None:
+        common = [s for s, g in ok.groupby("set") if set(g["method"]) == set(METHODS)]
     rows = []
     for m in METHODS:
         d = ok[ok["method"] == m]
@@ -121,12 +142,12 @@ def ranking(delta):
     return pd.DataFrame(rows), common
 
 
-def driver_table(root, sets, content):
+def driver_table(root, sets, content, bias="bias", nobias="nobias"):
     rows = []
     for s in sets:
         c = content.get(s)
         for m in METHODS:
-            b, nb = pertype(os.path.join(root, s, "bias"), m), pertype(os.path.join(root, s, "nobias"), m)
+            b, nb = pertype(os.path.join(root, s, bias), m), pertype(os.path.join(root, s, nobias), m)
             if b is None or nb is None:
                 continue
             common = [t for t in b.index if t in nb.index]
@@ -216,10 +237,13 @@ def main():
     ap.add_argument("--root", default="data/deconvolution/simbu_bench_refs4all")
     ap.add_argument("--out", default=None)
     ap.add_argument("--july-root", default="data/deconvolution/simbu_bench")
+    ap.add_argument("--bias-arm", default="bias", help="folder of the arm with more bias (default: bias)")
+    ap.add_argument("--nobias-arm", default="nobias", help="folder of the baseline arm (default: nobias)")
     a = ap.parse_args()
+    B, NB = a.bias_arm, a.nobias_arm
     out = a.out or os.path.join(a.root, "summary")
     os.makedirs(out, exist_ok=True)
-    sets = battery_sets(a.root)
+    sets = battery_sets(a.root, (B, NB))
     if not sets:
         sys.exit(f"no battery sets under {a.root}")
     L = []
@@ -227,19 +251,19 @@ def main():
     # status + pairing sanity check + mRNA content (from the nobias reference = the bias reference)
     srows, content = [], {}
     for s in sets:
-        refs = {c: os.path.join(a.root, s, c, "reference", "reference_counts.mtx") for c in ("bias", "nobias")}
-        paired = all(os.path.exists(p) for p in refs.values()) and md5(refs["bias"]) == md5(refs["nobias"])
-        tf = [os.path.join(a.root, s, c, "mixtures", "true_fractions.tsv") for c in ("bias", "nobias")]
+        refs = {c: os.path.join(a.root, s, c, "reference", "reference_counts.mtx") for c in (B, NB)}
+        paired = all(os.path.exists(p) for p in refs.values()) and md5(refs[B]) == md5(refs[NB])
+        tf = [os.path.join(a.root, s, c, "mixtures", "true_fractions.tsv") for c in (B, NB)]
         same_truth = all(os.path.exists(p) for p in tf) and md5(tf[0]) == md5(tf[1])
-        meta = sim_meta(os.path.join(a.root, s, "nobias"))
+        meta = sim_meta(os.path.join(a.root, s, NB))
         row = {"set": s, "paired_reference": paired, "same_truth": same_truth,
                "n_ref_cells": meta.get("n_ref_cells"), "n_types": meta.get("n_types"),
                "n_genes_bulk": meta.get("n_genes_bulk")}
-        for c in ("bias", "nobias"):
+        for c, name in ((B, "bias"), (NB, "nobias")):
             for m in METHODS:
-                row[f"{c}_{m}"] = os.path.exists(os.path.join(a.root, s, c, "scores", f"overall_metrics_{m}.tsv"))
+                row[f"{name}_{m}"] = os.path.exists(os.path.join(a.root, s, c, "scores", f"overall_metrics_{m}.tsv"))
         srows.append(row)
-        rd = os.path.join(a.root, s, "nobias", "reference")
+        rd = os.path.join(a.root, s, NB, "reference")
         if os.path.exists(os.path.join(rd, "reference_counts.mtx")):
             content[s] = expressed_genes(rd)
     status = pd.DataFrame(srows)
@@ -248,11 +272,11 @@ def main():
         ["set", "cell_type", "n_cells", "mean_expressed_genes", "mrna_rank", "mean_total_counts", "counts_rank"]].to_csv(
         os.path.join(out, "simbu_mrna_content.tsv"), sep="\t", index=False)
 
-    delta = delta_table(a.root, sets)
+    delta = delta_table(a.root, sets, B, NB)
     delta.to_csv(os.path.join(out, "simbu_delta.tsv"), sep="\t", index=False, float_format="%.5f")
     rank, common = ranking(delta)
     rank.to_csv(os.path.join(out, "simbu_ranking.tsv"), sep="\t", index=False, float_format="%.5f")
-    drv = driver_table(a.root, sets, content)
+    drv = driver_table(a.root, sets, content, B, NB)
     drv.to_csv(os.path.join(out, "simbu_driver.tsv"), sep="\t", index=False, float_format="%.5f")
     dose, slope, dchecks = dose_tables(a.root)
     dose.to_csv(os.path.join(out, "simbu_doseresp.tsv"), sep="\t", index=False, float_format="%.5f")
@@ -263,6 +287,8 @@ def main():
 
     # ---------------- summary.txt ----------------
     L.append(f"SimBu mRNA-bias battery: {len(sets)} references under {a.root}")
+    if (B, NB) != ("bias", "nobias"):
+        L.append(f"arms compared: '{B}' (called bias below) minus '{NB}' (called nobias below)")
     L.append(f"paired (bias and nobias references byte-identical): {int(status['paired_reference'].sum())}/{len(status)}; "
              f"same cell-fraction truth: {int(status['same_truth'].sum())}/{len(status)}")
     for c in dchecks:
@@ -279,8 +305,7 @@ def main():
                  f"all {r['mean_d_rmse_all']:+.4f} median {r['median_d_rmse_all']:+.4f} (n={r['n_all']}, "
                  f"{r['n_positive']} > 0)")
     mc = rank.set_index("method")["mean_d_rmse_common"]
-    worst = min(mc["bp_rna"], mc["cibersortx"])
-    rep = mc["music"] < worst and mc["scdc"] < worst
+    rep = corrector_rule(mc)
     L.append(f"paper's core finding (MuSiC and SCDC below BayesPrism and CIBERSORTx): "
              f"{'REPRODUCED' if rep else 'NOT REPRODUCED'} (music {mc['music']:+.4f}, scdc {mc['scdc']:+.4f}; "
              f"bp_rna {mc['bp_rna']:+.4f}, cibersortx {mc['cibersortx']:+.4f}; dwls {mc['dwls']:+.4f})")
