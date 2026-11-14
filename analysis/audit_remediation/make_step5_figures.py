@@ -46,20 +46,26 @@ b.set_yticks(yy); b.set_yticklabels(top.study); b.set_xlim(0, top.n_above_15.max
 b.set_xlabel("cells above 15% (thousands)"); b.grid(axis="y", visible=False)
 b.set_title(f"(b) Twelve studies hold {top.n_above_15.sum() / o['cells_above_15']:.0%} of them")
 
-g = r.groupby("reference").apply(lambda d: pd.Series({
-    "matched": d.n_matched_to_a_qc_cell.sum(),
-    "share": (d.share_above_15 * d.n_matched_to_a_qc_cell).sum() / max(d.n_matched_to_a_qc_cell.sum(), 1)}), include_groups=False)
-g = g[g.matched > 0].sort_values("share")
+# panel (c): every refs5 reference, read from its own count matrix (measure_mito_reference_direct.py). A reference
+# whose matrix holds no mitochondrial gene cannot be measured and is drawn as such, not as zero.
+dr = pd.read_csv(REC / "mito_by_reference_refs5_direct.tsv", sep="\t")
+g = dr.groupby("reference").apply(lambda d: pd.Series({
+    "share": (d.share_above_15 * d.n_cells).sum() / d.n_cells.sum(), "n_mt": d.n_mt_genes_in_matrix.iloc[0],
+    "flagged": int(d.flag_registered_rule.sum())}), include_groups=False)
+g["share"] = g.share.where(g.n_mt > 0)
+g = pd.concat([g[g.share.isna()], g[g.share.notna()].sort_values("share")])
 yy = np.arange(len(g))
-c.barh(yy, g.share, color=fs.BLUE, height=0.62)
-for y_, v in zip(yy, g.share):
-    c.text(v + 0.01, y_, f"{v:.1%}", va="center", fontsize=7.5, color=fs.INK2)
-c.axvline(0.05, color=fs.NEUTRAL, lw=1, ls=(0, (4, 3)))
-c.text(0.055, len(g) - 0.3, "registered flag: 5%", fontsize=7.5, color=fs.INK2, va="bottom")
-c.set_yticks(yy); c.set_yticklabels([n.split("_")[0] for n in g.index]); c.set_xlim(0, 0.62)
+c.barh(yy, g.share.fillna(0), color=[fs.ORANGE if k else fs.BLUE for k in g.flagged], height=0.62)
+for y_, v, k in zip(yy, g.share, g.flagged):
+    c.text((0 if np.isnan(v) else v) + 0.01, y_,
+           "no mitochondrial genes in the deposited data" if np.isnan(v) else f"{v:.1%}" + (f"  ({int(k)} cell types flagged)" if k else ""),
+           va="center", fontsize=7.5, color=fs.INK2)
+c.set_yticks(yy); c.set_yticklabels([n.split("_")[0] for n in g.index]); c.set_xlim(0, 0.82)
 c.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
 c.set_xlabel("share of the reference's cells above 15%"); c.grid(axis="y", visible=False)
-c.set_title("(c) Deconvolution references built from corpus cells")
+c.set_title("(c) The 15 deconvolution references (refs5)")
+c.text(0.0, -0.2, "orange: at least one cell type (100+ cells) has 5% or more of its cells above 15%",
+       transform=c.transAxes, fontsize=7.5, color=fs.INK2)
 fs.save(fig, FIG / "step5_mito.png")
 
 # ------------------------------------------------- Figure 5.2: counts filed under another gene, by study and in the bulk

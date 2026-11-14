@@ -6,7 +6,7 @@ against a reading rule written first (`STEP5_PREREG.md`), and each is disclosed 
 | | Finding | Result | Registered reading |
 |---|---|---|---|
 | M1 | No mitochondrial cut on training cells | 10.4% of the 6.8 million training cells are above 15% | **Material departure** (the rule's top band, above 5%) |
-| M1 | The same in the deconvolution references | SMLINT 50.6% and KIDNEY 16.7% of reference cells above 15%; every cell type of both is flagged | **To the expert review plan**; references not rebuilt in this pass |
+| M1 | The same in the deconvolution references | SMLINT 50.6% and KIDNEY 16.7% of reference cells above 15%; every cell type of both is flagged. HIPPOC and SPLEEN have two flagged types each. LUNG cannot be measured | **To the expert review plan**; references not rebuilt in this pass |
 | M2 | 79 single-cell series never entered the corpus | *(filled in when the held-out set is built)* | Used as the held-out set of Step 4 |
 | M3 | Gene IDs carried over from earlier annotations | 1.04% of counts in ID-keyed corpus files sit under another gene's token; 43 of 53 studies are above the 0.5% bound. In the bulk, 2.24% of counts | **Not negligible.** Studies and genes listed; four reference studies above the bound go to the review plan |
 | M4 | Genes that cannot be tokenized | *(filled in from the refs5 pseudo-cells)* | Reported per tissue; no threshold |
@@ -21,8 +21,9 @@ of counts on the 13 mitochondrial protein-coding genes, found by Ensembl ID
 
 *Figure 5.1. (a) Share of training cells above each cut, for all cells and for the files where the
 mitochondrial outlier rule did and did not see mitochondrial genes. (b) The twelve studies with the most
-cells above 15%. (c) Share of each reference's cells above 15%, for references built from corpus cells.
-Tables: `record/step5/mito_overall.tsv`, `mito_by_study.tsv`, `mito_by_file.tsv`, `mito_by_reference.tsv`.*
+cells above 15%. (c) Share of each refs5 reference's cells above 15%, read from the reference's own count
+matrix. Tables: `record/step5/mito_overall.tsv`, `mito_by_study.tsv`, `mito_by_file.tsv`,
+`mito_by_reference.tsv`, `mito_by_reference_refs5_direct.tsv`.*
 
 ### Training cells
 
@@ -41,6 +42,9 @@ Tables: `record/step5/mito_overall.tsv`, `mito_by_study.tsv`, `mito_by_file.tsv`
   of cells are above 15%; in the files where the rule saw the genes, 3.8%.
 - **It is concentrated.** Five studies hold half of the cells above 15% and twelve hold 72%. Thirty-seven of 81
   studies have more than 5% of their cells above 15%; thirteen have none.
+- **Twelve files cannot be measured.** They hold no mitochondrial counts at all (154,614 cells in six studies,
+  2.3% of the corpus), so their cells count as below every cut. The deposited matrices had the genes removed.
+  10.4% is therefore a floor.
 
 | Study | Cells | Above 15% | Share of the study |
 |---|---|---|---|
@@ -68,7 +72,8 @@ are above 15%.
 | WATSC_GSE137869_Y | 11,984 | 1.2% | 9 | 0 |
 | LIVER_GSE220075 | 27,059 | 0.5% | 6 | 0 |
 | TESTES_OMIX767_lifted | 5,836 | 0.2% | 5 | 0 |
-| BAT, CORTEX, HEART, HYPOTH, LUNG, MUSCLE | | 0.0% | | 0 |
+| BAT, CORTEX, HEART, HYPOTH, MUSCLE | | 0.0% | | 0 |
+| LUNG_native_pooled | 44,158 | **not measurable**: its three source files hold no mitochondrial counts | | - |
 | BLOOD (composite), OVARY, SPLEEN | | not covered by this measurement | | see below |
 
 - **SMLINT.** Enterocytes, the dominant type (7,361 cells), have a median mitochondrial share of 20%; 72% are
@@ -89,7 +94,32 @@ so it could not cover the three references built outside those files, and it was
 before refs5. A second measurement reads each refs5 reference's own count matrix
 (`analysis/audit_remediation/measure_mito_reference_direct.py`).
 
-*(filled in when job 12377897 finishes: `record/step5/mito_by_reference_refs5_direct.tsv`)*
+| Reference | Cells | Above 15% | Flagged cell types |
+|---|---|---|---|
+| SMLINT_GSE272055 | 16,193 | 50.6% | 12 of 12 |
+| KIDNEY_GSE240658 | 24,479 | 16.7% | 15 of 15 |
+| WATSC_GSE137869_Y | 11,984 | 1.2% | 0 |
+| HIPPOC_GSE295314 | 23,892 | 1.2% | 2 (astrocytes 6.6%, endothelial cells 5.3%) |
+| **SPLEEN_GSE306764** | 13,013 | 0.5% | **2** (plasma cells 5.2% of 191; red-pulp macrophages 5.0% of 100) |
+| LIVER_GSE220075 | 27,059 | 0.5% | 0 |
+| TESTES_OMIX767_lifted | 5,836 | 0.2% | 0 |
+| **BLOOD_composite** | 67,147 | 0.04% | 0 |
+| **OVARY_GSE343214** | 9,104 | 0.0% | 0 |
+| HYPOTH_GSE248413_Y (re-annotated) | 7,992 | 0.01% | 0 |
+| BAT, CORTEX, HEART, MUSCLE | | 0.0% | 0 |
+| LUNG_native_pooled | 44,158 | not measurable (0 of 13 mitochondrial genes in the matrix) | - |
+
+- **The two measurements agree.** For the 138 cell types both cover, the share above 15% agrees to within
+  0.01 points in every reference except TESTES, whose lifted matrix holds fewer genes (spermatogonia 1.8%
+  against 0.6%).
+- **New from this measurement:** BLOOD and OVARY are clean. SPLEEN has two cell types at the rule's bound; they
+  join the review plan. The re-annotated HYPOTH reference is clean.
+- **Below the rule's 100-cell floor but worth a look:** 9 of the 42 TESTES Sertoli cells (21%) are above 15%.
+- **LUNG stays unmeasured.** Its source studies deposited matrices without mitochondrial genes, so nothing
+  can be said about the quality of those cells from this measure.
+
+Record: `record/step5/mito_by_reference_refs5_direct.tsv`, `mito_by_reference_refs5_direct_summary.tsv` (job
+12377897).
 
 ## M2. The series that never entered the corpus (finding 1.1)
 
