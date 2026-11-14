@@ -144,3 +144,50 @@ file) before any run. Every job runs the committed code of this branch with
 | MuSiC, SCDC, Bisque | omnideconv defaults, sample of origin as batch | the same |
 | CIBERSORTx | no batch correction; existing container and credentials | the same |
 | Gene exclusion | `rat_exclude_genes_v2.tsv`, every method (note N4) | the same |
+
+## Smoke run (job 12378260, commit `ea44863`, 2026-11-14, 35 minutes)
+
+One job ran the offline test suite and then both batteries on TESTES with the registered settings, into
+`simbu_bench_refs5_smoke` and `mixture_panel_refs5_smoke`. Nothing below is part of the result (note N13).
+
+- **Tests.** 337 passed, none failed (`python -m pytest -q`, 107 s). With R on the path the suite includes the
+  R test of the runner's settings, the guard and the provenance record, and the check that the installed DWLS
+  0.5.2 has exactly one place for the guard in each of its two signature builders.
+- **Every task ran and was scored**: BayesPrism, DWLS, MuSiC, SCDC, Bisque and CIBERSORTx on the three V5 arms
+  and on TESTES_holdout.
+- **Arm A removes the library-size differences** (registered check). Through SimBu's own summation, 1,000
+  cells of one type total exactly 1 per cell in arm A for each of the six TESTES types. In arm B the same cells
+  total 25,994 (spermatogonia) to 81,336 (spermatocytes) per cell, a 3.13-fold spread; in arm C the spread is
+  4.42-fold. Table: `record/step4/smoke/v5_arm_library_size_TESTES_smoke.tsv`.
+- **The new arguments do not disturb the old arms.** TESTES arm B's mixtures are byte-identical to the
+  "nobias" mixtures of 2026-11-11 and arm C's to the "bias" mixtures; the three arms share one downsampled
+  reference and one cell-fraction truth.
+- **The panel builder reproduces.** TESTES_holdout's mixtures, truth and 70% reference are byte-identical to
+  the 2026-11-08 panel's (`record/step4/smoke/v6_build_check_TESTES_smoke.tsv`).
+- **Settings as registered, read back from the provenance files**
+  (`record/step4/smoke/v5_run_settings_TESTES_smoke.tsv`, `v6_run_settings_TESTES_smoke.tsv`): V5 DWLS `mast`,
+  p 0.01, fold change 0.5, no cap; V6 DWLS `mast_optimized`, p 0.05, fold change 0.5, cap 2,000 with seed 1;
+  both DWLS builders patched, guard not fired; every runner on `rat_exclude_genes_v2.tsv` (261 genes removed,
+  the same gene count for BayesPrism and the cross-check methods); commit `ea44863`, no modified tracked file.
+  The CIBERSORTx record holds the container's md5 and no credential.
+- **`mast_optimized` took 6 minutes** on TESTES_holdout; `mast` took 16 on the same set in the earlier panel.
+- **The table and figure commands ran on the smoke outputs.** One defect was found and fixed (`7b014d9`): a
+  table with no rows was written without its header, which stopped the figure script.
+
+After the smoke run one setting of the job scripts changed, before any full run started: `PROVENANCE_MD5=1`,
+so that the Stage 8 runner also records the md5 of its inputs. It changes no computation.
+
+## Full batteries: jobs (submitted 2026-11-14 15:23, commit `7b014d9`)
+
+Runner code is unchanged since the smoke commit `ea44863`; the commits in between touch only the table and
+figure scripts and their tests. Three lanes, so at most three of these jobs hold a GPU slot at once.
+
+| Job | ID | Runs |
+|---|---|---|
+| build | 12380292 | V5: arms A, B, C of the 15 references and the arm check. V6: the 19 sets and `check_panel_build.py` |
+| A | 12380293 | BayesPrism, V5 (45 sets) and V6 (19 sets) |
+| B | 12380294 | V5 DWLS (22 sets); V5 MuSiC, SCDC, Bisque and CIBERSORTx (45 sets) |
+| C | 12380295 | V5 DWLS (23 sets); V6 MuSiC, SCDC, Bisque and CIBERSORTx (19 sets) |
+| D, E, F | 12380296, 12380297, 12380298 | V6 DWLS (9, 7 and 3 sets), after A, B and C |
+| tables | 12380299 | the three table and figure commands, after D, E and F |
+| smoke tables | 12380311 | regression of `simbu_summary.py` and `mixture_panel_summary.py` against their committed records; tables of the smoke runs |
