@@ -181,7 +181,8 @@ def attention_types(panel, previous, which=ATTENTION):
                          "r_20261108": old.loc[t, "pearson_r"], "true_mean_now": np.nan, "est_mean_now": np.nan,
                          "true_mean_20261108": old.loc[t, "true_mean"], "est_mean_20261108": old.loc[t, "est_mean"],
                          "note": "benchmarked on 2026-11-08, not now"})
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=["set", "cell_type", "in_20261108_panel", "r_now", "r_20261108", "true_mean_now",
+                                       "est_mean_now", "true_mean_20261108", "est_mean_20261108", "note"])
 
 
 def dwls_table(panel, previous, sets):

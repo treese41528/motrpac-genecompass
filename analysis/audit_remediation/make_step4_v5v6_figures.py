@@ -39,9 +39,13 @@ RING = dict(edgecolor=fs.SURFACE, linewidth=1.2)
 
 
 def read(path):
+    """The table, or None if it is missing or has no rows (an unfinished battery)."""
     if not path.exists():
         return None
-    t = pd.read_csv(path, sep="\t")
+    try:
+        t = pd.read_csv(path, sep="\t")
+    except pd.errors.EmptyDataError:
+        return None
     return t if len(t) else None
 
 
