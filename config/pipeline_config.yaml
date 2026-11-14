@@ -347,10 +347,14 @@ prior_knowledge:
     # Stage 6 read (md5 5e1e18fea6f3b34dca80758c5322a9e6, fetched 2026-03-17) is not in the archive
     # (between the 03-06 and 04-01 snapshots); it is deposited.
     hgnc_url: "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2026-03-06.txt"
-    rat_only_tokens: true       # Only embed rat-specific tokens (T4); 
-                                # ortholog-mapped tokens inherit from GC
+    # rat_only_tokens is read by no code (audit Part 2, Stage 6 deviation 2). The family builder trains on
+    # human, mouse and rat families together and cannot give a rat-specific (T4) token a vector: 0 of 2,474
+    # T4 rows are non-zero in v2's initialisation. The key is left in place; removing it would change nothing.
+    rat_only_tokens: true
 
-  # Steps 3 & 4: Promoter and GRN — stubs, not yet implemented
+  # Steps 3 & 4: promoter (build_promoter_embedding.py) and GRN transfer (build_grn_transfer.py). Both are
+  # implemented and ran in March 2026; this comment called them "stubs, not yet implemented" until 2026-11-14.
+  # Stage 6 refuses to overwrite an existing <name>_embeddings.pkl without --overwrite (audit finding 2.7).
   promoter:
     enabled: true             # Requires DNABert + Ensembl genome sequences
     dnabert_model: "zhihan1996/DNA_bert_6"

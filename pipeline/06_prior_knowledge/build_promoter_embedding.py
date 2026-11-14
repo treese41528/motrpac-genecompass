@@ -137,7 +137,7 @@ _TRANSFORMERS_AVAILABLE = None  # lazy-checked
 # ─────────────────────────────────────────────────────────────────────────────
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, refuse_overwrite, resolve_path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -750,6 +750,10 @@ On Gilbreth (GPU recommended for DNABert inference):
         '-v', '--verbose', action='store_true',
         help='Enable DEBUG-level logging',
     )
+    parser.add_argument(
+        '--overwrite', action='store_true',
+        help='Replace an existing promoter_embeddings.pkl (--test writes the same file) (default: refuse; audit finding 2.7)',
+    )
     args = parser.parse_args()
 
     if args.verbose:
@@ -806,6 +810,8 @@ On Gilbreth (GPU recommended for DNABert inference):
         logger.info(f"  {fname}: {p.stat().st_size / 1e6:.1f} MB [OK]")
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    # --test writes the same promoter_embeddings.pkl as a full run, so it is guarded too.
+    refuse_overwrite(output_dir / 'promoter_embeddings.pkl', args.overwrite, dry_run=args.dry_run)
 
     if args.dry_run:
         # No manifest: a dry run must not overwrite the manifest of the real outputs
