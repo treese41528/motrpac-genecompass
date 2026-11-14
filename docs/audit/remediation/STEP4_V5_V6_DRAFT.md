@@ -125,3 +125,22 @@ python analysis/audit_remediation/make_step4_v5_tables.py     # -> docs/audit/re
 python analysis/audit_remediation/make_step4_v6_tables.py     # -> docs/audit/remediation/record/step4/v6_mixture_panel/
 MPLCONFIGDIR=tmp/mpl python analysis/audit_remediation/make_step4_v5v6_figures.py   # -> docs/audit/remediation/figures/step4_v5_*.png, step4_v6_*.png
 ```
+
+## Settings of the two batteries
+
+Fixed in `slurm/analysis/v56_task.sh` (local job script; the settings also appear in each run's provenance
+file) before any run. Every job runs the committed code of this branch with
+`PIPELINE_PROFILE=config/profiles/refs5.yaml`.
+
+| | V5, SimBu battery | V6, mixture panel |
+|---|---|---|
+| References | the 15 `references_v5` builds | the same |
+| Sets | 45: 15 references x arms A, B, C | 19: 15 holdout, 4 cross |
+| Mixtures | 50 of 1,000 cells, SimBu `random` composition, 1,000,000 reads, seed 1, from a seeded downsample to at most 500 cells per type | 50 of 1,000 cells, Dirichlet alpha 1, seed 1, 30% holdout, at least 20 pool cells per benchmarked type |
+| Deconvolved against | the set's own downsampled reference, no further cap | holdout: the set's 70% split; cross: the production reference. Cap of 2,000 cells per type (seed 1) for every method but BayesPrism |
+| Scored against | cell fractions (`--truth cellfrac`) | RNA fractions (`rnafrac`) |
+| BayesPrism | Stage 8 runner, 8 cores | Stage 8 runner, 16 cores |
+| DWLS | `mast`, p 0.01, fold change 0.5, 4 cores (note N3) | `mast_optimized`, p 0.05, fold change 0.5, 4 cores (the registered correction) |
+| MuSiC, SCDC, Bisque | omnideconv defaults, sample of origin as batch | the same |
+| CIBERSORTx | no batch correction; existing container and credentials | the same |
+| Gene exclusion | `rat_exclude_genes_v2.tsv`, every method (note N4) | the same |
