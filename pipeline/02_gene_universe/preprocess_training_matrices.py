@@ -275,6 +275,24 @@ class GeneUniverseMapper:
         return mito_ensembl
 
 
+def load_mito_ids_by_chromosome(config: dict) -> Set[str]:
+    """Ensembl IDs of every gene on chromosome MT in the BioMart gene table (biomart.rat_gene_info).
+
+    Used by the switch gene_universe.preprocessing.mito_by_id (audit finding 1.3): mitochondrial genes are
+    otherwise recognised by a symbol pattern, which finds none in a file keyed by Ensembl ID.
+    """
+    path = resolve_path(config, config['biomart']['rat_gene_info'])
+    ids = set()
+    with open(path, 'r') as f:
+        reader = csv.DictReader(f, delimiter='\t')
+        for row in reader:
+            if (row.get('Chromosome/scaffold name') or '').strip() == 'MT':
+                ids.add(row['Gene stable ID'].strip())
+    if not ids:
+        raise ValueError(f"no chromosome-MT gene in {path}")
+    return ids
+
+
 def _merge_duplicate_genes(adata: 'ad.AnnData', ensembl_ids: List[str]) \
         -> Tuple['ad.AnnData', int]:
     """Merge duplicate gene mappings by summing counts."""
@@ -704,8 +722,14 @@ def _find_companion_file(directory: Path, candidates: List[str],
 #   (unchanged from previous version)
 # ═════════════════════════════════════════════════════════════════════════════
 
-def find_matrix_files(study_dir: str) -> List[Tuple[str, str]]:
-    """Discover matrix files in a study directory."""
+def find_matrix_files(study_dir: str, once: bool = False) -> List[Tuple[str, str]]:
+    """Discover matrix files in a study directory.
+
+    The walk of the study folder already enters <GSE>_RAW, which is then walked again, so a non-mtx matrix
+    under _RAW is returned twice (audit finding 1.6: md5 copies in the first corpus, which the v2 file list
+    drops). once=True (switch gene_universe.preprocessing.walk_each_file_once, off for v2) returns each file
+    once. Pinned sample ids are unaffected either way: see number_matrix_files.
+    """
     study_path = Path(study_dir)
     candidates = []
     search_dirs = [study_path]
@@ -719,12 +743,17 @@ def find_matrix_files(study_dir: str) -> List[Tuple[str, str]]:
 
     seen_mtx_dirs = set()
     seen_mtx_prefixes = set()
+    seen_files = set()
 
     for search_dir in search_dirs:
         for root, dirs, files in os.walk(search_dir):
             root_path = Path(root)
             for fname in files:
                 fpath = root_path / fname
+                if once:
+                    if str(fpath) in seen_files:
+                        continue
+                    seen_files.add(str(fpath))
                 fname_lower = fname.lower()
                 if any(skip in fname_lower for skip in SKIP_FILE_PATTERNS):
                     continue
@@ -811,8 +840,13 @@ def identify_mito_genes(gene_names: List[str]) -> List[str]:
     return mito_genes
 
 
-def normal_filter(adata, mito_gene_ids: Set[str]):
-    """GeneCompass normal_filter: z-score on total counts + mito %."""
+def normal_filter(adata, mito_gene_ids: Set[str], outlier_on_n_genes: bool = False):
+    """Within-file outlier rule: cells outside 3 SD on total counts or on mitochondrial fraction are dropped.
+
+    outlier_on_n_genes (switch gene_universe.preprocessing.outlier_on_n_genes, off for the v2 corpus) adds the
+    same rule on the number of expressed genes, which is the quantity the GeneCompass paper applies it to
+    (audit finding 1.8).
+    """
     if sp.issparse(adata.X):
         total_counts = np.array(adata.X.sum(axis=1)).flatten()
     else:
@@ -844,7 +878,34 @@ def normal_filter(adata, mito_gene_ids: Set[str]):
     keep = ((total_z > -3) & (total_z < 3) &
             (mito_z > -3) & (mito_z < 3))
 
+    if outlier_on_n_genes:
+        if sp.issparse(adata.X):
+            n_genes = np.array((adata.X > 0).sum(axis=1)).flatten()
+        else:
+            n_genes = np.sum(np.asarray(adata.X) > 0, axis=1).flatten()
+        genes_z = np.nan_to_num(zscore(n_genes.astype(float)), nan=0.0)
+        keep &= (genes_z > -3) & (genes_z < 3)
+
     return adata[keep].copy()
+
+
+def max_mito_filter(adata, mito_gene_ids: Set[str], max_fraction: float):
+    """Drop cells whose mitochondrial share of counts is above max_fraction (GeneCompass: 0.15).
+
+    Applied only under the switch gene_universe.preprocessing.apply_max_mito_fraction (audit finding 1.2); the
+    v2 corpus was built without it.
+    """
+    if sp.issparse(adata.X):
+        total = np.array(adata.X.sum(axis=1)).flatten()
+        mito = np.array(adata[:, np.isin(adata.var_names, list(mito_gene_ids))].X.sum(axis=1)).flatten()
+    else:
+        X = np.asarray(adata.X)
+        total = X.sum(axis=1).flatten()
+        mito = X[:, np.isin(adata.var_names, list(mito_gene_ids))].sum(axis=1).flatten()
+    # in double precision: a float32 division puts a cell at exactly the cut (15 of 100) just above it
+    total, mito = total.astype(np.float64), mito.astype(np.float64)
+    frac = np.divide(mito, total, out=np.zeros_like(mito), where=total > 0)
+    return adata[frac <= max_fraction].copy()
 
 
 def gene_number_filter(adata, core_gene_ids: Set[str]):
@@ -1049,6 +1110,8 @@ def number_matrix_files(study_accession: str, matrix_files: List[Tuple[str, str]
 
     # Discovery can return the same file twice (the study walk enters <GSE>_RAW, which is then walked
     # again); the canonical run numbered both copies, so pinned ids are matched occurrence by occurrence.
+    # Under walk_each_file_once each file is returned once: the pinned id of a second copy is then not
+    # produced (it is an md5 copy that the v2 file list drops) and every other pinned id keeps its file.
     found = defaultdict(list)
     for fp, fmt in matrix_files:
         found[rel(fp)].append((fp, fmt))
@@ -1058,6 +1121,8 @@ def number_matrix_files(study_accession: str, matrix_files: List[Tuple[str, str]
         src = src[:-3] if src.endswith('.mtx.gz') else src
         if taken[src] < len(found.get(src, [])):
             out.append((sample_id, *found[src][taken[src]])); taken[src] += 1
+        elif found.get(src):
+            logger.info(f"{sample_id}: pinned second copy of {src}, which is read once; not produced")
         else:
             logger.warning(f"{sample_id}: pinned source not found on disk: {src}")
     next_idx = 1 + max((int(sid.rsplit('sample', 1)[1]) for sid, _ in pinned), default=-1)
@@ -1077,6 +1142,13 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
     min_genes_per_cell = int(pp.get('min_genes_per_cell', 200))
     min_cells_per_sample = int(pp.get('min_cells_per_sample', 4))
     save_qc = pp.get('save_qc_matrices', True)
+    # Switches for a future corpus, all off for v2 (docs/audit/remediation/STEP5_PREREG.md)
+    mito_by_id = bool(pp.get('mito_by_id', False))
+    apply_max_mito = bool(pp.get('apply_max_mito_fraction', False))
+    outlier_on_n_genes = bool(pp.get('outlier_on_n_genes', False))
+    max_mito_fraction = float(pp.get('max_mito_fraction', 0.15))
+    mito_chr_ids = load_mito_ids_by_chromosome(config) if mito_by_id else set()
+    walk_once = bool(pp.get('walk_each_file_once', False))
 
     report = {
         'accession': study_accession,
@@ -1091,7 +1163,7 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
     })
 
     # Discover matrices
-    matrix_files = find_matrix_files(study_dir)
+    matrix_files = find_matrix_files(study_dir, once=walk_once)
     if not matrix_files:
         report['status'] = 'no_matrices_found'
         return report, {}
@@ -1155,11 +1227,21 @@ def process_study(study_accession: str, study_dir: str, mapper: GeneUniverseMapp
 
             # 6. Identify mito genes in ENSRNOG space
             mito_ensembl = mapper.get_mito_ensembl_ids(mito_originals)
+            if mito_by_id:
+                n_by_symbol = len(mito_ensembl)
+                mito_ensembl = mito_ensembl | (mito_chr_ids & set(adata_mapped.var_names))
+                sample_report['mito_genes_by_symbol'] = n_by_symbol
+                sample_report['mito_genes_with_ids'] = len(mito_ensembl)
 
-            # 7. Cell QC — GeneCompass exact order
-            # 7a. normal_filter (z-score ±3 on total counts + mito %)
-            adata_qc = normal_filter(adata_mapped, mito_ensembl)
+            # 7. Cell QC (modelled on GeneCompass; departures: audit findings 1.2, 1.3, 1.8)
+            # 7a. normal_filter (z-score ±3 on total counts + mito %; + number of genes under its switch)
+            adata_qc = normal_filter(adata_mapped, mito_ensembl, outlier_on_n_genes=outlier_on_n_genes)
             sample_report['cells_after_normal_filter'] = adata_qc.n_obs
+
+            # 7a'. fixed mitochondrial cut, only under its switch
+            if apply_max_mito:
+                adata_qc = max_mito_filter(adata_qc, mito_ensembl, max_mito_fraction)
+                sample_report['cells_after_max_mito'] = adata_qc.n_obs
 
             # 7b. gene_number_filter (≥7 protein_coding + miRNA)
             adata_qc = gene_number_filter(adata_qc, mapper.core_ids)

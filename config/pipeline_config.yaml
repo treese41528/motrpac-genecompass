@@ -170,6 +170,11 @@ harvesting:
   data_root: data/raw
   catalog_file: data/gene_inventory/study_catalog.tsv
   catalog_dir: data/catalog
+  # A series returned by both the single-cell and the bulk GEO query is listed twice in master_catalog.json.
+  # false (as v2 was built): the later, bulk row wins and Stage 2 skips the series; 79 confirmed rat
+  # single-cell series never reached cell QC (audit finding 1.1). true keeps the single-cell row. Recommended
+  # true for any new corpus; it changes which series enter Stage 2.
+  prefer_single_cell_on_conflict: false
 
   sources:
     geo:
@@ -210,18 +215,27 @@ gene_universe:
     - "^E-[A-Z]+-[A-Z]+-\\d+$"
   fail_on_unrecognized_accession: true
 
-  # ── Step 2 cell QC thresholds (modelled on GeneCompass; two departures, audit findings 1.2, 1.3, 1.8) ──
-  # max_mito_fraction is NOT read by any Stage 2 code: no fixed 15% mitochondrial cut was applied to the v2
-  # corpus. The only mitochondrial rule is the within-file 3 SD outlier rule, applied to total counts and
-  # mitochondrial fraction (GeneCompass applies 3 SD to the number of expressed genes), and it has no effect in
-  # files keyed by Ensembl ID, because mitochondrial genes are recognised by symbol.
+  # ── Step 2 cell QC thresholds (modelled on GeneCompass; departures, audit findings 1.2, 1.3, 1.8) ──
+  # As the v2 corpus was built: no fixed 15% mitochondrial cut (max_mito_fraction is read only under its
+  # switch below); the only mitochondrial rule is the within-file 3 SD outlier rule, applied to total counts
+  # and mitochondrial fraction (GeneCompass applies 3 SD to the number of expressed genes); and that rule has
+  # no effect in files keyed by Ensembl ID, because mitochondrial genes are recognised by symbol. Measured:
+  # 10.4% of the 6.8 million training cells are above 15% (docs/audit/remediation/STEP5_RESULTS.md, M1).
   preprocessing:
     min_genes_per_cell: 200
     min_cells_per_sample: 4
-    max_mito_fraction: 0.15        # not applied (see above)
+    max_mito_fraction: 0.15        # applied only when apply_max_mito_fraction is true
     outlier_sd_threshold: 3.0
     min_core_genes_per_cell: 7
     save_qc_matrices: true
+    # Repairs for a FUTURE corpus (docs/audit/remediation/STEP5_PREREG.md). All false: the v2 corpus is
+    # defined by its file list and checksums (config/corpus_v2_plan.tsv), and turning any of these on makes
+    # Stage 2 produce a different corpus. Recommended true for any new corpus.
+    mito_by_id: false               # 1.3: also recognise mitochondrial genes by Ensembl ID (chromosome MT)
+    apply_max_mito_fraction: false  # 1.2: drop cells above max_mito_fraction
+    outlier_on_n_genes: false       # 1.8: 3 SD rule on the number of expressed genes as well
+    walk_each_file_once: false      # 1.6: do not read a matrix under <GSE>_RAW twice (the second read made
+                                    #      the md5 copies that corpus_v2_plan.tsv lists as drop_duplicate)
 
   # ── Step 3 expression-based pruning ──
   # GeneCompass architecture: biotype filtering (Step 1) + top-2048

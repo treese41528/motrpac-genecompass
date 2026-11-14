@@ -46,4 +46,6 @@ def pytest_configure(config):
     if not config.option.basetemp:
         # one folder per pytest process: pytest empties its basetemp at start, so two sessions sharing one
         # folder (several people, or several jobs, on this cluster) delete each other's files mid-run
-        config.option.basetemp = str(ROOT / "tmp" / "pytest" / f"run_{os.getpid()}")
+        base = ROOT / "tmp" / "pytest"
+        base.mkdir(parents=True, exist_ok=True)      # a fresh clone or worktree has no tmp/pytest yet
+        config.option.basetemp = str(base / f"run_{os.getpid()}")
