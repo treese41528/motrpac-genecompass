@@ -99,3 +99,29 @@ draws one sample of 1,000 cells of that type alone, in each arm, with no rescali
 size of that type's cells as the arm sums them. Arm A removes the library-size differences if this number is
 the same for every cell type of a reference. The check runs on all 15 references, not only on the smoke
 reference.
+
+## Code changes (worktree branch `audit-remediation-v56`)
+
+| Change | File | Earlier behaviour still reachable |
+|---|---|---|
+| Arm without mRNA bias: `--remove-bias-in-counts`, `--remove-bias-method`; the call is written to `sim_meta.txt` | `deconvolution/omnideconv_bench/simulate_simbu.R` | Yes. Without the arguments the call to SimBu is the one made before. On a test reference, arm B's mixtures equal the old "nobias" call's byte for byte and arm C's equal the old "bias" call's |
+| Battery builder: arms A, B, C on the `references_v5` builds; arm check | `deconvolution/omnideconv_bench/build_simbu_battery.sh`, `check_simbu_arms.R` | Yes. `REFSET=refs4all` builds the 2026-11-11 battery (bias, nobias, dose-response) |
+| DWLS method and both cut-offs passed explicitly and recorded | `deconvolution/R/run_omnideconv.R`, `omnideconv_settings.R` | Yes. Unset, they are `mast`, 0.01 and 0.5, the values every earlier run used |
+| In-memory DWLS guard extended to the `mast_optimized` builder; each firing printed and recorded | same | The guard for `mast` has the same effect as before |
+| Provenance record per run of the cross-check runner | same, with `deconvolution/R/provenance.R` | Adds a file; changes no output |
+| Scoring message says a type a method does not estimate is left out of its scores; the counts go into `overall_metrics` | `deconvolution/score_validation.py` | Scores are unchanged; four rows are added to `overall_metrics_<method>.tsv` |
+| Panel builder on the `references_v5` builds; check of a built panel before deconvolution | `deconvolution/build_mixture_panel.sh`, `check_panel_build.py` | Yes. `REFSET=refs4all` builds the 2026-11-04 panel |
+| Summary of two named arms; the corrector rule as a function | `deconvolution/omnideconv_bench/simbu_summary.py` | Yes. The defaults are the arms of 2026-11-11 |
+
+Tests added (`tests/`): `test_omnideconv_runner.py` (with `tests/r/test_omnideconv_settings.R`),
+`test_check_panel_build.py`, `test_step4_v5_v6_tables.py`.
+
+## Commands that build the tables and figures
+
+Run from the repository root, on a compute node (`slurm/analysis/v56_tables.slurm final` runs the three).
+
+```
+python analysis/audit_remediation/make_step4_v5_tables.py     # -> docs/audit/remediation/record/step4/v5_simbu/
+python analysis/audit_remediation/make_step4_v6_tables.py     # -> docs/audit/remediation/record/step4/v6_mixture_panel/
+MPLCONFIGDIR=tmp/mpl python analysis/audit_remediation/make_step4_v5v6_figures.py   # -> docs/audit/remediation/figures/step4_v5_*.png, step4_v6_*.png
+```
