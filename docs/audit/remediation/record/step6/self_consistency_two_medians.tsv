@@ -1,0 +1,3 @@
+arm	folder	networks	tf_network_scores	median_over_all_tf_network_scores	median_of_the_per_network_medians	per_network_medians	note
+refs4, 14 tissues (the arm of the two quoted figures)	data/deconvolution/grn_v2_refs4_human/conservation	8	859	0.3096	0.2974	0.2611; 0.2738; 0.2854; 0.2894; 0.3053; 0.3208; 0.3807; 0.3869	
+the default config's arm when this was run (deconvolution.grn_human_dir)	data/deconvolution/grn_v2_refs4all_rebuild_human/conservation	6	633	0.3099	0.2874	0.2611; 0.2738; 0.2854; 0.2894; 0.3807; 0.3869	
