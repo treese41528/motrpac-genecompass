@@ -272,3 +272,19 @@ now builds the battery's sets if they are missing, under a lock so that only one
 (`slurm/analysis/v56_ensure_build.sh`); the build job, if it starts later, finds the sets built and ends. The
 build commands, the sets and every per-task setting are unchanged. Time limits were shortened (A 9 h, B to F
 12 h) so the jobs fit more gaps in the schedule.
+
+**Build, 17:18 to 17:32 (job 12380292, commit `c5644d3`, no modified tracked file).** Both batteries were
+built. Before any deconvolution:
+- the four cross sets' harmonization maps equal the reviewed ones, so the cross sets may run (note N10);
+- 17 of the 19 panel sets are byte-identical to the 2026-11-08 panel's (mixtures, truth and, for holdout sets,
+  the 70% reference); HEART_holdout and HYPOTH_holdout differ, as they should
+  (`data/deconvolution/mixture_panel_refs5/build_check.tsv`);
+- the arm check ran on all 15 references (185 cell types).
+
+**Short packs, submitted 17:37 (array 12382533, tasks 0 to 23, two at a time; job 12382534).** Only jobs with
+a short time limit were being started: the 40-minute build job was, the 9- and 12-hour jobs were not. The tasks
+that fit well inside 50 minutes were therefore also listed in short packs: BayesPrism on both batteries, and
+MuSiC, SCDC, Bisque and CIBERSORTx on both; job 12382534 holds the three V5 HEART BayesPrism tasks (85-minute
+limit). They call the same task script with the same settings. A task that is done is skipped, and a task that
+another job is running is skipped (a lock per set and method group), so no task runs twice. The long jobs stay
+queued for the DWLS tasks and for anything the short packs do not finish.
