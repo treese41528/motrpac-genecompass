@@ -1,6 +1,21 @@
 # Pipeline Bug & Fix Tracker
 **Last updated:** 2026-02-10
 
+> **Historical document (banner added 2026-11-14, audit "stale documents").** This tracker was last updated
+> on 2026-02-10, during the refactoring that produced the present Stages 1-3. It is not maintained and its
+> status column was never brought up to date.
+> - Two of the scripts it lists no longer exist (`build_gene_inventory`, `prune_vocabulary`); their work is
+>   done by `pipeline/02_gene_universe/build_gene_universe.py` and `prune_gene_universe.py`.
+> - The Stage 3 items (BUG-02, -09, -15, -16, -17) are written against a design the current
+>   `pipeline/03_ortholog_mapping/build_ortholog_mapping.py` does not have: it performs no outer join and
+>   reads no RGD biotype column.
+> - Whether each remaining "TODO" still applies to the current code was **not** re-examined when this banner
+>   was written. Do not read a "TODO" here as an open defect, or a "DONE" as verified.
+> - It lists nothing for Stages 4-14, which were written after it.
+>
+> **Where current defects are recorded:** `docs/audit/FINDINGS.md` (the audit of 2026-11-11, with the nine
+> parts beside it) and `docs/audit/remediation/README.md` (what has been done about each finding).
+
 ## Architectural Decisions (locked)
 - **BioMart is canonical gene universe** (Ensembl release pinned in config)
 - **RGD: symbol synonyms ONLY** — `use_for_biotype_fallback: false`
