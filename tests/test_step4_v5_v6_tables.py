@@ -107,6 +107,9 @@ def test_v5_readings_on_a_made_up_battery(tmp_path, monkeypatch, capsys):
     assert r["n_common"] == 2 and r["n_all"] == 3 and r["n_positive"] == 3      # SCDC also ran on R3
     assert r["mean_rmse_A_common"] == pytest.approx(0.030) and r["mean_rmse_C_common"] == pytest.approx(0.060)
 
+    ms = pd.read_csv(out / "v5_method_status.tsv", sep="\t").set_index(["reference", "arm", "method"])["status"]
+    assert len(ms) == 54 and (ms == "scored").sum() == 48
+    assert ms[("R3", "A", "music")] == "not run"                 # no score and no record of a run
     st = pd.read_csv(out / "v5_status.tsv", sep="\t").set_index("reference")
     assert st["same_truth"].all() and st["same_reference"].all()
     assert st["call_A_as_registered"].all() and st["call_B_as_registered"].all() and st["call_C_as_registered"].all()
@@ -119,6 +122,25 @@ def test_v5_readings_on_a_made_up_battery(tmp_path, monkeypatch, capsys):
     assert d["driver"] == "Hepatocytes" and d["driver_mrna_rank"] == 1 and d["direction"] == "inflated"
     mc = pd.read_csv(out / "v5_mrna_content.tsv", sep="\t").set_index(["reference", "cell_type"])
     assert mc.loc[("R1", "Hepatocytes"), "mean_expressed_genes"] == 3 and mc.loc[("R1", "T cells"), "mean_total_counts"] == 1.5
+
+
+def test_v5_tells_not_applicable_from_failed_by_the_run_record(tmp_path, monkeypatch, capsys):
+    root, out = tmp_path / "simbu", tmp_path / "rec"
+    part = {m: (0.01, 0.02, 0.03) for m in METHODS if m not in ("music", "bisque", "scdc")}
+    _v5_reference(root, "ONE", part)
+    for arm in "ABC":
+        st = root / "ONE" / arm
+        (st / "reference" / "cells_meta.tsv").write_text(          # the same four cells, all from one sample
+            "barcode\tsample\tcell_type\nc1\ts1\tT cells\nc2\ts1\tT cells\nc3\ts1\tHepatocytes\nc4\ts1\tHepatocytes\n")
+        (st / "results").mkdir()
+        (st / "results" / "provenance_run_omnideconv_music+scdc+bisque.json").write_text(json.dumps({"params": {"method_result": {
+            "music": {"status": "failed", "error": "one subject"}, "scdc": {"status": "failed", "error": "singular matrix"},
+            "bisque": {"status": "failed", "error": "Only one individual detected in single-cell data"}}}}))
+    txt = _run_v5(root, out, monkeypatch, capsys)
+    ms = pd.read_csv(out / "v5_method_status.tsv", sep="\t").set_index(["arm", "method"])
+    assert ms.loc[("A", "music"), "status"] == "not applicable" and ms.loc[("C", "bisque"), "status"] == "not applicable"
+    assert ms.loc[("B", "scdc"), "status"] == "failed" and ms.loc[("B", "scdc"), "detail"] == "singular matrix"
+    assert "A not applicable" in txt and "B failed (singular matrix)" in txt
 
 
 def test_v5_common_set_is_over_all_three_arms_and_a_differing_contrast_is_shown(tmp_path, monkeypatch, capsys):

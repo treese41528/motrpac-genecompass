@@ -26,6 +26,8 @@ Tables (all TSV, under --out):
                            each arm; which method is scored in which arm
   v5_rmse.tsv              per reference and method: pooled RMSE and r in A, B, C and the three differences
   v5_bayesprism.tsv        the BayesPrism rows of v5_rmse.tsv (readings 1 and 2)
+  v5_method_status.tsv     per reference, arm and method: scored, not applicable (MuSiC and Bisque on a one-sample
+                           reference), failed (with the runner's message) or not run
   v5_ranking.tsv           per contrast and method: mean difference on the common set, over all scored, counts
   v5_corrector_rule.tsv    per contrast: the four means the rule uses, the verdict, the common set, and how many
                            leave-one-reference-out subsets give the same verdict (descriptive)
@@ -50,7 +52,9 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "deconvolution" / "omnideconv_bench"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import simbu_summary as ss  # noqa: E402
+from make_step4_v6_tables import n_reference_samples, run_status  # noqa: E402
 
 ARMS = ["A", "B", "C"]
 ARM_CALL = {"A": {"scaling": "NONE", "remove_bias_in_counts": "TRUE", "remove_bias_in_counts_method": "read-number"},
@@ -123,6 +127,19 @@ def status_table(root, sets, previous=None):
             for m in ss.METHODS:
                 row[f"{a}_{m}"] = (root / s / a / "scores" / f"overall_metrics_{m}.tsv").exists()
         rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def method_status(root, sets):
+    rows = []
+    for s in sets:
+        for a in ARMS:
+            sd = root / s / a
+            ns = n_reference_samples(sd)
+            for m in ss.METHODS:
+                status, detail = run_status(sd, m, ns)
+                rows.append({"reference": s, "arm": a, "method": m, "n_reference_samples": ns, "status": status,
+                             "detail": detail})
     return pd.DataFrame(rows)
 
 
@@ -292,6 +309,7 @@ def main():
     w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.5f")
 
     status = status_table(root, sets, a.previous if Path(a.previous).is_dir() else None); w(status, "v5_status.tsv")
+    mstat = method_status(root, sets); w(mstat, "v5_method_status.tsv")
     rmse = rmse_table(root, sets); w(rmse, "v5_rmse.tsv")
     bp = rmse[rmse["method"] == "bp_rna"].drop(columns="method"); w(bp, "v5_bayesprism.tsv")
     common = common_set(rmse)
@@ -323,7 +341,11 @@ def main():
     L.append(f"Method runs scored: {int((rmse['status'] == 'ok').sum())} of {len(rmse)} reference x method (all three arms). "
              f"Not complete: {len(nots)}")
     for r in nots.itertuples():
-        L.append(f"  {r.reference:8s} {NAMES[r.method]:10s} {r.status}")
+        why = mstat[(mstat["reference"] == r.reference) & (mstat["method"] == r.method) & (mstat["status"] != "scored")]
+        L.append(f"  {r.reference:8s} {NAMES[r.method]:10s} {r.status}: " + "; ".join(
+            f"{q.arm} {q.status}" + (f" ({q.detail[:90]})" if q.detail else "") for q in why.itertuples()))
+    L.append("Method runs by status (reference x arm x method): " + ", ".join(
+        f"{k} {v}" for k, v in mstat["status"].value_counts().items()))
     if len(libsum):
         L.append("")
         L.append("Check of the arms (mean library size of a cell type's cells as SimBu sums them; largest over smallest "

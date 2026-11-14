@@ -86,6 +86,32 @@ def cross_reference_dir(sd):
     return None
 
 
+def run_status(sd, m, n_samples):
+    """What happened to method m on the set in folder sd: (status, detail).
+    scored          its score file exists
+    not applicable  MuSiC or Bisque gave no output and the reference has one sample (the registered case)
+    failed          the runner's provenance record says the method ran and gave no output (its message is the detail)
+    not run         no score and no record of a run
+    The distinction between 'not applicable' and 'failed' is made here from the record, not by hand."""
+    sd = Path(sd)
+    if (sd / "scores" / f"overall_metrics_{m}.tsv").exists():
+        return "scored", ""
+    pf = sd / "results" / PROV[m]
+    if m == "bp_rna" or not pf.exists():
+        return "not run", ""
+    try:
+        rec = json.load(open(pf)).get("params", {})
+    except Exception as e:
+        return "not run", f"unreadable provenance: {e}"
+    res = (rec.get("method_result") or {}).get(m)
+    if res is None:
+        return "not run", ""
+    msg = str(res.get("error") or "")
+    if m in ("music", "bisque") and n_samples == 1:
+        return "not applicable", f"one-sample reference; runner message: {msg[:160]}"
+    return "failed", msg[:300]
+
+
 def status_table(panel, sets):
     rows = []
     for s in sets:
@@ -93,27 +119,8 @@ def status_table(panel, sets):
         ref = cross_reference_dir(sd) if s.endswith("_cross") else None
         ns = n_reference_samples(sd, (ROOT / ref) if ref and not os.path.isabs(ref) else ref)
         for m in mps.METHODS:
-            o = mps.overall(sd, m)
-            row = {"set": s, "method": m, "n_reference_samples": ns, "status": "", "detail": ""}
-            pf = sd / "results" / PROV[m]
-            rec = None
-            if pf.exists():
-                try:
-                    rec = json.load(open(pf)).get("params", {})
-                except Exception as e:
-                    row["detail"] = f"unreadable provenance: {e}"
-            if o is not None:
-                row["status"] = "scored"
-            elif rec is not None and m != "bp_rna":
-                res = (rec.get("method_result") or {}).get(m, {})
-                msg = str(res.get("error") or "")
-                if m in ("music", "bisque") and ns == 1:
-                    row["status"], row["detail"] = "not applicable", f"one-sample reference; runner message: {msg[:160]}"
-                else:
-                    row["status"], row["detail"] = "failed", msg[:300]
-            else:
-                row["status"] = "not run"
-            rows.append(row)
+            status, detail = run_status(sd, m, ns)
+            rows.append({"set": s, "method": m, "n_reference_samples": ns, "status": status, "detail": detail})
     return pd.DataFrame(rows)
 
 
