@@ -3,6 +3,14 @@
 # fgsea (signed dose statistic) vs MSigDB Hallmark + Reactome over the per-cell-type DE blocks.
 # Installs fgsea + msigdbr + msigdbdf into R_libs/ on first use (needs Bioconductor/CRAN/r-universe
 # network on the compute node). Same R env pattern as run_pseudobulk_de.sh. Light after install.
+#
+# Environment read by run_gene_set_enrichment.R and passed through unchanged (see its header):
+#   DE_DIR          DE folder to analyse       (default: <genecompass_input_dir>/pseudobulk_de of the config)
+#   ENRICH_OUT      output folder              (default: <DE_DIR>/enrichment); set it to leave DE_DIR untouched
+#   GSEA_GENE_SETS  a saved gene_sets_used.tsv (default: the table in the output folder, else msigdbr)
+#   GSEA_SEED       fgsea seed                 (default 1)
+# The gene-set table a run used is saved beside its results with its md5 (STEP3_PREREG.md 8.2), so a later
+# run that is given that table does not read msigdbr's per-user cache at all.
 set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

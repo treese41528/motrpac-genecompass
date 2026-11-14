@@ -1,0 +1,11 @@
+field	value
+file	gene_sets_used.tsv
+md5	ac1c1238aeffe5330e1cc1861957b956
+msigdbr_version	26.1.0
+msigdb_release	2026.1.Hs
+collections	H; C2 CP:REACTOME
+species	Homo sapiens
+n_sets	1889
+n_rows	120984
+n_ensembl_genes	13728
+created	2026-11-14T10:45:42-0500
