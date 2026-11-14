@@ -27,16 +27,31 @@ sys.path.insert(0, str(ROOT / "lib"))
 sys.path.insert(0, str(ROOT / "pipeline" / "05_tokenization"))
 sys.path.insert(0, str(ROOT / "translation"))
 from gene_utils import load_config, resolve_path                                      # noqa: E402
+from provenance import write_provenance                                               # noqa: E402
 from transfer_to_human import (HUMAN_SPECIES_ID, _base, load_human_median_dict,      # noqa: E402
                                load_human_token_dict)
 from tokenize_corpus import (CELL_BATCH_SIZE, TOP_N_DEFAULT, build_eligible_gene_arrays,  # noqa: E402
                              build_gene_index, map_varnames_to_eligible, tokenize_cell_batch)
 
 MIN_CELLS = 20          # cells per (donor, cell type) pseudobulk
+# Size and md5 of each Tabula Sapiens file as downloaded (translation/fetch_tabula_sapiens.sh checks them).
+ATLAS_MD5 = ROOT / "translation" / "tabula_sapiens_md5.tsv"
 # MoTrPAC tissue label (genecompass_input/<label>) -> Tabula Sapiens tissue file
 TISSUES = {"blood": "Blood", "lung": "Lung", "skmgn": "Muscle", "skmvl": "Muscle", "heart": "Heart",
            "liver": "Liver", "kidney": "Kidney", "watsc": "Fat", "bat": "Fat", "smlint": "Small_Intestine",
            "testes": "Testis", "spleen": "Spleen", "ovary": "Ovary"}
+
+
+def registered_atlas_file(tissue, table=ATLAS_MD5):
+    """The row of translation/tabula_sapiens_md5.tsv for one atlas tissue ({} when the table or the row is
+    missing). The files are 0.4-3.7 GB, so the provenance record carries the registered md5 beside the file's
+    size and time; it does not rehash a file above the 2 GB limit of lib/provenance.py."""
+    try:
+        with open(table) as fh:
+            rows = [r for r in csv.DictReader((ln for ln in fh if not ln.startswith("#")), delimiter="\t")]
+        return next((dict(r) for r in rows if r["tissue"] == tissue), {})
+    except OSError:
+        return {}
 
 
 def prep(args):
@@ -89,6 +104,15 @@ def prep(args):
             "cell_types": {c: rows["cell_type"].count(c) for c in sorted(set(rows["cell_type"]))}}
     json.dump(summ, open(out / "prep_summary.json", "w"), indent=2)
     print(json.dumps({k: v for k, v in summ.items() if k != "cell_types"}))
+    # Provenance (audit finding 8.6: this script wrote none). Written after the dataset and the summary.
+    write_provenance(out, name="provenance_project_to_atlas_prep.json",
+                     inputs=[src, resolve_path(cfg, paths["genecompass_tokens"]),
+                             resolve_path(cfg, paths["genecompass_medians"]), ATLAS_MD5],
+                     params={"cmd": "prep", "tissue": args.tissue, "atlas_dir": str(args.atlas_dir),
+                             "out": str(args.out), "target_sum": target_sum, "min_cells": MIN_CELLS,
+                             "top_n": TOP_N_DEFAULT, "min_genes": 200, "species": HUMAN_SPECIES_ID,
+                             "registered_atlas_file": registered_atlas_file(args.tissue),
+                             "n_pseudobulks": int(keep.sum())})
 
 
 def load_map(path):
@@ -107,11 +131,14 @@ def score(args):
     rng = np.random.default_rng(0)
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     per_type, data = [], []
+    read = []                                    # embeddings read, for the provenance record
     for lab, tsname in TISSUES.items():
         rd = Path(args.human_root) / lab
         ad_ = Path(args.atlas_root) / tsname
         if not (ad_ / "embeddings" / "cell_embeddings.npy").exists():
             print(f"skip {lab}: no atlas embeddings for {tsname}"); continue
+        read += [rd / "embeddings" / "cell_embeddings.npy", ad_ / "embeddings" / "cell_embeddings.npy",
+                 ad_ / "prep_summary.json"]
         R = np.load(rd / "embeddings" / "cell_embeddings.npy"); rct = np.array(load_from_disk(str(rd / "dataset"))["cell_type"])
         T = np.load(ad_ / "embeddings" / "cell_embeddings.npy"); tct = np.array(load_from_disk(str(ad_ / "dataset"))["cell_type"])
         assert len(R) == len(rct) and len(T) == len(tct)
@@ -162,6 +189,12 @@ def score(args):
             r = [x for x in P if x["variant"] == var and x["tissue"] == lab]
             lines.append(f"    {lab}: {np.mean([x['top1_acc'] for x in r]):.3f} (chance {np.mean([x['chance'] for x in r]):.3f}, {len(r)} types)")
     txt = "\n".join(lines); print(txt); (out / "summary.txt").write_text(txt + "\n")
+    # Provenance (audit finding 8.6: this script wrote none). Written after both outputs.
+    write_provenance(out, name="provenance_project_to_atlas_score.json", inputs=[args.map] + read,
+                     params={"cmd": "score", "atlas_root": str(args.atlas_root), "human_root": str(args.human_root),
+                             "map": str(args.map), "out": str(args.out), "n_perm": args.n_perm,
+                             "permutation_seed": 0, "tissues_scored": sorted({d[1] for d in data}),
+                             "primary_variant": "centered"})
 
 
 def main():
