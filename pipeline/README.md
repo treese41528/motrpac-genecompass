@@ -11,7 +11,7 @@ stages (8, 9, 10, 12–14), which drive the scripts in `deconvolution/` and
 | 1 | `run_stage1.py` | Data harvesting & QC |
 | 2 | `run_stage2.py` | Gene universe & cell QC |
 | 3 | `run_stage3.py` | Ortholog mapping |
-| 4 | `run_stage4.py` | Gene medians (scatter / gather) |
+| 4 | `run_stage4.py` | Gene medians (scatter / gather). The divisor Stage 5 and Stage 9 use is the hybrid of these and GeneCompass's human medians: [`docs/SCHEME_B_MEDIANS.md`](../docs/SCHEME_B_MEDIANS.md) |
 | 5 | `run_stage5.py` | Reference assembly & tokenization |
 | 6 | `run_stage6.py` | Prior-knowledge embeddings |
 | 7 | `run_stage7.py` | Fine-tuning |

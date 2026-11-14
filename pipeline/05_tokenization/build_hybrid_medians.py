@@ -25,18 +25,25 @@ Purpose:
         GeneCompass's ~1.01), so genes with a human median keep it. This also
         keeps rat cells and their human re-expression (Stage 12) on the same
         per-gene scaling.
-      - Stage 4 rat medians are computed after normalize_total(1e4) and sit ~2.24x
-        above GeneCompass's medians on the genes that have both. Left unscaled,
+      - Stage 4 rat medians are computed after normalize_total(1e4) and sit about 2x
+        above GeneCompass's medians on the genes that have both (F = 2.24 on the March
+        medians, 2.0527 on v2's). Left unscaled,
         those genes enter at about half the value of their neighbours (0.50 vs
         0.94 in the same cells), so they are divided by F = median(rat / human)
         over the shared genes (--fallback-rescale auto; decided 2026-10-06).
-        Check on 20,370 rat cells: corpus value median 0.886 unscaled -> 0.946
-        rescaled, vs GeneCompass 1.007-1.015.
+        Check on 20,370 rat cells (run on the March medians, before the corpus
+        clean-up): corpus value median 0.886 unscaled -> 0.946 rescaled, vs
+        GeneCompass 1.007-1.015.
 
-Coverage (March 2026 build):
-    Human medians: 14,812 / 21,379 genes (69.3%)
-    Rat medians:    6,567 / 21,379 genes (30.7%)
-    Fallback (1.0):     0 genes
+This rule is "scheme B". Its definition, the figures of the v2 build and the check that the
+dictionary on disk follows it gene by gene are in docs/SCHEME_B_MEDIANS.md.
+
+Coverage:
+    March 2026 build (April's model; rat medians unscaled, which --fallback-rescale none reproduces):
+        human medians 14,812 / 21,379 genes (69.3%), rat medians 6,567 (30.7%), fallback 0
+    v2 build (2026-10-09; --fallback-rescale auto, F = 2.052656 over 14,766 shared genes):
+        human medians 14,766 / 21,222 genes (69.6%), rat medians / F 6,456 (30.4%), fallback 0
+        (data/training/gene_medians_v2/hybrid_median_provenance.json)
 
 Outputs (written to paths.median_dir, or --output-dir):
     hybrid_gene_medians.pickle  — {ENSRNOG_base: median_float}
