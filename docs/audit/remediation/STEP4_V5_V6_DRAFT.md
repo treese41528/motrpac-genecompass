@@ -177,17 +177,18 @@ One job ran the offline test suite and then both batteries on TESTES with the re
 After the smoke run one setting of the job scripts changed, before any full run started: `PROVENANCE_MD5=1`,
 so that the Stage 8 runner also records the md5 of its inputs. It changes no computation.
 
-## Full batteries: jobs (submitted 2026-11-14 15:23, commit `7b014d9`)
+## Full batteries: jobs (submitted 2026-11-14 15:23)
 
-Runner code is unchanged since the smoke commit `ea44863`; the commits in between touch only the table and
-figure scripts and their tests. Three lanes, so at most three of these jobs hold a GPU slot at once.
+Runner code is unchanged since the smoke commit `ea44863`: every later commit of this branch touches only the
+table and figure scripts, their tests and this document. Each run's provenance file records the commit it ran
+from and any modified tracked file. Three lanes, so at most three of these jobs hold a GPU slot at once.
 
 | Job | ID | Runs |
 |---|---|---|
 | build | 12380292 | V5: arms A, B, C of the 15 references and the arm check. V6: the 19 sets and `check_panel_build.py` |
 | A | 12380293 | BayesPrism, V5 (45 sets) and V6 (19 sets) |
-| B | 12380294 | V5 DWLS (22 sets); V5 MuSiC, SCDC, Bisque and CIBERSORTx (45 sets) |
-| C | 12380295 | V5 DWLS (23 sets); V6 MuSiC, SCDC, Bisque and CIBERSORTx (19 sets) |
+| B | 12380294 | V5 DWLS (19 sets); V5 MuSiC, SCDC, Bisque and CIBERSORTx (45 sets) |
+| C | 12380295 | V5 DWLS (26 sets); V6 MuSiC, SCDC, Bisque and CIBERSORTx (19 sets) |
 | D, E, F | 12380296, 12380297, 12380298 | V6 DWLS (9, 7 and 3 sets), after A, B and C |
 | tables | 12380299 | the three table and figure commands, after D, E and F |
 | smoke tables | 12380311 | regression of `simbu_summary.py` and `mixture_panel_summary.py` against their committed records; tables of the smoke runs |
