@@ -302,3 +302,43 @@ def test_v6_tables_are_written_for_a_panel_with_no_bayesprism_score_yet(tmp_path
     txt = _run_v6(panel, prev, out, monkeypatch, capsys)
     assert "not scored: 1" in txt and "was not written" in txt
     assert pd.read_csv(out / "v6_floor.tsv", sep="\t").iloc[0]["verdict"] == "not scored"
+
+
+# ============================================================================================ the results text
+def test_report_is_written_from_the_tables_and_says_what_is_missing(tmp_path, monkeypatch, capsys):
+    import make_step4_v5v6_report as rep
+    root, out5 = tmp_path / "simbu", tmp_path / "rec5"
+    full = {"bp_rna": (0.010, 0.040, 0.070), "cibersortx": (0.020, 0.050, 0.075), "dwls": (0.005, 0.010, 0.040),
+            "music": (0.010, 0.012, 0.050), "scdc": (0.030, 0.050, 0.060), "bisque": (0.060, 0.065, 0.066)}
+    _v5_reference(root, "R1", full); _v5_reference(root, "R2", full)
+    _run_v5(root, out5, monkeypatch, capsys)
+    panel, prev, out6 = tmp_path / "now", tmp_path / "prev", tmp_path / "rec6"
+    _v6_set(panel, "LIVER_holdout", {m: 0.95 for m in METHODS} | {"bp_rna": 0.849}); _v6_set(prev, "LIVER_holdout", {"bp_rna": 0.88})
+    _v6_set(panel, "KIDNEY_cross", {})
+    _run_v6(panel, prev, out6, monkeypatch, capsys)
+    draft = tmp_path / "draft.md"
+    draft.write_text(f"# title\n\nkept above\n\n{rep.BEGIN}\nold text\n{rep.END}\n\nkept below\n")
+    monkeypatch.setattr(sys, "argv", ["x", "--v5", str(out5), "--v6", str(out6), "--draft", str(draft), "--date", "2026-11-14"])
+    rep.main()
+    t = draft.read_text()
+    assert "kept above" in t and "kept below" in t and "old text" not in t
+    assert t.count(rep.BEGIN) == 1 and t.count(rep.END) == 1
+    # V5: 2 of 15 references, so the part is headed incomplete; the verdicts are the tables' own words
+    assert "**INCOMPLETE.** 36 of 36 method runs are scored over 2 of 15 references" in t
+    assert "Positive on **2 of 2** references" in t
+    assert "rule on arm C minus arm A is **reproduced**" in t and "(arm C minus arm B) is **not reproduced**" in t
+    assert "| R1 | 0.0100 | 0.0400 | 0.0700 | +0.0300 | +0.0600 | +0.0300 |" in t
+    # V6: one weak set and one not scored; the weak set is named in the lead
+    assert "The registered floor is NOT met on 1 of 1 sets scored: LIVER_holdout 0.849" in t
+    assert "| KIDNEY_cross | n/a | not scored |" in t
+    # run again: the part is replaced, not appended
+    rep.main()
+    assert draft.read_text() == t
+
+
+def test_report_without_tables_says_so(tmp_path, monkeypatch, capsys):
+    import make_step4_v5v6_report as rep
+    monkeypatch.setattr(sys, "argv", ["x", "--v5", str(tmp_path / "none5"), "--v6", str(tmp_path / "none6"), "--print"])
+    rep.main()
+    out = capsys.readouterr().out
+    assert out.count("No table yet") == 2

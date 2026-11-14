@@ -1,8 +1,62 @@
 # Step 4, V5 and V6: draft
 
 Draft for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) and V6 (mixture panel, findings
-5.5 and 5.6). Results are filled in below as the jobs finish. The notes in the next section were written and
-committed before any simulation, mixture or deconvolution of either battery existed.
+5.5 and 5.6).
+
+- **Results** come first. They are written from the record tables by one command (see "Commands") and say
+  plainly which runs are finished.
+- **Then** what the results do not show, the notes that settled open points before any result existed, the
+  settings, the smoke run, the jobs and the code changes.
+
+<!-- RESULTS:BEGIN -->
+
+*This part is written by `analysis/audit_remediation/make_step4_v5v6_report.py` from the record tables (last run 2026-11-14). Paths are relative to `docs/audit/remediation/`.*
+
+## V5 results: mRNA-content bias against a baseline that has no bias
+
+No table yet: the battery has not been summarised (`make_step4_v5_tables.py`).
+
+## V6 results: mixture panel on the refs5 references
+
+No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
+
+<!-- RESULTS:END -->
+
+## What the results do not show
+
+### V5
+
+- **It is a test of mRNA weighting only.** Each reference is deconvolved against the very cells its mixtures
+  were drawn from, so there is no mismatch between reference and mixture. Accuracy against independent
+  mixtures is V6's question, and neither battery uses tissue.
+- **The truth is cell fractions, and BayesPrism estimates the share of RNA.** In arm A a type's share of the
+  RNA equals its share of the cells; in arms B and C it does not. A rise in BayesPrism's error from arm A to
+  arm B therefore measures how far RNA shares lie from cell shares on that reference. It is what the method is
+  expected to do when its output is read as cell fractions, not an error against its own target.
+- **Arm A changes two things** (note N14): the differences in library size between cell types, and the
+  weighting of cells within a type. The battery cannot separate them.
+- **Arm A has no sampling noise** (note N2): its mixtures are scaled to 1,000,000 reads, while arms B and C
+  are subsampled to it.
+- **For a method that rescales by library size, arm A is not the easy case** (note N16). The corrector rule
+  compares arm C with arm A. A method can pass it because its error in arm A is high, without correcting
+  anything in arm C. The table of each method's error in the three arms shows which case applies.
+- **The dose-response of the earlier battery was not rerun.** It is not part of V5.
+
+### V6
+
+- **Only the benchmarked types are tested**: those with at least 20 cells in the mixture pool. The coverage
+  table lists the others.
+- **Holdout mixtures share a study with their reference.** Only four references have a cross-study set.
+- **Not changed, as registered:** mixture compositions are flat Dirichlet, so every type averages the same
+  share, unlike tissue; a pool as small as 20 cells is resampled, so mixtures share cells; BayesPrism sees every
+  reference cell and the other methods at most 2,000 per type.
+- **Also not changed** (the rest of finding 5.6): every method gets raw counts (the benchmark plan gave TPM
+  mixtures to MuSiC, SCDC and CIBERSORTx and CPM single-cell data to CIBERSORTx; the project has no rat
+  gene-length table); BayesPrism runs with cell states and its final update, as in Stage 8; the CIBERSORTx
+  container draws samples without a seed (its image is now identified by md5 in every record); KIDNEY_cross and
+  MUSCLE_cross pool every arm of their source study.
+- **The DWLS comparison with the earlier panel is not a clean test of the setting.** Between the two panels
+  the exclusion list also changed, and for HEART and HYPOTH the labels.
 
 ## Notes written before any result (2026-11-14)
 
@@ -100,6 +154,15 @@ size of that type's cells as the arm sums them. Arm A removes the library-size d
 the same for every cell type of a reference. The check runs on all 15 references, not only on the smoke
 reference.
 
+**N16. V5, a caveat on the corrector rule, written 2026-11-14 after the smoke run on TESTES and before any
+full run.** On the smoke reference, MuSiC and DWLS had their lowest error in arm B and a much higher error in
+arm A; BayesPrism and CIBERSORTx had their lowest error in arm A. This is expected of a method that converts
+RNA shares to cell shares with the reference's library sizes: arm A removes the differences it corrects for.
+The registered rule on arm C minus arm A is scored exactly as registered. Beside it, each method's mean error
+in the three arms and the arm in which it is lowest are tabled (`v5_method_arm_rmse.tsv`), so a reader can see
+whether a small difference comes from a low error in arm C or a high error in arm A. This table is descriptive
+and was added after the smoke outputs were seen; no rule, arm or threshold changed.
+
 ## Code changes (worktree branch `audit-remediation-v56`)
 
 | Change | File | Earlier behaviour still reachable |
@@ -124,7 +187,11 @@ Run from the repository root, on a compute node (`slurm/analysis/v56_tables.slur
 python analysis/audit_remediation/make_step4_v5_tables.py     # -> docs/audit/remediation/record/step4/v5_simbu/
 python analysis/audit_remediation/make_step4_v6_tables.py     # -> docs/audit/remediation/record/step4/v6_mixture_panel/
 MPLCONFIGDIR=tmp/mpl python analysis/audit_remediation/make_step4_v5v6_figures.py   # -> docs/audit/remediation/figures/step4_v5_*.png, step4_v6_*.png
+python analysis/audit_remediation/make_step4_v5v6_report.py   # rewrites the results part of this document from the tables
+python analysis/audit_remediation/compare_smoke_full.py       # -> record/step4/smoke/smoke_vs_full_TESTES.tsv
 ```
+
+`bash slurm/analysis/v56_progress.sh` lists, per battery and method group, the sets not yet scored.
 
 ## Settings of the two batteries
 
