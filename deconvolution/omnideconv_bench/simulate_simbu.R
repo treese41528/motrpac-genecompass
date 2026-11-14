@@ -24,10 +24,19 @@
 # Seeded end-to-end: same --seed => identical downsample AND composition, so a
 # bias/no-bias pair (same seed, --scaling expressed_genes vs NONE) is matched.
 #
+# --remove-bias-in-counts TRUE (STEP4_PREREG.md V5, arm A) passes SimBu's remove_bias_in_counts: each sampled
+# cell's counts are divided, before the cells are summed, by that cell's own total count
+# (--remove-bias-method read-number, SimBu's default) or by its number of expressed genes (gene-number). With
+# read-number and --scaling NONE every cell contributes a total of 1, so a type's share of the reads equals its
+# share of the cells: a mixture with no mRNA-content bias. The default, FALSE, sums raw counts as before, which
+# keeps each reference's native differences in library size (audit finding 5.2). The argument draws no random
+# numbers, so the downsample, the composition and the sampled cells are the same with and without it.
+#
 # Usage (via simulate_simbu.sh, which sets the project R env):
 #   simulate_simbu.sh --ref-dir <dir> --out <dir> [--scenario random]
 #     [--scaling expressed_genes] [--nsamples 50] [--ncells 1000]
 #     [--cells-per-type 500] [--seed 1] [--total-reads 1000000]
+#     [--remove-bias-in-counts FALSE] [--remove-bias-method read-number]
 #     [--weighted-cell-type T --weighted-amount 0.5] [--pure-cell-type T]
 # =============================================================================
 suppressMessages({library(SimBu); library(Matrix)})
@@ -41,7 +50,8 @@ ref_dir <- getarg("ref-dir"); out <- getarg("out")
 if (is.null(ref_dir) || is.null(out))
   stop("usage: --ref-dir <dir> --out <dir> [--scenario random] [--scaling expressed_genes] ",
        "[--nsamples 50] [--ncells 1000] [--cells-per-type 500] [--seed 1] ",
-       "[--total-reads 1000000] [--weighted-cell-type T --weighted-amount 0.5] [--pure-cell-type T]")
+       "[--total-reads 1000000] [--remove-bias-in-counts FALSE] [--remove-bias-method read-number] ",
+       "[--weighted-cell-type T --weighted-amount 0.5] [--pure-cell-type T]")
 scenario    <- getarg("scenario", "random")
 scaling     <- getarg("scaling", "expressed_genes")
 nsamples    <- as.integer(getarg("nsamples", "50"))
@@ -52,12 +62,22 @@ total_reads <- as.numeric(getarg("total-reads", "1000000"))
 w_type      <- getarg("weighted-cell-type"); w_amt <- as.numeric(getarg("weighted-amount", "0.5"))
 p_type      <- getarg("pure-cell-type")
 ba          <- getarg("bias-alpha"); bias_alpha <- if (is.null(ba)) NA_real_ else as.numeric(ba)
+rb_arg      <- toupper(getarg("remove-bias-in-counts", "FALSE"))
+if (!rb_arg %in% c("TRUE", "FALSE")) stop("--remove-bias-in-counts must be TRUE or FALSE, got: ", rb_arg)
+remove_bias <- rb_arg == "TRUE"
+remove_bias_method <- getarg("remove-bias-method", "read-number")
+if (!remove_bias_method %in% c("read-number", "gene-number"))
+  stop("--remove-bias-method must be read-number or gene-number, got: ", remove_bias_method)
+if (remove_bias && !is.na(bias_alpha))
+  stop("--remove-bias-in-counts TRUE is not defined for the dose-response mode (--bias-alpha)")
 
 dir.create(file.path(out, "mixtures"),  recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(out, "reference"), recursive = TRUE, showWarnings = FALSE)
 cat(sprintf("SimBu %s | ref=%s | scenario=%s scaling=%s nsamples=%d ncells=%d cap=%d seed=%d\n",
             as.character(packageVersion("SimBu")), ref_dir, scenario, scaling,
             nsamples, ncells, cap, seed))
+cat(sprintf("remove_bias_in_counts=%s remove_bias_in_counts_method=%s total_read_counts=%s\n",
+            remove_bias, remove_bias_method, format(total_reads, scientific = FALSE)))
 
 # ---- read reference (cells x genes) ----
 ref   <- readMM(file.path(ref_dir, "reference_counts.mtx"))
@@ -106,7 +126,10 @@ if (!is.na(bias_alpha)) {
                               ncells = ncells, nsamples = nsamples, total_read_counts = total_reads,
                               seed = seed, run_parallel = FALSE)
 } else {
+  # remove_bias_in_counts = FALSE with method "read-number" are SimBu's defaults, so a run without the new
+  # arguments makes the same call as before they existed
   sim_args <- list(data = ds, scenario = scenario, scaling_factor = scaling,
+                   remove_bias_in_counts = remove_bias, remove_bias_in_counts_method = remove_bias_method,
                    nsamples = nsamples, ncells = ncells, total_read_counts = total_reads,
                    seed = seed, run_parallel = FALSE)
   if (scenario == "weighted" && !is.null(w_type)) {
@@ -139,6 +162,10 @@ writeLines(c(paste0("scenario=", scenario), paste0("scaling=", scaling),
              paste0("nsamples=", nsamples), paste0("ncells=", ncells),
              paste0("cells_per_type=", cap), paste0("seed=", seed),
              paste0("bias_alpha=", bias_alpha),
+             paste0("remove_bias_in_counts=", remove_bias),
+             paste0("remove_bias_in_counts_method=", remove_bias_method),
+             paste0("total_read_counts=", format(total_reads, scientific = FALSE)),
+             paste0("simbu_version=", as.character(packageVersion("SimBu"))),
              paste0("weighted_cell_type=", ifelse(is.null(w_type), "", w_type)),
              paste0("weighted_amount=", w_amt),
              paste0("pure_cell_type=", ifelse(is.null(p_type), "", p_type)),
