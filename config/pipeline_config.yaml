@@ -396,7 +396,7 @@ deconvolution:
   # Committed reference artifacts (small, tracked; live with the code under deconvolution/reference/)
   rat_genecompass_genes: deconvolution/reference/rat_genecompass_genes.tsv  # GeneCompass token-gene keep-list
   sample_pheno: deconvolution/reference/motrpac_sample_pheno.tsv            # PHENO viallabel -> sex/group/weeks
-  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, rel-113
+  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, Ensembl 115 IDs
   reference_dir: deconvolution/reference   # root for the committed reference TSVs above
   # Outputs -- regenerable + gitignored, under data/deconvolution/ (NOT in the code tree)
   output_root: data/deconvolution
@@ -439,10 +439,11 @@ deconvolution:
   n_cores: 4
   r_module: r/4.4.1
   # Real MoTrPAC bulk gene-ID liftover (Fix 1): lift consortium TRNSCRPT_<TISSUE>_RAW_COUNTS
-  # (older Ensembl rat build) -> current mRatBN7.2 ENSRNOG via three bridges: direct match,
+  # (older Ensembl rat build) -> current ENSRNOG (the BioMart files above: Ensembl 115 / GRCr8; this
+  # comment said mRatBN7.2 until 2026-11-14) via three bridges: direct match,
   # a FEATURE_TO_GENE symbol bridge, and an Entrez/RGD ID-history bridge (rgd.genes_file
-  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed across
-  # the Rnor_6.0->mRatBN7.2 rebuild). Then write deconv-ready samples x genes bulk per
+  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed since
+  # the Rnor_6.0 annotation). Then write deconv-ready samples x genes bulk per
   # tissue. Built by deconvolution/R/prepare_motrpac_bulk.{R,sh}; biomart rat_gene_info
   # (above) supplies the current-ID universe.
   motrpac_bulk_dir: data/motrpac/rat_training_6mo/data        # source TRNSCRPT_*_RAW_COUNTS.rda
