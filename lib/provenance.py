@@ -38,6 +38,15 @@ def _git(*args):
         return ""
 
 
+def git_state():
+    """The repository's commit and its modified tracked files, for a stage manifest:
+    {'git_commit': <HEAD, '' when git cannot be asked>, 'git_modified_tracked_files': [paths]}.
+    The same two fields write_provenance records. Never raises."""
+    modified = [line[3:] for line in
+                _git("status", "--porcelain", "--untracked-files=no").splitlines() if line.strip()]
+    return {"git_commit": _git("rev-parse", "HEAD").strip(), "git_modified_tracked_files": modified}
+
+
 MD5_MAX_BYTES = 2 * 1024 ** 3   # md5 only files below 2 GB; bigger ones get size + mtime only
 
 
