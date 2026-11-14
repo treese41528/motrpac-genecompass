@@ -27,8 +27,8 @@ reason for every choice and the evidence behind it.
 | 1 | Integrity checks: could anything be silently wrong? | 3.1, 6.7, 6.9, 7.2 (imbalance), 8.4 | **Done. All clean or explained; guards added** | [`STEP1_INTEGRITY.md`](STEP1_INTEGRITY.md) |
 | 2 | Statements that are wrong whatever a rerun shows | 1.2, 1.4, 1.8, 1.9, 2.1, 2.2, 2.3, 3.2, 4.2, 4.4, 5.1, 6.5, 6.10, 7.3, 7.5, 7.7, 8.1, 8.2, 8.7, 9.2 | **Done** | [`STEP2_STATEMENTS.md`](STEP2_STATEMENTS.md) |
 | 3 | One registered rerun of Stages 8-14 with every result-changing fix | 4.1, 4.3, 4.8, 4.9, 5.3, 5.4, 5.7, 5.8, 6.1-6.6, 6.8, 6.9, 7.1, 7.2, 7.5-7.10, 8.1, 8.2, 8.4, 9.1, 9.3, 9.5, 9.7 | **Registered; in progress** | [`STEP3_PREREG.md`](STEP3_PREREG.md) |
-| 4 | Missing validations | 3.6, 5.1, 5.2, 5.5, 5.6, 7.3, 7.4, 9.2 | Not started | - |
-| 5 | Corpus and model findings: measure and disclose | 1.1, 1.3, 1.5, 1.6, 1.7, 2.5, 2.6, 3.4, 3.5 | Not started | - |
+| 4 | Missing validations | 3.2, 3.6, 5.1, 5.2, 5.5, 5.6, 7.3, 7.4, 9.2 | Registered; waits for refs5 | [`STEP4_PREREG.md`](STEP4_PREREG.md) |
+| 5 | Corpus and model findings: measure and disclose | 1.1, 1.2, 1.3, 1.5, 1.6, 1.7, 2.5, 2.6, 3.4, 3.5 | Registered; measurements running | [`STEP5_PREREG.md`](STEP5_PREREG.md) |
 | 6 | Records, tests, hygiene | 1.10, 2.4, 2.7, 3.7, 4.10, 5.8, 6.7, 8.6, 9.4, 9.6, cross-stage | Not started | - |
 | - | Expert review plan | 4.2, 4.6 | Last | - |
 
