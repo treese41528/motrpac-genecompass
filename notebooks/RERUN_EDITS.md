@@ -1,3 +1,19 @@
+> **How to use this file (banner added 2026-11-14, audit "stale documents").** This is a log, newest entry
+> first. Only the next three points are current instructions; everything else is the record of how the
+> notebooks got to their present state.
+> 1. **After a rerun of Stages 8–14, re-execute and do not edit:** `python notebooks/run_notebooks.py 8 9 10 11 12`
+>    from the project venv, inside a batch job. The notebooks read the active config through
+>    `notebooks/nb_config.py` (`PIPELINE_PROFILE` is honoured), and every number they show is computed.
+> 2. **What a rerun can still make wrong is method prose**, not numbers. When a rerun changes a method (the
+>    hotspot rule, the DE's treatment of single-sex tissues, the gate's commands), the markdown that describes
+>    that method has to be rewritten by hand. `docs/audit/remediation/STEP6_HYGIENE.md` lists the cells of
+>    notebooks 10 and 11 that describe the methods of the run before refs5.
+> 3. **Superseded entries below.** The "Runner (2026-11-01)" entry says notebooks 8–12 do not read the config
+>    and lists hand-copied constants to re-source: both were overtaken by the "Config-driven" and "Markdown
+>    prose" entries above it. The part from "Notebook rerun edit map — pipeline8–12 after the 2026-07-16
+>    reference rebuild" to the end of the file is the July edit map for the April model; none of it applies
+>    to the present notebooks.
+
 > **Markdown prose (2026-11-04).** No markdown cell of notebooks 1–12 quotes a result any more. Every figure the prose
 > used to state is printed by a code cell from the outputs or the config. Notebooks 8–12 end with a "Results for this
 > config" cell that renders the summary sentences from the gate, DE and transfer tables. What the markdown still
