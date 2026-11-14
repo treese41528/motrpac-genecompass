@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-for sub in ("finetune/genecompass", "pipeline/03_ortholog_mapping", "analysis/audit_remediation"):
+for sub in ("finetune/genecompass", "pipeline/03_ortholog_mapping"):
     sys.path.insert(0, str(ROOT / sub))
 
 import build_lung_pooled                         # noqa: E402
