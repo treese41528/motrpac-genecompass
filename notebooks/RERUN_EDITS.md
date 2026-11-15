@@ -31,6 +31,9 @@
 >   technical-covariate check and both sex-consistency counts; nb11's prints the classes and the sensitivities;
 >   nb12's prints the corrected rule and the dose trend. nb9's summary no longer prints "(registered threshold
 >   0.80)".
+> - **A typed-in constant found by the rerun.** nb9 printed "target_sum=6400" and labelled an axis with it,
+>   whatever the run. Both now read the tokenize summaries and the config (6700 on refs5); nb9 was executed
+>   again (job 12392439).
 > - **Executing from a worktree.** A notebook run inside a git worktree whose `data/` is a symlink prints the
 >   worktree's path, and nb8's path listing stops. Run with the main tree as the project root.
 >
