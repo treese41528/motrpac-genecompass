@@ -1,0 +1,196 @@
+tissue	cell_type	n_sig_refs5	low_fraction_refs5	n_sig_default	low_fraction_default	gate_class	status	n_male	n_female	mean_fraction	median_libsize	n_dose_tests	n_sexcons_concordance_8w	n_sexcons_repfdr_8w	n_sexcons_union_8w
+BAT	ASPC	1261.0	False	1331.0	False	none	ok	25.0	25.0	0.177463009060545	2270662.434	13727.0	0.0	15.0	15.0
+BAT	Brown adipocytes	985.0	False	946.0	False	none	ok	25.0	25.0	0.192027910993216	124925.548	13570.0	0.0	13.0	13.0
+BAT	Endothelial cells	1627.0	False	1701.0	False	none	ok	25.0	25.0	0.274631658087097	4329177.362	13731.0	0.0	19.0	19.0
+BAT	Immune cells	1395.0	False	1438.0	False	none	ok	25.0	25.0	0.216579923635624	4239508.266	13735.0	0.0	14.0	14.0
+BAT	Neuronal-like cells	499.0	False	548.0	False	none	ok	25.0	25.0	0.0143202979594803	185051.188	13603.0	0.0	4.0	4.0
+BAT	SMCs & Pericytes	1259.0	False	1339.0	False	none	ok	25.0	25.0	0.124977200264038	1871909.442	13719.0	0.0	34.0	34.0
+BLOOD	B cells					none	SKIP: degenerate (median libsize 46.8 < 1000)			0.0016326128848882	46.824				
+BLOOD	CD4+ T cells					none	SKIP: degenerate (median libsize 9.3 < 1000)			0.0023902973080756	9.288				
+BLOOD	CD8+ T cells					none	SKIP: degenerate (median libsize 3.0 < 1000)			0.000519351672646	2.956				
+BLOOD	Classical monocytes	2496.0	False	2500.0	False	hotspot	ok	25.0	25.0	0.034940380371097	308413.962	13837.0	0.0	130.0	130.0
+BLOOD	Cycling cells	2052.0	True	2025.0	True	none	ok	25.0	25.0	0.0029270328497137	21419.494	13541.0	0.0	123.0	123.0
+BLOOD	Erythroid cells	2434.0	False	2438.0	False	hotspot	ok	25.0	25.0	0.708390601419102	6037809.366	13879.0	0.0	129.0	129.0
+BLOOD	Megakaryocytes and platelets	2554.0	False	2572.0	False	hotspot	ok	25.0	25.0	0.145425906477492	1263074.154	13844.0	0.0	135.0	135.0
+BLOOD	NK cells	2713.0	True	2847.0	True	none	ok	25.0	25.0	0.0012312110679849	3964.53	13220.0	0.0	192.0	192.0
+BLOOD	Neutrophils	1810.0	False	2239.0	False	hotspot	ok	25.0	25.0	0.0696522055495882	556768.594	13825.0	0.0	70.0	70.0
+BLOOD	Non-classical monocytes	2364.0	False	2384.0	False	none	ok	25.0	25.0	0.0203961389878432	146714.188	13793.0	0.0	130.0	130.0
+BLOOD	Plasmacytoid dendritic cells	2322.0	True	2353.0	False	none	ok	25.0	25.0	0.009029019700631	76285.658	13532.0	0.0	118.0	118.0
+BLOOD	Regulatory T cells					none	SKIP: degenerate (median libsize 3.7 < 1000)			0.0020468154132184	3.664				
+BLOOD	T cells					none	SKIP: degenerate (median libsize 3.8 < 1000)			0.0014184262977194	3.81				
+CORTEX	Astrocytes	0.0	False	1.0	False	none	ok	25.0	25.0	0.115128761295796	1830366.428	15179.0	0.0	0.0	0.0
+CORTEX	Border-associated macrophages	1.0	False	2.0	False	none	ok	25.0	25.0	0.0103572647238323	164981.114	14854.0	0.0	0.0	0.0
+CORTEX	Excitatory neurons	0.0	False	1.0	False	none	ok	25.0	25.0	0.589491937949125	9499071.85	15186.0	0.0	0.0	0.0
+CORTEX	Inhibitory neurons	0.0	False	0.0	False	none	ok	25.0	25.0	0.11577030934111	1824996.918	15184.0	0.0	0.0	0.0
+CORTEX	Medium spiny neurons	1.0	False	1.0	False	none	ok	25.0	25.0	0.0395862296622223	582487.272	15154.0	0.0	0.0	0.0
+CORTEX	Microglia	0.0	True	1.0	True	none	ok	25.0	25.0	0.0080136378191352	128268.67	14951.0	0.0	0.0	0.0
+CORTEX	Neuroblasts					none	SKIP: degenerate (median libsize 13.1 < 1000)			0.0009536016181208	13.118				
+CORTEX	Neutrophils	0.0	True	1.0	True	none	ok	25.0	25.0	0.000677904949001	10634.758	12294.0	0.0	0.0	0.0
+CORTEX	Oligodendrocyte precursor cells					none	SKIP: degenerate (median libsize 14.5 < 1000)			0.0001451522825425	14.452				
+CORTEX	Oligodendrocytes	1.0	False	2.0	False	none	ok	25.0	25.0	0.101529021681824	1581052.3	15179.0	0.0	0.0	0.0
+CORTEX	T cells	0.0	True	0.0	True	none	ok	25.0	25.0	0.0007013349133373	10806.812	12498.0	0.0	0.0	0.0
+CORTEX	Vascular leptomeningeal cells	0.0	False	0.0	False	none	ok	25.0	25.0	0.0176448437639537	278919.616	15006.0	0.0	0.0	0.0
+HEART	B cells					none	SKIP: degenerate (median libsize 173.7 < 1000)			0.0003580576897423	173.65				
+HEART	Cardiac fibroblasts	377.0	False	366.0	False	none	ok	25.0	25.0	0.0630928310068877	883547.112	15106.0	14.0	114.0	114.0
+HEART	Cardiac neurons	151.0	True	159.0	True	none	ok	25.0	25.0	0.001945200876571	27003.272	13455.0	5.0	58.0	58.0
+HEART	Cardiomyocytes	478.0	False	471.0	False	none	ok	25.0	25.0	0.722189441410789	10492158.686	15165.0	22.0	156.0	158.0
+HEART	Dendritic cells	193.0	True	190.0	True	none	ok	25.0	25.0	0.0066679150325718	96178.344	14090.0	0.0	65.0	65.0
+HEART	Endothelial cells	400.0	False	394.0	False	none	ok	25.0	25.0	0.103149330640168	1492046.84	15109.0	15.0	134.0	134.0
+HEART	Lymphatic endothelial cells	163.0	True	192.0	True	none	ok	25.0	25.0	0.0017795941182293	25154.988	13668.0	0.0	53.0	53.0
+HEART	Macrophages	202.0	True	250.0	True	none	ok	25.0	25.0	0.0030282813154	42546.576	14065.0	4.0	62.0	62.0
+HEART	Mast cells					none	SKIP: degenerate (median libsize 36.7 < 1000)			0.00013334272856	36.654				
+HEART	Mesothelial cells	176.0	True	172.0	True	none	ok	25.0	25.0	0.0039531265881546	56766.514	13790.0	6.0	58.0	58.0
+HEART	Monocytes	626.0	False	570.0	False	none	ok	25.0	25.0	0.0627787471469441	912977.316	14927.0	24.0	181.0	184.0
+HEART	NK cells	196.0	True	175.0	True	none	ok	25.0	25.0	0.0021214881020077	31398.52	13583.0	1.0	57.0	57.0
+HEART	Pericytes					none	SKIP: degenerate (median libsize 128.3 < 1000)			0.0004441575751082	128.314				
+HEART	T cells	481.0	False	462.0	False	none	ok	25.0	25.0	0.0154511882360107	226019.534	14743.0	6.0	78.0	79.0
+HEART	Vascular smooth muscle cells	316.0	False	318.0	False	hotspot	ok	25.0	25.0	0.0129072975328553	176184.992	14451.0	16.0	110.0	110.0
+HIPPOC	Astrocytes	0.0	False	0.0	False	none	ok	25.0	25.0	0.0847791836886146	1347083.044	15003.0	0.0	0.0	0.0
+HIPPOC	Dentate gyrus granule cells	0.0	False	0.0	False	none	ok	25.0	25.0	0.0282712452796299	503287.404	14984.0	0.0	0.0	0.0
+HIPPOC	Endothelial cells	2.0	False	0.0	False	none	ok	25.0	25.0	0.50087614196206	7812962.214	15007.0	0.0	0.0	0.0
+HIPPOC	Excitatory neurons					none	SKIP: degenerate (median libsize 287.9 < 1000)			0.0030293430341686	287.864				
+HIPPOC	Inhibitory neurons	0.0	False	0.0	False	none	ok	25.0	25.0	0.355644507817479	5588015.384	14998.0	0.0	0.0	0.0
+HIPPOC	Microglia	0.0	True	0.0	True	none	ok	25.0	25.0	0.0006945036156383	8393.324	14599.0	0.0	0.0	0.0
+HIPPOC	Mural cells	0.0	True	0.0	True	none	ok	25.0	25.0	0.0021536063989546	22945.66	14134.0	0.0	0.0	0.0
+HIPPOC	Oligodendrocyte precursor cells					none	SKIP: degenerate (median libsize 12.4 < 1000)			0.0003875425270231	12.366				
+HIPPOC	Oligodendrocytes	0.0	False	0.0	False	none	ok	25.0	25.0	0.0189837112639343	252492.28	14980.0	0.0	0.0	0.0
+HIPPOC	Thalamic neurons					none	SKIP: degenerate (median libsize 32.1 < 1000)			0.003993604199067	32.11				
+HIPPOC	Vascular leptomeningeal cells					none	SKIP: degenerate (median libsize 65.8 < 1000)			0.0011866102134306	65.84				
+HYPOTH	Astrocytes	0.0	False	0.0	False	none	ok	25.0	25.0	0.14393172534994	2308729.112	13903.0	0.0	0.0	0.0
+HYPOTH	Endothelial cells	0.0	False	0.0	False	none	ok	25.0	25.0	0.0693339045421425	1099835.81	13840.0	0.0	0.0	0.0
+HYPOTH	Ependymal cells	0.0	True	1.0	True	none	ok	25.0	25.0	0.0041155416826495	59294.484	13590.0	0.0	0.0	0.0
+HYPOTH	Glutamatergic neurons	0.0	False	0.0	False	none	ok	25.0	25.0	0.58247157031035	9529908.876	13919.0	0.0	0.0	0.0
+HYPOTH	Microglia	0.0	False	0.0	False	none	ok	25.0	25.0	0.0267834969982571	431559.432	13836.0	0.0	0.0	0.0
+HYPOTH	Neurons	0.0	False			none	ok	25.0	25.0	0.0225704195749318	294489.026	13900.0	0.0	0.0	0.0
+HYPOTH	Oligodendrocyte precursor cells			0.0	True	none	SKIP: degenerate (median libsize 47.4 < 1000)			0.0029448574481307	47.428				
+HYPOTH	Oligodendrocytes	0.0	False	0.0	False	none	ok	25.0	25.0	0.0894555325011569	1442063.692	13879.0	0.0	0.0	0.0
+HYPOTH	Pars tuberalis cells					none	SKIP: degenerate (median libsize 732.5 < 1000)			0.0006230097137189	732.514				
+HYPOTH	Radial glial cells			0.0	False										
+HYPOTH	Tanycytes					none	SKIP: degenerate (median libsize 40.6 < 1000)			0.0015075315996241	40.644				
+HYPOTH	Vascular leptomeningeal cells	0.0	False			none	ok	25.0	25.0	0.0562624102790994	920539.964	13859.0	0.0	0.0	0.0
+KIDNEY	Connecting tubule cells	9.0	False	12.0	False	none	ok	25.0	25.0	0.0476493582426752	868727.108	14466.0	0.0	1.0	1.0
+KIDNEY	Cycling cells					none	SKIP: degenerate (median libsize 19.8 < 1000)			0.0001509451394884	19.798				
+KIDNEY	Distal convoluted tubule cells	9.0	False	9.0	False	none	ok	25.0	25.0	0.0265885722387421	453095.972	14440.0	0.0	2.0	2.0
+KIDNEY	Endothelial cells	12.0	False	11.0	False	none	ok	25.0	25.0	0.0244742107998696	438042.8	14467.0	0.0	1.0	1.0
+KIDNEY	Fibroblasts	11.0	False	12.0	False	none	ok	25.0	25.0	0.0593449520735211	1061267.42	14513.0	0.0	1.0	1.0
+KIDNEY	Immune cells	1.0	True	7.0	True	none	ok	25.0	25.0	0.0013042413068193	13769.508	14001.0	0.0	0.0	0.0
+KIDNEY	Injured proximal tubule cells					none	SKIP: degenerate (median libsize 20.7 < 1000)			0.0017563737901963	20.736				
+KIDNEY	Monocytes	7.0	False	9.0	False	none	ok	25.0	25.0	0.157710825259076	2793547.356	14498.0	0.0	1.0	1.0
+KIDNEY	Podocytes	3.0	True	4.0	True	none	ok	25.0	25.0	0.002266666883738	43514.672	13924.0	0.0	1.0	1.0
+KIDNEY	Principal cells					none	SKIP: degenerate (median libsize 40.8 < 1000)			0.0018543357361605	40.778				
+KIDNEY	Proximal tubule cells	5.0	False	11.0	False	none	ok	25.0	25.0	0.585727445466045	10522656.332	14533.0	0.0	0.0	0.0
+KIDNEY	Thick ascending limb cells	6.0	False	11.0	False	none	ok	25.0	25.0	0.066778431553867	1222926.568	14513.0	0.0	2.0	2.0
+KIDNEY	Thin limb cells					none	SKIP: degenerate (median libsize 13.7 < 1000)			0.0009529563076475	13.682				
+KIDNEY	Type A intercalated cells	7.0	False	10.0	False	none	ok	25.0	25.0	0.0145646764623217	269446.45	14430.0	0.0	1.0	1.0
+KIDNEY	Type B intercalated cells	7.0	True	8.0	True	none	ok	25.0	25.0	0.0088760087398318	156299.234	14283.0	0.0	1.0	1.0
+LIVER	Cholangiocytes	74.0	True	85.0	True	none	ok	25.0	25.0	0.0025128217991869	21829.516	11928.0	0.0	7.0	7.0
+LIVER	Hepatic stellate cells	138.0	False	141.0	False	none	ok	25.0	25.0	0.0299234180903846	485737.648	12641.0	0.0	14.0	14.0
+LIVER	Hepatocytes	183.0	False	204.0	False	none	ok	25.0	25.0	0.898862392128121	14643183.508	12663.0	0.0	16.0	16.0
+LIVER	Kupffer cells	118.0	False	151.0	False	none	ok	25.0	25.0	0.0250897569720759	423781.666	12617.0	0.0	14.0	14.0
+LIVER	Liver sinusoidal endothelial cells	102.0	False	112.0	False	none	ok	25.0	25.0	0.0283409998831642	459272.842	12634.0	0.0	8.0	8.0
+LIVER	Mesothelial cells	112.0	True	132.0	True	none	ok	25.0	25.0	0.0046168794294001	76540.868	12335.0	0.0	12.0	12.0
+LIVER	NK cells	55.0	True	59.0	True	none	ok	25.0	25.0	0.0082262906804706	5068.896	11692.0	0.0	5.0	5.0
+LIVER	Vascular endothelial cells	98.0	True	108.0	True	none	ok	25.0	25.0	0.0024274410171965	35772.25	12104.0	0.0	10.0	10.0
+LUNG	Alveolar macrophages					none	SKIP: degenerate (median libsize 20.3 < 1000)			0.0025617447264332	20.306				
+LUNG	Alveolar type II cells	1378.0	False	1360.0	False	none	ok	25.0	25.0	0.114428553162115	2243070.642	15061.0	0.0	39.0	39.0
+LUNG	B cells					none	SKIP: degenerate (median libsize 214.0 < 1000)			0.0023673644179191	213.994				
+LUNG	Basal cells	855.0	True	463.0	True	none	ok	25.0	25.0	0.0046640240966233	93832.288	14763.0	0.0	25.0	25.0
+LUNG	CD4+ T cells					none	SKIP: degenerate (median libsize 19.5 < 1000)			0.00020386630519	19.542				
+LUNG	Ciliated cells	1963.0	False	2157.0	False	none	ok	25.0	25.0	0.0787595583864543	1598860.36	15056.0	0.0	39.0	39.0
+LUNG	Club cells					none	SKIP: degenerate (median libsize 2.4 < 1000)			0.0007197454080884	2.444				
+LUNG	Dendritic cells					none	SKIP: degenerate (median libsize 46.1 < 1000)			0.0012392609979341	46.136				
+LUNG	Endothelial cells	1453.0	False	1460.0	False	hotspot	ok	25.0	25.0	0.53145789679823	10522530.478	15064.0	0.0	52.0	52.0
+LUNG	Fibroblasts	1418.0	False	1432.0	False	none	ok	25.0	25.0	0.153449694583707	3039904.822	15059.0	0.0	44.0	44.0
+LUNG	Goblet cells					none	SKIP: degenerate (median libsize 1.3 < 1000)			0.0007290626344166	1.276				
+LUNG	Interstitial macrophages					none	SKIP: degenerate (median libsize 15.5 < 1000)			0.0005105501609218	15.454				
+LUNG	Mesothelial cells	1346.0	False	1320.0	False	none	ok	25.0	25.0	0.0352630546961626	698870.322	15042.0	0.0	41.0	41.0
+LUNG	Monocytes					none	SKIP: degenerate (median libsize 10.7 < 1000)			7.91192360136298e-05	10.65				
+LUNG	NK cells					none	SKIP: degenerate (median libsize 13.1 < 1000)			0.0002036578156493	13.05				
+LUNG	Neutrophils					none	SKIP: degenerate (median libsize 4.3 < 1000)			0.0001534112207555	4.338				
+LUNG	Non-classical monocytes					none	SKIP: degenerate (median libsize 6.8 < 1000)			8.79826193157591e-05	6.796				
+LUNG	Plasmacytoid dendritic cells					none	SKIP: degenerate (median libsize 21.1 < 1000)			0.0002275092329117	21.05				
+LUNG	T cells					none	SKIP: degenerate (median libsize 11.3 < 1000)			0.0004169863278464	11.308				
+LUNG	Tuft cells					none	SKIP: degenerate (median libsize 87.4 < 1000)			4.88886653723718e-05	87.406				
+LUNG	Vascular smooth muscle cells	1389.0	False	1391.0	False	hotspot	ok	25.0	25.0	0.0724280685079396	1450314.834	15045.0	0.0	34.0	34.0
+OVARY	B cells	0.0	True	0.0	True	none	ok	0.0	24.0	0.0024243014070679	39258.438	13469.0			
+OVARY	CD4+ T cells					none	SKIP: degenerate (median libsize 21.5 < 1000)			0.0001364585297936	21.484				
+OVARY	Dendritic cells	1.0	True	0.0	True	none	ok	0.0	24.0	0.0036019341885746	73335.442	13755.0			
+OVARY	Endothelial cells	1.0	False	0.0	False	none	ok	0.0	24.0	0.151017965945813	2868025.898	14056.0			
+OVARY	Erythroid cells					none	SKIP: degenerate (median libsize 6.2 < 1000)			0.0016029768804094	6.164				
+OVARY	Granulosa cells	0.0	False	0.0	False	none	ok	0.0	24.0	0.133287263881869	2371763.846	14054.0			
+OVARY	Luteal cells	1.0	False	0.0	False	none	ok	0.0	24.0	0.167000442502442	3366099.4	14057.0			
+OVARY	Lymphatic endothelial cells	0.0	True	0.0	True	none	ok	0.0	24.0	0.0083816095120192	154482.852	13866.0			
+OVARY	Macrophages	1.0	False	0.0	False	none	ok	0.0	24.0	0.0206547586350631	412843.888	14020.0			
+OVARY	Monocytes	0.0	True	0.0	True	none	ok	0.0	24.0	0.0032693867010736	52760.978	13809.0			
+OVARY	NK cells	0.0	True	0.0	True	none	ok	0.0	24.0	0.0014888896641786	28237.798	13419.0			
+OVARY	Neutrophils					none	SKIP: degenerate (median libsize 7.6 < 1000)			8.86529124357613e-05	7.608				
+OVARY	Non-classical monocytes			0.0	True	none	SKIP: degenerate (median libsize 142.7 < 1000)			0.0012846418922912	142.688				
+OVARY	Pericytes	1.0	False	0.0	False	none	ok	0.0	24.0	0.0581578079484553	1003636.876	14043.0			
+OVARY	Plasmacytoid dendritic cells	0.0	False	0.0	False	none	ok	0.0	24.0	0.0197182331066841	390068.518	13964.0			
+OVARY	Smooth muscle cells	1.0	False	0.0	False	none	ok	0.0	24.0	0.153482863828481	2781451.132	14053.0			
+OVARY	Stromal cells	1.0	False	0.0	False	none	ok	0.0	24.0	0.183285581407845	3399606.182	14056.0			
+OVARY	Theca cells	1.0	False	0.0	False	none	ok	0.0	24.0	0.0911162310555025	1673554.418	14052.0			
+SKMGN	Endothelial cells	262.0	False	253.0	False	none	ok	25.0	25.0	0.0118005621353196	144661.48	12551.0	1.0	63.0	63.0
+SKMGN	Fibro-adipogenic progenitors	373.0	False	346.0	False	none	ok	25.0	25.0	0.0141551672600169	157451.476	12673.0	0.0	85.0	85.0
+SKMGN	Macrophages	195.0	True	181.0	True	none	ok	25.0	25.0	0.0034848782258958	40052.624	12092.0	1.0	47.0	47.0
+SKMGN	Pericytes					none	SKIP: degenerate (median libsize 13.5 < 1000)			5.51214053743546e-05	13.538				
+SKMGN	Satellite cells	127.0	True	154.0	True	none	ok	25.0	25.0	0.0010627095818296	11682.472	11620.0	0.0	29.0	29.0
+SKMGN	Schwann cells	103.0	True	80.0	True	hotspot	ok	25.0	25.0	0.0007919733577018	7372.83	9596.0	0.0	26.0	26.0
+SKMGN	Skeletal muscle cells	375.0	False	361.0	False	none	ok	25.0	25.0	0.956336462875875	11485487.976	12820.0	1.0	97.0	97.0
+SKMGN	Tenocytes	246.0	False	232.0	False	none	ok	25.0	25.0	0.0110824435978119	116913.222	12357.0	0.0	64.0	64.0
+SKMGN	Vascular smooth muscle cells	128.0	True	122.0	True	borderline	ok	25.0	25.0	0.0012306815601753	14043.918	11334.0	0.0	24.0	24.0
+SKMVL	Endothelial cells	332.0	False	388.0	False	none	ok	25.0	25.0	0.0198039870592366	226061.9	12588.0	5.0	65.0	65.0
+SKMVL	Fibro-adipogenic progenitors	103.0	False	135.0	False	none	ok	25.0	25.0	0.0111430541327088	84756.326	12656.0	1.0	10.0	10.0
+SKMVL	Macrophages	229.0	True	263.0	True	none	ok	25.0	25.0	0.0042377871476287	26705.944	12121.0	4.0	45.0	45.0
+SKMVL	Pericytes					none	SKIP: degenerate (median libsize 17.1 < 1000)			0.0001111546136707	17.07				
+SKMVL	Satellite cells	198.0	True	242.0	True	hotspot	ok	25.0	25.0	0.0021376964009687	18677.104	11840.0	2.0	35.0	35.0
+SKMVL	Schwann cells	125.0	True	141.0	True	none	ok	25.0	25.0	0.0008158056986151	7435.478	9599.0	0.0	20.0	20.0
+SKMVL	Skeletal muscle cells	388.0	False	426.0	False	none	ok	25.0	25.0	0.952406191133676	10557818.654	12827.0	7.0	94.0	94.0
+SKMVL	Tenocytes	237.0	True	275.0	True	hotspot	ok	25.0	25.0	0.0071412800243067	48838.31	12275.0	3.0	51.0	51.0
+SKMVL	Vascular smooth muscle cells	187.0	True	216.0	True	hotspot	ok	25.0	25.0	0.0022030437891886	19376.318	11594.0	1.0	29.0	29.0
+SMLINT	B cells	30.0	False	33.0	False	none	ok	25.0	25.0	0.0937690058578426	1575272.926	12774.0	0.0	3.0	3.0
+SMLINT	BEST4+ enterocytes	8.0	True	6.0	True	none	ok	25.0	25.0	0.000794960255724	13450.746	12257.0	0.0	0.0	0.0
+SMLINT	CD8+ T cells	25.0	False	31.0	False	none	ok	25.0	25.0	0.02916812512742	467172.034	12765.0	0.0	2.0	2.0
+SMLINT	Enterocytes	25.0	False	27.0	False	none	ok	25.0	25.0	0.540764356551333	10767019.28	12782.0	0.0	1.0	1.0
+SMLINT	Enteroendocrine cells	20.0	False	24.0	False	none	ok	25.0	25.0	0.0103489901423559	151790.358	12713.0	0.0	1.0	1.0
+SMLINT	Epithelial cells	30.0	False	27.0	False	none	ok	25.0	25.0	0.052488927670811	862034.466	12771.0	0.0	1.0	1.0
+SMLINT	Erythroid cells	17.0	True	14.0	True	none	ok	25.0	25.0	0.0021070561543727	31241.776	12438.0	0.0	0.0	0.0
+SMLINT	Goblet cells	22.0	False	24.0	False	none	ok	25.0	25.0	0.013163870572939	250231.754	12742.0	0.0	3.0	3.0
+SMLINT	Macrophages	30.0	False	28.0	False	none	ok	25.0	25.0	0.0467924563204109	710721.76	12774.0	0.0	3.0	3.0
+SMLINT	NK cells	26.0	False	20.0	False	none	ok	25.0	25.0	0.0326050627031148	441825.612	12766.0	0.0	0.0	0.0
+SMLINT	Stem cells	32.0	False	27.0	False	none	ok	25.0	25.0	0.0579066261684582	722866.862	12771.0	0.0	3.0	3.0
+SMLINT	Transit-amplifying cells	22.0	False	21.0	False	none	ok	25.0	25.0	0.101494415677152	1699355.208	12778.0	0.0	1.0	1.0
+SMLINT	Tuft cells	22.0	False	23.0	False	none	ok	25.0	25.0	0.0185961467980662	293318.368	12749.0	0.0	2.0	2.0
+SPLEEN	B cells	821.0	False	745.0	False	none	ok	25.0	25.0	0.151743149850688	2557432.144	12989.0	0.0	21.0	21.0
+SPLEEN	CD4+ T cells	783.0	False	487.0	False	none	ok	25.0	25.0	0.0197848744240987	317359.11	12963.0	0.0	7.0	7.0
+SPLEEN	CD8+ T cells					none	SKIP: degenerate (median libsize 113.8 < 1000)			0.0003908762568923	113.796				
+SPLEEN	Cycling cells	472.0	True	480.0	True	none	ok	25.0	25.0	0.0071683172320186	119089.264	12859.0	0.0	13.0	13.0
+SPLEEN	Dendritic cells	527.0	False	494.0	False	none	ok	25.0	25.0	0.011124034090549	187312.608	12884.0	0.0	9.0	9.0
+SPLEEN	Endothelial cells	522.0	False	477.0	False	none	ok	25.0	25.0	0.147064254053832	2536905.688	12971.0	0.0	10.0	10.0
+SPLEEN	Erythroid progenitors	579.0	False	527.0	False	none	ok	25.0	25.0	0.0792763179340047	1385329.258	12957.0	0.0	11.0	11.0
+SPLEEN	Monocytes					none	SKIP: degenerate (median libsize 8.6 < 1000)			0.0013535681542567	8.636				
+SPLEEN	NK cells	598.0	False	557.0	False	none	ok	25.0	25.0	0.171370148486553	2950729.97	12985.0	0.0	15.0	15.0
+SPLEEN	Neutrophils	570.0	False	515.0	False	none	ok	25.0	25.0	0.0295611404664912	505453.798	12928.0	0.0	10.0	10.0
+SPLEEN	Non-classical monocytes	766.0	False	652.0	False	none	ok	25.0	25.0	0.165256398767057	2825860.39	12988.0	0.0	24.0	24.0
+SPLEEN	Plasma cells	504.0	False	461.0	False	none	ok	25.0	25.0	0.0127304806732155	216891.89	12890.0	0.0	13.0	13.0
+SPLEEN	Plasmacytoid dendritic cells	533.0	False	500.0	False	none	ok	25.0	25.0	0.0307187832283329	527090.67	12921.0	0.0	14.0	14.0
+SPLEEN	Red-pulp macrophages	577.0	False	544.0	False	none	ok	25.0	25.0	0.17245765638201	2917452.318	12976.0	0.0	16.0	16.0
+TESTES	Condensed spermatids	38.0	False	0.0	False	none	ok	25.0	0.0	0.116125915464252	3007667.968	13626.0			
+TESTES	Elongating spermatids	41.0	False	0.0	False	none	ok	25.0	0.0	0.154536979691954	3845254.74	13626.0			
+TESTES	Round spermatids	40.0	False	0.0	False	none	ok	25.0	0.0	0.060554535001547	1540243.948	13624.0			
+TESTES	Sertoli cells	45.0	False	0.0	False	none	ok	25.0	0.0	0.372111484352464	9462412.24	13626.0			
+TESTES	Spermatocytes	30.0	False	0.0	False	none	ok	25.0	0.0	0.236456007797447	6132337.44	13626.0			
+TESTES	Spermatogonia	25.0	False	0.0	False	none	ok	25.0	0.0	0.0602150776923366	1561321.664	13622.0			
+WATSC	Adipose stromal progenitor cells	154.0	False	169.0	False	none	ok	25.0	25.0	0.349411433658708	7046455.69	12768.0	0.0	4.0	4.0
+WATSC	B cells	104.0	False	110.0	False	none	ok	25.0	25.0	0.013248856820111	93052.736	12709.0	0.0	3.0	3.0
+WATSC	Cycling cells	114.0	True	136.0	True	none	ok	25.0	25.0	0.0033420216582455	26264.598	12631.0	0.0	5.0	5.0
+WATSC	Dendritic cells	24.0	True			none	ok	25.0	25.0	0.003315005636199	8278.736	12508.0	0.0	1.0	1.0
+WATSC	Endothelial cells	158.0	False	187.0	False	none	ok	25.0	25.0	0.0960144360812264	1855708.022	12766.0	0.0	2.0	2.0
+WATSC	Glandular epithelial cells	148.0	False	163.0	False	none	ok	25.0	25.0	0.134666709542984	2615507.194	12760.0	0.0	4.0	4.0
+WATSC	Macrophages	8.0	True	17.0	True	none	ok	25.0	25.0	0.0080400804173252	8286.638	12661.0	0.0	0.0	0.0
+WATSC	Mammary luminal epithelial cells	160.0	False	172.0	False	none	ok	25.0	25.0	0.236629598219342	3649972.122	12764.0	0.0	3.0	3.0
+WATSC	Mural cells	117.0	False	138.0	False	none	ok	25.0	25.0	0.0376827324424591	669833.382	12750.0	0.0	4.0	4.0
+WATSC	NK and cytotoxic T cells			50.0	True	none	SKIP: degenerate (median libsize 726.9 < 1000)			0.0064608122102516	726.91				
+WATSC	Non-classical monocytes	14.0	True	21.0	True	none	ok	25.0	25.0	0.0042096082167629	14650.928	12382.0	0.0	0.0	0.0
+WATSC	Plasmacytoid dendritic cells	139.0	False	155.0	False	none	ok	25.0	25.0	0.0442183910058493	864244.814	12754.0	0.0	2.0	2.0
+WATSC	T cells	131.0	False	138.0	False	none	ok	25.0	25.0	0.0627603140905358	930365.326	12764.0	0.0	5.0	5.0

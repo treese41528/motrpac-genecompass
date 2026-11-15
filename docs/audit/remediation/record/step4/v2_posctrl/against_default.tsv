@@ -1,0 +1,92 @@
+tier	group	symbol	tissue	sex	cell_type	outcome_refs5	FDR_IHW_refs5	lfc_8w_refs5	outcome_default	FDR_IHW_default	lfc_8w_default
+A	blood_hematopoietic_TF	Ets1	BLOOD	any	Megakaryocytes and platelets				wrong_direction	0.0008087061570731	-0.563730115541172
+A	blood_hematopoietic_TF	Ets1	BLOOD	any	Neutrophils	wrong_direction	0.0042736631866754	-0.532161701445445			
+A	blood_hematopoietic_TF	Gabpa	BLOOD	any	Megakaryocytes and platelets				wrong_direction	0.016549030266244	-0.30226321304704
+A	blood_hematopoietic_TF	Gabpa	BLOOD	any	Neutrophils	wrong_direction	0.0186441672305564	-0.252279481924829			
+A	blood_hematopoietic_TF	Klf3	BLOOD	any	Erythroid cells	recovered	0.0251651548720035	0.0350019787696599	recovered	0.0234491115500598	0.0358529239288744
+A	blood_hematopoietic_TF	Znf143	BLOOD	any		not_testable_prior			not_testable_prior		
+A	heart_mito_biogenesis	Hsp90aa1	HEART	any	Cardiomyocytes	not_testable			not_testable		
+A	heart_mito_biogenesis	Hspa1b	HEART	any	Cardiomyocytes	not_testable			not_testable		
+A	heart_mito_biogenesis	Mef2c	HEART	any	Cardiomyocytes	not_significant	1.0	0.0375851600829585	not_significant	1.0	0.0370084922092595
+A	heart_mito_biogenesis	Mfn1	HEART	any	Cardiomyocytes	recovered	0.0297565383205469	0.107539263567118	recovered	0.0284041656162458	0.107553860401942
+A	heart_mito_biogenesis	Opa1	HEART	any	Cardiomyocytes	recovered	0.0098641002659422	0.0080110277872153	recovered	0.0095468660063289	0.0080505391966479
+A	heart_mito_biogenesis	Sod2	HEART	any	Cardiomyocytes	not_significant	0.890204308228632	-0.0293709411319057	not_significant	0.821822925791355	-0.0298177372076678
+A	liver_metabolic	Hsp90aa1	LIVER	any	Hepatocytes	not_significant	0.086978021030882	-0.439118497208022	not_significant	0.104616436351487	-0.439124837019856
+A	liver_metabolic	Pxn	LIVER	any	Hepatocytes	not_significant	1.0	-0.0086192905728308	not_significant	1.0	-0.0073620481084059
+A	liver_metabolic	Stat3	LIVER	any	Hepatocytes	not_significant	1.0	-0.0604932246302582	not_significant	1.0	-0.0606839562628875
+A	muscle_mito_biogenesis	Hsp90aa1	SKMGN	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Hsp90aa1	SKMVL	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Hspa1b	SKMGN	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Hspa1b	SKMVL	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Mef2a	SKMGN	any	Skeletal muscle cells	not_significant	0.545173747911057	0.0425848916297909	not_significant	0.474239542832441	0.042849485286086
+A	muscle_mito_biogenesis	Mef2a	SKMVL	any	Skeletal muscle cells	not_significant	0.468934991439582	-0.0499913339982086	not_significant	0.418753825626666	-0.0506352801450705
+A	muscle_mito_biogenesis	Mef2c	SKMGN	any	Skeletal muscle cells	not_significant	0.658317057133421	0.0517210988047877	not_significant	0.714077214416409	0.0516456383356022
+A	muscle_mito_biogenesis	Mef2c	SKMVL	any	Skeletal muscle cells	not_significant	0.740212162288709	0.0042033870029206	not_significant	0.544530280877638	0.004048171926504
+A	muscle_mito_biogenesis	Mef2d	SKMGN	any	Skeletal muscle cells	not_significant	0.502167112459578	0.0499901660522133	not_significant	0.462059529455657	0.0500247429771914
+A	muscle_mito_biogenesis	Mef2d	SKMVL	any	Skeletal muscle cells	not_significant	0.582449347490683	-0.0719199121276413	not_significant	0.520571342444807	-0.0717058792656637
+A	muscle_mito_biogenesis	Mfn1	SKMGN	any	Skeletal muscle cells	recovered	0.0492904676043725	0.0571798561796804	recovered	0.0479082704720378	0.0573609501426273
+A	muscle_mito_biogenesis	Mfn1	SKMVL	any	Skeletal muscle cells	not_significant	0.253011673562412	0.117086229128696	not_significant	0.226428241304043	0.116964461546182
+A	muscle_mito_biogenesis	Opa1	SKMGN	any	Skeletal muscle cells	not_significant	0.203636689140581	0.0608444800691731	not_significant	0.20266307194823	0.0608632457411904
+A	muscle_mito_biogenesis	Opa1	SKMVL	any	Skeletal muscle cells	not_significant	0.10812773747044	0.0567647830576079	not_significant	0.0778802366575024	0.0566607330619707
+A	muscle_mito_biogenesis	Plin2	SKMGN	any	Skeletal muscle cells	not_significant	0.502805339749315	-0.0231275845212581	not_significant	0.554066468212147	-0.0238623949347353
+A	muscle_mito_biogenesis	Plin2	SKMVL	any	Skeletal muscle cells	not_significant	0.349283479560535	0.202946007286708	not_significant	0.308663242053355	0.202323786316593
+A	muscle_mito_biogenesis	Plin4	SKMGN	any	Skeletal muscle cells	not_significant	0.0975973722599633	-0.0517260126973579	not_significant	0.106497704443728	-0.0520745478358943
+A	muscle_mito_biogenesis	Plin4	SKMVL	any	Skeletal muscle cells	not_significant	0.0514231012879851	-0.0284825768907996	wrong_direction	0.0365343486541705	-0.0283577889433103
+A	muscle_mito_biogenesis	Plin5	SKMGN	any	Skeletal muscle cells	not_significant	0.470033926272073	-0.134114881312395	not_significant	0.460038586983125	-0.13396293526478
+A	muscle_mito_biogenesis	Plin5	SKMVL	any	Skeletal muscle cells	not_significant	1.0	0.0217706540461726	not_significant	1.0	0.0215881822819531
+A	muscle_mito_biogenesis	Prkab1	SKMGN	any	Skeletal muscle cells	not_significant	0.15687873908981	-0.0025414498700509	not_significant	0.16094259176163	-0.0031990708122719
+A	muscle_mito_biogenesis	Prkab1	SKMVL	any	Skeletal muscle cells	not_significant	0.925742692527247	0.019543818705523	not_significant	0.660504648033317	0.0191075889769607
+A	muscle_mito_biogenesis	Slc2a4	SKMGN	any	Skeletal muscle cells	not_significant	0.539108704432316	0.0948903207065927	not_significant	0.546746982340387	0.0948299084135421
+A	muscle_mito_biogenesis	Slc2a4	SKMVL	any	Skeletal muscle cells	recovered	0.0318216331792711	0.198898179922773	recovered	0.0280114889724269	0.198856149103369
+A	muscle_mito_biogenesis	Sod2	SKMGN	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Sod2	SKMVL	any	Skeletal muscle cells	not_testable			not_testable		
+A	muscle_mito_biogenesis	Tbc1d1	SKMGN	any	Skeletal muscle cells	recovered	0.0058303575644984	0.172768708243122	recovered	0.0056647750317363	0.17262835310312
+A	muscle_mito_biogenesis	Tbc1d1	SKMVL	any	Skeletal muscle cells	not_significant	0.259098360763427	0.287833296741357	not_significant	0.226175374207535	0.28788689298077
+A	wat_adrenergic	Adra1b	WATSC	any	Adipose stromal progenitor cells	not_significant	0.184829342417022	0.0820245724203854	not_significant	0.175402542676946	0.0828281370095284
+A	wat_adrenergic	Adra1d	WATSC	any	Adipose stromal progenitor cells	not_significant	1.0	0.0737167292299469	not_significant	1.0	0.0716508320230368
+A	wat_adrenergic	Adra2b	WATSC	any	Endothelial cells|Mammary luminal epithelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Mural cells|Cycling cells|B cells|NK and cytotoxic T cells|Non-classical monocytes|Macrophages				not_testable		
+A	wat_adrenergic	Adra2b	WATSC	any	Mammary luminal epithelial cells|Endothelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Mural cells|Cycling cells|B cells|Dendritic cells|Non-classical monocytes|Macrophages	not_testable					
+A	wat_adrenergic	Adrb1	WATSC	any	Endothelial cells|Mammary luminal epithelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Mural cells|Cycling cells|B cells|NK and cytotoxic T cells|Non-classical monocytes|Macrophages				not_testable		
+A	wat_adrenergic	Adrb1	WATSC	any	Mammary luminal epithelial cells|Endothelial cells|Adipose stromal progenitor cells|Glandular epithelial cells|Plasmacytoid dendritic cells|T cells|Mural cells|Cycling cells|B cells|Dendritic cells|Non-classical monocytes|Macrophages	not_testable					
+Ai	heart_structural	Cdh2	HEART	any	Cardiomyocytes	recovered	0.019972184910076	0.0310719510510603	recovered	0.018880991520056	0.0309475943489723
+Ai	heart_structural	Gja1	HEART	any	Cardiomyocytes	not_significant	0.197896057151322	-0.0775293973514668	not_significant	0.199966195564916	-0.077538994294414
+Ai	hippoc_neuro	Gpr37l1	HIPPOC	any	Endothelial cells	not_significant	0.810000647632055	0.138272927313054	not_significant	1.0	0.137069244822216
+Ai	kidney_signalling	Akt1	KIDNEY	any	Proximal tubule cells	not_significant	1.0	0.0162373603434162	not_significant	1.0	0.0168655560113189
+Ai	kidney_signalling	Hnf1b	KIDNEY	any	Proximal tubule cells	not_significant	1.0	0.195148980538592	not_significant	1.0	0.195782499169314
+Ai	kidney_signalling	Hnf4a	KIDNEY	any	Proximal tubule cells	not_significant	1.0	0.0679973749777025	not_significant	1.0	0.0680446207434143
+Ai	kidney_signalling	Mtor	KIDNEY	any	Proximal tubule cells	not_significant	1.0	-0.0271738465728647	not_significant	1.0	-0.0269672677500311
+Ai	liver_tf	Hnf1b	LIVER	any	Hepatocytes	not_significant	0.693229068454387	0.052051475084331	not_significant	0.568849203532045	0.0540406643610671
+Ai	liver_tf	Hnf4a	LIVER	any	Hepatocytes	not_significant	0.48506613421777	-0.0855014891413648	not_significant	0.409413023186408	-0.0855869246412504
+Ai	lung_prkaca_substrates	Dsp	LUNG	male	Endothelial cells	not_significant	0.193761683388462	-0.0265231232846684	not_significant	0.154868320002203	-0.0287703260366534
+Ai	lung_prkaca_substrates	Mylk	LUNG	male	Endothelial cells	recovered	0.0022057201842943	0.119183025857903	recovered	0.0020106537467038	0.119504017526065
+Ai	lung_prkaca_substrates	Prkaca	LUNG	male	Endothelial cells	not_significant	0.399832191842705	-0.0318582753338099	not_significant	0.387021022923001	-0.0318009449207771
+Ai	lung_prkaca_substrates	Stmn1	LUNG	male	Endothelial cells	not_significant	0.108081900312572	-0.131522217590173	not_significant	0.10427470883358	-0.132356691853251
+Ai	lung_prkaca_substrates	Syne1	LUNG	male	Endothelial cells	not_significant	0.252671822539411	0.051833287624217	not_significant	0.243844665452265	0.0518176162593946
+B	vetr_blood_asthma_male	Bag6	BLOOD	male	Erythroid cells	recovered	0.10425702234675	0.265034031649621	recovered	0.117867150269107	0.259112693042245
+B	vetr_blood_asthma_male	Ccnf	BLOOD	male	Erythroid cells	not_significant	0.113508283818459	0.135804102670032	not_significant	0.0864720454532956	0.147847237241805
+B	vetr_blood_asthma_male	Crat	BLOOD	male	Erythroid cells				recovered	0.25491048306308	0.251580725317779
+B	vetr_blood_asthma_male	Crat	BLOOD	male	Megakaryocytes and platelets	recovered	0.158537724102208	0.483327492846363			
+B	vetr_blood_asthma_male	Fam89b	BLOOD	male	Erythroid cells	recovered	0.001234871917013	0.522829771849313	recovered	0.0011595935939822	0.522327400644104
+B	vetr_blood_chol_male	Aamp	BLOOD	male	Erythroid cells	not_significant	0.0512090427699323	0.152970244896823	not_significant	0.0564753599139569	0.145984803004726
+B	vetr_blood_chol_male	Fads2	BLOOD	male	Erythroid cells	recovered	0.0226731665171944	0.895634275364456	recovered	0.0252176700358776	0.936804946898894
+B	vetr_blood_chol_male	Ndufa13	BLOOD	male		not_testable_prior			not_testable_prior		
+B	vetr_blood_chol_male	Ogdh	BLOOD	male	Erythroid cells	not_significant	0.050899045900018	0.269354335623044	not_significant	0.0480652291422756	0.274209423311834
+B	vetr_blood_chol_male	Pnkd	BLOOD	male	Erythroid cells	not_significant	0.184756979731509	-0.0985555647075554	not_significant	0.193276339261456	-0.101109465094252
+B	vetr_disease_gene	Apob	LUNG	male	Vascular smooth muscle cells|Ciliated cells|Endothelial cells|Fibroblasts|Alveolar type II cells|Mesothelial cells|Basal cells				not_testable		
+B	vetr_disease_gene	Apob	LUNG	male	Vascular smooth muscle cells|Endothelial cells|Ciliated cells|Fibroblasts|Alveolar type II cells|Mesothelial cells|Basal cells	not_testable					
+B	vetr_disease_gene	Foxp3	HEART	any		not_testable_prior			not_testable_prior		
+B	vetr_disease_gene	Ldlr	CORTEX	any	Excitatory neurons	not_significant	1.0	0.193031875557853	not_significant	1.0	0.187845124576276
+B	vetr_disease_gene	Ldlr	HIPPOC	any	Endothelial cells	not_significant	1.0	0.247508178972609	not_significant	1.0	0.246817877427227
+B	vetr_disease_gene	Ldlr	SKMGN	any	Skeletal muscle cells	recovered	0.0087256932111791	-0.393140157327904	recovered	0.0083707489091569	-0.392758778995991
+B	vetr_disease_gene	Ldlr	SKMVL	any	Skeletal muscle cells	not_significant	0.0518046709169366	-0.513898077044755	recovered	0.0467263424313502	-0.514431818707485
+B	vetr_disease_gene	Slc6a8	HEART	any	Monocytes|Cardiomyocytes|T cells|Endothelial cells|Cardiac fibroblasts|Vascular smooth muscle cells|Macrophages|Lymphatic endothelial cells|Dendritic cells|NK cells|Mesothelial cells|Cardiac neurons				not_testable		
+B	vetr_disease_gene	Slc6a8	HEART	any	Vascular smooth muscle cells|Monocytes|T cells|Cardiomyocytes|Endothelial cells|Cardiac fibroblasts|Macrophages|NK cells|Dendritic cells|Mesothelial cells|Lymphatic endothelial cells|Cardiac neurons	not_testable					
+B	vetr_disease_gene	Slc6a8	LIVER	any	Hepatocytes|Hepatic stellate cells|Kupffer cells|Mesothelial cells|Liver sinusoidal endothelial cells|Vascular endothelial cells|Cholangiocytes|NK cells	not_testable					
+B	vetr_disease_gene	Slc6a8	LIVER	any	Hepatocytes|Kupffer cells|Hepatic stellate cells|Mesothelial cells|Liver sinusoidal endothelial cells|Vascular endothelial cells|Cholangiocytes|NK cells				not_testable		
+B	vetr_disease_gene	Slc6a8	LUNG	any	Vascular smooth muscle cells|Ciliated cells|Endothelial cells|Fibroblasts|Alveolar type II cells|Mesothelial cells|Basal cells				not_testable		
+B	vetr_disease_gene	Slc6a8	LUNG	any	Vascular smooth muscle cells|Endothelial cells|Ciliated cells|Fibroblasts|Alveolar type II cells|Mesothelial cells|Basal cells	not_testable					
+B	vetr_liver_female	Abcg8	LIVER	female	Hepatocytes	not_significant	0.0284640214715192	2.28137431503605	not_significant	0.0261929871779737	2.27898949679335
+B	vetr_skmvl_female	Atp6v1g2	SKMVL	female	Satellite cells|Tenocytes|Vascular smooth muscle cells|Skeletal muscle cells|Endothelial cells|Macrophages|Schwann cells|Fibro-adipogenic progenitors	not_testable					
+B	vetr_skmvl_female	Atp6v1g2	SKMVL	female	Satellite cells|Vascular smooth muscle cells|Skeletal muscle cells|Endothelial cells|Tenocytes|Macrophages|Schwann cells|Fibro-adipogenic progenitors				not_testable		
+B	vetr_skmvl_male	Tmbim1	SKMVL	male	Skeletal muscle cells	not_significant	0.116204701501818	0.903429323487799	not_significant	0.106534324482475	0.902242297847457
+B	vetr_wat_female	Endou	WATSC	female	Adipose stromal progenitor cells	recovered	0.0283372026936698	0.997139555332774	recovered	0.0322426236110944	1.00573782294437

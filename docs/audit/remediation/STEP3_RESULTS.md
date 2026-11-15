@@ -7,6 +7,18 @@ finish. Part A is complete; Part B is filled in stage by stage.
   change does what it should on the existing default's data.
 - **Part B** covers the rerun itself, compared with the current default.
 
+## What the rerun found
+
+| Stage | Result |
+|---|---|
+| 8, deconvolution | Reproduces byte for byte when repeated. The rebuilt exclusion list shifts fractions by at most 2.8 points and keeps sample order in the 14 tissues whose reference did not change |
+| 9, embedding | 9,060 pseudo-cells; target sum 6,700 by the registered formula; weights load completely |
+| 11, gate | **11 hotspots and 1 borderline block** of 150 (9 before). Seven of the nine earlier hotspots remain; membership is not stable to small input changes |
+| 10, DE | 52,961 dose-significant gene x block pairs. **No block's calls are robust to technical covariates** by the registered verdict; 44% and 33% of pairs survive the two reruns |
+| 12, transfer | 10 of 11 preserved by the registered rule, 9 by the corrected rule |
+| 13, networks | The decoy null is negative again: no TF-specific signal |
+| All readings | **No called block passes all nine registered readings**; two BLOOD types pass eight (Figure B3) |
+
 ## Part A. Before the rerun
 
 ### A1. The references reproduce (finding 4.8)
@@ -328,6 +340,212 @@ formula's prediction.
 
 Record: `record/step3/stage9/stage9_by_tissue_refs5.tsv`.
 
-### B4 to B7. Gate, differential expression, transfer, networks
+### B4. Stage 11: the gate
 
-*(filled in as stages finish)*
+**The chain.** Stages 11, 10, 12, 13 and 14 ran in one job (12377824, 12 h 45 min) from commit `44332e6`
+with no modified tracked file at the start and end of every stage. The two join checks pass on the refs5
+tree, the offline test suite passes (312 tests) and the data tests pass (10) under the refs5 profile.
+
+**Result.** 11 hotspots and 1 borderline block among 150 analysable blocks (194 blocks in all). The current
+default had 9 hotspots.
+
+| | Current default | refs5 |
+|---|---|---|
+| Blocks / analysable | 197 / 151 | 194 / 150 |
+| Hotspots | 9 | **11** |
+| Borderline | not defined | **1** (SKMGN vascular smooth muscle cells) |
+| Blocks with q < 0.05 at the first 10,000 permutations (the earlier method) | 9 | 12 |
+
+![Gate](figures/step3_gate.png)
+
+*Figure B2. (a) The trained-against-control AUC of the 147 blocks analysable in both runs, under the current
+default and under refs5. (b) The 20 blocks with the smallest permutation p: estimate, interval, and the two
+Benjamini-Hochberg cuts. Tables: `record/step3/downstream/gate_blocks_refs5_vs_default.tsv`,
+`gate_called_blocks.tsv`, `gate_summary.tsv`.*
+
+**The sequential rule did what it was registered to do.** Ten hotspots were decided after 70,000
+permutations and one after 130,000. One block, SKMGN vascular smooth muscle cells, was still undecided at the
+cap of 1,000,000: its p is 0.00379 (interval 0.00349 to 0.00408) against cuts of 0.0037 and 0.0040. The
+earlier method would have called it a hotspot on a p of 0.0029 from 10,000 permutations.
+
+**The list of hotspots is not stable to small changes of the inputs.** This is the main finding of the gate.
+
+| | Blocks |
+|---|---|
+| Hotspot in both runs | 7: SKMVL satellite cells; SKMVL and LUNG vascular smooth muscle cells; BLOOD neutrophils, erythroid cells, megakaryocytes and platelets, classical monocytes |
+| Hotspot in the default, not called in refs5 | 2: SKMGN tenocytes (AUC 0.825 to 0.706); HYPOTH oligodendrocyte precursor cells (0.798 to 0.517, and no longer analysable: median library 2,266 to 47) |
+| Called in refs5, not in the default | 5: SKMVL tenocytes (0.749 to 0.858); SKMGN Schwann cells (0.637 to 0.838); HEART vascular smooth muscle cells (0.748 to 0.812); LUNG endothelial cells (0.786 to 0.801); SKMGN vascular smooth muscle cells, borderline (0.714 to 0.801) |
+
+- **In the 14 tissues whose reference did not change**, the only differences are the exclusion list (58 to
+  122 genes of about 13,000) and the target sum (6,400 to 6,700). Over their 129 blocks the two runs' AUCs
+  correlate at 0.87. A block's AUC moves by 0.03 at the median, by 0.10 or more in one block in ten, and by
+  up to 0.31. Hotspots sit at AUC 0.80 to 0.88 and dozens of blocks sit at 0.70 to 0.80, so shifts of this
+  size move blocks across the line (`gate_auc_default_vs_refs5.tsv`).
+- **Which of the two changes moved them was not separated.** That needs a rerun with one change at a time,
+  which was not registered.
+- **HYPOTH**, re-annotated, has no called block. Its old hotspot was a cell type whose estimated fraction is
+  now driven by one sample (B1).
+- **Five blocks changed sides of the analysable rule** (median library of 1,000) between the runs, in
+  tissues whose reference did not change as well: for example WATSC dendritic cells went from a median
+  library of 164 to 8,279. The estimated expression of rare types is that unstable.
+
+**The sensitivities and the reading rule** (`STEP3_PREREG.md` 5.3), for the 12 called blocks:
+
+| Sensitivity | Result |
+|---|---|
+| S1, sex-stratified folds and permutation | All 12 significant. S1 is the less conservative test: 55 of 150 blocks pass it |
+| S2, 8-week animals against controls (10 against 10) | 9 of 12 significant. Not: SKMVL tenocytes (q 0.052), LUNG vascular smooth muscle cells (AUC 0.61) and LUNG endothelial cells (AUC 0.52) |
+| S3, the same probe on all genes | 9 hotspots **supported**, 2 **neither** (LUNG vascular smooth muscle cells 0.59, LUNG endothelial cells 0.60), 0 **model-only**. The rule gives no reading for a borderline block |
+| S4, the fraction tier | 7 of 12 are at least 1% of their tissue and significant in that tier. 5 are below 1%: all five muscle blocks (0.08% to 0.7%) |
+
+- **Both LUNG hotspots rest on the early time points and on the model.** At 8 weeks against control they do
+  not separate, and expression alone separates them at AUC 0.59 to 0.60.
+- **All five muscle blocks are rare types** of one two-library reference. SKMGN Schwann cells rest on 30
+  reference cells; BLOOD erythroid cells on 90 cells of one library
+  (`gate_called_blocks_reference_cells.tsv`).
+- **Embedding against baselines, all 150 analysable blocks:** the embedding's AUC is above the PCA-50 probe's
+  in 88 blocks (medians 0.624 and 0.615, Wilcoxon p 0.013) and above the all-genes probe's in 80 (p 0.38).
+  Augur and the probe agree across blocks (Spearman 0.82).
+
+### B5. Stage 10: differential expression
+
+| | Current default | Old inputs, repaired code (A4) | refs5 |
+|---|---|---|---|
+| Blocks analysed | 151 | 151 | 150 |
+| Dose-significant gene x block pairs | 53,084 | 53,283 | **52,961** |
+| Distinct genes | 9,671 | - | **9,617** |
+| Pairs outside low-fraction blocks | 43,807 | - | **41,401** (8,496 genes) |
+| Pairs in the 44 low-fraction blocks | 9,277 | - | 11,560 |
+| TESTES / OVARY pairs | 0 / 0 | 202 / 11 | **219** (67 genes) **/ 8** (1 gene) |
+| Sex-consistent 8-week calls | 5,126 (old rule) | 144 / 3,404 / 3,415 | **139** by concordance; 3,623 by repfdr; 3,629 union |
+
+Table by tissue: `record/step3/downstream/de_by_tissue_refs5_vs_default.tsv`; by block,
+`de_blocks_refs5_vs_default.tsv`; the headline three ways, `refs5_de_headline.tsv`.
+
+- **The headline count barely moves; where it sits does.** BLOOD holds 18,745 of the pairs, LUNG 9,802,
+  SPLEEN 7,252, BAT 7,026. CORTEX, HIPPOC, HYPOTH and OVARY hold 13 between them.
+- **One pair in five is in a block below 1% of its tissue** (11,560 of 52,961).
+- **Single-sex tissues now have a dose test.** TESTES has 219 dose-significant pairs.
+- **Sex-consistency by concordance is small:** 139 gene x block pairs are significant in both sexes in the same
+  direction at 8 weeks. The repfdr calls (3,623) are a model-based reading on dose-significant genes.
+
+**The DE calls are not robust to technical covariates.** The registered check reruns the whole DE with RIN and
+globin percentage in every model (A), and with those plus duplication rate and 5'-3' bias (B). The registered
+verdict for a block is ROBUST if at least 80% of its calls are retained and the gene ranking correlates at 0.9
+or more, under both.
+
+| | Rerun A (RIN, globin) | Rerun B (four covariates) |
+|---|---|---|
+| Dose-significant pairs | 27,373 | 22,079 |
+| Headline pairs retained | 23,408 of 52,961 (**44%**) | 17,321 (**33%**) |
+| Median correlation of the gene ranking with the headline, over blocks | 0.92 | 0.80 |
+| Blocks ROBUST under both | **0 of 150** | |
+| Called blocks ROBUST | **0 of 12** | |
+
+| Called block | Calls | Retained, A | Retained, B |
+|---|---|---|---|
+| BLOOD megakaryocytes / classical monocytes / erythroid / neutrophils | 2,554 / 2,496 / 2,434 / 1,810 | 28% / 26% / 26% / 23% | 50% / 48% / 49% / 40% |
+| LUNG endothelial cells / vascular smooth muscle cells | 1,453 / 1,389 | 67% / 65% | 21% / 17% |
+| HEART vascular smooth muscle cells | 316 | 47% | 37% |
+| SKMVL tenocytes / satellite cells / vascular smooth muscle cells | 237 / 198 / 187 | 71% / 71% / 71% | 57% / 50% / 45% |
+| SKMGN Schwann cells / vascular smooth muscle cells (borderline) | 103 / 128 | 37% / 41% | 31% / 31% |
+
+- **This is a negative result and it is new.** The earlier check (Stage 14, a pooled-sex dose slope refitted
+  with RIN and globin) again reads 10 of 11 hotspots as robust on refs5. It tests a different model than the
+  one that makes the headline calls. The registered check refits the headline model itself.
+- **The ranking of genes is steadier than the calls.** Under A the ranking correlates at 0.89 to 0.94 with
+  the headline in the called blocks. What is lost is significance.
+- **A descriptive check, made after the result and not registered:** the four covariates do not differ
+  between training groups beyond chance. Of 120 tissue x sex x covariate tests, 11 have p below 0.05 against
+  6 expected, and the median share of variance explained by group, 0.167, is the value expected by chance
+  with five groups of five animals (`technical_covariates_by_group.tsv`). So the loss is not explained by
+  the covariates standing in for the training groups. With five animals per group and sex, the calls depend
+  on the model's specification. Which reading is right was not established.
+- **Composition.** In 2 of the 11 hotspots the estimated fraction itself trends with dose (SKMVL vascular
+  smooth muscle cells, p 0.006; SKMGN Schwann cells, p 0.033), so their expression signal cannot be told from
+  a change in abundance. Over all blocks: 25 flagged, 66 pass, 59 quiet, 44 not analysed
+  (`refs5_composition_confound_table.tsv`).
+
+The registered positive controls are in `STEP4_RESULTS.md`, V2.
+
+### B6. Stage 12: transfer to human space
+
+| | Current default (9 hotspots) | refs5 (11 hotspots) |
+|---|---|---|
+| Registered rule (human AUC at least 0.65 and raw p below 0.05) | 9 preserved | **10 preserved, 1 weakened** (HEART vascular smooth muscle cells), 0 lost |
+| Corrected rule (also called in human space under Benjamini-Hochberg) | 7 | **9**. Not: SKMGN Schwann cells (q 0.16), HEART vascular smooth muscle cells (q 0.19) |
+| Dose trend lost in human space | 2 | **1**: LUNG vascular smooth muscle cells (0.25 to -0.10) |
+| The borderline block | - | weakened; does not transfer |
+
+- The human test reuses the rat test's cells, labels, folds and seeds. It shows that the model's
+  human-species reading keeps the structure. It is not a replication, and no human measurement enters.
+- Across all blocks the human-space AUC follows the rat-space AUC at Spearman 0.73, and the dose correlation
+  at 0.79. The sex control's median AUC is 0.756 in rat space and 0.745 in human space; its 0.70 floor is
+  set in the script, not in a registration.
+- 19 LUNG goblet-cell pseudo-cells exist in rat space and not in human space (too few genes after the
+  ortholog projection): `refs5_transfer_comparison.tsv`, and `rat_only_pseudocells.tsv` beside the gate.
+
+### B7. Stage 13: networks and enrichment
+
+Networks are built for the 7 hotspots that are at least 1% of their tissue: four BLOOD types, the two LUNG
+types and HEART vascular smooth muscle cells.
+
+| | Current default | refs5 |
+|---|---|---|
+| Networks | 6 | 7 |
+| Edges | 1,527,076 | 1,540,997 |
+| Edge rule | every gene of either arm; a missing side set to 0 | genes in both arms only |
+| Genes in both arms, of 2,048 per arm | - | 1,944 to 2,014 |
+| TF x target pairs with one arm missing, not made into edges | - | 7% to 17% per network |
+
+**The decoy null is negative again, under the repaired edge rule.**
+
+| | Result |
+|---|---|
+| Edges at \|z\| of 2 or more: TFs / expression-matched decoys | 145,894 / 148,977 |
+| Pooled false-discovery estimate at \|z\| of 2 | **1.02** |
+| A threshold with an estimate of 0.10 or less | none on the grid 2 to 50 |
+| TF x network pairs whose hub strength beats same-network decoys at q below 0.10 | **0 of 777** (281 distinct TFs) |
+
+The registered reading stands: the edges cannot be told from those of deleting a random gene of the same
+expression. The networks carry no TF-specific signal, and nothing in them should be read as regulation.
+
+**Rat-human self-consistency.** 685 TF x network scores: median 0.48 over all scores, 0.55 over the
+per-network medians; per network 0.29 (LUNG vascular smooth muscle cells) to 0.64 (BLOOD erythroid cells).
+This compares the same cells through the same model under two species settings. It is a statement about the
+model, not about conservation.
+
+**Enrichment** (one-to-one orthologs, ranked by the dose p, saved gene sets):
+
+| | Current default (old method) | Old DE, registered method (A4) | refs5 |
+|---|---|---|---|
+| Blocks tested | 151 | 130 | 150 |
+| Blocks with a significant set | 132 | 101 | 116 |
+| Significant sets | 7,502 | 4,761 | 4,956 |
+| Tests with no p-value | 139 | 67 | 79 |
+
+Record: `record/step3/downstream/networks_*`, `enrichment_blocks_refs5.tsv`.
+
+### B8. Stage 14, and every called block against every reading
+
+The 11 configured purity sweeps pass on the refs5 references: the dominant type's expression is recovered at
+a median correlation of 0.993 or more at every purity of 0.5 and above (`stage14_sweeps_refs5.tsv`). The
+sweeps of the called cell types themselves are Step 4, V1.
+
+![Called blocks](figures/step3_called_blocks.png)
+
+*Figure B3. The 12 called blocks against the nine registered readings of Steps 3 and 4. Table:
+`record/step3/downstream/called_blocks_all_readings.tsv`.*
+
+- **No called block passes every reading.** BLOOD megakaryocytes and platelets and BLOOD classical monocytes
+  pass eight of nine; the one they fail is the robustness of their DE calls to technical covariates, which
+  every block fails.
+- **The muscle blocks pass the fewest.** All five are under 1% of their tissue, none has its expression
+  recovered at its abundance, and two have a fraction that trends with dose.
+- **The two LUNG blocks** fail the 8-week contrast and the expression-alone reading.
+
+### B9. refs5 becomes the default
+
+The registered conditions are met: every stage finished from one clean commit, both join checks pass, and the
+test suite passes. The default configuration is switched to the refs5 folders, the rebuilt exclusion list and
+the 6,700 target sum; the earlier default stays available as `config/profiles/refs4all_rebuild.yaml`.

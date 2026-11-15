@@ -1,0 +1,27 @@
+index	tag	kind	tissue	reference_dir	focal	grid	mean_fraction_in_bulk
+0	dominant__bat__Endothelial_cells	dominant	BAT	data/deconvolution/references_v5/BAT_GSE244451	Endothelial cells	0.1,0.3,0.5,0.7,0.85,0.95	0.2746316580870966
+1	dominant__blood__Erythroid_cells	dominant	BLOOD	data/deconvolution/references_v5/BLOOD_composite	Erythroid cells	0.1,0.3,0.5,0.7,0.85,0.95	0.7083906014191019
+2	dominant__cortex__Excitatory_neurons	dominant	CORTEX	data/deconvolution/references_v5/CORTEX_GSE303115	Excitatory neurons	0.1,0.3,0.5,0.7,0.85,0.95	0.5894919379491248
+3	dominant__heart__Cardiomyocytes	dominant	HEART	data/deconvolution/references_v5/HEART_GSE280111_LV	Cardiomyocytes	0.1,0.3,0.5,0.7,0.85,0.95	0.7221894414107883
+4	dominant__hippoc__Endothelial_cells	dominant	HIPPOC	data/deconvolution/references_v5/HIPPOC_GSE295314	Endothelial cells	0.1,0.3,0.5,0.7,0.85,0.95	0.5008761419620599
+5	dominant__hypoth__Glutamatergic_neurons	dominant	HYPOTH	data/deconvolution/references_v5/HYPOTH_GSE248413_Y	Glutamatergic neurons	0.1,0.3,0.5,0.7,0.85,0.95	0.5824715703103497
+6	dominant__kidney__Proximal_tubule_cells	dominant	KIDNEY	data/deconvolution/references_v5/KIDNEY_GSE240658	Proximal tubule cells	0.1,0.3,0.5,0.7,0.85,0.95	0.5857274454660452
+7	dominant__liver__Hepatocytes	dominant	LIVER	data/deconvolution/references_v5/LIVER_GSE220075	Hepatocytes	0.1,0.3,0.5,0.7,0.85,0.95	0.8988623921281211
+8	dominant__lung__Endothelial_cells	dominant	LUNG	data/deconvolution/references_v5/LUNG_native_pooled	Endothelial cells	0.1,0.3,0.5,0.7,0.85,0.95	0.5314578967982295
+9	dominant__ovary__Stromal_cells	dominant	OVARY	data/deconvolution/references_v5/OVARY_GSE343214	Stromal cells	0.1,0.3,0.5,0.7,0.85,0.95	0.18328558140784543
+10	dominant__skmgn__Skeletal_muscle_cells	dominant	SKMGN	data/deconvolution/references_v5/MUSCLE_GSE137869_Y	Skeletal muscle cells	0.1,0.3,0.5,0.7,0.85,0.95	0.9563364628758744
+11	dominant__smlint__Enterocytes	dominant	SMLINT	data/deconvolution/references_v5/SMLINT_GSE272055	Enterocytes	0.1,0.3,0.5,0.7,0.85,0.95	0.540764356551333
+12	dominant__spleen__Red_pulp_macrophages	dominant	SPLEEN	data/deconvolution/references_v5/SPLEEN_GSE306764	Red-pulp macrophages	0.1,0.3,0.5,0.7,0.85,0.95	0.17245765638201024
+13	dominant__testes__Sertoli_cells	dominant	TESTES	data/deconvolution/references_v5/TESTES_OMIX767_lifted	Sertoli cells	0.1,0.3,0.5,0.7,0.85,0.95	0.37211148435246394
+14	dominant__watsc__Adipose_stromal_progenitor_cells	dominant	WATSC	data/deconvolution/references_v5/WATSC_GSE137869_Y	Adipose stromal progenitor cells	0.1,0.3,0.5,0.7,0.85,0.95	0.3494114336587083
+15	hotspot__blood__Classical_monocytes	hotspot	BLOOD	data/deconvolution/references_v5/BLOOD_composite	Classical monocytes	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.03494038037109701
+16	hotspot__blood__Erythroid_cells	hotspot	BLOOD	data/deconvolution/references_v5/BLOOD_composite	Erythroid cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.7083906014191019
+17	hotspot__blood__Megakaryocytes_and_platelets	hotspot	BLOOD	data/deconvolution/references_v5/BLOOD_composite	Megakaryocytes and platelets	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.1454259064774922
+18	hotspot__blood__Neutrophils	hotspot	BLOOD	data/deconvolution/references_v5/BLOOD_composite	Neutrophils	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.06965220554958824
+19	hotspot__heart__Vascular_smooth_muscle_cells	hotspot	HEART	data/deconvolution/references_v5/HEART_GSE280111_LV	Vascular smooth muscle cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.012907297532855331
+20	hotspot__lung__Endothelial_cells	hotspot	LUNG	data/deconvolution/references_v5/LUNG_native_pooled	Endothelial cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.5314578967982295
+21	hotspot__lung__Vascular_smooth_muscle_cells	hotspot	LUNG	data/deconvolution/references_v5/LUNG_native_pooled	Vascular smooth muscle cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.07242806850793962
+22	hotspot__skmgn__Schwann_cells	hotspot	SKMGN	data/deconvolution/references_v5/MUSCLE_GSE137869_Y	Schwann cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.0007919733577017719
+23	hotspot__skmgn__Vascular_smooth_muscle_cells	hotspot	SKMGN	data/deconvolution/references_v5/MUSCLE_GSE137869_Y	Vascular smooth muscle cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.0012306815601753418
+24	hotspot__skmvl__Satellite_cells	hotspot	SKMVL	data/deconvolution/references_v5/MUSCLE_GSE137869_Y	Satellite cells	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.002137696400968714
+25	hotspot__skmvl__Tenocytes	hotspot	SKMVL	data/deconvolution/references_v5/MUSCLE_GSE137869_Y	Tenocytes	0.005,0.01,0.02,0.05,0.1,0.2,0.3,0.5,0.7,0.9	0.00714128002430671

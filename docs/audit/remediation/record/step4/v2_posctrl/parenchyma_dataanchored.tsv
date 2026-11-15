@@ -1,0 +1,5 @@
+tissue	cell_type	n_bulk_movers	n_testable	n_recovered	recovery_rate
+SKMGN	Skeletal muscle cells	251	215	88	0.409
+SKMVL	Skeletal muscle cells	198	170	92	0.541
+HEART	Cardiomyocytes	27	24	22	0.917
+LIVER	Hepatocytes	0	0	0	

@@ -1,0 +1,27 @@
+tag	kind	tissue	focal	mean_fraction_in_bulk	status	min_median_r_at_0.5_and_above	lowest_purity_with_r_at_least_0.95	note	purity_nearest_its_abundance	median_r_there	validated_at_its_abundance
+dominant__bat__Endothelial_cells	dominant	BAT	Endothelial cells	0.2746316580870966	PASS	0.9961459368712396	0.1				
+dominant__blood__Erythroid_cells	dominant	BLOOD	Erythroid cells	0.7083906014191019	FAIL	0.8338315733127359					
+dominant__cortex__Excitatory_neurons	dominant	CORTEX	Excitatory neurons	0.5894919379491248	PASS	0.999648125471158	0.1				
+dominant__heart__Cardiomyocytes	dominant	HEART	Cardiomyocytes	0.7221894414107883	PASS	0.9980354296601884	0.1				
+dominant__hippoc__Endothelial_cells	dominant	HIPPOC	Endothelial cells	0.5008761419620599	PASS	0.9538928924451944	0.5				
+dominant__hypoth__Glutamatergic_neurons	dominant	HYPOTH	Glutamatergic neurons	0.5824715703103497	PASS	0.9933116367339396	0.1				
+dominant__kidney__Proximal_tubule_cells	dominant	KIDNEY	Proximal tubule cells	0.5857274454660452	PASS	0.99799424889834	0.1				
+dominant__liver__Hepatocytes	dominant	LIVER	Hepatocytes	0.8988623921281211	PASS	0.9865474263102276	0.3				
+dominant__lung__Endothelial_cells	dominant	LUNG	Endothelial cells	0.5314578967982295	PASS	0.9930809706151024	0.1				
+dominant__ovary__Stromal_cells	dominant	OVARY	Stromal cells	0.1832855814078454	PASS	0.9975000840191716	0.1				
+dominant__skmgn__Skeletal_muscle_cells	dominant	SKMGN	Skeletal muscle cells	0.9563364628758744	PASS	0.992677499197819	0.3				
+dominant__smlint__Enterocytes	dominant	SMLINT	Enterocytes	0.540764356551333	PASS	0.9986015412864424	0.1				
+dominant__spleen__Red_pulp_macrophages	dominant	SPLEEN	Red-pulp macrophages	0.1724576563820102	FAIL	0.854401554479323					
+dominant__testes__Sertoli_cells	dominant	TESTES	Sertoli cells	0.3721114843524639	not testable or not run			step failed (rc 1): /depot/reese18/apps/motrpac-env/bin/python /depot/reese18/apps/motrpac-genecompass/deconvolution/make_purity_sweep.py --mode holdout --ref-s			
+dominant__watsc__Adipose_stromal_progenitor_cells	dominant	WATSC	Adipose stromal progenitor cells	0.3494114336587083	PASS	0.9985417932175444	0.1				
+hotspot__blood__Classical_monocytes	hotspot	BLOOD	Classical monocytes	0.034940380371097	PASS	0.9987403525673044	0.02		0.02	0.96551783231197	True
+hotspot__blood__Erythroid_cells	hotspot	BLOOD	Erythroid cells	0.7083906014191019	FAIL	0.8377899712004746			0.7	0.8721365243105516	False
+hotspot__blood__Megakaryocytes_and_platelets	hotspot	BLOOD	Megakaryocytes and platelets	0.1454259064774922	PASS	0.9892346203291896	0.05		0.1	0.9772057674533424	True
+hotspot__blood__Neutrophils	hotspot	BLOOD	Neutrophils	0.0696522055495882	PASS	0.9932349386509716	0.1		0.05	0.9458937141120876	False
+hotspot__heart__Vascular_smooth_muscle_cells	hotspot	HEART	Vascular smooth muscle cells	0.0129072975328553	PASS	0.974911043864621	0.2		0.01	0.681736894248594	False
+hotspot__lung__Endothelial_cells	hotspot	LUNG	Endothelial cells	0.5314578967982295	PASS	0.9921840188697604	0.05		0.5	0.9921840188697604	True
+hotspot__lung__Vascular_smooth_muscle_cells	hotspot	LUNG	Vascular smooth muscle cells	0.0724280685079396	PASS	0.9853889155615276	0.05		0.05	0.9591649583892145	True
+hotspot__skmgn__Schwann_cells	hotspot	SKMGN	Schwann cells	0.0007919733577017	not testable or not run			step failed (rc 1): /depot/reese18/apps/motrpac-env/bin/python /depot/reese18/apps/motrpac-genecompass/deconvolution/make_purity_sweep.py --mode holdout --ref-s			
+hotspot__skmgn__Vascular_smooth_muscle_cells	hotspot	SKMGN	Vascular smooth muscle cells	0.0012306815601753	FAIL	0.940748681445108	0.7		0.005	0.5715893985759906	False
+hotspot__skmvl__Satellite_cells	hotspot	SKMVL	Satellite cells	0.0021376964009687	FAIL	0.9330176448287264	0.7		0.005	0.4982039596633475	False
+hotspot__skmvl__Tenocytes	hotspot	SKMVL	Tenocytes	0.0071412800243067	FAIL	0.9359688862264606	0.7		0.005	0.507366344142033	False

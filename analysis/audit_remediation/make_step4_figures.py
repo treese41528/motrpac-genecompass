@@ -98,6 +98,38 @@ def fig_v3():
     fs.save(fig, FIG / "step4_v3_heldout.png")
 
 
+def fig_v1():
+    """Purity sweeps of the called cell types: median Pearson-VST against purity, by reference, with each type's abundance."""
+    f = REC / "v1_purity_sweeps" / "sweep_points.tsv"
+    cb = Path("docs/audit/remediation/record/step3/downstream/called_blocks_all_readings.tsv")
+    if not (f.exists() and cb.exists()):
+        return
+    p = pd.read_csv(f, sep="\t"); p = p[p.kind == "hotspot"]; c = pd.read_csv(cb, sep="\t")
+    groups = [("BLOOD (composite reference)", ["BLOOD"]), ("LUNG", ["LUNG"]), ("HEART", ["HEART"]), ("Muscle (one reference for SKMGN and SKMVL)", ["SKMGN", "SKMVL"])]
+    cols = [fs.BLUE, fs.ORANGE, fs.AQUA, fs.INK2]
+    short = lambda x: x.replace("Vascular smooth muscle cells", "VSMC").replace("Megakaryocytes and platelets", "Megakaryocytes")
+    fig, axes = plt.subplots(1, 4, figsize=(15.2, 4.5), sharey=True, gridspec_kw={"wspace": 0.08})
+    for ax, (title, tis) in zip(axes, groups):
+        d = p[p.tissue.isin(tis)]
+        for (focal, g), col, mk in zip(d.groupby("focal", sort=False), cols, ("o", "s", "D", "^")):
+            g = g.sort_values("target_purity")
+            ax.plot(g.target_purity, g.pearson_vst_median, color=col, marker=mk, ms=4.5, lw=1.8, label=short(focal))
+            for r in c[(c.cell_type == focal) & c.tissue.isin(tis)].itertuples():       # the type's abundance in each tissue that calls it
+                y = float(np.interp(np.log(max(r.mean_fraction, 0.005)), np.log(g.target_purity), g.pearson_vst_median))
+                ax.scatter([max(r.mean_fraction, 0.005)], [y], s=120, facecolor="none", edgecolor=col, linewidth=1.6, zorder=5)
+        ax.axhline(0.95, color=fs.NEUTRAL, lw=1, ls=(0, (4, 3)))
+        ax.set_xscale("log"); ax.set_xlim(0.004, 1.0); ax.set_ylim(0.45, 1.01)
+        ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}" if v >= 0.01 else f"{v:.1%}"))
+        ax.set_title(title, fontsize=9); ax.set_xlabel("share of the mixture that is the cell type")
+        ax.legend(loc="lower right", handlelength=1.6, fontsize=7.5)
+    axes[0].set_ylabel("median correlation of estimated\nwith true expression (Pearson, VST)")
+    axes[2].text(0.0045, 0.955, "registered bar: 0.95", fontsize=7.5, color=fs.INK2, va="bottom")
+    fig.text(0.125, -0.06, "Open circle: the cell type's mean estimated fraction in the MoTrPAC tissue (drawn at 0.5% when lower). "
+             "SKMGN Schwann cells could not be swept: the reference has 30.", fontsize=8, color=fs.INK2)
+    fs.save(fig, FIG / "step4_v1_purity_sweeps.png")
+
+
 if __name__ == "__main__":
     fig_v4()
     fig_v3()
+    fig_v1()

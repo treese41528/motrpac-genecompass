@@ -1,0 +1,8 @@
+cell_type	n_tf_rat	n_tf_scored	n_tf_fallback	n_tf_no_human	n_tf_lt_min_shared	n_tf_nonfinite	median_spearman	frac_pos	frac_rho_ge_0.3
+blood_classical_monocytes	97	87	0	10	0	0	0.545	0.989	0.839
+blood_erythroid_cells	118	101	0	17	0	0	0.6384	0.931	0.812
+blood_megakaryocytes_and_platelets	102	90	0	12	0	0	0.5937	1.0	0.8
+blood_neutrophils	112	97	0	15	0	0	0.5613	1.0	0.938
+heart_vascular_smooth_muscle_cells	70	65	0	5	0	0	0.3607	0.908	0.569
+lung_endothelial_cells	135	119	0	16	0	0	0.3234	0.958	0.563
+lung_vascular_smooth_muscle_cells	143	126	0	17	0	0	0.29	0.746	0.476

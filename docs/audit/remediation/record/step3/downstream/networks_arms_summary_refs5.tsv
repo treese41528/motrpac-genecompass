@@ -1,0 +1,8 @@
+network	cell_type	n_control_cells	n_trained_cells	n_genes_control	n_genes_trained	n_genes_both	n_genes_control_only	n_genes_trained_only	n_tf_listed	n_tf_in_both	n_tf_control_only	n_tf_trained_only	n_tf_neither	n_edges	n_pairs_union	n_pairs_one_arm_only	share_pairs_one_arm_only	bootstrap	seed	edge_rule
+blood_classical_monocytes	Classical monocytes	10	40	2048	2048	1962	86	86	1049	97	3	5	944	190217	223277	33060	0.1481	30	0	shared_genes
+blood_erythroid_cells	Erythroid cells	10	40	2048	2048	1966	82	82	1049	118	6	1	924	231870	265551	33681	0.1268	30	0	shared_genes
+blood_megakaryocytes_and_platelets	Megakaryocytes and platelets	10	40	2048	2048	1944	104	104	1049	102	5	5	937	198186	239872	41686	0.1738	30	0	shared_genes
+blood_neutrophils	Neutrophils	10	40	2048	2048	1977	71	71	1049	112	4	1	932	221312	247451	26139	0.1056	30	0	shared_genes
+heart_vascular_smooth_muscle_cells	Vascular smooth muscle cells	10	40	2048	2048	2014	34	34	1049	70	3	3	973	140910	157952	17042	0.1079	30	0	shared_genes
+lung_endothelial_cells	Endothelial cells	10	40	2048	2048	2010	38	38	1049	135	3	2	909	271215	291710	20495	0.0703	30	0	shared_genes
+lung_vascular_smooth_muscle_cells	Vascular smooth muscle cells	10	40	2048	2048	2010	38	38	1049	143	3	3	900	287287	310437	23150	0.0746	30	0	shared_genes

@@ -1,0 +1,25 @@
+                           network  n_tf  n_decoy  tf_edges  decoy_edges  tf_frac_z2  decoy_frac_z2  fdr_z2    edge_rule  n_matches  match_dist_median  match_dist_p95  match_dist_max
+         blood_classical_monocytes    97       97    190217       190217    0.095796       0.099960  1.0435 shared_genes        105           0.000134        0.001748        0.049633
+             blood_erythroid_cells   118      118    231870       231870    0.097740       0.108337  1.1084 shared_genes        125           0.000220        0.001706        0.011302
+blood_megakaryocytes_and_platelets   102      102    198186       198186    0.146383       0.137891  0.9420 shared_genes        112           0.000155        0.001480        0.004791
+                 blood_neutrophils   112      112    221312       221312    0.124968       0.128240  1.0262 shared_genes        117           0.000170        0.001584        0.014523
+heart_vascular_smooth_muscle_cells    70       70    140910       140910    0.069058       0.074878  1.0843 shared_genes         76           0.000145        0.000921        0.001483
+            lung_endothelial_cells   135      135    271215       271215    0.071471       0.071762  1.0041 shared_genes        140           0.000107        0.001163        0.178406
+ lung_vascular_smooth_muscle_cells   143      143    287287       287287    0.066923       0.066554  0.9945 shared_genes        149           0.000149        0.001382        0.035796
+
+edge rule of the networks scored: shared_genes
+TF x network pairs: 777 in 7 networks; distinct TFs: 281; decoy x network pairs: 777
+pooled FDR(2) = 1.021  (145,894 TF / 148,977 decoy edges at |z|>=2)
+t* (pooled FDR <= 0.10, >= 100 TF edges): none on the grid 2..50
+registered reading: FDR(2) > 0.50: |z|>=2 edges not distinguishable from random-gene deletion
+
+decoy match distance |log1p(decoy expression) - log1p(TF expression)| per network: median 0.000107 to 0.00022, largest single distance 0.1784 (columns match_dist_* above)
+
+hub level (TF sum|delta| vs same-network decoys, BH within network): 0 of 777 TF x network pairs at q<0.10 (0 of 281 distinct TFs)
+  blood_classical_monocytes: 0/97 TFs q<0.10; anchors: Nr4a1 q=0.915
+  blood_erythroid_cells: 0/118 TFs q<0.10; anchors: Tfeb q=1.000
+  blood_megakaryocytes_and_platelets: 0/102 TFs q<0.10; anchors: none present
+  blood_neutrophils: 0/112 TFs q<0.10; anchors: none present
+  heart_vascular_smooth_muscle_cells: 0/70 TFs q<0.10; anchors: Epas1 q=0.704, Mef2c q=0.955
+  lung_endothelial_cells: 0/135 TFs q<0.10; anchors: Epas1 q=0.248
+  lung_vascular_smooth_muscle_cells: 0/143 TFs q<0.10; anchors: Epas1 q=0.579
