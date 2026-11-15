@@ -310,6 +310,15 @@ def run_settings(root, sets):
     return pd.DataFrame(rows)
 
 
+def r7(df):
+    """Round the float columns to the seven decimals the tables are written with, so the summary, the figures and
+    the results text all format the same stored number (a difference that sits on a rounding tie at four decimals
+    otherwise shows as -0.0125 in one place and -0.0126 in another)."""
+    f = df.select_dtypes("float").columns
+    df[f] = df[f].round(7)
+    return df
+
+
 def fmt(x, n=4):
     return "n/a" if x is None or not np.isfinite(x) else f"{x:+.{n}f}"
 
@@ -330,20 +339,21 @@ def main():
 
     status = status_table(root, sets, a.previous if Path(a.previous).is_dir() else None); w(status, "v5_status.tsv")
     mstat = method_status(root, sets); w(mstat, "v5_method_status.tsv")
-    rmse = rmse_table(root, sets); w(rmse, "v5_rmse.tsv")
+    rmse = r7(rmse_table(root, sets)); w(rmse, "v5_rmse.tsv")
     bp = rmse[rmse["method"] == "bp_rna"].drop(columns="method"); w(bp, "v5_bayesprism.tsv")
     common = common_set(rmse)
-    rank, rule = ranking_and_rule(rmse, common); w(rank, "v5_ranking.tsv"); w(rule, "v5_corrector_rule.tsv")
-    marm = method_arm_rmse(rmse, common); w(marm, "v5_method_arm_rmse.tsv")
+    rank, rule = ranking_and_rule(rmse, common); rank, rule = r7(rank), r7(rule)
+    w(rank, "v5_ranking.tsv"); w(rule, "v5_corrector_rule.tsv")
+    marm = r7(method_arm_rmse(rmse, common)); w(marm, "v5_method_arm_rmse.tsv")
     content = {s: ss.expressed_genes(str(root / s / "A" / "reference")) for s in sets
                if (root / s / "A" / "reference" / "reference_counts.mtx").exists()}
     if content:
         mc = pd.concat([c.assign(reference=s) for s, c in content.items()])[
             ["reference", "cell_type", "n_cells", "mean_expressed_genes", "mrna_rank", "mean_total_counts", "counts_rank"]]
         w(mc, "v5_mrna_content.tsv")
-    drv = driver_tables(root, sets, content); w(drv, "v5_driver.tsv")
+    drv = driver_tables(root, sets, content); drv = r7(drv) if len(drv) else drv; w(drv, "v5_driver.tsv")
     lib, libsum = arm_library(root, sets); w(lib, "v5_arm_library_size.tsv"); w(libsum, "v5_arm_library_size_summary.tsv")
-    prev = vs_previous(rmse, a.previous); w(prev, "v5_vs_20261111.tsv")
+    prev = vs_previous(rmse, a.previous); prev = r7(prev) if len(prev) else prev; w(prev, "v5_vs_20261111.tsv")
     runs = run_settings(root, sets); w(runs, "v5_run_settings.tsv")
 
     # ---------------------------------------------------------------- summary.txt

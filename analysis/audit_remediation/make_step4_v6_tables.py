@@ -321,11 +321,18 @@ def main():
 
     # seven decimals, so a number rounded again for the text or a figure label is the number itself rounded once
     w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.7f")
-    floor = floor_table(panel, sets); w(floor, "v6_floor.tsv")
+    def r7(df):
+        """Round the float columns to the seven decimals the tables are written with, so the summary below, the
+        figures and the results text all format the same stored number."""
+        f = df.select_dtypes("float").columns
+        df[f] = df[f].round(7)
+        return df
+
+    floor = r7(floor_table(panel, sets)); w(floor, "v6_floor.tsv")
     status = status_table(panel, sets); w(status, "v6_status.tsv")
-    prev = vs_previous(panel, previous, sets); w(prev, "v6_vs_20261108.tsv")
-    att = attention_types(panel, previous); w(att, "v6_heart_hypoth_types.tsv")
-    dw = dwls_table(panel, previous, sets); w(dw, "v6_dwls_setting.tsv")
+    prev = vs_previous(panel, previous, sets); prev = r7(prev) if len(prev) else prev; w(prev, "v6_vs_20261108.tsv")
+    att = attention_types(panel, previous); att = r7(att) if len(att) else att; w(att, "v6_heart_hypoth_types.tsv")
+    dw = r7(dwls_table(panel, previous, sets)); w(dw, "v6_dwls_setting.tsv")
     runs = run_settings(panel, sets); w(runs, "v6_run_settings.tsv")
     bc = panel / "build_check.tsv"
     if bc.exists():

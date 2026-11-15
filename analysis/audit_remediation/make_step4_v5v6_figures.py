@@ -225,7 +225,7 @@ def fig_v6_types(rec, fig):
     xmin = min(0.9, float(np.floor(vals.min() * 20) / 20)) - 0.008        # room for a dot at the lowest value
     # one panel under the other: the type names are long and would run into a panel placed beside them
     f, axes = plt.subplots(len(sets), 1, figsize=(7.6, 0.31 * sum(n) + 1.5 * len(sets) + 0.6), squeeze=False,
-                           gridspec_kw={"height_ratios": n, "hspace": 0.42 if len(sets) > 1 else 0})
+                           gridspec_kw={"height_ratios": n, "hspace": 0.2 if len(sets) > 1 else 0})
     for k, (ax, s) in enumerate(zip(axes[:, 0], sets)):
         d = t[t["set"] == s].copy()
         d["key"] = d["r_now"].fillna(d["r_20261108"])
@@ -245,7 +245,7 @@ def fig_v6_types(rec, fig):
         ax.set_xlim(xmin, 1.004); ax.grid(axis="y", visible=False)
         if xmin < 0.85:
             ax.axvline(0.85, color=fs.ORANGE, linewidth=1.2, zorder=1)
-            ax.text(0.851, len(d) - 0.45, " 0.85", ha="left", va="top", fontsize=7.5, color=fs.INK2)
+            ax.text(0.851, len(d) - 0.45, " floor 0.85", ha="left", va="top", fontsize=7.5, color=fs.INK2)
         if k == len(sets) - 1:
             ax.set_xlabel("Pearson r between true and estimated fraction, BayesPrism (50 mixtures)")
         ax.set_title(s.replace("_holdout", " holdout: every cell type"), pad=26 if k == 0 else 8)
