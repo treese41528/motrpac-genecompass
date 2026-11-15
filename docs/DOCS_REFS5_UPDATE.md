@@ -115,7 +115,8 @@ Augur 0.82; 9,060 embedded, 22 LUNG dropped.
 
 - **Backup** before the first edit: `manuscript/_pre_refs5_backup_20261115/` (the `.tex`, `make_figures.py`,
   `figures/`, and the PDF of 2026-11-13).
-- **How it was edited.** Section texts in `tmp/docs_refs5/ms/*.tex` (worktree scratch), applied by
+- **How it was edited.** Section texts in `tmp/docs_refs5/ms/*.tex` (worktree scratch; not committed,
+  because manuscript text does not go into tracked files), applied by
   `tmp/docs_refs5/apply_manuscript.py`, which starts from the backup and replaces ranges between markers
   that must each match once.
 - **Figures.** `make_figures.py` was changed: paths to the refs5 inputs (mixture panel, SimBu record, decoy
@@ -128,12 +129,20 @@ Augur 0.82; 9,060 embedded, 22 LUNG dropped.
   - Job 12392480: **compiled**, 31 pages. Log: no undefined reference, no undefined citation, no missing
     figure. Two overfull boxes above 10 pt: Table "Blocks with the most dose-significant genes" (53 pt) and
     the Data-availability paragraph (25 pt; that paragraph is unchanged from the backup).
-  - Job 12392491, the PDF now in `manuscript/`: **compiled**, 31 pages, after narrowing that table. Log: no
-    undefined reference, no undefined citation, no missing figure, no multiply defined label. One overfull
-    box above 10 pt remains, in the unchanged Data-availability paragraph. One font warning remains (bold
-    small caps, from section titles and a caption that the backup also has).
-  - Job 12392503 rendered the pages to PNG and extracted the text, to look at the tables and to search for
-    unresolved references. PAGES_OUTCOME_PLACEHOLDER
+  - Job 12392491: **compiled**, 31 pages, after narrowing that table.
+  - Job 12392508, **the PDF now in `manuscript/`** (after two last wording changes; `.tex` md5 `3954acbf...`,
+    PDF md5 `b363f042...`): **compiled**, 31 pages. Log: no undefined reference, no undefined citation, no
+    missing figure, no multiply defined label. One overfull box above 10 pt remains, in the unchanged
+    Data-availability paragraph. One font warning remains (bold small caps, from a section title and a
+    caption that the backup also has).
+  - **The pages were not looked at as rendered pages.** Jobs 12392503 and 12392509 were to render them to
+    PNG; the compute nodes have neither `pdftoppm` nor `gs`, so they wrote nothing. Job 12392558 extracted
+    the PDF's text with pypdf instead: 31 pages, no "??" (no unresolved reference or citation), captions of
+    all 9 tables and 5 figures present, no empty page. I read the extracted text of the three new or rebuilt
+    tables (the nine readings, the blocks with the most calls, the perturbation criteria): rows and columns
+    come out as written. The five figures were looked at as PNG.
+- **Tests.** The offline suite on this branch at `f41702c` (job 12392517): 462 passed, 0 failed, 22
+  deselected (the data and network tests). The data tests were not run.
 - **Numbers.** Where the results files give a number it is theirs. Numbers they do not print were read from
   the refs5 tables on disk and are listed in section 5.
 
