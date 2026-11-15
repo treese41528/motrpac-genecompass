@@ -73,21 +73,35 @@ def v5_section(rec):
         L += [f"**INCOMPLETE.** {scored} of {n_runs} method runs are scored over {n_ref} of 15 references "
               f"({na} not applicable, {failed} failed, {notrun} not run yet). The readings below cover the runs that "
               "exist and will change when the rest finish.", ""]
-    # ---- lead
+    # ---- lead: the readings, then what the corrector verdict rests on (from the table of error by arm)
     lead = []
     if len(b):
+        neg = b[b["d_rmse_B_minus_A"] <= 0]["reference"].tolist()
         lead.append(f"Against a baseline with no mRNA bias, BayesPrism's error against cell fractions is higher under the "
-                    f"references' native bias on {int((b['d_rmse_B_minus_A'] > 0).sum())} of {len(b)} references "
-                    f"(mean RMSE {num(b['rmse_A'].mean(), 4)} without bias, {num(b['rmse_B'].mean(), 4)} with the native bias, "
-                    f"{num(c['rmse_C'].mean(), 4)} with the added bias)")
+                    f"references' native bias on {int((b['d_rmse_B_minus_A'] > 0).sum())} of {len(b)} references and under the "
+                    f"added bias on {int((c['d_rmse_C_minus_A'] > 0).sum())} of {len(c)} (mean pooled RMSE "
+                    f"{num(b['rmse_A'].mean(), 4)} without bias, {num(b['rmse_B'].mean(), 4)} with the native bias, "
+                    f"{num(c['rmse_C'].mean(), 4)} with the added bias)."
+                    + (f" On {' and '.join(neg)} it is lower with the native bias than without." if neg else ""))
     if r_ca is not None and len(r_ca):
         v = r_ca.iloc[0]
-        lead.append(f"the registered corrector rule on arm C minus arm A is **{v['verdict']}** over the {int(v['n_common'])} "
-                    f"references every method ran")
-    if r_cb is not None and len(r_cb):
-        lead.append(f"the 2026-11-11 reading (arm C minus arm B) is **{r_cb.iloc[0]['verdict']}** on these references")
+        txt = (f"The registered corrector rule on arm C minus arm A is **{v['verdict']}** over the {int(v['n_common'])} "
+               f"references every method ran")
+        if marm is not None and len(marm) and r_cb is not None and len(r_cb):
+            m = marm.set_index("method"); w = r_cb.iloc[0]
+            worst_in_a = [k for k in ("music", "dwls") if k in m.index and m.loc[k, "mean_rmse_A"] > max(m.loc[k, "mean_rmse_B"], m.loc[k, "mean_rmse_C"])]
+            if v["verdict"] == "reproduced" and "music" in worst_in_a:
+                names = " and ".join(NAMES[k] for k in worst_in_a)
+                txt += (f", but not because MuSiC withstands the added bias: {names} {'is' if len(worst_in_a) == 1 else 'are'} "
+                        f"closest to cell fractions in arm B and furthest in arm A, so {'its' if len(worst_in_a) == 1 else 'their'} "
+                        f"arm C minus arm A difference is negative. From arm B to arm C, the 2026-11-11 reading, the rule is "
+                        f"**{w['verdict']}**: MuSiC loses {sgn(w['music'])} and DWLS {sgn(w['dwls'])}, against BayesPrism's "
+                        f"{sgn(w['bp_rna'])}")
+            else:
+                txt += f". The 2026-11-11 reading (arm C minus arm B) is **{w['verdict']}** on these references"
+        lead.append(txt + ".")
     if lead:
-        L += ["**Result.** " + "; ".join(lead) + ".", ""]
+        L += ["**Result.** " + " ".join(lead), ""]
 
     # ---- what ran
     L += ["### What ran", ""]

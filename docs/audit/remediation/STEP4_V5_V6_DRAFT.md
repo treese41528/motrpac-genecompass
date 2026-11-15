@@ -1,12 +1,11 @@
 # Step 4, V5 and V6: draft
 
 Draft for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) and V6 (mixture panel, findings
-5.5 and 5.6).
+5.5 and 5.6). Both batteries are finished: every registered run was made, none failed and none was retried.
 
-- **Results** come first. They are written from the record tables by one command (see "Commands") and say
-  plainly which runs are finished.
-- **Then** what the results do not show, the notes that settled open points before any result existed, the
-  settings, the smoke run, the jobs and the code changes.
+- **Results** come first. They are written from the record tables by one command (see "Commands").
+- **Then** what the results mean and do not show, the notes that settled open points before any result
+  existed, the settings, the smoke run, the jobs and the code changes.
 
 <!-- RESULTS:BEGIN -->
 
@@ -21,6 +20,49 @@ No table yet: the battery has not been summarised (`make_step4_v5_tables.py`).
 No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
 
 <!-- RESULTS:END -->
+
+## Reading the results
+
+### V5: what the three arms say together
+
+- **BayesPrism's error against cell fractions grows with the bias in the mixtures**, as it should for a method
+  that estimates shares of RNA: lowest without bias, higher with the references' own library-size differences,
+  highest with the added factor. The rise from arm A to arm B is the part the battery of 2026-11-11 could not
+  see, because its baseline was arm B.
+- **Two references go the other way from arm A to arm B: BAT and BLOOD.** In BAT the cell types differ by
+  1.08-fold in library size, so arm B carries almost no bias between types, and what arm A changes is the
+  weighting of cells within a type (note N14). There BayesPrism underestimates brown adipocytes in arm A (true
+  mean 0.185, estimated 0.111) and less so in arm B (0.168). The battery cannot say how much of any other
+  reference's arm A to arm B difference is this same within-type effect.
+- **The corrector rule is met on arm C minus arm A for a reason the rule was not written for.** MuSiC and DWLS
+  convert RNA shares to cell shares with the reference's library sizes. That is right when the mixture carries
+  the reference's own differences (arm B, where their error is lowest), too much when the mixture carries none
+  (arm A, where it is highest), and not enough when a further factor is added (arm C). Their arm C minus arm A
+  difference is negative because arm A is their worst case. SCDC is the only method of the two named in the
+  rule whose difference is positive and still below BayesPrism's and CIBERSORTx's.
+- **From arm B to arm C nothing changed since 2026-11-11.** Every method but Bisque loses 0.022 to 0.028, the
+  rule is not met, and BayesPrism's values on the 13 unchanged references move by at most 0.0005 (the new
+  exclusion list).
+- **What stands for the pipeline.** BayesPrism does not correct mRNA-content differences, native or added.
+  MuSiC and DWLS recover cell fractions under the native differences and are not protected against a factor
+  their reference does not contain. "MuSiC and SCDC correct mRNA-content bias and BayesPrism and CIBERSORTx do
+  not" holds here only in the first sense, and for SCDC only weakly: its error in arm B is no lower than
+  BayesPrism's.
+
+### V6: what the panel says
+
+- **Every set meets the registered floor**, and no set moved by more than 0.004 against the panel of
+  2026-11-08. On the 17 sets whose mixtures are byte-identical to that panel's, the only change is the exclusion
+  list.
+- **HEART and HYPOTH**, the two references whose labels changed, recover every benchmarked type at r 0.89 or
+  above. In HYPOTH the re-annotation removed the weakest type of the earlier panel: glutamatergic neurons were
+  at 0.850 beside a separate GABAergic label and are at 0.991 now. The broader "Neurons" label is lower than
+  before (0.957 against 0.978), and the new ependymal label is the lowest of the reference (0.955).
+- **The weak types are the earlier ones.** Six type tests are below 0.85: LIVER hepatocytes, OVARY erythroid
+  cells, HIPPOC_cross excitatory neurons, and three KIDNEY_cross types. KIDNEY_cross keeps a pooled r of 0.17
+  for BayesPrism: absolute kidney fractions across studies remain unusable, as before.
+- **The DWLS correction changes little.** `mast_optimized` at p 0.05 gives the same medians as `mast` at p 0.01
+  to within 0.01 on every set, in about a fifth of the time.
 
 ## What the results do not show
 
@@ -265,6 +307,30 @@ from and any modified tracked file. Three lanes, so at most three of these jobs 
 | tables | 12380299 | the three table and figure commands, after D, E and F |
 | smoke tables | 12380311 | regression of `simbu_summary.py` and `mixture_panel_summary.py` against their committed records; tables of the smoke runs |
 
+**Outcome.** All of them completed.
+
+| Job | Ran (2026-11-14 to 15) | Tasks, all with exit status 0 | Peak memory |
+|---|---|---|---|
+| build 12380292 | 17:18 to 17:32 | both batteries built | - |
+| A 12380293 | 18:05 to 22:44 | 64 | 46 GB |
+| B 12380294 | 17:39 to 22:52 | 109 | 336 GB |
+| C 12380295 | 17:42 to 22:56 | 64 | 261 GB |
+| D 12380296 | 23:29 to 00:51 | 9 | 347 GB |
+| E 12380297 | 23:29 to 00:39 | 7 | 211 GB |
+| F 12380298 | 23:29 to 00:17 | 3 | 208 GB |
+
+- 256 deconvolution runs wrote a provenance record (180 in V5, 76 in V6). Every one names commit `631fde0`
+  and no modified tracked file (`record/step4/v5_simbu/v5_run_settings.tsv`,
+  `record/step4/v6_mixture_panel/v6_run_settings.tsv`).
+- No task failed, none ran out of memory or time, and no registered retry was used. MuSiC and Bisque gave no
+  output on HYPOTH, OVARY and SPLEEN, whose references hold one sample: the registered "not applicable" case
+  (18 runs in V5, 6 in V6).
+- The smoke runs and the full runs of TESTES give byte-identical estimates for all six methods on the four
+  TESTES sets, CIBERSORTx included (`record/step4/smoke/smoke_vs_full_TESTES.tsv`). This is a run-to-run check
+  on one reference only.
+- The final tables and figures were built by job 12392329 (commit `0eccbdd`, 2026-11-15), after two rebuilds
+  that changed only how the tables are written (readable type names from the DWLS guard, seven decimals).
+
 **Scheduling change, 2026-11-14 16:32, before any of these jobs had started.** The partition was saturated
 (about 250 eligible jobs of other groups at the same or higher priority) and the build job had waited an hour.
 Jobs A, B and C were made eligible at once instead of after the build job: the first task to run in any of them
@@ -288,3 +354,10 @@ MuSiC, SCDC, Bisque and CIBERSORTx on both; job 12382534 holds the three V5 HEAR
 limit). They call the same task script with the same settings. A task that is done is skipped, and a task that
 another job is running is skipped (a lock per set and method group), so no task runs twice. The long jobs stay
 queued for the DWLS tasks and for anything the short packs do not finish.
+
+**The short packs never ran.** Jobs B, C and A started at 17:39, 17:42 and 18:05, before any short pack. The
+array and job 12382534 were then put on hold, so that three jobs held GPU slots and not five. Every task they
+list was done by jobs A to C. They are still in the queue on hold and should be cancelled, not released: a
+released pack would skip the finished tasks but would rerun MuSiC, SCDC and Bisque on the nine V5 sets and
+three V6 sets of the one-sample references (those have no "done" marker, because two of the three methods give
+no output there) and overwrite their records.

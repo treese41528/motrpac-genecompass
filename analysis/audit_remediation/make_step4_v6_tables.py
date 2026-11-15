@@ -405,6 +405,9 @@ def main():
         L.append(f"scored {len(d)} of {len(dw)} sets; median per-type r {d['median_r_mast_optimized_p0.05'].min():.3f} to "
                  f"{d['median_r_mast_optimized_p0.05'].max():.3f}; change against 2026-11-08 "
                  f"{both['median_change'].min():+.3f} to {both['median_change'].max():+.3f} over {len(both)} sets")
+        if "minutes" in d and d["minutes"].notna().any():
+            L.append(f"signature build and deconvolution, minutes per set {d['minutes'].min():.1f} to {d['minutes'].max():.1f}, "
+                     f"total {d['minutes'].sum():.0f} over {int(d['minutes'].notna().sum())} sets")
         if "setting_recorded" in d:
             L.append("settings recorded: " + "; ".join(f"{k} ({v} sets)" for k, v in d["setting_recorded"].value_counts().items()))
         if "guard_fired_for" in d:

@@ -26,6 +26,8 @@ Tables (all TSV, under --out):
                            each arm; which method is scored in which arm
   v5_rmse.tsv              per reference and method: pooled RMSE and r in A, B, C and the three differences
   v5_bayesprism.tsv        the BayesPrism rows of v5_rmse.tsv (readings 1 and 2)
+  v5_bayesprism_per_type.tsv  BayesPrism per reference and cell type: true mean cell fraction, and the mean
+                           estimate, RMSE and r in each arm
   v5_method_status.tsv     per reference, arm and method: scored, not applicable (MuSiC and Bisque on a one-sample
                            reference), failed (with the runner's message) or not run
   v5_ranking.tsv           per contrast and method: mean difference on the common set, over all scored, counts
@@ -159,6 +161,27 @@ def rmse_table(root, sets):
             row["status"] = "ok" if not missing else "not scored in " + ",".join(missing)
             rows.append(row)
     return pd.DataFrame(rows)
+
+
+def per_type_table(root, sets, method="bp_rna"):
+    """One method's per-type scores in the three arms, side by side."""
+    rows = []
+    for s in sets:
+        t = {a: ss.pertype(str(root / s / a), method) for a in ARMS}
+        types = [x for x in (t["A"].index if t["A"] is not None else [])]
+        for a in ARMS[1:]:
+            types += [x for x in (t[a].index if t[a] is not None else []) if x not in types]
+        for ct in types:
+            row = {"reference": s, "cell_type": ct}
+            for a in ARMS:
+                has = t[a] is not None and ct in t[a].index
+                if has and "true_mean" not in row:
+                    row["true_mean"] = t[a].loc[ct, "true_mean"]
+                for col, name in (("est_mean", "est"), ("rmse", "rmse"), ("pearson_r", "r")):
+                    row[f"{name}_{a}"] = t[a].loc[ct, col] if has else np.nan
+            rows.append(row)
+    cols = ["reference", "cell_type", "true_mean"] + [f"{n}_{a}" for n in ("est", "rmse", "r") for a in ARMS]
+    return pd.DataFrame(rows, columns=cols)
 
 
 def common_set(rmse):
@@ -341,6 +364,7 @@ def main():
     mstat = method_status(root, sets); w(mstat, "v5_method_status.tsv")
     rmse = r7(rmse_table(root, sets)); w(rmse, "v5_rmse.tsv")
     bp = rmse[rmse["method"] == "bp_rna"].drop(columns="method"); w(bp, "v5_bayesprism.tsv")
+    w(r7(per_type_table(root, sets)), "v5_bayesprism_per_type.tsv")
     common = common_set(rmse)
     rank, rule = ranking_and_rule(rmse, common); rank, rule = r7(rank), r7(rule)
     w(rank, "v5_ranking.tsv"); w(rule, "v5_corrector_rule.tsv")

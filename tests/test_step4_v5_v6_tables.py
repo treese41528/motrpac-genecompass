@@ -110,6 +110,10 @@ def test_v5_readings_on_a_made_up_battery(tmp_path, monkeypatch, capsys):
     ms = pd.read_csv(out / "v5_method_status.tsv", sep="\t").set_index(["reference", "arm", "method"])["status"]
     assert len(ms) == 54 and (ms == "scored").sum() == 48
     assert ms[("R3", "A", "music")] == "not run"                 # no score and no record of a run
+    pt = pd.read_csv(out / "v5_bayesprism_per_type.tsv", sep="\t").set_index(["reference", "cell_type"])
+    assert len(pt) == 6 and pt.loc[("R1", "Hepatocytes"), "true_mean"] == 0.3
+    assert pt.loc[("R1", "Hepatocytes"), "est_A"] == pytest.approx(0.31) and pt.loc[("R1", "Hepatocytes"), "est_C"] == pytest.approx(0.37)
+    assert pt.loc[("R3", "Hepatocytes"), "rmse_B"] == pytest.approx(0.045) and pt.loc[("R1", "T cells"), "r_A"] == 0.99
     ma = pd.read_csv(out / "v5_method_arm_rmse.tsv", sep="\t").set_index("method")
     assert ma.loc["music", "n_references"] == 2 and ma.loc["music", "mean_rmse_B"] == pytest.approx(0.012)
     assert ma.loc["bp_rna", "n_lowest_in_A"] == 2 and ma.loc["bp_rna", "n_lowest_in_B"] == 0   # R3 is not in the common set
