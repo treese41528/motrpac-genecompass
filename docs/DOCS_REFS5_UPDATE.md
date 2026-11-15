@@ -301,3 +301,35 @@ printed by the re-executed notebooks.
   controls are flat or down in the rat bulk (Hspa1b -0.96)". For (ii) I could not tell whether the bulk
   identifier printed as Hspa1b is the consortium's gene, given the identifier drift of STEP5 M3. If you want
   either back, it needs recomputing on refs5.
+
+## 6. After the merge (2026-11-15, by the session that ran the remediation)
+
+The branch was merged into `aim2b-perturbation-engine` as `2ee8530`. What follows was done after the report
+above was written; where the two disagree, this section is the later one.
+
+- **The six inconsistencies in the results files** (section 5) are corrected in `f2796d9`. No number changed.
+  The file-walk placeholder in `STEP5_RESULTS.md` is filled from its record; the sentence in `STEP4_RESULTS.md`
+  now says 0.5% of a mixture is below SKMVL tenocytes' abundance; `STEP3_RESULTS.md` says what "current
+  default" means in that file.
+- **The eight docstrings and help strings** listed under "What I did not change" name the refs5 default since
+  `36abb41`. Text only; the files compile and the test suite passes.
+- **The preprint's pages were looked at.** No page renderer is installed on the cluster (the `ghostscript`
+  module points at a folder that does not exist), so `pypdfium2` was installed into a scratch folder, not
+  into the project environment, and removed afterwards. Pages 1, 12, 14, 16 and 20 were rendered: the
+  abstract, Fig. 3, the table of nine readings, the table of calls, and Fig. 5. Nothing overflows or overlaps
+  a neighbour.
+- **Table "Every called block against the nine registered readings"** was checked cell by cell against
+  `record/step3/downstream/called_blocks_all_readings.tsv`: all 12 rows agree, including the counts passed.
+- **One row of the table of calls was changed.** The pair counts of cortex, hippocampus and hypothalamus
+  (3 / 2 / 0) sat in the second column; they are now in the first, as in every other row.
+- **Final compile**, job 12392568: 31 pages, three passes, no undefined reference or citation, no missing
+  figure; the one overfull box (25 pt) is in the unchanged Data-availability paragraph. This is the PDF in
+  `manuscript/` (`.tex` md5 `fcc86832...`, PDF md5 `84aec908...`).
+- **Tests on the merged tree**, job 12392569 at `2ee8530`: offline 461 passed, 1 skipped; data 15 passed.
+- **Where the preprint's edit record is.** The side worktree is removed, so the paths `tmp/docs_refs5/...`
+  above no longer exist. The section texts, `apply_manuscript.py` and the notebook edit scripts are in
+  `manuscript/_refs5_edit_record_20261115/` (gitignored, like the rest of `manuscript/`), with the table row
+  above applied to `ms/03_results.tex`.
+- **What stays as written in section 5.** The eight phrasings flagged for the PI, the numbers read from tables
+  rather than from the results files, and the two removed post-hoc parenchyma analyses are open as stated.
+  `docs/audit/remediation/README.md` now lists the analyses that were not repeated on refs5.

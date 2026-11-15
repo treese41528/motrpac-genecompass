@@ -49,7 +49,7 @@ reason for every choice and the evidence behind it.
 | 5 | Corpus and model findings: measure and disclose | 1.1, 1.2, 1.3, 1.5, 1.6, 1.7, 2.5, 2.6, 3.4, 3.5 | **Done** | [`STEP5_PREREG.md`](STEP5_PREREG.md), [`STEP5_RESULTS.md`](STEP5_RESULTS.md) |
 | 6 | Records, tests, hygiene | 1.10, 2.4, 2.7, 3.7, 4.10, 5.8, 6.7, 8.6, 9.4, 9.6, cross-stage | **Done; every change checked output-neutral** | [`STEP6_HYGIENE.md`](STEP6_HYGIENE.md) |
 | - | What an expert should review | 4.2, 4.6 and what the steps turned up | **Written** | [`LABEL_REVIEW_PLAN.md`](LABEL_REVIEW_PLAN.md) |
-| - | Living documents, notebooks and the preprint brought to refs5 | - | In progress | `docs/DOCS_REFS5_UPDATE.md` |
+| - | Living documents, notebooks 8-12 and the preprint brought to refs5 | - | **Done** | [`docs/DOCS_REFS5_UPDATE.md`](../../DOCS_REFS5_UPDATE.md) |
 
 ## Where the work departs from the plan agreed on 2026-11-14
 
@@ -66,6 +66,20 @@ Each departure was found on re-opening the evidence. Each is conservative and is
 | Step 4 V3: series-level exclusions for the held-out set | File-level rules as well (not rat, not raw counts, duplicate), fixed before any loss was computed | Reading the files showed series-level rules let non-rat matrices, non-count tables and a second deposit through |
 | Step 4 V4: the myeloid replication "is scored" | Its scoring rule was registered in an addendum before any perturbation ran | The 2026-07-03 registration froze no null for it |
 | - | A descriptive check of whether the technical covariates differ between training groups, made after the DE robustness result | To help read that result. It is labelled as not registered |
+
+## What was not repeated on refs5
+
+These analyses sit outside the registered rerun (Stages 8-14) and the six validations. Each was last run on
+an earlier default, and the documents that report them now say so. None was rerun without a registration.
+
+| Analysis | Last run on | Where it is reported |
+|---|---|---|
+| Projection onto the Tabula Sapiens atlas (E.3) | The default of 2026-11-04 (9 hotspots) | `translation/ATLAS_PROJECTION_16_RESULTS.md` |
+| Comparison of the DE with the published MoTrPAC results | The June references, with a section on the default of 2026-11-01 | `deconvolution/AIM2_DE_MOTRPAC_COMPARISON.md` |
+| Second heart reference check (`REFERENCE_RELABEL_PREREG.md` §15) | references_v4, the HEART reference before its merge | `docs/OPEN_FRONTIER.md` |
+| The BLOOD composite's checks | references_v4; the composite is byte-identical in references_v5, the exclusion list is not | `docs/OPEN_FRONTIER.md` |
+| Two post-hoc parenchyma analyses of the positive-control miss (bulk-to-parenchyma slope correlation; bulk direction of the canonical controls) | The default before refs5 | Removed from the preprint; they need recomputing to return |
+| Hub strength against the TF's own expression (finding 9.4) | Earlier network arms | Removed from the preprint |
 
 ## How the work was run
 
