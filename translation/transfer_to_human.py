@@ -30,7 +30,8 @@ PARITY  (make-or-break -- verified 2026-06-24)
   ONLY THREE things change vs the rat path: the token dict (human ENSG), the median
   dict (human), and the species token (0, not 2). Empirical grounding:
     * target_sum = deconvolution.pseudocell_target_sum, the rat run's value in every tissue
-      (tokenize_summary.json): v2 6,400, April 6,500 -- each matches its model's corpus value median.
+      (tokenize_summary.json): 6,700 under the default config, April 6,500 -- each set to match its model's
+      corpus value median.
     * 13,883 / 15,234 ortholog-mapped rat genes already carry the SAME GeneCompass token
       ID as their human ortholog (the rat tokens reuse the GC ID space) -> for those the
       transfer reuses the identical token. Human ENSG token IDs are 2..23114, all < the

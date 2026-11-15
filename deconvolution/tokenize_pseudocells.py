@@ -92,7 +92,7 @@ def main():
     ap.add_argument("--out", required=True, help="output dir (writes dataset/ + tokenize_summary.json)")
     ap.add_argument("--target-sum", type=float, default=None,
                     help="per-pseudo-cell library normalization target (default: "
-                    "deconvolution.pseudocell_target_sum -- v2 6,400, April 6,500 -- which calibrates the "
+                    "deconvolution.pseudocell_target_sum -- 6,700 by default, April 6,500 -- which calibrates the "
                     "value distribution to the model's corpus; 6500 if unset). The script prints the achieved "
                     "median -- re-check/adjust per tissue if it drifts from the corpus reference.")
     ap.add_argument("--top-n", type=int, default=TOP_N_DEFAULT)

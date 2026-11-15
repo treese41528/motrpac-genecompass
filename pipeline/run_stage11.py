@@ -14,7 +14,7 @@ borderline / none from the limits of its ideal p (deconvolution/mc_gate.py). The
 q_sup_trained_10k.
 
 The gate folder is the folder of deconvolution.hotspots_table (default config:
-genecompass_input_v2_refs4all_rebuild/gate_rcv10/); the Augur exports go to deconvolution.augur_input_dir.
+genecompass_input_v2_refs5/gate_rcv10/); the Augur exports go to deconvolution.augur_input_dir.
 
 Chain:
   1. embed_qc.py            per-tissue embedding QC (silhouette, kNN purity, value scale)        -> stdout
