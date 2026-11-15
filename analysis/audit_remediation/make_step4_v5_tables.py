@@ -56,7 +56,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "deconvolution" / "omnideconv_bench"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import simbu_summary as ss  # noqa: E402
-from make_step4_v6_tables import n_reference_samples, run_status  # noqa: E402
+from make_step4_v6_tables import deescape, n_reference_samples, run_status  # noqa: E402
 
 ARMS = ["A", "B", "C"]
 ARM_CALL = {"A": {"scaling": "NONE", "remove_bias_in_counts": "TRUE", "remove_bias_in_counts_method": "read-number"},
@@ -295,7 +295,8 @@ def run_settings(root, sets):
                     d = p["method_settings"].get("dwls")
                     if d:
                         row["dwls"] = f"{d['dwls_method']}, p {d['pval_cutoff']}, fold change {d['diff_cutoff']}, {d['ncores']} cores"
-                        row["dwls_guard_fired_for"] = "; ".join(p["in_memory_patches"]["dwls"].get("guard_fired_for", []))
+                        row["dwls_guard_fired_for"] = "; ".join(deescape(x) for x in
+                                                                p["in_memory_patches"]["dwls"].get("guard_fired_for", []))
                     cap = p.get("reference_cap", {})
                     row["cell_cap"] = cap.get("max_cells_per_type"); row["cap_seed"] = cap.get("seed")
                     row["result"] = "; ".join(f"{m}: {v.get('status')}" for m, v in (p.get("method_result") or {}).items())
@@ -324,7 +325,8 @@ def main():
     sets = references(root)
     if not sets:
         sys.exit(f"no references with arms A, B or C under {root}")
-    w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.5f")
+    # seven decimals, so a number rounded again for the text or a figure label is the number itself rounded once
+    w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.7f")
 
     status = status_table(root, sets, a.previous if Path(a.previous).is_dir() else None); w(status, "v5_status.tsv")
     mstat = method_status(root, sets); w(mstat, "v5_method_status.tsv")

@@ -55,6 +55,26 @@ PROV = {"bp_rna": "provenance_run_deconvolution.json", "dwls": "provenance_run_o
         "bisque": "provenance_run_omnideconv_music+scdc+bisque.json", "cibersortx": "provenance_run_omnideconv_cibersortx.json"}
 
 
+# omnideconv replaces special characters in cell-type names by fixed tokens before it calls a method and puts them
+# back in what it returns (omnideconv 0.1.1, escape_special_chars). The DWLS guard reports a type from inside
+# DWLS, so its name arrives with the tokens; this puts the characters back for the tables.
+_ESC_SUFFIX = "7f8711ec9bf265fb9bf6ab9c"
+_ESC = {" ": "21b29fb0", "!": "21b29fb1", '"': "21b29fb2", "#": "21b29fb3", "$": "21b29fb4", "%": "21b29fb5",
+        "&": "21b29fb6", "'": "21b29fb7", "(": "21b29fb8", ")": "21b29fb9", "*": "21b29fba", "+": "21b2c6e8",
+        ",": "21b2c6e9", "-": "21b2c756", ".": "21b2c757", "/": "21b2c758", ":": "21b2c759", ";": "21b2c75a",
+        "<": "21b2c75b", "=": "21b2c75c", ">": "21b2c75d", "?": "21b2c75e", "@": "21b2c75f", "[": "21b2c760",
+        "\\": "21b2ee34", "]": "21b2ee35", "^": "21b2ee36", "_": "21b2ee37", "`": "21b2ee38", "\u00b4": "21b2ee39",
+        "{": "21b2ee3a", "|": "21b2ee3b", "}": "21b2ee3c", "~": "21b2ee3d", "\u00a7": "21b2ee3e"}
+
+
+def deescape(name):
+    """'Brown21b29fb07f8711ec9bf265fb9bf6ab9cadipocytes' -> 'Brown adipocytes'."""
+    name = str(name)
+    for ch, tok in _ESC.items():
+        name = name.replace(tok + _ESC_SUFFIX, ch)
+    return name
+
+
 def panel_sets(panel):
     return sorted([p.name for p in Path(panel).iterdir() if p.is_dir() and p.name.endswith(("_holdout", "_cross"))],
                   key=lambda s: (s.endswith("_cross"), s))
@@ -202,7 +222,7 @@ def dwls_table(panel, previous, sets):
                 p = json.load(open(pf))["params"]
                 d = p["method_settings"]["dwls"]
                 row["setting_recorded"] = f"{d['dwls_method']}, p {d['pval_cutoff']}, fold change {d['diff_cutoff']}"
-                row["guard_fired_for"] = "; ".join(p["in_memory_patches"]["dwls"].get("guard_fired_for", []))
+                row["guard_fired_for"] = "; ".join(deescape(x) for x in p["in_memory_patches"]["dwls"].get("guard_fired_for", []))
                 row["minutes"] = (p.get("method_result") or {}).get("dwls", {}).get("minutes")
             except Exception as e:
                 row["setting_recorded"] = f"unreadable provenance: {e}"
@@ -253,7 +273,7 @@ def run_settings(panel, sets):
                 row["exclude_list_md5"] = (p.get("gene_cleanup") or {}).get("exclude_list_md5")
                 patch = (p.get("in_memory_patches") or {}).get("dwls", {})
                 row["dwls_patch_applied"] = "; ".join(f"{k}: {v.get('patched')}" for k, v in (patch.get("applied") or {}).items())
-                row["dwls_guard_fired_for"] = "; ".join(patch.get("guard_fired_for", []))
+                row["dwls_guard_fired_for"] = "; ".join(deescape(x) for x in patch.get("guard_fired_for", []))
                 row["cibersortx_command_patched"] = ((p.get("in_memory_patches") or {})
                                                      .get("cibersortx_container_command", {}).get("applied"))
                 row["result"] = "; ".join(f"{m}: {v.get('status')}" + (f" ({str(v.get('error'))[:80]})" if v.get("error") else "")
@@ -297,7 +317,8 @@ def main():
     finally:
         sys.argv = argv
 
-    w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.5f")
+    # seven decimals, so a number rounded again for the text or a figure label is the number itself rounded once
+    w = lambda df, name: df.to_csv(out / name, sep="\t", index=False, float_format="%.7f")
     floor = floor_table(panel, sets); w(floor, "v6_floor.tsv")
     status = status_table(panel, sets); w(status, "v6_status.tsv")
     prev = vs_previous(panel, previous, sets); w(prev, "v6_vs_20261108.tsv")

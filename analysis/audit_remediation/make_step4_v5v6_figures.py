@@ -223,9 +223,10 @@ def fig_v6_types(rec, fig):
     n = [int((t["set"] == s).sum()) for s in sets]
     vals = pd.concat([t["r_now"], t["r_20261108"]]).dropna()
     xmin = min(0.9, float(np.floor(vals.min() * 20) / 20)) - 0.008        # room for a dot at the lowest value
-    f, axes = plt.subplots(1, len(sets), figsize=(5.6 * len(sets), 0.33 * max(n) + 1.9), squeeze=False,
-                           gridspec_kw={"wspace": 0.75})
-    for ax, s in zip(axes[0], sets):
+    # one panel under the other: the type names are long and would run into a panel placed beside them
+    f, axes = plt.subplots(len(sets), 1, figsize=(7.6, 0.31 * sum(n) + 1.5 * len(sets) + 0.6), squeeze=False,
+                           gridspec_kw={"height_ratios": n, "hspace": 0.42 if len(sets) > 1 else 0})
+    for k, (ax, s) in enumerate(zip(axes[:, 0], sets)):
         d = t[t["set"] == s].copy()
         d["key"] = d["r_now"].fillna(d["r_20261108"])
         d = d.sort_values("key").reset_index(drop=True)
@@ -244,8 +245,10 @@ def fig_v6_types(rec, fig):
         ax.set_xlim(xmin, 1.004); ax.grid(axis="y", visible=False)
         if xmin < 0.85:
             ax.axvline(0.85, color=fs.ORANGE, linewidth=1.2, zorder=1)
-        ax.set_xlabel("Pearson r, true against estimated fraction")
-        ax.set_title(s.replace("_holdout", " holdout: every cell type"), pad=28)
+            ax.text(0.851, len(d) - 0.45, " 0.85", ha="left", va="top", fontsize=7.5, color=fs.INK2)
+        if k == len(sets) - 1:
+            ax.set_xlabel("Pearson r between true and estimated fraction, BayesPrism (50 mixtures)")
+        ax.set_title(s.replace("_holdout", " holdout: every cell type"), pad=26 if k == 0 else 8)
     dot_legend(axes[0][0], [("panel of 2026-11-08", "#7fb0ea", 7.5), ("refs5", "#174a8a", 8)], loc="lower left",
                bbox_to_anchor=(0, 1.01), ncol=2, columnspacing=1.4)
     fs.save(f, fig / "step4_v6_heart_hypoth.png")

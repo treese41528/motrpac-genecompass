@@ -342,3 +342,11 @@ def test_report_without_tables_says_so(tmp_path, monkeypatch, capsys):
     rep.main()
     out = capsys.readouterr().out
     assert out.count("No table yet") == 2
+
+
+def test_cell_type_names_reported_by_the_dwls_guard_get_their_characters_back():
+    tok = "7f8711ec9bf265fb9bf6ab9c"
+    assert v6.deescape(f"Brown21b29fb0{tok}adipocytes") == "Brown adipocytes"
+    assert v6.deescape(f"CD821b2c6e8{tok}21b29fb0{tok}T21b29fb0{tok}cells") == "CD8+ T cells"
+    assert v6.deescape(f"Type21b29fb0{tok}A21b2c756{tok}like21b29fb0{tok}21b29fb8{tok}x21b29fb9{tok}") == "Type A-like (x)"
+    assert v6.deescape("Hepatocytes") == "Hepatocytes"
