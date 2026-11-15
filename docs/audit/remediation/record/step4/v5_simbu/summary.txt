@@ -1,0 +1,112 @@
+V5: SimBu mRNA-content bias with a baseline that has no bias. 15 references under data/deconvolution/simbu_bench_refs5
+
+Arms built for all three: 15/15; one reference across the arms: 15/15; one cell-fraction truth: 15/15; simulate call as registered: A 15/15, B 15/15, C 15/15
+Arms B and C against the nobias and bias mixtures of 2026-11-11, on the 13 references that did not change: B identical 13/13, C identical 13/13
+Method runs scored: 84 of 90 reference x method (all three arms). Not complete: 6
+  HYPOTH   MuSiC      not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+  HYPOTH   Bisque     not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+  OVARY    MuSiC      not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+  OVARY    Bisque     not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+  SPLEEN   MuSiC      not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+  SPLEEN   Bisque     not scored in A,B,C: A not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); B not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a ); C not applicable (one-sample reference; runner message: error in evaluating the argument 'x' in selecting a )
+Method runs by status (reference x arm x method): scored 252, not applicable 18
+
+Check of the arms (mean library size of a cell type's cells as SimBu sums them; largest over smallest across the types of a reference):
+  arm A: 1.0000 to 1.0000 over 15 references
+  arm B: 1.0794 to 28.6686 over 15 references
+  arm C: 1.2006 to 283.2293 over 15 references
+
+== Reading 1. BayesPrism under native bias: RMSE(B) - RMSE(A) is positive on 13 of 15 references ==
+  BAT      A 0.0373  B 0.0145  B-A -0.0228
+  BLOOD    A 0.0487  B 0.0467  B-A -0.0019
+  CORTEX   A 0.0124  B 0.1058  B-A +0.0934
+  HEART    A 0.0061  B 0.0377  B-A +0.0316
+  HIPPOC   A 0.0098  B 0.0582  B-A +0.0484
+  HYPOTH   A 0.0157  B 0.0172  B-A +0.0015
+  KIDNEY   A 0.0149  B 0.0255  B-A +0.0106
+  LIVER    A 0.0216  B 0.0555  B-A +0.0340
+  LUNG     A 0.0147  B 0.0247  B-A +0.0100
+  MUSCLE   A 0.0100  B 0.0209  B-A +0.0109
+  OVARY    A 0.0098  B 0.0602  B-A +0.0504
+  SMLINT   A 0.0275  B 0.0596  B-A +0.0321
+  SPLEEN   A 0.0210  B 0.0467  B-A +0.0258
+  TESTES   A 0.0181  B 0.0770  B-A +0.0589
+  WATSC    A 0.0134  B 0.0395  B-A +0.0262
+  mean +0.0273, median +0.0262, range -0.0228 to +0.0934
+
+== Reading 2. BayesPrism under added bias: RMSE(C) - RMSE(A) is positive on 14 of 15 references ==
+  BAT      A 0.0373  C 0.0210  C-A -0.0162
+  BLOOD    A 0.0487  C 0.0721  C-A +0.0234
+  CORTEX   A 0.0124  C 0.1515  C-A +0.1391
+  HEART    A 0.0061  C 0.0755  C-A +0.0694
+  HIPPOC   A 0.0098  C 0.0856  C-A +0.0758
+  HYPOTH   A 0.0157  C 0.0395  C-A +0.0238
+  KIDNEY   A 0.0149  C 0.0423  C-A +0.0273
+  LIVER    A 0.0216  C 0.0977  C-A +0.0762
+  LUNG     A 0.0147  C 0.0378  C-A +0.0231
+  MUSCLE   A 0.0100  C 0.0463  C-A +0.0363
+  OVARY    A 0.0098  C 0.0930  C-A +0.0832
+  SMLINT   A 0.0275  C 0.0784  C-A +0.0510
+  SPLEEN   A 0.0210  C 0.0798  C-A +0.0588
+  TESTES   A 0.0181  C 0.1028  C-A +0.0846
+  WATSC    A 0.0134  C 0.0571  C-A +0.0437
+  mean +0.0533, median +0.0510, range -0.0162 to +0.1391
+
+== Reading 3. Correctors: the registered rule on RMSE(C) - RMSE(A), mean over the common set ==
+  common set (all three arms): 12 references: BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC
+    DWLS       common -0.0126 (n=12)   all scored -0.0123, median -0.0117 (n=15, 4 > 0)
+    MuSiC      common -0.0070 (n=12)   all scored -0.0070, median +0.0017 (n=12, 7 > 0)
+    Bisque     common +0.0049 (n=12)   all scored +0.0049, median +0.0034 (n=12, 12 > 0)
+    SCDC       common +0.0181 (n=12)   all scored +0.0179, median +0.0209 (n=15, 12 > 0)
+    BayesPrism common +0.0528 (n=12)   all scored +0.0533, median +0.0510 (n=15, 14 > 0)
+    CIBERSORTx common +0.0618 (n=12)   all scored +0.0624, median +0.0524 (n=15, 14 > 0)
+  rule (MuSiC and SCDC both below BayesPrism and CIBERSORTx): REPRODUCED (MuSiC -0.0070, SCDC +0.0181; BayesPrism +0.0528, CIBERSORTx +0.0618; DWLS -0.0126, Bisque +0.0049)
+  dropping one reference at a time gives the same verdict in 12 of 12 cases (descriptive)
+
+   Mean pooled RMSE by arm over the common set (12 references), and the number of references where each arm is the method's lowest (descriptive):
+    BayesPrism A 0.0195  B 0.0471  C 0.0723   lowest in A 10, B 2, C 0
+    CIBERSORTx A 0.0255  B 0.0652  C 0.0873   lowest in A 11, B 1, C 0
+    DWLS       A 0.0505  B 0.0095  C 0.0379   lowest in A 0, B 12, C 0
+    MuSiC      A 0.0531  B 0.0202  C 0.0462   lowest in A 1, B 11, C 0
+    SCDC       A 0.0571  B 0.0536  C 0.0752   lowest in A 7, B 4, C 1
+    Bisque     A 0.0646  B 0.0671  C 0.0695   lowest in A 12, B 0, C 0
+
+   The native bias alone, RMSE(B) - RMSE(A), per method (a ranking; no rule is registered for it):
+  common set (all three arms): 12 references: BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC
+    DWLS       common -0.0410 (n=12)   all scored -0.0407, median -0.0344 (n=15, 0 > 0)
+    MuSiC      common -0.0329 (n=12)   all scored -0.0329, median -0.0262 (n=12, 1 > 0)
+    SCDC       common -0.0035 (n=12)   all scored -0.0037, median +0.0027 (n=15, 8 > 0)
+    Bisque     common +0.0024 (n=12)   all scored +0.0024, median +0.0014 (n=12, 12 > 0)
+    BayesPrism common +0.0276 (n=12)   all scored +0.0273, median +0.0262 (n=15, 13 > 0)
+    CIBERSORTx common +0.0397 (n=12)   all scored +0.0394, median +0.0348 (n=15, 14 > 0)
+
+== Reading 4. The 2026-11-11 readings, RMSE(C) - RMSE(B), on these references ==
+  common set (all three arms): 12 references: BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC
+    Bisque     common +0.0024 (n=12)   all scored +0.0024, median +0.0018 (n=12, 12 > 0)
+    SCDC       common +0.0216 (n=12)   all scored +0.0215, median +0.0156 (n=15, 14 > 0)
+    CIBERSORTx common +0.0221 (n=12)   all scored +0.0230, median +0.0220 (n=15, 15 > 0)
+    BayesPrism common +0.0252 (n=12)   all scored +0.0260, median +0.0254 (n=15, 15 > 0)
+    MuSiC      common +0.0260 (n=12)   all scored +0.0260, median +0.0221 (n=12, 12 > 0)
+    DWLS       common +0.0284 (n=12)   all scored +0.0283, median +0.0240 (n=15, 15 > 0)
+  rule (MuSiC and SCDC both below BayesPrism and CIBERSORTx): NOT REPRODUCED (MuSiC +0.0260, SCDC +0.0216; BayesPrism +0.0252, CIBERSORTx +0.0221; DWLS +0.0284, Bisque +0.0024)
+  dropping one reference at a time gives the same verdict in 12 of 12 cases (descriptive)
+  BayesPrism RMSE(C) - RMSE(B) is positive on 15 of 15 references
+  BayesPrism's driver (C-B) is the highest-mRNA type (expressed genes) on 10 of 15 references; highest by total counts on 9 of 15
+  BayesPrism's driver (C-A) is the highest-mRNA type (expressed genes) on 10 of 15 references; highest by total counts on 10 of 15
+  BayesPrism's driver (B-A) is the highest-mRNA type (expressed genes) on 10 of 15 references; highest by total counts on 13 of 15
+    BAT      Brown adipocytes                     rank 6/6 (counts 6) inflated true 0.185 est 0.168 -> 0.215
+    BLOOD    Plasmacytoid dendritic cells         rank 1/13 (counts 1) inflated true 0.084 est 0.174 -> 0.230
+    CORTEX   Excitatory neurons                   rank 1/12 (counts 1) inflated true 0.092 est 0.354 -> 0.493
+    HEART    Cardiomyocytes                       rank 1/15 (counts 1) inflated true 0.064 est 0.178 -> 0.303
+    HIPPOC   Dentate gyrus granule cells          rank 1/11 (counts 1) inflated true 0.111 est 0.218 -> 0.284
+    HYPOTH   Glutamatergic neurons                rank 1/11 (counts 1) inflated true 0.107 est 0.132 -> 0.185
+    KIDNEY   Proximal tubule cells                rank 3/15 (counts 3) inflated true 0.063 est 0.098 -> 0.149
+    LIVER    NK cells                             rank 1/8 (counts 1) inflated true 0.142 est 0.268 -> 0.351
+    LUNG     Alveolar macrophages                 rank 5/21 (counts 3) inflated true 0.045 est 0.074 -> 0.129
+    MUSCLE   Skeletal muscle cells                rank 1/9 (counts 1) inflated true 0.113 est 0.159 -> 0.224
+    OVARY    Luteal cells                         rank 1/18 (counts 1) inflated true 0.059 est 0.250 -> 0.373
+    SMLINT   Transit-amplifying cells             rank 3/13 (counts 2) inflated true 0.087 est 0.161 -> 0.213
+    SPLEEN   Erythroid progenitors                rank 1/14 (counts 1) inflated true 0.066 est 0.130 -> 0.212
+    TESTES   Condensed spermatids                 rank 6/6 (counts 4) deflated true 0.179 est 0.133 -> 0.088
+    WATSC    Cycling cells                        rank 1/13 (counts 2) inflated true 0.080 est 0.130 -> 0.161
+  Against 2026-11-11 (BayesPrism, C - B here, bias - nobias then): largest absolute change 0.0074 over 15 references (0.0005 over the 13 whose reference did not change)

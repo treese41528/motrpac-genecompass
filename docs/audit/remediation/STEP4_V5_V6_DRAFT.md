@@ -9,15 +9,214 @@ Draft for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) a
 
 <!-- RESULTS:BEGIN -->
 
-*This part is written by `analysis/audit_remediation/make_step4_v5v6_report.py` from the record tables (last run 2026-11-14). Paths are relative to `docs/audit/remediation/`.*
+*This part is written by `analysis/audit_remediation/make_step4_v5v6_report.py` from the record tables (last run 2026-11-15). Paths are relative to `docs/audit/remediation/`.*
 
 ## V5 results: mRNA-content bias against a baseline that has no bias
 
-No table yet: the battery has not been summarised (`make_step4_v5_tables.py`).
+**Result.** Against a baseline with no mRNA bias, BayesPrism's error against cell fractions is higher under the references' native bias on 13 of 15 references and under the added bias on 14 of 15 (mean pooled RMSE over the 15 references: 0.0187 without bias, 0.0460 with the native bias, 0.0720 with the added bias). On BAT and BLOOD it is lower with the native bias than without. The registered corrector rule on arm C minus arm A is **reproduced** over the 12 references every method ran, but not because MuSiC withstands the added bias: MuSiC and DWLS are closest to cell fractions in arm B and furthest in arm A, so their arm C minus arm A difference is negative. From arm B to arm C, the 2026-11-11 reading, the rule is **not reproduced**: MuSiC's error rises by 0.0260 and DWLS's by 0.0284, against 0.0252 for BayesPrism.
+
+### What ran
+
+- 15 references x 3 arms x 6 methods = 270 method runs: 252 scored, 18 not applicable, 0 failed, 0 not run (`record/step4/v5_simbu/v5_method_status.tsv`).
+  - Not applicable: Bisque on HYPOTH (arms A, B, C); MuSiC on HYPOTH (arms A, B, C); Bisque on OVARY (arms A, B, C); MuSiC on OVARY (arms A, B, C); Bisque on SPLEEN (arms A, B, C); MuSiC on SPLEEN (arms A, B, C).
+    These references hold one sample; MuSiC and Bisque need at least two (the registered case).
+- The three arms share one downsampled reference on 15 of 15 references and one cell-fraction truth on 15 of 15; the simulate call recorded in `sim_meta.txt` is the registered one for arm A on 15, arm B on 15 and arm C on 15 of 15 (`record/step4/v5_simbu/v5_status.tsv`).
+- On the 13 references that did not change since 2026-11-11, arm B's mixtures are byte-identical to that battery's "nobias" mixtures on 13 and arm C's to its "bias" mixtures on 13 (same table).
+
+### Check: does arm A remove the library-size differences?
+
+Yes. Through SimBu's own summation, the mean library size of 1,000 cells of one type, largest type over smallest type within a reference: arm A 1.0000 to 1.0000; arm B 1.0794 to 28.6686; arm C 1.2006 to 283.2293, over 15 references (`record/step4/v5_simbu/v5_arm_library_size_summary.tsv`; per type in `v5_arm_library_size.tsv`; figure `figures/step4_v5_arm_check.png`). In arm A every cell contributes a total of 1.
+
+### Registered readings
+
+**1. BayesPrism under native bias (RMSE in arm B minus arm A).** Positive on **13 of 15** references; mean +0.0273, range -0.0228 to +0.0934 (`record/step4/v5_simbu/v5_bayesprism.tsv`).
+
+**2. BayesPrism under added bias (arm C minus arm A).** Positive on **14 of 15** references; mean +0.0533, range -0.0162 to +0.1391 (same table; figure `figures/step4_v5_bayesprism_arms.png`).
+
+| Reference | RMSE A | RMSE B | RMSE C | B - A | C - A | C - B |
+|---|---|---|---|---|---|---|
+| BAT | 0.0373 | 0.0145 | 0.0210 | -0.0228 | -0.0162 | +0.0065 |
+| BLOOD | 0.0487 | 0.0467 | 0.0721 | -0.0019 | +0.0234 | +0.0253 |
+| CORTEX | 0.0124 | 0.1058 | 0.1515 | +0.0934 | +0.1391 | +0.0457 |
+| HEART | 0.0061 | 0.0377 | 0.0755 | +0.0316 | +0.0694 | +0.0378 |
+| HIPPOC | 0.0098 | 0.0582 | 0.0856 | +0.0484 | +0.0758 | +0.0274 |
+| HYPOTH | 0.0157 | 0.0172 | 0.0395 | +0.0015 | +0.0238 | +0.0222 |
+| KIDNEY | 0.0149 | 0.0255 | 0.0423 | +0.0106 | +0.0273 | +0.0167 |
+| LIVER | 0.0216 | 0.0555 | 0.0977 | +0.0340 | +0.0762 | +0.0422 |
+| LUNG | 0.0147 | 0.0247 | 0.0378 | +0.0100 | +0.0231 | +0.0131 |
+| MUSCLE | 0.0100 | 0.0209 | 0.0463 | +0.0109 | +0.0363 | +0.0254 |
+| OVARY | 0.0098 | 0.0602 | 0.0930 | +0.0504 | +0.0832 | +0.0329 |
+| SMLINT | 0.0275 | 0.0596 | 0.0784 | +0.0321 | +0.0510 | +0.0188 |
+| SPLEEN | 0.0210 | 0.0467 | 0.0798 | +0.0258 | +0.0588 | +0.0330 |
+| TESTES | 0.0181 | 0.0770 | 0.1028 | +0.0589 | +0.0846 | +0.0257 |
+| WATSC | 0.0134 | 0.0395 | 0.0571 | +0.0262 | +0.0437 | +0.0176 |
+
+**3. Correctors: the registered rule on arm C minus arm A.**
+
+Common set (all three arms): 12 references (BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC).
+
+| Method | Mean difference, common set | Mean, all it scored | References scored | of which positive |
+|---|---|---|---|---|
+| DWLS | -0.0126 | -0.0123 | 15 | 4 |
+| MuSiC | -0.0070 | -0.0070 | 12 | 7 |
+| Bisque | +0.0049 | +0.0049 | 12 | 12 |
+| SCDC | +0.0181 | +0.0179 | 15 | 12 |
+| BayesPrism | +0.0528 | +0.0533 | 15 | 14 |
+| CIBERSORTx | +0.0618 | +0.0624 | 15 | 14 |
+
+Rule: reproduced if MuSiC and SCDC are both below BayesPrism and CIBERSORTx. MuSiC -0.0070, SCDC +0.0181; BayesPrism +0.0528, CIBERSORTx +0.0618. **Reproduced.** Dropping one reference at a time leaves the verdict unchanged in 12 of 12 cases (descriptive). Tables: `record/step4/v5_simbu/v5_corrector_rule.tsv`, `v5_ranking.tsv`.
+
+**4. The 2026-11-11 readings (arm C minus arm B) on the refs5 references.**
+
+Common set (all three arms): 12 references (BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC).
+
+| Method | Mean difference, common set | Mean, all it scored | References scored | of which positive |
+|---|---|---|---|---|
+| Bisque | +0.0024 | +0.0024 | 12 | 12 |
+| SCDC | +0.0216 | +0.0215 | 15 | 14 |
+| CIBERSORTx | +0.0221 | +0.0230 | 15 | 15 |
+| BayesPrism | +0.0252 | +0.0260 | 15 | 15 |
+| MuSiC | +0.0260 | +0.0260 | 12 | 12 |
+| DWLS | +0.0284 | +0.0283 | 15 | 15 |
+
+Rule: reproduced if MuSiC and SCDC are both below BayesPrism and CIBERSORTx. MuSiC +0.0260, SCDC +0.0216; BayesPrism +0.0252, CIBERSORTx +0.0221. **Not reproduced.** Dropping one reference at a time leaves the verdict unchanged in 12 of 12 cases (descriptive). Tables: `record/step4/v5_simbu/v5_corrector_rule.tsv`, `v5_ranking.tsv`.
+
+- BayesPrism's RMSE rises from arm B to arm C on 15 of 15 references (2026-11-11: 15 of 15), by +0.0065 to +0.0457.
+- BayesPrism's driver (the type with the largest per-type rise) is the type with the most expressed genes on 10 of 15 references (2026-11-11: 10 of 15); by total counts on 9 of 15 (`record/step4/v5_simbu/v5_driver.tsv`).
+
+| Reference | Driver (C - B) | mRNA rank (genes; counts) | True | Estimate B -> C | Direction |
+|---|---|---|---|---|---|
+| BAT | Brown adipocytes | 6 of 6; 6 | 0.185 | 0.168 -> 0.215 | inflated |
+| BLOOD | Plasmacytoid dendritic cells | 1 of 13; 1 | 0.084 | 0.174 -> 0.230 | inflated |
+| CORTEX | Excitatory neurons | 1 of 12; 1 | 0.092 | 0.354 -> 0.493 | inflated |
+| HEART | Cardiomyocytes | 1 of 15; 1 | 0.064 | 0.178 -> 0.303 | inflated |
+| HIPPOC | Dentate gyrus granule cells | 1 of 11; 1 | 0.111 | 0.218 -> 0.284 | inflated |
+| HYPOTH | Glutamatergic neurons | 1 of 11; 1 | 0.107 | 0.132 -> 0.185 | inflated |
+| KIDNEY | Proximal tubule cells | 3 of 15; 3 | 0.063 | 0.098 -> 0.149 | inflated |
+| LIVER | NK cells | 1 of 8; 1 | 0.142 | 0.268 -> 0.351 | inflated |
+| LUNG | Alveolar macrophages | 5 of 21; 3 | 0.045 | 0.074 -> 0.129 | inflated |
+| MUSCLE | Skeletal muscle cells | 1 of 9; 1 | 0.113 | 0.159 -> 0.224 | inflated |
+| OVARY | Luteal cells | 1 of 18; 1 | 0.059 | 0.250 -> 0.373 | inflated |
+| SMLINT | Transit-amplifying cells | 3 of 13; 2 | 0.087 | 0.161 -> 0.213 | inflated |
+| SPLEEN | Erythroid progenitors | 1 of 14; 1 | 0.066 | 0.130 -> 0.212 | inflated |
+| TESTES | Condensed spermatids | 6 of 6; 4 | 0.179 | 0.133 -> 0.088 | deflated |
+| WATSC | Cycling cells | 1 of 13; 2 | 0.080 | 0.130 -> 0.161 | inflated |
+
+- Against the battery of 2026-11-11 (BayesPrism, arm C minus arm B here, bias minus nobias then): the largest absolute change is 0.0074 over 15 references, and 0.0005 over the 13 whose reference did not change (only the exclusion list differs there) (`record/step4/v5_simbu/v5_vs_20261111.tsv`).
+
+### Each method in the three arms (descriptive, not a registered reading)
+
+Mean pooled RMSE against cell fractions over the 12 references every method ran, and the number of those references on which each arm is the method's lowest (`record/step4/v5_simbu/v5_method_arm_rmse.tsv`; figure `figures/step4_v5_methods_arms.png`).
+
+| Method | Arm A | Arm B | Arm C | Lowest in A | Lowest in B | Lowest in C |
+|---|---|---|---|---|---|---|
+| BayesPrism | 0.0195 | 0.0471 | 0.0723 | 10 | 2 | 0 |
+| CIBERSORTx | 0.0255 | 0.0652 | 0.0873 | 11 | 1 | 0 |
+| DWLS | 0.0505 | 0.0095 | 0.0379 | 0 | 12 | 0 |
+| MuSiC | 0.0531 | 0.0202 | 0.0462 | 1 | 11 | 0 |
+| SCDC | 0.0571 | 0.0536 | 0.0752 | 7 | 4 | 1 |
+| Bisque | 0.0646 | 0.0671 | 0.0695 | 12 | 0 | 0 |
+
+DWLS and MuSiC are closest to cell fractions in arm B, not in arm A, on most references: for such a method arm A is not the easy case, and its arm C minus arm A difference is small or negative because its arm A error is high, not because it corrects the added bias. BayesPrism, CIBERSORTx, SCDC and Bisque are closest in arm A.
 
 ## V6 results: mixture panel on the refs5 references
 
-No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
+**Result.** The registered floor is met on every set scored: BayesPrism's median per-type r is 0.990 to 0.999 on the 15 holdout sets; 0.976 to 0.996 on the 4 cross sets, against 0.85 (19 of 19).
+
+### Pass rule (registered, unchanged): BayesPrism's median per-type r of at least 0.85
+
+| Set | BayesPrism median r | Verdict | BayesPrism pooled r | Types in the median | Types below 0.85 | CIBERSORTx | DWLS | MuSiC | SCDC | Bisque |
+|---|---|---|---|---|---|---|---|---|---|---|
+| BAT_holdout | 0.998 | recovers | 0.958 | 6 of 6 | 0 | 0.990 | 0.996 | 0.997 | 0.991 | 0.959 |
+| BLOOD_holdout | 0.990 | recovers | 0.980 | 13 of 13 | 0 | 0.986 | 0.980 | 0.972 | 0.915 | 0.765 |
+| CORTEX_holdout | 0.999 | recovers | 0.999 | 8 of 8 | 0 | 0.997 | 0.938 | 0.932 | 0.953 | 0.982 |
+| HEART_holdout | 0.994 | recovers | 0.974 | 15 of 15 | 0 | 0.991 | 0.982 | 0.981 | 0.943 | 0.957 |
+| HIPPOC_holdout | 0.998 | recovers | 0.997 | 10 of 10 | 0 | 0.993 | 0.980 | 0.972 | 0.970 | 0.965 |
+| HYPOTH_holdout | 0.995 | recovers | 0.926 | 10 of 10 | 0 | 0.979 | 0.993 | - | 0.987 | - |
+| KIDNEY_holdout | 0.995 | recovers | 0.974 | 15 of 15 | 0 | 0.993 | 0.990 | 0.982 | 0.979 | 0.951 |
+| LIVER_holdout | 0.992 | recovers | 0.844 | 7 of 7 | 1 | 0.990 | 0.986 | 0.988 | 0.987 | 0.928 |
+| LUNG_holdout | 0.991 | recovers | 0.947 | 21 of 21 | 0 | 0.990 | 0.985 | 0.979 | 0.959 | 0.671 |
+| MUSCLE_holdout | 0.997 | recovers | 0.958 | 8 of 8 | 0 | 0.996 | 0.996 | 0.995 | 0.994 | 0.969 |
+| OVARY_holdout | 0.996 | recovers | 0.995 | 16 of 16 | 1 | 0.993 | 0.966 | - | 0.950 | - |
+| SMLINT_holdout | 0.992 | recovers | 0.979 | 13 of 13 | 0 | 0.984 | 0.966 | 0.964 | 0.951 | 0.890 |
+| SPLEEN_holdout | 0.990 | recovers | 0.987 | 13 of 13 | 0 | 0.991 | 0.964 | - | 0.960 | - |
+| TESTES_holdout | 0.999 | recovers | 0.996 | 5 of 5 | 0 | 0.996 | 0.983 | 0.982 | 0.977 | 0.983 |
+| WATSC_holdout | 0.994 | recovers | 0.950 | 9 of 9 | 0 | 0.983 | 0.977 | 0.985 | 0.974 | 0.920 |
+| CORTEX_cross | 0.983 | recovers | 0.897 | 6 of 6 | 0 | 0.973 | 0.922 | 0.927 | 0.964 | 0.960 |
+| HIPPOC_cross | 0.996 | recovers | 0.826 | 6 of 6 | 1 | 0.997 | 0.951 | 0.975 | 0.985 | 0.961 |
+| KIDNEY_cross | 0.976 | recovers | 0.174 | 7 of 7 | 3 | 0.945 | 0.706 | 0.589 | 0.736 | 0.767 |
+| MUSCLE_cross | 0.986 | recovers | 0.832 | 4 of 4 | 0 | 0.945 | 0.934 | 0.962 | 0.965 | 0.900 |
+
+Median per-type r of the other methods is descriptive; "-" is not scored (see the status below). Tables: `record/step4/v6_mixture_panel/v6_floor.tsv`, `panel_median.tsv`, `panel_pooled.tsv`, `panel_per_type.tsv`; figure `figures/step4_v6_median_r.png`.
+
+Per type, BayesPrism has 192 type tests over the 19 sets: 181 at r 0.95 or above, 185 at 0.90 or above and 6 below 0.85 (`record/step4/v6_mixture_panel/v6_floor.tsv`, `panel_per_type.tsv`).
+
+Types below 0.85 for BayesPrism (a set can meet the floor on its median and still have such types): LIVER_holdout: Hepatocytes 0.789; NK cells 0.978; Liver sinusoidal endothelial cells 0.981; OVARY_holdout: Erythroid cells 0.397; Stromal cells 0.976; B cells 0.985; HIPPOC_cross: Excitatory neurons 0.722; Microglia 0.995; Oligodendrocytes 0.995; KIDNEY_cross: Monocytes 0.587; Immune cells 0.698; Distal convoluted tubule cells 0.703. The list gives each set's three lowest types.
+
+### Against the panel of 2026-11-08 (descriptive, as registered)
+
+BayesPrism's median per-type r, 19 sets compared: a drop of more than 0.05 on **0**; largest drop -0.0035 (HEART_holdout), largest rise +0.0022 (KIDNEY_cross) (`record/step4/v6_mixture_panel/v6_vs_20261108.tsv`).
+The mixtures themselves are byte-identical to that panel's on 17 of 19 sets; they differ on HEART_holdout and HYPOTH_holdout. The cross harmonization equals the reviewed maps on 4 of 4 cross sets (`record/step4/v6_mixture_panel/v6_build_check.tsv`). Where the mixtures are identical, a change in r comes from the exclusion list alone.
+
+### What the panel covers, and the other methods (descriptive)
+
+- **Coverage.** 169 of the 185 cell types of the 15 references are benchmarked in holdout. 3 are lost at the 70/30 split (CORTEX Vascular leptomeningeal cells; TESTES Sertoli cells; WATSC Mural cells) and 13 have fewer than 20 pool cells. The cross sets benchmark 6 (CORTEX), 6 (HIPPOC), 7 (KIDNEY), 4 (MUSCLE) types (`record/step4/v6_mixture_panel/panel_coverage.tsv`).
+- **Against the other methods.** On median per-type r BayesPrism is the best method on 17 of 19 sets and within 0.02 of the best on 19; on pooled r it is the best on 13 of 19 (`record/step4/v6_mixture_panel/panel_median.tsv`, `panel_pooled.tsv`, three decimals).
+- **Types left out of a method's median** (the scoring leaves a type out of a method's scores when the method gives no estimate for it, and out of its median when the estimate is a constant): Excitatory neurons in HIPPOC_cross for MuSiC, SCDC and CIBERSORTx (constant estimate); Erythroid cells in BLOOD_holdout for MuSiC (no estimate); Neutrophils in BLOOD_holdout for MuSiC (no estimate); Medium spiny neurons in CORTEX_holdout for MuSiC (no estimate) (`record/step4/v6_mixture_panel/panel_scoring_notes.tsv`). These exclusions favour the other methods, not BayesPrism.
+
+### HEART and HYPOTH, every type (their labels changed)
+
+- **HEART_holdout**: 15 types scored, r 0.894 to 0.999; below 0.85: none. New since 2026-11-08: none. Benchmarked then, not now: CD8+ T cells.
+- **HYPOTH_holdout**: 10 types scored, r 0.955 to 0.997; below 0.85: none. New since 2026-11-08: Ependymal cells, Vascular leptomeningeal cells, Pars tuberalis cells. Benchmarked then, not now: GABAergic neurons, Neuroendocrine cells, Radial glial cells.
+  Table: `record/step4/v6_mixture_panel/v6_heart_hypoth_types.tsv`; figure `figures/step4_v6_heart_hypoth.png`.
+
+| Set | Type | r now | r 2026-11-08 | True mean now | Estimated mean now |
+|---|---|---|---|---|---|
+| HEART_holdout | Dendritic cells | 0.894 | 0.900 | 0.056 | 0.062 |
+| HEART_holdout | Endothelial cells | 0.984 | 0.982 | 0.051 | 0.064 |
+| HEART_holdout | Cardiac fibroblasts | 0.984 | 0.991 | 0.063 | 0.068 |
+| HEART_holdout | T cells | 0.988 | 0.971 | 0.047 | 0.057 |
+| HEART_holdout | Pericytes | 0.993 | 0.997 | 0.051 | 0.057 |
+| HEART_holdout | Macrophages | 0.993 | 0.986 | 0.060 | 0.068 |
+| HEART_holdout | Mast cells | 0.994 | 0.994 | 0.081 | 0.049 |
+| HEART_holdout | Monocytes | 0.994 | 0.988 | 0.046 | 0.045 |
+| HEART_holdout | NK cells | 0.996 | 0.999 | 0.053 | 0.048 |
+| HEART_holdout | Cardiac neurons | 0.996 | 0.999 | 0.056 | 0.054 |
+| HEART_holdout | Vascular smooth muscle cells | 0.997 | 0.997 | 0.062 | 0.065 |
+| HEART_holdout | Lymphatic endothelial cells | 0.997 | 0.998 | 0.061 | 0.059 |
+| HEART_holdout | B cells | 0.998 | 0.999 | 0.043 | 0.043 |
+| HEART_holdout | Mesothelial cells | 0.998 | 0.999 | 0.080 | 0.065 |
+| HEART_holdout | Cardiomyocytes | 0.999 | 0.999 | 0.189 | 0.195 |
+| HEART_holdout | CD8+ T cells | n/a | 0.998 | n/a | n/a |
+| HYPOTH_holdout | Ependymal cells | 0.955 | n/a | 0.110 | 0.068 |
+| HYPOTH_holdout | Neurons | 0.957 | 0.978 | 0.109 | 0.161 |
+| HYPOTH_holdout | Tanycytes | 0.982 | 0.997 | 0.111 | 0.118 |
+| HYPOTH_holdout | Glutamatergic neurons | 0.991 | 0.850 | 0.119 | 0.139 |
+| HYPOTH_holdout | Oligodendrocyte precursor cells | 0.995 | 0.999 | 0.110 | 0.084 |
+| HYPOTH_holdout | Microglia | 0.995 | 0.998 | 0.108 | 0.088 |
+| HYPOTH_holdout | Pars tuberalis cells | 0.996 | n/a | 0.075 | 0.081 |
+| HYPOTH_holdout | Vascular leptomeningeal cells | 0.996 | n/a | 0.089 | 0.081 |
+| HYPOTH_holdout | Oligodendrocytes | 0.997 | 0.996 | 0.067 | 0.063 |
+| HYPOTH_holdout | Astrocytes | 0.997 | 0.995 | 0.103 | 0.110 |
+| HYPOTH_holdout | GABAergic neurons | n/a | 0.940 | n/a | n/a |
+| HYPOTH_holdout | Neuroendocrine cells | n/a | 0.994 | n/a | n/a |
+| HYPOTH_holdout | Radial glial cells | n/a | 0.996 | n/a | n/a |
+
+### DWLS as the benchmark plan specified
+
+`mast_optimized` at p 0.05 is scored on 19 of 19 sets: median per-type r 0.706 to 0.996. Against `mast` at p 0.01 in the 2026-11-08 panel the change is -0.006 to +0.009 over 19 sets (`record/step4/v6_mixture_panel/v6_dwls_setting.tsv`). The comparison also carries the change of exclusion list and, for HEART and HYPOTH, of labels.
+The 19 runs took 319 minutes in all (3.9 to 57.9 per set; same table, column `minutes`).
+Setting read back from the provenance files: mast_optimized, p 0.05, fold change 0.5 (19 sets).
+The in-memory guard fired on 2 sets: BAT_holdout (Brown adipocytes); OVARY_holdout (Erythroid cells). Those types have no marker genes of their own in the DWLS signature.
+
+### Status of every method run
+
+scored 108, not applicable 6 of 114 (19 sets x 6 methods; `record/step4/v6_mixture_panel/v6_status.tsv`).
+- Not applicable: MuSiC on HYPOTH_holdout; Bisque on HYPOTH_holdout; MuSiC on OVARY_holdout; Bisque on OVARY_holdout; MuSiC on SPLEEN_holdout; Bisque on SPLEEN_holdout.
+
+### Provenance records (finding 5.6)
+
+76 records: 57 from the cross-check runner and 19 from the Stage 8 runner. Commits: 631fde0. Records with a modified tracked file: 0. Each record of the cross-check runner holds the commit, the inputs with md5, the methods and their settings, package versions, the cell cap and its seed, and the in-memory patches (`record/step4/v6_mixture_panel/v6_run_settings.tsv`).
 
 <!-- RESULTS:END -->
 
@@ -25,21 +224,25 @@ No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
 
 ### V5: what the three arms say together
 
-- **BayesPrism's error against cell fractions grows with the bias in the mixtures**, as it should for a method
-  that estimates shares of RNA: lowest without bias, higher with the references' own library-size differences,
-  highest with the added factor. The rise from arm A to arm B is the part the battery of 2026-11-11 could not
-  see, because its baseline was arm B.
+- **On 13 of 15 references BayesPrism's error against cell fractions grows with the bias in the mixtures**, as
+  it should for a method that estimates shares of RNA: lowest without bias, higher with the references' own
+  library-size differences, highest with the added factor. The rise from arm A to arm B is the part the
+  battery of 2026-11-11 could not see, because its baseline was arm B.
 - **Two references go the other way from arm A to arm B: BAT and BLOOD.** In BAT the cell types differ by
   1.08-fold in library size, so arm B carries almost no bias between types, and what arm A changes is the
   weighting of cells within a type (note N14). There BayesPrism underestimates brown adipocytes in arm A (true
-  mean 0.185, estimated 0.111) and less so in arm B (0.168). The battery cannot say how much of any other
-  reference's arm A to arm B difference is this same within-type effect.
+  mean 0.185, estimated 0.111) and less so in arm B (0.168). In BLOOD arm A puts megakaryocytes and platelets
+  at 0.192 against a true 0.074 (`record/step4/v5_simbu/v5_bayesprism_per_type.tsv`). The battery cannot say
+  how much of any other reference's arm A to arm B difference is this same within-type effect, so reading 1
+  is not a clean measure of the cost of the native bias.
 - **The corrector rule is met on arm C minus arm A for a reason the rule was not written for.** MuSiC and DWLS
-  convert RNA shares to cell shares with the reference's library sizes. That is right when the mixture carries
-  the reference's own differences (arm B, where their error is lowest), too much when the mixture carries none
-  (arm A, where it is highest), and not enough when a further factor is added (arm C). Their arm C minus arm A
-  difference is negative because arm A is their worst case. SCDC is the only method of the two named in the
-  rule whose difference is positive and still below BayesPrism's and CIBERSORTx's.
+  carry each type's library size in what they fit: MuSiC multiplies a type's profile by its mean library size
+  in the reference, and DWLS's signature is the mean raw count per type (both read in the installed packages).
+  So they return shares of cells. That is right when the mixture carries the reference's own differences (arm
+  B, where their error is lowest), too much when the mixture carries none (arm A, where it is highest), and
+  not enough when a further factor is added (arm C). Their arm C minus arm A difference is negative because
+  arm A is their worst case. Of the two methods the rule names, SCDC is the one whose difference is positive
+  and still below BayesPrism's and CIBERSORTx's.
 - **From arm B to arm C nothing changed since 2026-11-11.** Every method but Bisque loses 0.022 to 0.028, the
   rule is not met, and BayesPrism's values on the 13 unchanged references move by at most 0.0005 (the new
   exclusion list).
@@ -62,7 +265,8 @@ No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
   cells, HIPPOC_cross excitatory neurons, and three KIDNEY_cross types. KIDNEY_cross keeps a pooled r of 0.17
   for BayesPrism: absolute kidney fractions across studies remain unusable, as before.
 - **The DWLS correction changes little.** `mast_optimized` at p 0.05 gives the same medians as `mast` at p 0.01
-  to within 0.01 on every set, in about a fifth of the time.
+  to within 0.01 on every set. Its 19 runs took 319 minutes in all; the earlier setting's took about 27 hours
+  of job time by the scheduler's record of jobs 12192438 and 12192735 (not a table of this record).
 
 ## What the results do not show
 
@@ -100,10 +304,11 @@ No table yet: the panel has not been summarised (`make_step4_v6_tables.py`).
 - **The DWLS comparison with the earlier panel is not a clean test of the setting.** Between the two panels
   the exclusion list also changed, and for HEART and HYPOTH the labels.
 
-## Notes written before any result (2026-11-14)
+## Notes written before the results (2026-11-14)
 
 Each note settles a point the registration leaves open, by the conservative reading, before the output it
-affects exists.
+affects exists. N1 to N15 were committed before any simulation, mixture or deconvolution of either battery;
+N16 after the smoke run on TESTES and before any full run.
 
 **N1. V5, how arm A removes the bias.** The registration gives `remove_bias_in_counts = TRUE` and names no
 method. SimBu 1.8.0 has a companion argument, `remove_bias_in_counts_method`, with two values:
@@ -204,6 +409,38 @@ The registered rule on arm C minus arm A is scored exactly as registered. Beside
 in the three arms and the arm in which it is lowest are tabled (`v5_method_arm_rmse.tsv`), so a reader can see
 whether a small difference comes from a low error in arm C or a high error in arm A. This table is descriptive
 and was added after the smoke outputs were seen; no rule, arm or threshold changed.
+
+## Departures, and what was done after the results were seen
+
+**No registered rule, arm, threshold, set, source or method setting changed.** The points the registration
+left open are the dated notes N1 to N16 above; N1 to N15 precede every output, and N16 was written after the
+smoke run on TESTES and before any full run.
+
+**Scheduling departures** (none changes a computation):
+- sets were run several to a job and side by side, with the earlier core counts per run (note N12);
+- the first task of a job builds the sets if they are missing, in place of a separate build job in front;
+- short packs were queued as a second route and never ran;
+- `PROVENANCE_MD5=1` was added to the job environment after the smoke run, so the Stage 8 runner records the
+  md5 of its inputs.
+
+**Done after the results were seen** (2026-11-15). The table, figure and report scripts were edited after the
+first tables (job 12380299) had been read. The edits change how numbers are written and what is tabled, not
+any rule or number:
+- cell-type names reported by the DWLS guard are written with their spaces and signs;
+- tables hold seven decimals in place of five, so that text, figure and table agree where a value sits on a
+  rounding tie (DWLS's mean arm C minus arm A difference, -0.01255);
+- added: BayesPrism's per-type table by arm, the counts of per-type r at 0.95 and 0.90, the total DWLS minutes;
+- the HEART and HYPOTH figure is drawn as two stacked panels;
+- the lead sentence of the V5 results names what the corrector verdict rests on.
+The section "Reading the results" was written after the results.
+
+**Not verified.**
+- Whether the DWLS guard also fired for BAT brown adipocytes and OVARY erythroid cells in the panel of
+  2026-11-08. That run did not log it.
+- Run-to-run reproducibility beyond TESTES. The smoke and full runs agree byte for byte there for all six
+  methods; no other reference was run twice.
+- The mechanism behind BAT and BLOOD in arm A. That the within-type weighting is the cause is the reading that
+  fits the numbers; no run isolates it.
 
 ## Code changes (worktree branch `audit-remediation-v56`)
 
@@ -328,8 +565,11 @@ from and any modified tracked file. Three lanes, so at most three of these jobs 
 - The smoke runs and the full runs of TESTES give byte-identical estimates for all six methods on the four
   TESTES sets, CIBERSORTx included (`record/step4/smoke/smoke_vs_full_TESTES.tsv`). This is a run-to-run check
   on one reference only.
-- The final tables and figures were built by job 12392329 (commit `0eccbdd`, 2026-11-15), after two rebuilds
-  that changed only how the tables are written (readable type names from the DWLS guard, seven decimals).
+- The tables and figures in the record were built by job 12392335 (commit `a65487d`, no modified tracked file,
+  2026-11-15 16:30). Jobs 12380299, 12392323 and 12392329 built them before; see "Done after the results were
+  seen".
+- The full offline test suite passes on the same commit: 340 passed, none failed, 17 deselected by their
+  network or data marker (job 12392337).
 
 **Scheduling change, 2026-11-14 16:32, before any of these jobs had started.** The partition was saturated
 (about 250 eligible jobs of other groups at the same or higher priority) and the build job had waited an hour.

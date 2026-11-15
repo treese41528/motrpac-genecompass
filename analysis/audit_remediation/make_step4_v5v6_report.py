@@ -45,6 +45,12 @@ def num(x, n=3):
     return "n/a" if x is None or not np.isfinite(x) else f"{x:.{n}f}"
 
 
+def listing(items):
+    """'A', 'A and B', 'A, B and C'."""
+    items = list(items)
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
 def table(header, rows):
     out = ["| " + " | ".join(header) + " |", "|" + "|".join("---" for _ in header) + "|"]
     out += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
@@ -79,9 +85,9 @@ def v5_section(rec):
         neg = b[b["d_rmse_B_minus_A"] <= 0]["reference"].tolist()
         lead.append(f"Against a baseline with no mRNA bias, BayesPrism's error against cell fractions is higher under the "
                     f"references' native bias on {int((b['d_rmse_B_minus_A'] > 0).sum())} of {len(b)} references and under the "
-                    f"added bias on {int((c['d_rmse_C_minus_A'] > 0).sum())} of {len(c)} (mean pooled RMSE "
-                    f"{num(b['rmse_A'].mean(), 4)} without bias, {num(b['rmse_B'].mean(), 4)} with the native bias, "
-                    f"{num(c['rmse_C'].mean(), 4)} with the added bias)."
+                    f"added bias on {int((c['d_rmse_C_minus_A'] > 0).sum())} of {len(c)} (mean pooled RMSE over the "
+                    f"{len(b)} references: {num(b['rmse_A'].mean(), 4)} without bias, {num(b['rmse_B'].mean(), 4)} with the "
+                    f"native bias, {num(c['rmse_C'].mean(), 4)} with the added bias)."
                     + (f" On {' and '.join(neg)} it is lower with the native bias than without." if neg else ""))
     if r_ca is not None and len(r_ca):
         v = r_ca.iloc[0]
@@ -95,8 +101,8 @@ def v5_section(rec):
                 txt += (f", but not because MuSiC withstands the added bias: {names} {'is' if len(worst_in_a) == 1 else 'are'} "
                         f"closest to cell fractions in arm B and furthest in arm A, so {'its' if len(worst_in_a) == 1 else 'their'} "
                         f"arm C minus arm A difference is negative. From arm B to arm C, the 2026-11-11 reading, the rule is "
-                        f"**{w['verdict']}**: MuSiC loses {sgn(w['music'])} and DWLS {sgn(w['dwls'])}, against BayesPrism's "
-                        f"{sgn(w['bp_rna'])}")
+                        f"**{w['verdict']}**: MuSiC's error rises by {num(w['music'], 4)} and DWLS's by {num(w['dwls'], 4)}, "
+                        f"against {num(w['bp_rna'], 4)} for BayesPrism")
             else:
                 txt += f". The 2026-11-11 reading (arm C minus arm B) is **{w['verdict']}** on these references"
         lead.append(txt + ".")
@@ -223,10 +229,10 @@ def v5_section(rec):
         low_a = [NAMES[r.method] for r in marm.itertuples() if r.n_lowest_in_A > max(r.n_lowest_in_B, r.n_lowest_in_C)]
         L.append("")
         if low_b:
-            L.append(f"{', '.join(low_b)} {'is' if len(low_b) == 1 else 'are'} closest to cell fractions in arm B, not in arm A, on most "
+            L.append(f"{listing(low_b)} {'is' if len(low_b) == 1 else 'are'} closest to cell fractions in arm B, not in arm A, on most "
                      "references: for such a method arm A is not the easy case, and its arm C minus arm A difference is small or negative "
                      "because its arm A error is high, not because it corrects the added bias. "
-                     + (f"{', '.join(low_a)} {'is' if len(low_a) == 1 else 'are'} closest in arm A." if low_a else ""))
+                     + (f"{listing(low_a)} {'is' if len(low_a) == 1 else 'are'} closest in arm A." if low_a else ""))
     L.append("")
     return L
 
@@ -273,6 +279,11 @@ def v6_section(rec):
     L += ["", f"Median per-type r of the other methods is descriptive; \"-\" is not scored (see the status below). Tables: "
               f"`{REC6}/v6_floor.tsv`, `panel_median.tsv`, `panel_pooled.tsv`, `panel_per_type.tsv`; figure "
               "`figures/step4_v6_median_r.png`.", ""]
+    if len(sc) and "n_types_r_ge_095" in sc:
+        L.append(f"Per type, BayesPrism has {int(sc['n_types_scored'].sum())} type tests over the {len(sc)} sets: "
+                 f"{int(sc['n_types_r_ge_095'].sum())} at r 0.95 or above, {int(sc['n_types_r_ge_090'].sum())} at 0.90 or above and "
+                 f"{int(sc['n_types_below_floor'].sum())} below 0.85 (`{REC6}/v6_floor.tsv`, `panel_per_type.tsv`).")
+        L.append("")
     below = sc[sc["n_types_below_floor"] > 0]
     if len(below):
         L.append("Types below 0.85 for BayesPrism (a set can meet the floor on its median and still have such types): "
@@ -294,10 +305,41 @@ def v6_section(rec):
             diff = bc[bc["mixtures_vs_previous"] == "different"]["set"].tolist()
             cr = bc[bc["design"] == "cross"]
             L.append(f"The mixtures themselves are byte-identical to that panel's on {int((bc['mixtures_vs_previous'] == 'identical').sum())} "
-                     f"of {len(bc)} sets" + (f"; they differ on {', '.join(diff)}" if diff else "") + ". The cross harmonization equals "
+                     f"of {len(bc)} sets" + (f"; they differ on {listing(diff)}" if diff else "") + ". The cross harmonization equals "
                      f"the reviewed maps on {int((cr['harmonization_map'] == 'identical').sum())} of {len(cr)} cross sets "
                      f"(`{REC6}/v6_build_check.tsv`). Where the mixtures are identical, a change in r comes from the exclusion list "
                      "alone.")
+        L.append("")
+
+    # ---- what the panel covers and what the other methods' medians leave out (the panel's own tables)
+    cov, notes = read(rec / "panel_coverage.tsv"), read(rec / "panel_scoring_notes.tsv")
+    if cov is not None and len(cov):
+        L += ["### What the panel covers, and the other methods (descriptive)", ""]
+        h = cov[cov["set"].str.endswith("_holdout")]; x = cov[cov["set"].str.endswith("_cross")]
+        lost = "; ".join(f"{r.set.replace('_holdout', '')} {r.lost_at_split}" for r in h.itertuples() if isinstance(r.lost_at_split, str))
+        L.append(f"- **Coverage.** {int(h['n_benchmarked'].sum())} of the {int(h['n_built'].sum())} cell types of the {len(h)} "
+                 f"references are benchmarked in holdout. {int((h['n_built'] - h['n_in_reference']).sum())} are lost at the 70/30 "
+                 f"split ({lost}) and {int((h['n_in_reference'] - h['n_benchmarked']).sum())} have fewer than 20 pool cells. The cross "
+                 f"sets benchmark " + ", ".join(f"{int(r.n_benchmarked)} ({r.set.replace('_cross', '')})" for r in x.itertuples())
+                 + f" types (`{REC6}/panel_coverage.tsv`).")
+    if med is not None and pool is not None and "bp_rna" in med:
+        M, P = med.set_index(med.columns[0]), pool.set_index(pool.columns[0])
+        rows = [M.loc[k].dropna() for k in M.index]; rows = [r for r in rows if len(r) >= 2 and "bp_rna" in r]
+        best = sum(r.idxmax() == "bp_rna" for r in rows); near = sum(r["bp_rna"] >= r.max() - 0.02 for r in rows)
+        pbest = sum(P.loc[r.name].dropna().idxmax() == "bp_rna" for r in rows)
+        L.append(f"- **Against the other methods.** On median per-type r BayesPrism is the best method on {best} of {len(rows)} "
+                 f"sets and within 0.02 of the best on {near}; on pooled r it is the best on {pbest} of {len(rows)} "
+                 f"(`{REC6}/panel_median.tsv`, `panel_pooled.tsv`, three decimals).")
+    if notes is not None and len(notes):
+        g = notes.groupby(["note", "set", "cell_type"])["method"].apply(lambda v: listing([NAMES[m] for m in v]))
+        L.append("- **Types left out of a method's median** (the scoring leaves a type out of a method's scores when the method "
+                 "gives no estimate for it, and out of its median when the estimate is a constant): "
+                 + "; ".join(f"{ct} in {st} for {who} ({'no estimate' if n.startswith('not estimated') else 'constant estimate'})"
+                             for (n, st, ct), who in g.items()) + f" (`{REC6}/panel_scoring_notes.tsv`). These exclusions favour "
+                 "the other methods, not BayesPrism.")
+    elif notes is not None:
+        L.append("- **Types left out of a method's median:** none.")
+    if cov is not None and len(cov):
         L.append("")
 
     L += ["### HEART and HYPOTH, every type (their labels changed)", ""]
@@ -330,6 +372,9 @@ def v6_section(rec):
                      f"p 0.01 in the 2026-11-08 panel the change is {sgn(both['median_change'].min(), 3)} to "
                      f"{sgn(both['median_change'].max(), 3)} over {len(both)} sets (`{REC6}/v6_dwls_setting.tsv`). The comparison also "
                      "carries the change of exclusion list and, for HEART and HYPOTH, of labels.")
+            if "minutes" in d and d["minutes"].notna().any():
+                L.append(f"The 19 runs took {d['minutes'].sum():.0f} minutes in all ({d['minutes'].min():.1f} to "
+                         f"{d['minutes'].max():.1f} per set; same table, column `minutes`).")
             if "setting_recorded" in d:
                 L.append("Setting read back from the provenance files: "
                          + "; ".join(f"{k} ({v} sets)" for k, v in d["setting_recorded"].value_counts().items()) + ".")
