@@ -1,5 +1,10 @@
 # Downstream GeneCompass modules -- detailed build plan
 
+> **2026-11-15 status.** The two status notes below describe the defaults of 2026-10-31 and 2026-11-01. The
+> default is now refs5 (`docs/audit/remediation/STEP3_RESULTS.md`): 11 hotspots and 1 borderline block, 7
+> networks, the decoy null negative again. Module A on v2 and refs5 passes criteria 1, 3 and 4 and fails its
+> myeloid replication (`STEP4_RESULTS.md`, V4). Current status: `docs/OPEN_FRONTIER.md`.
+
 > **2026-10-31 status.** Plan kept as written. Since then: Modules A, B, E.1–E.2 and the Aim-3b human-space GRN are
 > built and rerun on refs4 (11 hotspots, 8 GRNs; `REFS4_RERUN_RESULTS.md`); E.3 atlas anchoring PASSES (0.404 vs
 > null 0.084; `translation/ATLAS_PROJECTION_RESULTS.md`); the GRN decoy null is negative (FDR(2) = 1.03, 0/981 TFs

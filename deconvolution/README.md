@@ -1,57 +1,99 @@
 # Deconvolution (grant Aim 2 bridge)
 
-MoTrPAC bulk RNA-seq → **BayesPrism** per-cell-type deconvolution → per-cell-type
-**pseudo-cells** → fine-tuned **rat GeneCompass** → 768-d cell embeddings. See
-`AIM2_DECONV_RESULTS.md` for the science and `MOTRPAC_BULK_LIFTOVER.md` for the
-bulk gene-ID prep.
+**The question.** MoTrPAC's rat RNA-seq is bulk: one value per gene for a whole piece of tissue. Can it be
+split, tissue by tissue, into per-cell-type expression that is accurate enough to ask which cell types and
+which genes respond to training?
 
-**Current default (2026-11-01): v2 model + refs4 references over all 16 tissues.** The references are the
-jointly re-annotated set (`data/deconvolution/references_v4/`, with BLOOD as a whole-blood composite; BAT,
-HEART, HYPOTH and TESTES keep their `references_v3/` builds) plus SPLEEN (`references_v4/SPLEEN_GSE306764`) and
-OVARY (`references_v4/OVARY_GSE343214`), selected by `config/pipeline_config.yaml` with no profile. Outputs:
-`data/deconvolution/results_refs4all_rebuild/` (Stage 8), `genecompass_input_v2_refs4all_rebuild/` and `_human/`
-(Stages 9, 10, 12; gate in `gate_rcv10/`), `augur_input_v2_refs4all_rebuild/`, `grn_v2_refs4all_rebuild/` and
-`grn_v2_refs4all_rebuild_human/` (Stage 13), `validation_refs4all_rebuild/` (Stage 14 sweeps). These are the
-clean rebuild (2026-11-03), identical to the earlier assembled `_refs4all` tree through Stage 13
-(`REFS4ALL_REBUILD_RESULTS.md`). Current figures: 16 tissues, 9,232 pseudo-cells (9,214 embedded), 197 blocks (151 analysable under the §6 rule, median per-sample library
-≥ 1,000), **9 exercise hotspots** (none in SPLEEN or OVARY), 53,084 dose-significant gene × block pairs (9,671 distinct
-genes), 9 of 9 hotspots meeting the registered transfer rule (7 of 9 under BH over the 151 blocks) and
-RIN/globin-robust, 6 GRNs. How to read each figure: `docs/audit/remediation/STEP2_STATEMENTS.md`. The embedding does not beat PCA-50 significantly
-(p 0.15). Single-sex tissues (TESTES, OVARY) cannot have a dose-significant gene (the Fisher sex combine needs
-both sexes), so their 0 genes is structural. The GRNs carry no TF-specific signal (`GRN_DECOY_NULL_RESULTS.md`).
-Results: `ALL_TISSUE_RERUN_RESULTS.md`. The 14-tissue refs4 arm (8,100 pseudo-cells, 165 blocks, 124
-analysable, 11 hotspots, 48,522 genes, 8 GRNs; `REFS4_RERUN_RESULTS.md`) is `config/profiles/refs4_14.yaml`;
-the July references (172 blocks, 13 hotspots) are `config/profiles/july_refs.yaml`; April's model is
-`config/profiles/april.yaml`. Rebuild: `DECONV_REBUILD_RUNBOOK.md` §0.
+**The chain.** MoTrPAC bulk RNA-seq → **BayesPrism** deconvolution against a rat single-cell reference →
+one **pseudo-cell** per sample and cell type → fine-tuned **rat GeneCompass** → 768-d cell embeddings → the
+gate, the differential expression, the transfer and the networks.
+
+**The result, on the default configuration (refs5, since 2026-11-15).** refs5 is the registered rerun of
+Stages 8–14 that followed the 2026-11-11 audit, with the v2 model. Sources:
+`docs/audit/remediation/STEP3_RESULTS.md` (the rerun) and `STEP4_RESULTS.md` (the validations); every number
+there has a table under `docs/audit/remediation/record/`.
+
+- **What ran.** 16 tissues, 749 samples, 15 references, 194 tissue × cell-type blocks, of which 150 are
+  analysable (median per-sample library of at least 1,000); 9,060 pseudo-cells embedded. A repeat of Stage 8
+  from a second commit is byte-identical.
+- **What the deconvolution supports.** How a cell type's fraction varies across samples: on known-truth
+  mixtures BayesPrism meets the registered floor on 19 of 19 sets (median per-type r 0.976 to 0.999), with 6
+  of 192 type tests below 0.85 (LIVER hepatocytes, OVARY erythroid cells, HIPPOC cross-study excitatory
+  neurons, three KIDNEY cross-study types). The expression of each tissue's dominant type: 12 of 15 pass
+  their purity sweep.
+- **What it does not support.**
+  - *Fractions as cell proportions.* BayesPrism estimates the share of mRNA. Its error against cell fractions
+    rises under the references' own mRNA differences on 13 of 15 references.
+  - *The expression of rare types.* Expression is recovered at the type's own abundance for 4 of the 12 called
+    blocks and for none of the five muscle blocks (correlation 0.50 to 0.57 at 0.5% of a mixture). BLOOD
+    erythroid cells and SPLEEN red-pulp macrophages fail the dominant-type sweep.
+  - *Specific tissues.* HIPPOC's composition stays flagged unreliable (decision of 2026-11-14). TESTES
+    levels depend on the reference (a control-only reference keeps the order of animals and shifts levels by
+    up to 5.6 points). One HYPOTH sample stands apart from the other 49. 50.6% of the SMLINT reference's
+    cells and 16.7% of the KIDNEY reference's are above 15% mitochondrial reads (`STEP5_RESULTS.md`, M1).
+- **What was found downstream on these pseudo-cells.** 11 exercise hotspots and 1 borderline block, with a
+  list that is not stable to small changes of the inputs; 52,961 dose-significant gene × block pairs (9,617
+  distinct genes), none of whose blocks is robust to technical covariates by the registered verdict; the
+  positive-control red flag stands (5 of 26 testable pipeline-sanity controls); 10 of 11 hotspots transfer
+  by the registered rule and 9 by the corrected rule; the 7 perturbation networks carry no TF-specific signal.
+  No called block passes all nine registered readings.
+
+**Where things are.** Read the folders from `config/pipeline_config.yaml` (section `deconvolution`), not from
+this page:
+
+| Config key | Holds |
+|---|---|
+| `reference_dir` of each tissue in `tissue_references.yaml` | The reference (refs5: `data/deconvolution/references_v5/`; BLOOD is a whole-blood composite) |
+| `rat_exclude_genes` | The genes left out of the deconvolution (refs5: `reference/rat_exclude_genes_v2.tsv`) |
+| `results_dir` | Stage 8: fractions, Z and the sample key per tissue |
+| `genecompass_input_dir`, and the same with `_human` | Stages 9, 10, 12: pseudo-cells, embeddings, `pseudobulk_de/`; the human-space copies |
+| `hotspots_table` | Stage 11: the gate table; its folder (`gate_rcv10/`) holds every gate output. A hotspot is `gate_class == hotspot` |
+| `pseudocell_target_sum` | Stages 9 and 12: 6,700 for refs5, by the registered formula |
+| `augur_input_dir`, `grn_dir`, `grn_human_dir`, `validation_dir` | Augur exports; Stage 13 networks; Stage 14 sweeps |
+
+Earlier arms are profiles: `config/profiles/refs4all_rebuild.yaml` (the default before refs5; results in
+`ALL_TISSUE_RERUN_RESULTS.md` and `REFS4ALL_REBUILD_RESULTS.md`), `refs4_14.yaml` (14 tissues;
+`REFS4_RERUN_RESULTS.md`), `july_refs.yaml` (the July references), `april.yaml` (April's model). Their
+results documents are dated records; each carries a banner saying which run it describes. Rebuild commands:
+`DECONV_REBUILD_RUNBOOK.md` §0. Bulk gene-ID preparation: `MOTRPAC_BULK_LIFTOVER.md`.
 
 **Reference integrity — start here.** `tissue_references.yaml` is the canonical tissue→reference map
 (single source of truth). `REFERENCE_QC.md` documents the build-time QC gate (`reference_qc.py`) and the
 two reference bugs it now prevents: the **liver** Visium-spatial contamination (removed) and the
-**engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`, which gave lung a real
-exercise-hotspot signal; 1 LUNG hotspot on the 16-tissue default, 3 on refs4's 14 tissues). Cross-method validation, the full **mRNA-bias analysis**, and **which
-downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. The analysis notebooks
-(`../notebooks/pipeline8–12`) read the active config and compute every number they show: after a rerun they
-are re-executed (`python notebooks/run_notebooks.py 8 9 10 11 12`), not edited; see the banner of
+**engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`). The gate blocks spatial,
+engineered or cultured, and bulk samples by their inventory titles; it only warns on developmental ages and
+mixed depth, and it cannot test samples outside the inventory (BLOOD, SPLEEN, OVARY). All 15 references were
+rebuilt from committed code for refs5 and 13 came out byte-identical; HYPOTH is re-annotated and HEART has its
+registered label merge. The label decisions were made by an AI assistant and no specialist has read them.
+`OMNIDECONV_RESULTS.md` holds the earlier cross-method runs and the guidance on which downstream claims to
+trust; the runs on the current references are `docs/audit/remediation/STEP4_RESULTS.md` V5 (mRNA-content
+bias) and V6 (mixture panel). The analysis notebooks (`../notebooks/pipeline8–12`) read the active config and
+compute every number they show: after a rerun they are re-executed
+(`python notebooks/run_notebooks.py 8 9 10 11 12`), not edited; see the banner of
 `../notebooks/RERUN_EDITS.md`.
 
 ## Pipeline (production path)
 
-Two orchestrators in `pipeline/` drive the scripts in this folder in place
+The orchestrators in `pipeline/` drive the scripts in this folder in place
 (nothing is moved), in the same `run_stageN.py` style as the rest of the pipeline:
 
-| Stage | Orchestrator | Chain (scripts in this folder) |
+| Stage | Orchestrator | Chain (scripts in this folder unless a path is given) |
 |---|---|---|
 | **8 — Deconvolution** | `pipeline/run_stage8.py` | `R/prepare_motrpac_bulk.sh` → `R/run_deconvolution.sh` → `R/extract_z.sh` → `build_pseudocells.py` |
 | **9 — Tokenize + Embed** | `pipeline/run_stage9.py` | `tokenize_pseudocells.py` → `finetune/genecompass/embed_cells.py` |
+| **11 — Gate** | `pipeline/run_stage11.py` | `embed_qc.py` → `pheno_merge_test.py` → `subspace_probe.py --sequential` → `augur_prep.py` → `run_augur.sh` → `corroborate_summary.py` |
+| **10 — DE** | `pipeline/run_stage10.py` | `R/run_pseudobulk_de.sh` → `compare_posctrl.py` → with `--covariate-variants A B`, the whole DE again with technical covariates and `compare_de_runs.py` |
+| **12, 13, 14** | `pipeline/run_stage12.py`, `run_stage13.py`, `run_stage14.py` | transfer (`translation/`); networks, their decoy null and enrichment; purity sweeps and the composition table |
 
 Stage 8 = bulk → `pseudocells.h5ad`; Stage 9 = pseudo-cells → `cell_embeddings.npy`.
-Both are per-tissue; each prints its plan with `--dry-run` and supports `--from N`.
+Both are per-tissue; each prints its plan with `--dry-run` and supports `--from N`. Stages 10–14 run once
+over all tissues, in the order 11, 10, 12, 13, 14.
 
 ```bash
 # one tissue, end to end (step 2 of stage 8 is CPU-heavy -> compute node;
 # stage 9 embed -> GPU node):
 python pipeline/run_stage8.py --tissue SKM-GN \
-    --ref-dir "data/deconvolution/references_v4/MUSCLE_GSE137869_Y"
+    --ref-dir "data/deconvolution/references_v5/MUSCLE_GSE137869_Y"
 python pipeline/run_stage9.py --label skmgn
 ```
 
@@ -59,12 +101,12 @@ You supply `--tissue` (MoTrPAC bulk code, matches `TRNSCRPT_<TISSUE>_RAW_COUNTS.
 and `--ref-dir` (the per-tissue SC reference). The tissue→reference mapping is
 **`tissue_references.yaml`** — the canonical single source of truth (each tissue's correct reference +
 study + build command). The bulk code differs from the reference dir name (e.g. `LUNG` →
-`references_v4/LUNG_native_pooled`, `LIVER` → `references_v4/LIVER_GSE220075`, `BLOOD` →
-`references_v4/BLOOD_composite`).
+`references_v5/LUNG_native_pooled`, `LIVER` → `references_v5/LIVER_GSE220075`, `BLOOD` →
+`references_v5/BLOOD_composite`).
 
 **Recommended — from-scratch, correct-by-construction:** `pipeline/run_deconv_all.py` reads that
-manifest, runs the QC gate (`reference_qc.py --fail`) on every reference — refusing a missing or
-contaminated one, so a fresh run cannot silently use the wrong study — and submits Stage-8+9 for all 14
+manifest, runs the QC gate (`reference_qc.py --fail`) on every reference — refusing a missing reference or
+one the gate blocks, so a fresh run cannot silently use the wrong study — and submits Stage-8+9 for all 16
 tissues with the right `--ref-dir`:
 
 ```bash
@@ -76,25 +118,25 @@ python pipeline/run_deconv_all.py --submit      # sbatch one job per tissue (ref
 ```
 
 References are **built, not shipped** — `build_references_from_config.py` builds every reference in
-`tissue_references.yaml` (joint labels for the `references_v4/` builds; `build_blood_composite.py` for BLOOD;
+`tissue_references.yaml` into `references_v5/` (joint labels where the reference has them; `build_blood_composite.py` for BLOOD;
 `build_lung_pooled.py` for the native lung pool; the liver QC gate auto-drops the Visium samples). So a fresh clone must set up data first — see [`setup/SETUP.md`](setup/SETUP.md) (Data & config).
 Other paths default from `config/pipeline_config.yaml` `[deconvolution]`; outputs land under
 `data/deconvolution/` (gitignored).
 
-## Not in the pipeline (exploration / analysis)
+## Not in the numbered stages (validation / exploration)
 
-These are run on demand, separately from the pipeline:
+These are run on demand, separately from the stage orchestrators:
 
-- **Aim-2 analysis:** `pheno_merge_test.py` (gate), `subspace_probe.py`,
-  `augur_prep.py` + `run_augur.R` + `corroborate_summary.py`, `embed_qc.py`,
-  `build_umap_viewer.py` (+ `umap_viewer_template.html`, `umap_embeddings.py`).
+- **Viewer:** `build_umap_viewer.py` (+ `umap_viewer_template.html`, `umap_embeddings.py`). No viewer
+  exists for the default, and the viewer's "hotspot" rule is not the gate's.
 - **Deconvolution validation:** `make_pseudobulk.py`, `make_purity_sweep.py`,
   `score_purity_sweep.py`, `score_validation.py`, `score_z.py`, `compute_true_z.py`,
   `R/score_z_vst.R`, `R/run_tutorial_gbm.R`, `build_all_datasets.sh`.
-- **Cross-method θ check + mRNA-bias battery (COMPLETE):** `R/run_omnideconv.R` +
-  `omnideconv_bench/` (the SimBu simulator `simulate_simbu.{R,sh}`, `bias_delta.py`, `dose_response.py`)
-  → results + paper comparison + downstream-claims guidance in `OMNIDECONV_RESULTS.md`
-  (plan: `OMNIDECONV_BENCHMARK_PLAN.md`).
+- **Cross-method θ check + mRNA-bias battery:** `R/run_omnideconv.R` +
+  `omnideconv_bench/` (the SimBu simulator `simulate_simbu.{R,sh}`, `bias_delta.py`, `dose_response.py`).
+  On the current references: `docs/audit/remediation/STEP4_RESULTS.md` V5 and V6 (full report
+  `STEP4_V5_V6_RESULTS.md`). Earlier runs, the paper comparison and the downstream-claims guidance:
+  `OMNIDECONV_RESULTS.md` (plan: `OMNIDECONV_BENCHMARK_PLAN.md`).
 - **Reference build + QC:** `build_reference.py` (with the built-in QC gate), `build_references_v2.sh`,
   `build_lung_pooled.py` (native-lung pool); **`reference_qc.py`** (the contamination gate — run
   `python deconvolution/reference_qc.py --all --deep` to audit every reference); **`tissue_references.yaml`**

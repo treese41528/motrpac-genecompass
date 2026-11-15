@@ -1,5 +1,10 @@
 # repfdr's 8-week sex-consistency fit on the 16-tissue default (2026-11-10)
 
+> **2026-11-15: a dated record.** "The 16-tissue default" here is the run on the refs4 references, where
+> repfdr was fitted on every gene-block. In **refs5** the primary reading is per-sex concordance and repfdr is
+> fitted on dose-significant gene-blocks only, as the consortium does: 139 calls by concordance, 3,623 by
+> repfdr, 3,629 in their union (`docs/audit/remediation/STEP3_RESULTS.md`, A4 and B5).
+
 **Question.** `DECONVOLUTION_PIPELINE_REPORT.md` left one item unchecked on the current references: whether
 repfdr's fit is still degenerate. It was degenerate in the July-reference v2 run, so every 8-week sex-consistency
 call there rested on per-sex concordance alone. Stage 10 has recorded the fit's status in `de_methods.tsv` since

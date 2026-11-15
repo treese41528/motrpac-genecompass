@@ -1,5 +1,14 @@
 # Cell-type-resolved DE vs the MoTrPAC references — detailed comparison
 
+> **2026-11-15: a dated record, not the current results.** §0–§3 describe the June references; §0a and the
+> "Current figures" banner below describe the default of 2026-11-01 (refs4 references, 16 tissues). The
+> default is now **refs5**; the current DE results are `docs/audit/remediation/STEP3_RESULTS.md` (B5), with the
+> per-tissue table in `docs/audit/remediation/record/step3/downstream/de_by_tissue_refs5_vs_default.tsv`. What
+> differs on refs5: 52,961 dose-significant gene × block pairs (9,617 genes); single-sex tissues have a dose
+> test (TESTES 219 pairs, OVARY 8); no block's calls are robust to technical covariates by the registered
+> verdict; the positive-control red flag stands (`STEP4_RESULTS.md`, V2). The comparison with the MoTrPAC
+> references below has not been redone on refs5.
+
 _2026-06-22. Companion to `AIM2_DECONV_RESULTS.md` §4a. Compares our per-(tissue × cell-type)
 pseudobulk DE on the deconvolved BayesPrism `Z` against the published MoTrPAC findings, tissue by
 tissue. Sources: **MoTrPAC PASS1B** — #21 Nature 2024 (temporal multi-omic atlas), #22 Cell Genomics

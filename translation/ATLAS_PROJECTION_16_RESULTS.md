@@ -1,5 +1,12 @@
 # E.3 on the 16-tissue default: result (2026-11-04)
 
+> **2026-11-15: a dated record, and the latest run of this check.** "The 16-tissue default" here is the run
+> on the refs4 references. The projection has **not been repeated on refs5**, the default since 2026-11-15
+> (`docs/audit/remediation/STEP3_RESULTS.md`). The hotspot list has changed since: SKMGN tenocytes and HYPOTH
+> oligodendrocyte precursor cells are no longer called, and SKMVL tenocytes, SKMGN Schwann cells, HEART
+> vascular smooth muscle cells and LUNG endothelial cells are hotspots on refs5. The per-type accuracies
+> below are for the earlier run's cells.
+
 Pre-registration: `ATLAS_PROJECTION_16_PREREG.md` (780b149). The SPLEEN/OVARY map rows (0595e80) were committed
 before any Spleen or Ovary atlas cell was embedded. Job 12192423. Record: `atlas_record_16/` (`summary.txt`,
 `atlas_projection_per_type.tsv`, and the Tabula Sapiens name lists the new rows were written from). Scores:

@@ -1,5 +1,10 @@
 # Module A pre-registration -- RESULTS
 
+> **2026-11-15.** Module A was scored on the current model and references (v2, refs5):
+> `docs/audit/remediation/STEP4_RESULTS.md`, V4. Criteria 1, 3 and 4 pass. The registered myeloid replication,
+> which the note below says was never scored, has now been scored and **fails** (Spi1 at the 81st percentile
+> of its matched genes, bar 90th; Cebpa not testable). Criterion 2 stays withdrawn.
+
 > **Read this first (2026-11-14).** This file is the April model's scoring only. The retrained model (v2, the
 > default) passes criteria 1, 3 and 4 and **fails criterion 2** (0 of 25; `docs/RETRAIN_V2_RESULTS.md`, Module A).
 > Criterion 2's curated set was written after the smoke run had shown the targets, so it cannot validate

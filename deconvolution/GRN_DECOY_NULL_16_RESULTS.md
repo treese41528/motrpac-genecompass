@@ -1,5 +1,11 @@
 # GRN decoy null on the 16-tissue default: result (2026-11-05)
 
+> **2026-11-15: a dated record.** "The 16-tissue default" here is the run on the refs4 references, with six
+> networks built under the old edge rule (a gene missing from one arm set to 0). On **refs5** the null was
+> repeated on seven networks built on genes present in both arms, and it is negative again: pooled estimate
+> 1.02 at \|z\| ≥ 2, and 0 of 777 TF × network pairs beat their decoys
+> (`docs/audit/remediation/STEP3_RESULTS.md`, B7).
+
 Pre-registration: `GRN_DECOY_NULL_16_PREREG.md` (780b149), committed before any decoy network was built.
 Job 12192357 (57 min, A100). Decoys: `data/deconvolution/grn_v2_refs4all_rebuild_decoy/`. Record tables:
 `grn_decoy_record_16/`. Scorer: `grn_decoy_fdr.py`, run with its defaults (the config's `grn_dir`).

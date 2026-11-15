@@ -1,5 +1,10 @@
 # Embedding-based condition analysis & differential expression — methods in the literature
 
+> **2026-11-15: a dated record.** Written 2026-06-15; where it says "the current default" it means the run of
+> 2026-11-01 on the refs4 references. Current results are refs5: `docs/audit/remediation/STEP3_RESULTS.md`.
+> On refs5 the embedding's AUC is above PCA-50's in 88 of 150 analysable blocks (Wilcoxon p 0.013) and above
+> the all-genes probe's in 80 (p 0.38); Augur and the probe agree at Spearman 0.82.
+
 _2026-06-15. Companion to `AIM2_DECONV_RESULTS.md` (§3b). A web-verified review of how the field
 (a) quantifies how strongly a covariate is encoded in single-cell / embedding data, and (b) does the
 downstream differential expression — and where our Aim-2 pipeline sits relative to that precedent._

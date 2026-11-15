@@ -1,5 +1,9 @@
 # E.3 result: transferred rat cells land nearest their Tabula Sapiens counterparts (2026-10-31)
 
+> **2026-11-15: a dated record.** Run on the 14-tissue refs4 cells; repeated on 16 tissues on 2026-11-04
+> (`ATLAS_PROJECTION_16_RESULTS.md`). Not repeated on refs5, the default since 2026-11-15
+> (`docs/audit/remediation/STEP3_RESULTS.md`).
+
 Pre-registration: `ATLAS_PROJECTION_PREREG.md` (4895834) and the correspondence map
 `atlas_correspondence.tsv` (de65969), both committed before any atlas cell was embedded. Job 12103831.
 Record tables: `atlas_record/` (per-type table, summary).

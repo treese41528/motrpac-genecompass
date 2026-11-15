@@ -1,5 +1,11 @@
 # SimBu mRNA-content-bias battery on the 15 current references: results (2026-11-11)
 
+> **2026-11-15: a dated record.** "The current references" here are the refs4 references of the default of
+> 2026-11-11, and this battery's "no bias" arm kept each reference's native mRNA-content differences. The
+> battery was rerun on the refs5 references with an arm that removes those differences:
+> `docs/audit/remediation/STEP4_RESULTS.md`, V5. Against that baseline BayesPrism's error against cell
+> fractions rises under native bias on 13 of 15 references and under added bias on 14 of 15.
+
 **Question.** The mRNA-bias battery and its dose-response were last run in July, on the earlier references. Do
 July's four statements still hold on the 15 references of the 16-tissue default, and which cell type does the
 bias distort most in each tissue now?

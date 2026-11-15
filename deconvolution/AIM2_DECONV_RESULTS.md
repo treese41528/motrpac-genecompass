@@ -1,5 +1,13 @@
 # Deconvolution → GeneCompass (Aim 2 bridge) — Results & Next Stages
 
+> **2026-11-15: a dated record, not the current results.** The sections below were written with the April
+> model on the June and July references, and the "Current configuration" banner that follows describes the
+> default of 2026-11-01 (refs4 references, 16 tissues). The default is now **refs5**, the registered rerun of
+> Stages 8-14 after the audit. Current results: `docs/audit/remediation/STEP3_RESULTS.md`; validations:
+> `docs/audit/remediation/STEP4_RESULTS.md`. On refs5: 11 hotspots and 1 borderline block, with a list that is
+> not stable to small changes of the inputs; 52,961 dose-significant gene × block pairs, in no block robust to
+> technical covariates by the registered verdict; the positive-control red flag stands.
+
 _Status 2026-06-15 (supervised re-measurement + cross-method corroboration in §3b; external + cross-species validation in §3c; the §3 "exercise is small" reading is superseded — but see the §3c magnitude reconciliation). Companions: `MOTRPAC_BULK_LIFTOVER.md` (bulk gene-ID prep), `EMBEDDING_DE_STANDARDS.md` (methods in the literature), `README.md`._
 
 > **Current configuration: retrain v2 model + refs4 references over all 16 tissues (default since 2026-11-01,

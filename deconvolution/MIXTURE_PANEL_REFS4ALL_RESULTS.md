@@ -1,5 +1,10 @@
 # Known-truth mixture panel on the current references: result (2026-11-08)
 
+> **2026-11-15: a dated record.** "The current references" here are the refs4 references of the default of
+> 2026-11-08. The panel was rerun on the refs5 references with two registered corrections:
+> `docs/audit/remediation/STEP4_RESULTS.md`, V6. Its floor is met on 19 of 19 sets, and no set dropped by more
+> than 0.004 against this panel.
+
 **Question.** The 16-tissue default deconvolves against 15 references. Does each one recover the cell-type
 fractions of mixtures whose composition is known? The earlier panel (`OMNIDECONV_RESULTS.md`,
 `data/deconvolution/validation_v2/`) certified the June/July references; this reruns it on the current ones.

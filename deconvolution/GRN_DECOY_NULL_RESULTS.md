@@ -1,5 +1,9 @@
 # GRN decoy null: result (2026-10-31)
 
+> **2026-11-15: a dated record.** This null was run on the eight networks of the 14-tissue refs4 arm. The
+> current run is refs5 (seven networks, the difference taken on genes present in both arms): negative again,
+> pooled estimate 1.02, 0 of 777 TF × network pairs (`docs/audit/remediation/STEP3_RESULTS.md`, B7).
+
 Pre-registration: `GRN_DECOY_NULL_PREREG.md`, committed before any decoy network was built. Job 12103791
 (1 h 24 min, A100). Decoy networks: `data/deconvolution/grn_v2_refs4_decoy/`. Record tables (copied from
 `<decoy dir>/fdr/`): `grn_decoy_record/` (`summary.txt`, `fdr_per_network.tsv`, `fdr_curve_pooled.tsv`,
