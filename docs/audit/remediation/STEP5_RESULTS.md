@@ -86,8 +86,8 @@ are above 15%.
   tissue, so both references go into the expert review plan with these tables.
 - **Why it matters for results.** A reference profile averaged over damaged cells is a wrong profile.
   Mitochondrial genes are excluded from the deconvolution, so the concern is the rest of a damaged cell's
-  profile. Neither SMLINT nor KIDNEY holds a hotspot in the current default; whether either does in refs5 is
-  read in `STEP3_RESULTS.md`.
+  profile. Neither SMLINT nor KIDNEY holds a hotspot or a borderline block, in the default before refs5 or in
+  refs5 (`STEP3_RESULTS.md`, B4).
 
 **All 15 refs5 references, measured directly.** The table above matched reference cells to corpus QC files,
 so it could not cover the three references built outside those files, and it was run on the references in use
@@ -306,7 +306,19 @@ QC files the corpus was built from (job 12378047).
 - GSE260849's second file is a copy that does not come from the double read (two source files with the same
   content), so the file-walk switch leaves it. The switch is checked on a study with true double reads below.
 
-*(file-walk check on GSE214388: filled in when job 12379033 finishes)*
+**The file-walk switch on a study with true double reads** (GSE214388, job 12379033; `walk_each_file_once`
+alone on):
+
+| | Files written | Cells per file |
+|---|---|---|
+| Default | 4 | 4,109; 3,783; 4,109; 3,783. Files 3 and 4 are byte-for-byte files 1 and 2 |
+| `walk_each_file_once` on | 2 | 4,109; 3,783 |
+
+- The four default files hold the same cells, genes and counts as the QC files the corpus was built from.
+- With the switch on, each of the two files holds exactly the cells of its default file. No cell of this
+  study is above 15% mitochondrial (highest 8.6%).
+
+Record: `record/step5/stage2_walk_switch_check.tsv`.
 
 Tests: `tests/test_stage2_switches.py` (every switch is off in the committed configuration; each rule's
 boundary; the catalog merge). Record: `record/step5/stage2_switches_check.tsv`. The profile used for "on" sets
@@ -328,7 +340,7 @@ These stand as the registration states them; nothing was measured and nothing ca
 
 - [yang2024] Yang X, et al. GeneCompass. Cell Research 2024;34(12):830-845 (in `docs/audit/REFERENCES.md`).
 - [osorio2021] Osorio D, Cai JJ. Systematic determination of the mitochondrial proportion in human and mice
-  tissues for single-cell RNA-sequencing data quality control. Bioinformatics 2021;37(7):963-967.
+  tissues for single-cell RNA-sequencing data quality control. Bioinformatics 2021;37(7):963-967 (online 2020, the year Crossref records).
   doi:10.1093/bioinformatics/btaa751
 - [luecken2019] Luecken MD, Theis FJ. Current best practices in single-cell RNA-seq analysis: a tutorial.
   Mol Syst Biol 2019;15(6):e8746. doi:10.15252/msb.20188746

@@ -1,18 +1,21 @@
 # Step 3 results: the refs5 rerun
 
-The registered rerun of Stages 8-14 (`STEP3_PREREG.md`, with Amendment 1). This file is written as the stages
-finish. Part A is complete; Part B is filled in stage by stage.
+The registered rerun of Stages 8-14 (`STEP3_PREREG.md`, with Amendment 1). Both parts are complete.
 
 - **Part A** covers what changed before any refs5 number existed: the references, and the proof that each code
   change does what it should on the existing default's data.
 - **Part B** covers the rerun itself, compared with the current default.
+
+**"Current default" in this file** means the default configuration when the rerun was made: the
+`_refs4all_rebuild` folders of 2026-11-03. refs5 replaced it as the default on 2026-11-15 (B9), and it is now
+the profile `config/profiles/refs4all_rebuild.yaml`.
 
 ## What the rerun found
 
 | Stage | Result |
 |---|---|
 | 8, deconvolution | Reproduces byte for byte when repeated. The rebuilt exclusion list shifts fractions by at most 2.8 points and keeps sample order in the 14 tissues whose reference did not change |
-| 9, embedding | 9,060 pseudo-cells; target sum 6,700 by the registered formula; weights load completely |
+| 9, embedding | 9,060 pseudo-cells embedded (9,082 built; 22 LUNG goblet-cell pseudo-cells are dropped at tokenization); target sum 6,700 by the registered formula; weights load completely |
 | 11, gate | **11 hotspots and 1 borderline block** of 150 (9 before). Seven of the nine earlier hotspots remain; membership is not stable to small input changes |
 | 10, DE | 52,961 dose-significant gene x block pairs. **No block's calls are robust to technical covariates** by the registered verdict; 44% and 33% of pairs survive the two reruns |
 | 12, transfer | 10 of 11 preserved by the registered rule, 9 by the corrected rule |
@@ -172,8 +175,6 @@ point of restricted permutation [winkler2014]. It means "also significant in S1"
 reading rule for a supported hotspot, is the easier half. The rule is applied as registered.
 
 ## Part B. The rerun
-
-Written stage by stage. Sections that have no numbers yet say so.
 
 ### B1. Stage 8: deconvolution
 
@@ -415,7 +416,7 @@ earlier method would have called it a hotspot on a p of 0.0029 from 10,000 permu
 | Dose-significant gene x block pairs | 53,084 | 53,283 | **52,961** |
 | Distinct genes | 9,671 | - | **9,617** |
 | Pairs outside low-fraction blocks | 43,807 | - | **41,401** (8,496 genes) |
-| Pairs in the 44 low-fraction blocks | 9,277 | - | 11,560 |
+| Pairs in low-fraction blocks (45 blocks in the current default, 44 in refs5) | 9,277 | - | 11,560 |
 | TESTES / OVARY pairs | 0 / 0 | 202 / 11 | **219** (67 genes) **/ 8** (1 gene) |
 | Sex-consistent 8-week calls | 5,126 (old rule) | 144 / 3,404 / 3,415 | **139** by concordance; 3,623 by repfdr; 3,629 union |
 

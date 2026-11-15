@@ -223,9 +223,11 @@ cell type. Open circles mark each type's own abundance in the MoTrPAC tissue. Ta
 | SKMGN Schwann cells | 0.08% | - | - | not testable (30 reference cells) |
 
 - **Four of the 12 called blocks have their expression recovered at the abundance they are estimated at.**
-- **None of the five muscle blocks does.** At 0.5% of a mixture, the lowest point of the grid and still above
-  their abundance, the estimated expression of these types correlates at 0.50 to 0.57 with the truth. The
-  pseudo-cells the gate scores for them are estimates of that quality at best.
+- **None of the five muscle blocks does.** At 0.5% of a mixture, the lowest point of the grid, the estimated
+  expression of the four testable types correlates at 0.50 to 0.57 with the truth. That point is above the
+  abundance of three of them (0.1% to 0.2%), so for those the pseudo-cells the gate scores are estimates of
+  that quality at best. SKMVL tenocytes sit between two grid points (0.7% of the tissue): 0.51 at 0.5% and
+  0.61 at 1%.
 - **The top hotspot, SKMVL satellite cells, is among them** (0.50).
 
 **What a sweep can and cannot show.** Reference and mixtures come from one study, so this is the method's best
@@ -250,8 +252,8 @@ expected to recover):
 | **All** | **5** | 21 | 8 | **34** |
 
 **The registered red flag stands.** 5 of the 26 testable controls recover (19%). The specification reads a
-miss here as "a red flag for the deconvolution to DE pipeline, not a biological null". The current default
-gave the same 5 of 34.
+miss here as "a red flag for the deconvolution to DE pipeline, not a biological null". The default before
+refs5 gave the same 5 of 34.
 
 **By tier:**
 
