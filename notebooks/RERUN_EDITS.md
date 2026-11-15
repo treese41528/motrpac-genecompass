@@ -35,7 +35,8 @@
 >   whatever the run. Both now read the tokenize summaries and the config (6700 on refs5); nb9 was executed
 >   again (job 12392439).
 > - **Executing from a worktree.** A notebook run inside a git worktree whose `data/` is a symlink prints the
->   worktree's path, and nb8's path listing stops. Run with the main tree as the project root.
+>   worktree's path, and nb8's path listing stops. Run with the main tree as the project root
+>   (`analysis/audit_remediation/docs_refs5_exec_notebooks.py` does that).
 >
 > **Markdown prose (2026-11-04).** No markdown cell of notebooks 1–12 quotes a result any more. Every figure the prose
 > used to state is printed by a code cell from the outputs or the config. Notebooks 8–12 end with a "Results for this
