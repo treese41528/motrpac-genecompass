@@ -1,5 +1,15 @@
 # Deconvolution rebuild runbook — config-driven, validated, from start (2026-07-15)
 
+> **2026-11-15: §0 describes the default before refs5.** The commands in §0 read their folders from the
+> config, so run today they write into the refs5 folders (`deconvolution.results_dir` and the other keys;
+> references in `references_v5/`). What §0 says about "the default" (refs4 on 16 tissues, `_refs4all_rebuild`
+> folders, a 6,400 target sum, a gate of 10 splits × 10,000 permutations) is the default of 2026-11-03, now
+> `config/profiles/refs4all_rebuild.yaml`. How refs5 was run differs in three ways
+> (`docs/audit/remediation/STEP3_RESULTS.md`, B1, B3, B4; `STEP3_PREREG.md`): the target sum is computed from
+> the LIVER pseudo-cells after Stage 8 and before Stage 9 (`deconvolution/calibrate_target_sum.py`); the gate
+> draws further permutations for blocks still open and writes a class per block; and Stage 10 also reruns the
+> DE with technical covariates (`run_stage10.py --covariate-variants A B`). §0 has not been rewritten for it.
+
 The Stage-8 deconvolution reference layer was **rebuilt from scratch** to the reference decisions in
 `REFERENCE_SELECTION_PLAN.md` (Geyu's note), with a hard guard that every reference is built from — and validated
 against — an exact, locked sample selection *before* any bulk is deconvolved. This document is the reproducible

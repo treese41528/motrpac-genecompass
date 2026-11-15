@@ -1,5 +1,9 @@
 # Audit findings register (2026-11-11)
 
+> **2026-11-15: a dated record.** The register describes the default of 2026-11-11. What was done about each
+> finding, and the results of the rerun that followed (refs5, the default since 2026-11-15), are in
+> [`remediation/README.md`](remediation/README.md). The register is kept as written.
+
 The main findings of the nine audit parts in one place. Each row points to the part that holds the detail and the
 evidence. The parts list more items than this register does, under "Deviations, known defects and caveats".
 

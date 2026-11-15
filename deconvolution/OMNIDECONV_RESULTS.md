@@ -1,5 +1,13 @@
 # omnideconv Cross-Method Panel — Results
 
+> **2026-11-15: a dated record.** The panel and battery below certify the June/July references, and the two
+> notes that follow point to the runs of 2026-11-08 and 2026-11-11 on the refs4 references. The runs on the
+> current references (refs5) are `docs/audit/remediation/STEP4_RESULTS.md`, V5 and V6 (full report
+> `STEP4_V5_V6_RESULTS.md`). What they add: against a baseline with no mRNA-content bias, BayesPrism's error
+> against cell fractions rises under the references' own mRNA differences on 13 of 15 references, so an
+> estimated fraction is a share of mRNA, not a cell proportion; the corrector rule is reproduced on its
+> registered contrast (C minus A) and not on C minus B; the mixture panel meets its floor on 19 of 19 sets.
+
 > **Current references: see `MIXTURE_PANEL_REFS4ALL_RESULTS.md` (2026-11-08).** The panel below certifies the
 > June/July references. It was rerun on the 15 references of the 16-tissue default (15 holdout and 4 cross sets,
 > the same six methods): BayesPrism's median per-type r is 0.973–0.999 on all 19 sets.

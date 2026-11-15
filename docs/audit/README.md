@@ -1,5 +1,10 @@
 # Methods audit of the MoTrPAC x GeneCompass pipeline (2026-11-11)
 
+> **2026-11-15: a dated record.** The audit describes the default of 2026-11-11 (refs4 references). Its
+> findings were acted on afterwards: [`remediation/README.md`](remediation/README.md) says what was done about
+> each, and the default configuration is now refs5, the rerun registered there. The audit's parts are kept as
+> written.
+
 A stage-by-stage record of what the pipeline does: the models and software used, every threshold and flag with
 its value, the statistical procedures in full, and the references behind them. Each statement is tied to the code
 line, configuration key or result file that supports it.

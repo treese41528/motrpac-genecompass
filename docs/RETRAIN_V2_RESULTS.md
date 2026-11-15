@@ -1,5 +1,13 @@
 # Retrain v2 — results
 
+> **2026-11-15 note.** The default is now v2 on refs5, the registered rerun of Stages 8-14 after the audit
+> (`docs/audit/remediation/STEP3_RESULTS.md`): 194 blocks, 150 analysable, 11 hotspots and 1 borderline block.
+> Three things in this document have a later result in `docs/audit/remediation/`: the model was tested on
+> studies it never saw and generalises (loss ratio 1.046, bar 1.10; `STEP4_RESULTS.md` V3); Module A was
+> rescored on v2 and refs5, where criteria 1, 3 and 4 pass and the myeloid replication fails (V4); and the
+> corpus v2 was trained on was measured (10.4% of cells above 15% mitochondrial reads; `STEP5_RESULTS.md`).
+> The two notes below describe earlier defaults.
+
 > **2026-10-31 note.** The downstream (C5 and rerun) figures here are v2 on the **July** references (172 blocks,
 > 13 hotspots). The default is now v2 on the refs4 references (165 blocks, 124 analysable, 11 hotspots,
 > 11/11 preserved in transfer, GRN self-consistency median ρ 0.310): `deconvolution/REFS4_RERUN_RESULTS.md`.

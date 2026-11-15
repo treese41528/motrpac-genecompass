@@ -1,5 +1,11 @@
 # All-tissue (16) rerun: result (2026-11-01)
 
+> **2026-11-15: a dated record.** This is the 16-tissue run on the refs4 references, the default from
+> 2026-11-01 to 2026-11-15 (now `config/profiles/refs4all_rebuild.yaml`). "The default" below means that run.
+> The default is now **refs5**; current results: `docs/audit/remediation/STEP3_RESULTS.md`, which compares
+> refs5 with this run stage by stage (11 hotspots and 1 borderline block against the 9 here; 7 of the 9
+> remain).
+
 Registration: `REFERENCE_RELABEL_PREREG.md` §14 "What follows" and the §16 entry of 2026-11-01 (119e450), both
 committed before any of this was run. Profile: `config/profiles/refs_v4all.yaml` (now the default config, as
 §14 registered; the 14-tissue refs4 result is `config/profiles/refs4_14.yaml`). Jobs: gate 12108627 (6 h),

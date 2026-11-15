@@ -1,5 +1,11 @@
 # MoTrPAC rat BayesPrism reference-selection plan (2026-07-15)
 
+> **UPDATE 2026-11-15 (refs5 is the default).** The study and arm choices stand. All 15 references were
+> rebuilt from committed code into `data/deconvolution/references_v5/`: 13 are byte-identical to the builds
+> the updates below describe; HYPOTH was re-annotated by the joint procedure (11 types); HEART has "CD8+ T
+> cells" merged into "T cells" (15 types). TESTES keeps the pooled reference as primary, with a control-only
+> reference built as a sensitivity. Results: `docs/audit/remediation/STEP3_RESULTS.md` (A1, A2, B2).
+
 Response to Geyu's `manuscript/wip/claude_note.md`: pick, per MoTrPAC PASS1B tissue, the best **rat**
 single-cell/nucleus BayesPrism reference, filtering on **organism**, **geo_title**, and **control arms**;
 prefer one study across tissues where clean; add TESTES; repair CORTEX; find references for the missing
