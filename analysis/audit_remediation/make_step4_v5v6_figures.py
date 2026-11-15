@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""make_step4_v5v6_figures.py -- figures for V5 and V6 of Step 4 (docs/audit/remediation/STEP4_V5_V6_DRAFT.md), from
+"""make_step4_v5v6_figures.py -- figures for V5 and V6 of Step 4 (docs/audit/remediation/STEP4_V5_V6_RESULTS.md), from
 the record TSVs that make_step4_v5_tables.py and make_step4_v6_tables.py write.
 
   MPLCONFIGDIR=tmp/mpl python analysis/audit_remediation/make_step4_v5v6_figures.py

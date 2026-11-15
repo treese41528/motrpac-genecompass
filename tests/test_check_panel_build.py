@@ -1,5 +1,5 @@
 """The check that runs between building the mixture panel and deconvolving it
-(docs/audit/remediation/STEP4_V5_V6_DRAFT.md note N10): a cross set is deconvolved only if its harmonization of
+(docs/audit/remediation/STEP4_V5_V6_RESULTS.md note N10): a cross set is deconvolved only if its harmonization of
 source labels to reference types is the one that was reviewed for the earlier panel.
 """
 import sys

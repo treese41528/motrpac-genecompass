@@ -9,8 +9,8 @@ filled in as their jobs finish.
 | V2 | Positive controls on refs5 | Red flag stands if fewer than half of the testable sanity controls recover | **The red flag stands: 5 of 26 testable sanity controls recovered** (5 of 34 in all) |
 | V3 | Held-out test of the model | Held-out loss at most 1.10 times the in-sample loss | **Generalises: 1.046** |
 | V4 | Module A on the current model and references | Criteria 1, 3 and 4; myeloid replication reported, not a gate | **1, 3 and 4 pass. Replication fails:** Spi1 at the 81st percentile; Cebpa not testable |
-| V5 | mRNA-content bias with a bias-free baseline | Per-reference RMSE differences | *(running)* |
-| V6 | Mixture panel on refs5 | The registered floor | *(running)* |
+| V5 | mRNA-content bias with a bias-free baseline | Per-reference RMSE differences | **BayesPrism's error against cell fractions rises under native mRNA differences on 13 of 15 references** and under added bias on 14 of 15. The corrector rule is "reproduced" on its registered contrast, with a caveat |
+| V6 | Mixture panel on refs5 | The registered floor | **Floor met on 19 of 19 sets** (median per-type correlation 0.976 to 0.999) |
 
 ## V3. A held-out test of the model (findings 3.2, 3.6)
 
@@ -279,6 +279,68 @@ It does not lift the red flag.
 Record: `record/step4/v2_posctrl/` (`sanity_subset.tsv`, `by_tier.tsv`, `against_default.tsv`,
 `parenchyma_dataanchored.tsv`).
 
-## V5, V6
+## V5. mRNA-content bias against a baseline that has none (finding 5.2)
 
-*(the SimBu battery and the mixture panel are running; filled in when they finish)*
+The full report, with every note written before the results, is `STEP4_V5_V6_RESULTS.md`. This is the summary.
+
+**What ran.** The registered battery on the 15 refs5 references: 50 mixtures of 1,000 cells, six methods, three
+arms. A removes mRNA-content differences between cell types, B keeps each reference's native differences (the
+earlier "no bias" arm), C adds bias. 270 method runs: none failed; 24 were not applicable (a method that needs
+several samples, on a one-sample reference). In arm A every one of the 185 cell types sums to the same library
+per cell, so the arm does what it is meant to.
+
+![SimBu arms](figures/step4_v5_bayesprism_arms.png)
+
+*Figure V5. BayesPrism's error against cell fractions in the three arms, per reference. Table:
+`record/step4/v5_simbu/v5_bayesprism.tsv`.*
+
+| Registered reading | Result |
+|---|---|
+| BayesPrism under native bias: RMSE(B) minus RMSE(A) | Positive on **13 of 15** references (mean +0.027). Negative on BAT and BLOOD |
+| BayesPrism under added bias: RMSE(C) minus RMSE(A) | Positive on **14 of 15** (mean +0.053). Negative on BAT |
+| Correctors, on C minus A, over the 12 references every method runs | **Reproduced**: MuSiC -0.007 and SCDC +0.018 degrade less than BayesPrism (+0.053) and CIBERSORTx (+0.062) |
+| The 2026-11-11 reading, C minus B | **Not reproduced**, as before: MuSiC +0.026, SCDC +0.022, BayesPrism +0.025, CIBERSORTx +0.022 |
+
+- **The earlier baseline hid most of the effect.** Against a baseline with no bias, BayesPrism's fractions are
+  good estimates of cell fractions (r 0.82 to 0.99, except BLOOD at 0.66). With each reference's own mRNA
+  differences left in, the correlation with cell fractions falls to 0.39 in CORTEX, 0.47 in OVARY, 0.59 in
+  SMLINT and about 0.67 to 0.70 in HIPPOC, SPLEEN, BLOOD and HEART.
+- **What that means for this project.** BayesPrism estimates the share of mRNA, not the share of cells. Where
+  cell types differ in mRNA content, an estimated fraction is not a cell proportion, and this battery shows
+  the size of the gap on the project's own references. Claims about differences between animals in one cell
+  type are less exposed than claims about absolute fractions; they are not tested by this battery.
+- **"Reproduced" needs its caveat.** MuSiC and DWLS have their lowest error in arm B and their highest in arm
+  A, so their C minus A difference is small or negative for that reason. From B to C they lose as much as
+  BayesPrism. The registered rule is met; it does not show that MuSiC withstands added bias.
+- **Arm A is not a pure measure of native bias.** It also weights cells within a type equally. In BAT, where
+  types differ only 1.08-fold in library size, BayesPrism is worse in A than in B.
+
+## V6. Mixture panel on the refs5 references (findings 5.5, 5.6)
+
+**What ran.** The registered panel of 19 sets (15 holdout, 4 cross-study), six methods, on refs5, with the
+two registered corrections: DWLS as `mast_optimized` at p 0.05, and a provenance record from the cross-check
+runner. 114 method runs, none failed.
+
+![Mixture panel](figures/step4_v6_median_r.png)
+
+*Figure V6. Median per-type correlation of each method on each set. Table:
+`record/step4/v6_mixture_panel/v6_floor.tsv`, `panel_median.tsv`.*
+
+| Reading | Result |
+|---|---|
+| **Pass rule** (BayesPrism's median per-type correlation at least 0.85) | **Met on 19 of 19 sets**: holdout 0.990 to 0.999, cross-study 0.976 to 0.996 |
+| Against the panel of 2026-11-08 | No set dropped by more than 0.004 |
+| HEART (15 types after the merge) | Per-type correlation 0.89 to 0.999 |
+| HYPOTH (re-annotated, 10 types scored) | 0.955 to 0.997; glutamatergic neurons rise from 0.85 to 0.99 |
+| DWLS setting | Medians within 0.01 of the earlier setting on every set |
+
+- **The median hides the same failures as before.** 6 of 192 BayesPrism type tests are below 0.85: LIVER
+  hepatocytes, OVARY erythroid cells, HIPPOC cross-study excitatory neurons and three KIDNEY cross-study
+  types. KIDNEY cross-study has a pooled correlation of 0.17.
+- **Disclosed, unchanged:** compositions are flat Dirichlet, unlike tissue; pools as small as 20 cells are
+  resampled; BayesPrism sees every reference cell and the other methods a capped subset. A type a method does
+  not estimate is left out of that method's scores, and the scoring message now says so.
+- **What the panel does not test** is what Figure V1 tests: recovery of a rare type's expression at its
+  abundance in tissue. The panel's mixtures give every type a comparable share.
+
+Record: `record/step4/v5_simbu/`, `record/step4/v6_mixture_panel/`. Jobs and settings are in the full report.

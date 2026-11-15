@@ -1,7 +1,8 @@
-# Step 4, V5 and V6: draft
+# Step 4, V5 and V6: full report
 
-Draft for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) and V6 (mixture panel, findings
-5.5 and 5.6). Both batteries are finished: every registered run was made, none failed and none was retried.
+The full report for `STEP4_PREREG.md` sections V5 (SimBu mRNA-content bias, finding 5.2) and V6 (mixture panel,
+findings 5.5 and 5.6); `STEP4_RESULTS.md` carries the summary. Both batteries are finished: every registered run
+was made, none failed and none was retried.
 
 - **Results** come first. They are written from the record tables by one command (see "Commands").
 - **Then** what the results mean and do not show, the notes that settled open points before any result

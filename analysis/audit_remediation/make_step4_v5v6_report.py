@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""make_step4_v5v6_report.py -- write the results sections of docs/audit/remediation/STEP4_V5_V6_DRAFT.md from the
+"""make_step4_v5v6_report.py -- write the results sections of docs/audit/remediation/STEP4_V5_V6_RESULTS.md from the
 record tables, so every number in the text is read from the table named beside it.
 
   python analysis/audit_remediation/make_step4_v5v6_report.py
          [--v5 docs/audit/remediation/record/step4/v5_simbu] [--v6 docs/audit/remediation/record/step4/v6_mixture_panel]
-         [--draft docs/audit/remediation/STEP4_V5_V6_DRAFT.md] [--print]
+         [--draft docs/audit/remediation/STEP4_V5_V6_RESULTS.md] [--print]
 
 It replaces the text between the markers <!-- RESULTS:BEGIN --> and <!-- RESULTS:END --> of the draft (--print
 writes it to the terminal instead). Run it after make_step4_v5_tables.py and make_step4_v6_tables.py. It states
@@ -415,7 +415,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--v5", default="docs/audit/remediation/record/step4/v5_simbu")
     ap.add_argument("--v6", default="docs/audit/remediation/record/step4/v6_mixture_panel")
-    ap.add_argument("--draft", default="docs/audit/remediation/STEP4_V5_V6_DRAFT.md")
+    ap.add_argument("--draft", default="docs/audit/remediation/STEP4_V5_V6_RESULTS.md")
     ap.add_argument("--print", action="store_true", help="print the section instead of writing it into the draft")
     ap.add_argument("--date", default=datetime.date.today().isoformat(), help="date printed in the heading")
     a = ap.parse_args()

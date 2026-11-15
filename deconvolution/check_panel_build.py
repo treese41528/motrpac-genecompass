@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """check_panel_build.py -- checks on a freshly built mixture panel, run BEFORE any set is deconvolved
-(docs/audit/remediation/STEP4_PREREG.md V6; STEP4_V5_V6_DRAFT.md note N10).
+(docs/audit/remediation/STEP4_PREREG.md V6; STEP4_V5_V6_RESULTS.md note N10).
 
 1. Cross sets. The harmonization of source labels to reference types was reviewed on names alone for the earlier
    panel (MIXTURE_PANEL_REFS4ALL_PREREG.md). A cross set of this panel may be deconvolved only if its

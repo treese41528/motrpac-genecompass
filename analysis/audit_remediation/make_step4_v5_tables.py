@@ -18,7 +18,7 @@ Registered readings, in the order of the registration (summary.txt):
   3  Correctors: the rule of SIMBU_BIAS_REFS4ALL_PREREG.md (MuSiC and SCDC both below BayesPrism and CIBERSORTx)
      on the mean of RMSE(C) - RMSE(A) over the common set; reproduced or not
   4  The readings of 2026-11-11 (C against B) on these references, beside 1 to 3
-The common set (STEP4_V5_V6_DRAFT.md note N5) is the references where all six methods are scored in all three
+The common set (STEP4_V5_V6_RESULTS.md note N5) is the references where all six methods are scored in all three
 arms. If the set a single contrast would give differs from it, both rankings are written.
 
 Tables (all TSV, under --out):

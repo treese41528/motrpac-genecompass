@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """compare_smoke_full.py -- do the smoke runs and the full runs of TESTES give the same numbers?
 
-The smoke run of V5 and V6 (docs/audit/remediation/STEP4_V5_V6_DRAFT.md, note N13) ran TESTES with the registered
+The smoke run of V5 and V6 (docs/audit/remediation/STEP4_V5_V6_RESULTS.md, note N13) ran TESTES with the registered
 settings into folders of its own; the full batteries ran it again. For every estimate file of the four TESTES sets
 this compares the two runs: byte-identical or not, and the largest absolute difference in any estimated fraction.
 It is a run-to-run reproducibility check on one reference, which the audit noted had never been made for
