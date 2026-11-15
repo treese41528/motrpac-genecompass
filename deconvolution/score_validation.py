@@ -13,6 +13,13 @@ Inputs (under --stage-dir):
 Output:
   scores/metrics.tsv, scores/merged_long.tsv, and a printed summary.
 
+A cell type that is in the truth but that the method did not estimate (no column for it in the estimates) is
+LEFT OUT of that method's scores: it has no row in metrics.tsv and does not enter the pooled fit, the macro or
+the median r. It is not scored as an estimate of 0. The same holds, for the per-type r only, of a type the
+method estimates as a constant (r undefined). Both are printed and counted in overall_metrics.tsv
+(n_types_not_estimated, n_types_constant_estimate), so a median over fewer types can be seen for what it is
+(audit finding 5.5).
+
 Usage:  python deconvolution/score_validation.py --stage-dir data/deconvolution/validation/V0_liver
 """
 import argparse
@@ -21,6 +28,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
+
+
+def not_estimated_note(missing):
+    """The message for cell types in the truth that a method did not estimate. It says what the code does with
+    them: they are left out of the method's scores, not scored as 0 (audit finding 5.5)."""
+    return (f"[note] types in the truth that this method did not estimate: {missing}. They are left out of its "
+            f"scores (per-type, pooled, macro and median); they are not scored as 0.")
 
 
 def main():
@@ -54,7 +68,7 @@ def main():
     types = [t for t in true_cols if t in est.columns]
     missing = [t for t in true_cols if t not in est.columns]
     if missing:
-        print(f"[note] types in truth but not in estimates (set to 0): {missing}")
+        print(not_estimated_note(missing))
 
     rows, long = [], []
     for t in types:
@@ -84,6 +98,10 @@ def main():
     # therefore also report (a) macro per-type r (each type weighted equally)
     # and (b) the pooled fit with the top --drop-dominant type(s) excluded.
     valid_r = metrics["pearson_r"].dropna()
+    constant = list(metrics.loc[metrics["pearson_r"].isna(), "cell_type"])
+    if constant:
+        print(f"[note] types estimated as a constant (r undefined): {constant}. They are left out of the macro "
+              f"and median r; their RMSE is kept and they stay in the pooled fit.")
     macro_r = float(valid_r.mean()) if len(valid_r) else float("nan")
     median_r = float(valid_r.median()) if len(valid_r) else float("nan")
     k = max(0, min(args.drop_dominant, len(metrics) - 1))
@@ -106,6 +124,13 @@ def main():
          "note": f"pooled, excl {dropped_types or 'none'}"},
         {"metric": "separable_pooled_rmse", "value": sep_rmse,
          "note": f"pooled, excl {dropped_types or 'none'}"},
+        # what the scores above are taken over (audit finding 5.5)
+        {"metric": "n_types_truth", "value": len(true_cols), "note": "cell types in the truth"},
+        {"metric": "n_types_scored", "value": len(types), "note": "types with an estimate (rows of metrics)"},
+        {"metric": "n_types_not_estimated", "value": len(missing),
+         "note": "left out of every score: " + ("; ".join(missing) if missing else "none")},
+        {"metric": "n_types_constant_estimate", "value": len(constant),
+         "note": "r undefined, left out of macro and median r: " + ("; ".join(constant) if constant else "none")},
     ])
     overall.to_csv(out / f"overall_metrics{sfx}.tsv", sep="\t", index=False)
 

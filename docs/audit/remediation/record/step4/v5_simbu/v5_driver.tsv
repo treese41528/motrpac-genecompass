@@ -1,0 +1,253 @@
+contrast	reference	method	driver	d_rmse_driver	rest_median_d_rmse	true_mean	est_baseline_arm	est_bias_arm	direction	n_types_scored	driver_mrna_rank	driver_counts_rank	n_types_reference	top_mrna_type
+C-A	BAT	bp_rna	Immune cells	0.0001126	-0.0109422	0.1683294	0.1732687	0.1738383	inflated	6	2	1	6	ASPC
+C-A	BAT	cibersortx	Brown adipocytes	0.0787456	0.0120519	0.1849573	0.2082921	0.2930560	inflated	6	6	6	6	ASPC
+C-A	BAT	dwls	Immune cells	-0.0018923	-0.0071125	0.1683294	0.1767496	0.1677506	deflated	6	2	1	6	ASPC
+C-A	BAT	music	ASPC	0.0046029	-0.0087930	0.1465695	0.1601773	0.1264212	deflated	6	1	2	6	ASPC
+C-A	BAT	scdc	Brown adipocytes	0.1208650	0.0022286	0.1849573	0.2977038	0.4264961	inflated	6	6	6	6	ASPC
+C-A	BAT	bisque	Brown adipocytes	0.0061897	0.0010399	0.1849573	0.1829506	0.1829506	deflated	6	6	6	6	ASPC
+C-A	BLOOD	bp_rna	Plasmacytoid dendritic cells	0.1519945	0.0118772	0.0835185	0.0910616	0.2304953	inflated	13	1	1	13	Plasmacytoid dendritic cells
+C-A	BLOOD	cibersortx	Plasmacytoid dendritic cells	0.1480384	0.0399175	0.0835185	0.0978090	0.2344339	inflated	13	1	1	13	Plasmacytoid dendritic cells
+C-A	BLOOD	dwls	Erythroid cells	0.0277123	-0.0192351	0.0647598	0.0741601	0.0274189	deflated	13	13	12	13	Plasmacytoid dendritic cells
+C-A	BLOOD	music	Classical monocytes	0.0290327	-0.0151349	0.0794935	0.0879558	0.1329053	inflated	11	3	3	13	Plasmacytoid dendritic cells
+C-A	BLOOD	scdc	Non-classical monocytes	0.0171696	-0.0389919	0.0813831	0.0553558	0.0368498	deflated	13	9	11	13	Plasmacytoid dendritic cells
+C-A	BLOOD	bisque	Classical monocytes	0.1734942	0.0119495	0.0794935	0.0832044	0.2026730	inflated	13	3	3	13	Plasmacytoid dendritic cells
+C-A	CORTEX	bp_rna	Excitatory neurons	0.4170417	0.0668633	0.0917288	0.0946462	0.4929646	inflated	12	1	1	12	Excitatory neurons
+C-A	CORTEX	cibersortx	Excitatory neurons	0.4112254	0.0718361	0.0917288	0.1210848	0.5147771	inflated	12	1	1	12	Excitatory neurons
+C-A	CORTEX	dwls	Excitatory neurons	0.0575391	0.0082163	0.0917288	0.0100811	0.2273146	inflated	12	1	1	12	Excitatory neurons
+C-A	CORTEX	music	Excitatory neurons	0.0769998	0.0085162	0.0917288	0.0113334	0.2467043	inflated	12	1	1	12	Excitatory neurons
+C-A	CORTEX	scdc	Excitatory neurons	0.3129263	0.0479650	0.0917288	0.0266878	0.4566111	inflated	12	1	1	12	Excitatory neurons
+C-A	CORTEX	bisque	Neuroblasts	0.0161209	0.0035666	0.0892596	0.0618914	0.0615383	deflated	12	7	7	12	Excitatory neurons
+C-A	HEART	bp_rna	Cardiomyocytes	0.2585699	0.0230394	0.0642962	0.0652790	0.3033629	inflated	15	1	1	15	Cardiomyocytes
+C-A	HEART	cibersortx	Cardiomyocytes	0.2851131	0.0235906	0.0642962	0.1284186	0.3925405	inflated	15	1	1	15	Cardiomyocytes
+C-A	HEART	dwls	Cardiomyocytes	0.0208866	0.0028966	0.0642962	0.0198777	0.1285064	inflated	15	1	1	15	Cardiomyocytes
+C-A	HEART	music	Cardiomyocytes	0.0166789	0.0036193	0.0642962	0.0182278	0.1259088	inflated	15	1	1	15	Cardiomyocytes
+C-A	HEART	scdc	Mast cells	0.0662804	0.0158277	0.0689332	0.2003704	0.2597670	inflated	15	2	2	15	Cardiomyocytes
+C-A	HEART	bisque	B cells	0.0166359	0.0085283	0.0703716	0.0667961	0.0671660	inflated	15	15	15	15	Cardiomyocytes
+C-A	HIPPOC	bp_rna	Dentate gyrus granule cells	0.1748194	0.0589566	0.1105961	0.1024039	0.2842546	inflated	11	1	1	11	Dentate gyrus granule cells
+C-A	HIPPOC	cibersortx	Dentate gyrus granule cells	0.1457411	0.0578092	0.1105961	0.1408689	0.2803781	inflated	11	1	1	11	Dentate gyrus granule cells
+C-A	HIPPOC	dwls	Oligodendrocyte precursor cells	0.0048122	-0.0176880	0.0954679	0.0893085	0.0840861	deflated	11	7	7	11	Dentate gyrus granule cells
+C-A	HIPPOC	music	Dentate gyrus granule cells	0.0449170	-0.0045373	0.1105961	0.0487931	0.2190838	inflated	11	1	1	11	Dentate gyrus granule cells
+C-A	HIPPOC	scdc	Dentate gyrus granule cells	0.1120960	0.0176763	0.1105961	0.0709981	0.2640472	inflated	11	1	1	11	Dentate gyrus granule cells
+C-A	HIPPOC	bisque	Endothelial cells	0.0154395	0.0068736	0.0910593	0.0764163	0.0799528	inflated	11	10	10	11	Dentate gyrus granule cells
+C-A	HYPOTH	bp_rna	Oligodendrocytes	0.0565467	0.0181831	0.0964828	0.0972953	0.0448438	deflated	11	11	11	11	Glutamatergic neurons
+C-A	HYPOTH	cibersortx	Glutamatergic neurons	0.1006427	0.0219948	0.1071597	0.1354774	0.2417378	inflated	11	1	1	11	Glutamatergic neurons
+C-A	HYPOTH	dwls	Neurons	0.0079172	0.0018811	0.0951034	0.0585531	0.1398874	inflated	11	4	5	11	Glutamatergic neurons
+C-A	HYPOTH	scdc	Glutamatergic neurons	0.0380335	-0.0015636	0.1071597	0.0766704	0.1795225	inflated	11	1	1	11	Glutamatergic neurons
+C-A	KIDNEY	bp_rna	Proximal tubule cells	0.0785743	0.0204442	0.0632112	0.0690286	0.1492797	inflated	15	3	3	15	Cycling cells
+C-A	KIDNEY	cibersortx	Proximal tubule cells	0.0826975	0.0280094	0.0632112	0.1164392	0.1967274	inflated	15	3	3	15	Cycling cells
+C-A	KIDNEY	dwls	Principal cells	0.0091166	-0.0038526	0.0638817	0.0618901	0.0617362	deflated	15	9	9	15	Cycling cells
+C-A	KIDNEY	music	Injured proximal tubule cells	0.1145893	0.0013913	0.0694521	0.0752867	0.2003924	inflated	15	8	8	15	Cycling cells
+C-A	KIDNEY	scdc	Proximal tubule cells	0.0795860	0.0089430	0.0632112	0.0525811	0.1565476	inflated	15	3	3	15	Cycling cells
+C-A	KIDNEY	bisque	Thick ascending limb cells	0.0142295	0.0047776	0.0756823	0.0723958	0.0722509	deflated	15	7	7	15	Cycling cells
+C-A	LIVER	bp_rna	NK cells	0.2097250	0.0432076	0.1419275	0.1493042	0.3507780	inflated	8	1	1	8	NK cells
+C-A	LIVER	cibersortx	NK cells	0.3084048	0.0622444	0.1419275	0.1967236	0.5048251	inflated	8	1	1	8	NK cells
+C-A	LIVER	dwls	NK cells	0.0567395	0.0088786	0.1419275	0.0226742	0.3208781	inflated	8	1	1	8	NK cells
+C-A	LIVER	music	NK cells	0.0853818	0.0042010	0.1419275	0.0231319	0.3494198	inflated	8	1	1	8	NK cells
+C-A	LIVER	scdc	NK cells	0.0879857	0.0126899	0.1419275	0.0230995	0.3516967	inflated	8	1	1	8	NK cells
+C-A	LIVER	bisque	Hepatocytes	0.0138213	0.0039972	0.1164299	0.2059147	0.2065947	inflated	8	8	3	8	NK cells
+C-A	LUNG	bp_rna	Alveolar macrophages	0.0589942	0.0184831	0.0450384	0.0181359	0.1286270	inflated	21	5	3	21	Basal cells
+C-A	LUNG	cibersortx	Alveolar macrophages	0.0833046	0.0254710	0.0450384	0.0529559	0.1357897	inflated	21	5	3	21	Basal cells
+C-A	LUNG	dwls	Ciliated cells	0.0152052	-0.0060452	0.0473099	0.0281535	0.0776949	inflated	21	3	6	21	Basal cells
+C-A	LUNG	music	T cells	0.0217827	-0.0097495	0.0468927	0.0495708	0.0184818	deflated	21	19	18	21	Basal cells
+C-A	LUNG	scdc	Monocytes	0.0507061	0.0106697	0.0526805	0.0708508	0.1223056	inflated	21	9	11	21	Basal cells
+C-A	LUNG	bisque	Club cells	0.0124119	0.0027453	0.0444266	0.0614789	0.0626305	inflated	21	13	1	21	Basal cells
+C-A	MUSCLE	bp_rna	Skeletal muscle cells	0.0916491	0.0158134	0.1128022	0.0896110	0.2244079	inflated	9	1	1	9	Skeletal muscle cells
+C-A	MUSCLE	cibersortx	Satellite cells	0.0401946	-0.0016645	0.1154642	0.1994574	0.2360685	inflated	9	7	8	9	Skeletal muscle cells
+C-A	MUSCLE	dwls	Schwann cells	0.0071050	0.0005507	0.1220042	0.1134712	0.1335599	inflated	9	3	3	9	Skeletal muscle cells
+C-A	MUSCLE	music	Satellite cells	0.0153256	0.0021118	0.1154642	0.1237898	0.0928910	deflated	9	7	8	9	Skeletal muscle cells
+C-A	MUSCLE	scdc	Skeletal muscle cells	0.0708999	0.0070724	0.1128022	0.0824480	0.2171749	inflated	9	1	1	9	Skeletal muscle cells
+C-A	MUSCLE	bisque	Satellite cells	0.0050078	0.0011079	0.1154642	0.0914633	0.0914822	inflated	9	7	8	9	Skeletal muscle cells
+C-A	OVARY	bp_rna	Luteal cells	0.3334022	0.0370402	0.0592434	0.0633608	0.3730775	inflated	18	1	1	18	Luteal cells
+C-A	OVARY	cibersortx	Luteal cells	0.3448880	0.0278216	0.0592434	0.0685782	0.3897732	inflated	18	1	1	18	Luteal cells
+C-A	OVARY	dwls	Erythroid cells	0.0351290	-0.0044727	0.0564913	0.1298223	0.1438129	inflated	18	17	18	18	Luteal cells
+C-A	OVARY	scdc	Erythroid cells	0.1142943	-0.0065618	0.0564913	0.3335658	0.4437267	inflated	18	17	18	18	Luteal cells
+C-A	SMLINT	bp_rna	Transit-amplifying cells	0.1025904	0.0508569	0.0869140	0.1182709	0.2130398	inflated	13	3	2	13	Epithelial cells
+C-A	SMLINT	cibersortx	Stem cells	0.0931670	0.0550053	0.0819378	0.0857309	0.1825714	inflated	13	2	3	13	Epithelial cells
+C-A	SMLINT	dwls	Erythroid cells	0.0459251	-0.0149173	0.0740442	0.0970875	0.0094403	deflated	13	13	9	13	Epithelial cells
+C-A	SMLINT	music	Stem cells	0.1239896	-0.0082720	0.0819378	0.0476218	0.2446307	inflated	13	2	3	13	Epithelial cells
+C-A	SMLINT	scdc	Stem cells	0.1558282	0.0143985	0.0819378	0.0838808	0.2544674	inflated	13	2	3	13	Epithelial cells
+C-A	SMLINT	bisque	B cells	0.0113090	0.0037742	0.0745400	0.0627619	0.0627640	inflated	13	9	11	13	Epithelial cells
+C-A	SPLEEN	bp_rna	Erythroid progenitors	0.1650508	0.0416289	0.0660779	0.0587845	0.2116704	inflated	14	1	1	14	Erythroid progenitors
+C-A	SPLEEN	cibersortx	Cycling cells	0.1411746	0.0575965	0.0592810	0.0770986	0.2152617	inflated	14	2	2	14	Erythroid progenitors
+C-A	SPLEEN	dwls	Erythroid progenitors	0.0281292	0.0024311	0.0660779	0.0192829	0.1356482	inflated	14	1	1	14	Erythroid progenitors
+C-A	SPLEEN	scdc	Cycling cells	0.1234550	0.0288980	0.0592810	0.0411200	0.2052840	inflated	14	2	2	14	Erythroid progenitors
+C-A	TESTES	bp_rna	Spermatocytes	0.1546589	0.0688613	0.1559511	0.1426420	0.3132574	inflated	6	1	1	6	Spermatocytes
+C-A	TESTES	cibersortx	Spermatocytes	0.1767981	0.0888576	0.1559511	0.1549151	0.3258336	inflated	6	1	1	6	Spermatocytes
+C-A	TESTES	dwls	Condensed spermatids	0.0182894	-0.0541939	0.1793043	0.2018214	0.1263883	deflated	6	6	4	6	Spermatocytes
+C-A	TESTES	music	Condensed spermatids	0.0241270	-0.0643048	0.1793043	0.2052082	0.1179085	deflated	6	6	4	6	Spermatocytes
+C-A	TESTES	scdc	Spermatocytes	0.0788127	-0.0006557	0.1559511	0.1284564	0.2756621	inflated	6	1	1	6	Spermatocytes
+C-A	TESTES	bisque	Condensed spermatids	0.0089063	0.0019737	0.1793043	0.2167490	0.2166604	deflated	6	6	4	6	Spermatocytes
+C-A	WATSC	bp_rna	Cycling cells	0.0858912	0.0378049	0.0802646	0.0881948	0.1606627	inflated	13	1	2	13	Cycling cells
+C-A	WATSC	cibersortx	Mammary luminal epithelial cells	0.0891436	0.0309263	0.0823359	0.0865195	0.1654895	inflated	13	2	1	13	Cycling cells
+C-A	WATSC	dwls	Cycling cells	0.0016122	-0.0047331	0.0802646	0.0463777	0.1148684	inflated	13	1	2	13	Cycling cells
+C-A	WATSC	music	Non-classical monocytes	0.0265658	-0.0018994	0.0690141	0.0750275	0.0398077	deflated	13	10	10	13	Cycling cells
+C-A	WATSC	scdc	B cells	0.0638684	0.0025348	0.0793177	0.0669141	0.0006398	deflated	13	13	12	13	Cycling cells
+C-A	WATSC	bisque	NK and cytotoxic T cells	0.0096087	0.0004135	0.0751654	0.0607168	0.0599289	deflated	13	11	13	13	Cycling cells
+B-A	BAT	bp_rna	Immune cells	-0.0003829	-0.0129661	0.1683294	0.1732687	0.1748580	inflated	6	2	1	6	ASPC
+B-A	BAT	cibersortx	Brown adipocytes	0.0483750	0.0054055	0.1849573	0.2082921	0.2616590	inflated	6	6	6	6	ASPC
+B-A	BAT	dwls	Immune cells	-0.0005740	-0.0152567	0.1683294	0.1767496	0.1704341	deflated	6	2	1	6	ASPC
+B-A	BAT	music	Immune cells	-0.0044689	-0.0113365	0.1683294	0.1676852	0.1661634	deflated	6	2	1	6	ASPC
+B-A	BAT	scdc	Brown adipocytes	0.0753487	-0.0001681	0.1849573	0.2977038	0.3797020	inflated	6	6	6	6	ASPC
+B-A	BAT	bisque	Brown adipocytes	0.0041915	0.0010042	0.1849573	0.1829506	0.1829506	deflated	6	6	6	6	ASPC
+B-A	BLOOD	bp_rna	Plasmacytoid dendritic cells	0.0900758	0.0019161	0.0835185	0.0910616	0.1736350	inflated	13	1	1	13	Plasmacytoid dendritic cells
+B-A	BLOOD	cibersortx	Plasmacytoid dendritic cells	0.0888282	0.0264953	0.0835185	0.0978090	0.1800746	inflated	13	1	1	13	Plasmacytoid dendritic cells
+B-A	BLOOD	dwls	NK cells	-0.0027168	-0.0407354	0.0715910	0.0763021	0.0709715	deflated	13	6	7	13	Plasmacytoid dendritic cells
+B-A	BLOOD	music	Classical monocytes	0.0132911	-0.0317321	0.0794935	0.0879558	0.1181186	inflated	11	3	3	13	Plasmacytoid dendritic cells
+B-A	BLOOD	scdc	Non-classical monocytes	0.0078689	-0.0366344	0.0813831	0.0553558	0.0448866	deflated	13	9	11	13	Plasmacytoid dendritic cells
+B-A	BLOOD	bisque	Classical monocytes	0.1237551	0.0081810	0.0794935	0.0832044	0.1771698	inflated	13	3	3	13	Plasmacytoid dendritic cells
+B-A	CORTEX	bp_rna	Excitatory neurons	0.2745174	0.0475571	0.0917288	0.0946462	0.3540688	inflated	12	1	1	12	Excitatory neurons
+B-A	CORTEX	cibersortx	Excitatory neurons	0.2786898	0.0545904	0.0917288	0.1210848	0.3852346	inflated	12	1	1	12	Excitatory neurons
+B-A	CORTEX	dwls	Neuroblasts	0.0007672	-0.0293826	0.0892596	0.0747105	0.0875046	inflated	12	7	7	12	Excitatory neurons
+B-A	CORTEX	music	Neuroblasts	0.0274874	-0.0309063	0.0892596	0.0859014	0.1163401	inflated	12	7	7	12	Excitatory neurons
+B-A	CORTEX	scdc	Excitatory neurons	0.0404085	0.0091478	0.0917288	0.0266878	0.1980655	inflated	12	1	1	12	Excitatory neurons
+B-A	CORTEX	bisque	Neuroblasts	0.0098138	0.0020072	0.0892596	0.0618914	0.0617810	deflated	12	7	7	12	Excitatory neurons
+B-A	HEART	bp_rna	Cardiomyocytes	0.1243760	0.0115674	0.0642962	0.0652790	0.1779461	inflated	15	1	1	15	Cardiomyocytes
+B-A	HEART	cibersortx	Cardiomyocytes	0.1458371	0.0121461	0.0642962	0.1284186	0.2607743	inflated	15	1	1	15	Cardiomyocytes
+B-A	HEART	dwls	Endothelial cells	0.0015639	-0.0141084	0.0620641	0.0567184	0.0609969	inflated	15	9	9	15	Cardiomyocytes
+B-A	HEART	music	Endothelial cells	0.0003727	-0.0115681	0.0620641	0.0551717	0.0588890	inflated	15	9	9	15	Cardiomyocytes
+B-A	HEART	scdc	Mast cells	0.0468301	0.0031843	0.0689332	0.2003704	0.2429460	inflated	15	2	2	15	Cardiomyocytes
+B-A	HEART	bisque	B cells	0.0077939	0.0028662	0.0703716	0.0667961	0.0668733	inflated	15	15	15	15	Cardiomyocytes
+B-A	HIPPOC	bp_rna	Dentate gyrus granule cells	0.1056461	0.0396369	0.1105961	0.1024039	0.2183931	inflated	11	1	1	11	Dentate gyrus granule cells
+B-A	HIPPOC	cibersortx	Dentate gyrus granule cells	0.0943058	0.0416805	0.1105961	0.1408689	0.2305120	inflated	11	1	1	11	Dentate gyrus granule cells
+B-A	HIPPOC	dwls	Oligodendrocyte precursor cells	-0.0056290	-0.0384829	0.0954679	0.0893085	0.0956162	inflated	11	7	7	11	Dentate gyrus granule cells
+B-A	HIPPOC	music	Vascular leptomeningeal cells	0.0279223	-0.0310235	0.0756827	0.0724705	0.1171271	inflated	11	4	5	11	Dentate gyrus granule cells
+B-A	HIPPOC	scdc	Mural cells	0.0779793	0.0077812	0.1004065	0.0721979	0.0000025	deflated	11	11	11	11	Dentate gyrus granule cells
+B-A	HIPPOC	bisque	Endothelial cells	0.0109244	0.0030378	0.0910593	0.0764163	0.0789490	inflated	11	10	10	11	Dentate gyrus granule cells
+B-A	HYPOTH	bp_rna	Oligodendrocytes	0.0277829	0.0005144	0.0964828	0.0972953	0.0698928	deflated	11	11	11	11	Glutamatergic neurons
+B-A	HYPOTH	cibersortx	Glutamatergic neurons	0.0452812	0.0078313	0.1071597	0.1354774	0.1859145	inflated	11	1	1	11	Glutamatergic neurons
+B-A	HYPOTH	dwls	Vascular leptomeningeal cells	-0.0007073	-0.0116911	0.0922984	0.0936315	0.0928956	deflated	11	7	7	11	Glutamatergic neurons
+B-A	HYPOTH	scdc	Ependymal cells	0.0074697	-0.0082032	0.0851526	0.0708396	0.0628549	deflated	11	2	3	11	Glutamatergic neurons
+B-A	KIDNEY	bp_rna	Podocytes	0.0337996	0.0091327	0.0603372	0.0571595	0.0921192	inflated	15	4	1	15	Cycling cells
+B-A	KIDNEY	cibersortx	Proximal tubule cells	0.0425519	0.0185812	0.0632112	0.1164392	0.1578729	inflated	15	3	3	15	Cycling cells
+B-A	KIDNEY	dwls	Principal cells	0.0035177	-0.0170729	0.0638817	0.0618901	0.0635545	inflated	15	9	9	15	Cycling cells
+B-A	KIDNEY	music	Injured proximal tubule cells	0.0675386	-0.0001222	0.0694521	0.0752867	0.1535466	inflated	15	8	8	15	Cycling cells
+B-A	KIDNEY	scdc	Fibroblasts	0.0371313	0.0050231	0.0687095	0.0632375	0.0194425	deflated	15	11	12	15	Cycling cells
+B-A	KIDNEY	bisque	Thick ascending limb cells	0.0064762	0.0021560	0.0756823	0.0723958	0.0722287	deflated	15	7	7	15	Cycling cells
+B-A	LIVER	bp_rna	NK cells	0.1150214	0.0151326	0.1419275	0.1493042	0.2682091	inflated	8	1	1	8	NK cells
+B-A	LIVER	cibersortx	NK cells	0.1642888	0.0378435	0.1419275	0.1967236	0.3596621	inflated	8	1	1	8	NK cells
+B-A	LIVER	dwls	Hepatic stellate cells	-0.0006264	-0.0289707	0.1137045	0.1118599	0.1147599	inflated	8	2	2	8	NK cells
+B-A	LIVER	music	Hepatic stellate cells	-0.0031063	-0.0314749	0.1137045	0.1086969	0.1148696	inflated	8	2	2	8	NK cells
+B-A	LIVER	scdc	Cholangiocytes	0.0298165	-0.0131167	0.1205122	0.1200631	0.0840616	deflated	8	6	8	8	NK cells
+B-A	LIVER	bisque	Hepatocytes	0.0027889	0.0015592	0.1164299	0.2059147	0.2062064	inflated	8	8	3	8	NK cells
+B-A	LUNG	bp_rna	Neutrophils	0.0328828	0.0075240	0.0461404	0.0529760	0.0101307	deflated	21	21	21	21	Basal cells
+B-A	LUNG	cibersortx	Club cells	0.0624261	0.0155477	0.0444266	0.0492078	0.1079198	inflated	21	13	1	21	Basal cells
+B-A	LUNG	dwls	Interstitial macrophages	0.0001022	-0.0162829	0.0429161	0.0416721	0.0435377	inflated	21	11	13	21	Basal cells
+B-A	LUNG	music	T cells	0.0076915	-0.0154964	0.0468927	0.0495708	0.0314403	deflated	21	19	18	21	Basal cells
+B-A	LUNG	scdc	Monocytes	0.0444296	0.0015390	0.0526805	0.0708508	0.1158611	inflated	21	9	11	21	Basal cells
+B-A	LUNG	bisque	Club cells	0.0061138	0.0014719	0.0444266	0.0614789	0.0617686	inflated	21	13	1	21	Basal cells
+B-A	MUSCLE	bp_rna	Skeletal muscle cells	0.0261753	0.0054426	0.1128022	0.0896110	0.1592648	inflated	9	1	1	9	Skeletal muscle cells
+B-A	MUSCLE	cibersortx	Satellite cells	0.0145060	-0.0024837	0.1154642	0.1994574	0.2134634	inflated	9	7	8	9	Skeletal muscle cells
+B-A	MUSCLE	dwls	Vascular smooth muscle cells	-0.0008853	-0.0128446	0.1012001	0.1027428	0.1027543	inflated	9	6	5	9	Skeletal muscle cells
+B-A	MUSCLE	music	Vascular smooth muscle cells	0.0006844	-0.0086488	0.1012001	0.1040965	0.1050477	inflated	9	6	5	9	Skeletal muscle cells
+B-A	MUSCLE	scdc	Satellite cells	0.0161326	0.0021381	0.1154642	0.0786560	0.0637327	deflated	9	7	8	9	Skeletal muscle cells
+B-A	MUSCLE	bisque	Satellite cells	0.0018964	0.0000859	0.1154642	0.0914633	0.0914688	inflated	9	7	8	9	Skeletal muscle cells
+B-A	OVARY	bp_rna	Luteal cells	0.2054506	0.0231818	0.0592434	0.0633608	0.2497155	inflated	18	1	1	18	Luteal cells
+B-A	OVARY	cibersortx	Luteal cells	0.2126555	0.0216559	0.0592434	0.0685782	0.2624015	inflated	18	1	1	18	Luteal cells
+B-A	OVARY	dwls	Pericytes	-0.0060905	-0.0226393	0.0565801	0.0622831	0.0561059	deflated	18	12	12	18	Luteal cells
+B-A	OVARY	scdc	Erythroid cells	0.0563519	-0.0126054	0.0564913	0.3335658	0.3878403	inflated	18	17	18	18	Luteal cells
+B-A	SMLINT	bp_rna	Epithelial cells	0.0614818	0.0379714	0.0727290	0.1069937	0.1565055	inflated	13	1	1	13	Epithelial cells
+B-A	SMLINT	cibersortx	NK cells	0.0607362	0.0439500	0.0707662	0.0668911	0.0097432	deflated	13	10	13	13	Epithelial cells
+B-A	SMLINT	dwls	Goblet cells	-0.0013807	-0.0444996	0.0784628	0.0697869	0.0736976	inflated	13	11	8	13	Epithelial cells
+B-A	SMLINT	music	Stem cells	0.0519568	-0.0292413	0.0819378	0.0476218	0.1727680	inflated	13	2	3	13	Epithelial cells
+B-A	SMLINT	scdc	Stem cells	0.0935190	-0.0084071	0.0819378	0.0838808	0.1947501	inflated	13	2	3	13	Epithelial cells
+B-A	SMLINT	bisque	CD8+ T cells	0.0056108	0.0011798	0.0872099	0.1051546	0.1050337	deflated	13	8	10	13	Epithelial cells
+B-A	SPLEEN	bp_rna	Erythroid progenitors	0.0690396	0.0271335	0.0660779	0.0587845	0.1296592	inflated	14	1	1	14	Erythroid progenitors
+B-A	SPLEEN	cibersortx	Cycling cells	0.0771569	0.0370578	0.0592810	0.0770986	0.1528602	inflated	14	2	2	14	Erythroid progenitors
+B-A	SPLEEN	dwls	CD4+ T cells	-0.0052800	-0.0399852	0.0720084	0.0651007	0.0740113	inflated	14	10	9	14	Erythroid progenitors
+B-A	SPLEEN	scdc	Cycling cells	0.0405207	-0.0045341	0.0592810	0.0411200	0.1284473	inflated	14	2	2	14	Erythroid progenitors
+B-A	TESTES	bp_rna	Spermatocytes	0.1073192	0.0403265	0.1559511	0.1426420	0.2687680	inflated	6	1	1	6	Spermatocytes
+B-A	TESTES	cibersortx	Spermatocytes	0.1303777	0.0716403	0.1559511	0.1549151	0.2823772	inflated	6	1	1	6	Spermatocytes
+B-A	TESTES	dwls	Round spermatids	-0.0235554	-0.0790836	0.1598287	0.1352926	0.1589779	inflated	6	3	3	6	Spermatocytes
+B-A	TESTES	music	Round spermatids	-0.0201897	-0.0809382	0.1598287	0.1474245	0.1624390	inflated	6	3	3	6	Spermatocytes
+B-A	TESTES	scdc	Sertoli cells	0.0712257	-0.0049417	0.1725660	0.1298870	0.0624686	deflated	6	4	5	6	Spermatocytes
+B-A	TESTES	bisque	Condensed spermatids	0.0047276	0.0010575	0.1793043	0.2167490	0.2168268	inflated	6	6	4	6	Spermatocytes
+B-A	WATSC	bp_rna	Mammary luminal epithelial cells	0.0523904	0.0190670	0.0823359	0.0819813	0.1307418	inflated	13	2	1	13	Cycling cells
+B-A	WATSC	cibersortx	Mammary luminal epithelial cells	0.0618643	0.0182398	0.0823359	0.0865195	0.1420843	inflated	13	2	1	13	Cycling cells
+B-A	WATSC	dwls	Plasmacytoid dendritic cells	-0.0024743	-0.0294338	0.0703142	0.0673416	0.0703976	inflated	13	6	8	13	Cycling cells
+B-A	WATSC	music	Non-classical monocytes	0.0121404	-0.0233843	0.0690141	0.0750275	0.0517423	deflated	13	10	10	13	Cycling cells
+B-A	WATSC	scdc	B cells	0.0437021	-0.0040682	0.0793177	0.0669141	0.0164992	deflated	13	13	12	13	Cycling cells
+B-A	WATSC	bisque	Non-classical monocytes	0.0049163	-0.0000143	0.0690141	0.1120311	0.1116950	deflated	13	10	10	13	Cycling cells
+C-B	BAT	bp_rna	Brown adipocytes	0.0124683	0.0053976	0.1849573	0.1683685	0.2145045	inflated	6	6	6	6	ASPC
+C-B	BAT	cibersortx	Brown adipocytes	0.0303706	0.0078400	0.1849573	0.2616590	0.2930560	inflated	6	6	6	6	ASPC
+C-B	BAT	dwls	Brown adipocytes	0.0344507	0.0083506	0.1849573	0.1852917	0.2400247	inflated	6	6	6	6	ASPC
+C-B	BAT	music	Brown adipocytes	0.0326585	0.0025366	0.1849573	0.1817793	0.2323088	inflated	6	6	6	6	ASPC
+C-B	BAT	scdc	Brown adipocytes	0.0455164	0.0110671	0.1849573	0.3797020	0.4264961	inflated	6	6	6	6	ASPC
+C-B	BAT	bisque	Brown adipocytes	0.0019982	0.0000932	0.1849573	0.1829506	0.1829506	deflated	6	6	6	6	ASPC
+C-B	BLOOD	bp_rna	Plasmacytoid dendritic cells	0.0619186	0.0126237	0.0835185	0.1736350	0.2304953	inflated	13	1	1	13	Plasmacytoid dendritic cells
+C-B	BLOOD	cibersortx	Plasmacytoid dendritic cells	0.0592102	0.0118074	0.0835185	0.1800746	0.2344339	inflated	13	1	1	13	Plasmacytoid dendritic cells
+C-B	BLOOD	dwls	Plasmacytoid dendritic cells	0.0519431	0.0152161	0.0835185	0.0831037	0.1321356	inflated	13	1	1	13	Plasmacytoid dendritic cells
+C-B	BLOOD	music	Cycling cells	0.0500911	0.0126943	0.0760563	0.0933148	0.1402231	inflated	11	2	2	13	Plasmacytoid dendritic cells
+C-B	BLOOD	scdc	Classical monocytes	0.0396588	0.0032181	0.0794935	0.0828297	0.1307468	inflated	13	3	3	13	Plasmacytoid dendritic cells
+C-B	BLOOD	bisque	Classical monocytes	0.0497391	0.0050364	0.0794935	0.1771698	0.2026730	inflated	13	3	3	13	Plasmacytoid dendritic cells
+C-B	CORTEX	bp_rna	Excitatory neurons	0.1425243	0.0198470	0.0917288	0.3540688	0.4929646	inflated	12	1	1	12	Excitatory neurons
+C-B	CORTEX	cibersortx	Excitatory neurons	0.1325356	0.0171789	0.0917288	0.3852346	0.5147771	inflated	12	1	1	12	Excitatory neurons
+C-B	CORTEX	dwls	Excitatory neurons	0.1415793	0.0349645	0.0917288	0.0920726	0.2273146	inflated	12	1	1	12	Excitatory neurons
+C-B	CORTEX	music	Excitatory neurons	0.1529455	0.0273743	0.0917288	0.1016922	0.2467043	inflated	12	1	1	12	Excitatory neurons
+C-B	CORTEX	scdc	Excitatory neurons	0.2725178	0.0436160	0.0917288	0.1980655	0.4566111	inflated	12	1	1	12	Excitatory neurons
+C-B	CORTEX	bisque	Neuroblasts	0.0063071	0.0014819	0.0892596	0.0617810	0.0615383	deflated	12	7	7	12	Excitatory neurons
+C-B	HEART	bp_rna	Cardiomyocytes	0.1341939	0.0155274	0.0642962	0.1779461	0.3033629	inflated	15	1	1	15	Cardiomyocytes
+C-B	HEART	cibersortx	Cardiomyocytes	0.1392760	0.0119948	0.0642962	0.2607743	0.3925405	inflated	15	1	1	15	Cardiomyocytes
+C-B	HEART	dwls	Cardiomyocytes	0.0682248	0.0147591	0.0642962	0.0637748	0.1285064	inflated	15	1	1	15	Cardiomyocytes
+C-B	HEART	music	Cardiomyocytes	0.0643283	0.0131086	0.0642962	0.0612708	0.1259088	inflated	15	1	1	15	Cardiomyocytes
+C-B	HEART	scdc	Cardiomyocytes	0.0307179	0.0146782	0.0642962	0.0520959	0.1019279	inflated	15	1	1	15	Cardiomyocytes
+C-B	HEART	bisque	Pericytes	0.0097095	0.0052726	0.0693171	0.0763777	0.0764876	inflated	15	12	12	15	Cardiomyocytes
+C-B	HIPPOC	bp_rna	Dentate gyrus granule cells	0.0691733	0.0206672	0.1105961	0.2183931	0.2842546	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HIPPOC	cibersortx	Dentate gyrus granule cells	0.0514353	0.0164652	0.1105961	0.2305120	0.2803781	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HIPPOC	dwls	Dentate gyrus granule cells	0.0540966	0.0195877	0.1105961	0.1120035	0.1678571	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HIPPOC	music	Dentate gyrus granule cells	0.0736908	0.0098107	0.1105961	0.1470298	0.2190838	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HIPPOC	scdc	Dentate gyrus granule cells	0.0786688	-0.0000255	0.1105961	0.1873734	0.2640472	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HIPPOC	bisque	Dentate gyrus granule cells	0.0067128	0.0037919	0.1105961	0.1371654	0.1376283	inflated	11	1	1	11	Dentate gyrus granule cells
+C-B	HYPOTH	bp_rna	Glutamatergic neurons	0.0535701	0.0141309	0.1071597	0.1319824	0.1854770	inflated	11	1	1	11	Glutamatergic neurons
+C-B	HYPOTH	cibersortx	Glutamatergic neurons	0.0553615	0.0113660	0.1071597	0.1859145	0.2417378	inflated	11	1	1	11	Glutamatergic neurons
+C-B	HYPOTH	dwls	Glutamatergic neurons	0.0389132	0.0078563	0.1071597	0.1057832	0.1556603	inflated	11	1	1	11	Glutamatergic neurons
+C-B	HYPOTH	scdc	Glutamatergic neurons	0.0534746	0.0046954	0.1071597	0.1248417	0.1795225	inflated	11	1	1	11	Glutamatergic neurons
+C-B	KIDNEY	bp_rna	Proximal tubule cells	0.0515836	0.0117992	0.0632112	0.0975622	0.1492797	inflated	15	3	3	15	Cycling cells
+C-B	KIDNEY	cibersortx	Proximal tubule cells	0.0401456	0.0077290	0.0632112	0.1578729	0.1967274	inflated	15	3	3	15	Cycling cells
+C-B	KIDNEY	dwls	Proximal tubule cells	0.0372396	0.0075395	0.0632112	0.0640018	0.1074626	inflated	15	3	3	15	Cycling cells
+C-B	KIDNEY	music	Injured proximal tubule cells	0.0470506	0.0018581	0.0694521	0.1535466	0.2003924	inflated	15	8	8	15	Cycling cells
+C-B	KIDNEY	scdc	Proximal tubule cells	0.0524134	0.0104319	0.0632112	0.1055930	0.1565476	inflated	15	3	3	15	Cycling cells
+C-B	KIDNEY	bisque	Thick ascending limb cells	0.0077533	0.0021054	0.0756823	0.0722287	0.0722509	inflated	15	7	7	15	Cycling cells
+C-B	LIVER	bp_rna	NK cells	0.0947036	0.0310733	0.1419275	0.2682091	0.3507780	inflated	8	1	1	8	NK cells
+C-B	LIVER	cibersortx	NK cells	0.1441160	0.0260045	0.1419275	0.3596621	0.5048251	inflated	8	1	1	8	NK cells
+C-B	LIVER	dwls	NK cells	0.1750684	0.0249390	0.1419275	0.1414204	0.3208781	inflated	8	1	1	8	NK cells
+C-B	LIVER	music	NK cells	0.2017635	0.0297918	0.1419275	0.1409582	0.3494198	inflated	8	1	1	8	NK cells
+C-B	LIVER	scdc	NK cells	0.2035396	0.0190962	0.1419275	0.1417726	0.3516967	inflated	8	1	1	8	NK cells
+C-B	LIVER	bisque	Hepatocytes	0.0110324	0.0023427	0.1164299	0.2062064	0.2065947	inflated	8	8	3	8	NK cells
+C-B	LUNG	bp_rna	Alveolar macrophages	0.0524159	0.0092255	0.0450384	0.0741015	0.1286270	inflated	21	5	3	21	Basal cells
+C-B	LUNG	cibersortx	Alveolar macrophages	0.0371846	0.0068799	0.0450384	0.0995247	0.1357897	inflated	21	5	3	21	Basal cells
+C-B	LUNG	dwls	Alveolar macrophages	0.0308385	0.0086702	0.0450384	0.0456033	0.0814933	inflated	21	5	3	21	Basal cells
+C-B	LUNG	music	Ciliated cells	0.0289493	0.0058386	0.0473099	0.0485999	0.0766981	inflated	21	3	6	21	Basal cells
+C-B	LUNG	scdc	Alveolar macrophages	0.0380850	0.0075271	0.0450384	0.0746889	0.1128476	inflated	21	5	3	21	Basal cells
+C-B	LUNG	bisque	T cells	0.0075465	0.0020053	0.0468927	0.0406400	0.0387615	deflated	21	19	18	21	Basal cells
+C-B	MUSCLE	bp_rna	Skeletal muscle cells	0.0654738	0.0127106	0.1128022	0.1592648	0.2244079	inflated	9	1	1	9	Skeletal muscle cells
+C-B	MUSCLE	cibersortx	Pericytes	0.0289244	-0.0012652	0.1105924	0.1028776	0.0698403	deflated	9	9	9	9	Skeletal muscle cells
+C-B	MUSCLE	dwls	Skeletal muscle cells	0.0648016	0.0099717	0.1128022	0.1142063	0.1834154	inflated	9	1	1	9	Skeletal muscle cells
+C-B	MUSCLE	music	Skeletal muscle cells	0.0628907	0.0100263	0.1128022	0.1168411	0.1818095	inflated	9	1	1	9	Skeletal muscle cells
+C-B	MUSCLE	scdc	Skeletal muscle cells	0.0681477	0.0076062	0.1128022	0.1494964	0.2171749	inflated	9	1	1	9	Skeletal muscle cells
+C-B	MUSCLE	bisque	Satellite cells	0.0031114	0.0010220	0.1154642	0.0914688	0.0914822	inflated	9	7	8	9	Skeletal muscle cells
+C-B	OVARY	bp_rna	Luteal cells	0.1279515	0.0152549	0.0592434	0.2497155	0.3730775	inflated	18	1	1	18	Luteal cells
+C-B	OVARY	cibersortx	Luteal cells	0.1322325	0.0129675	0.0592434	0.2624015	0.3897732	inflated	18	1	1	18	Luteal cells
+C-B	OVARY	dwls	Erythroid cells	0.0709013	0.0178449	0.0564913	0.0799823	0.1438129	inflated	18	17	18	18	Luteal cells
+C-B	OVARY	scdc	Erythroid cells	0.0579424	0.0061338	0.0564913	0.3878403	0.4437267	inflated	18	17	18	18	Luteal cells
+C-B	SMLINT	bp_rna	Transit-amplifying cells	0.0534315	0.0145518	0.0869140	0.1610888	0.2130398	inflated	13	3	2	13	Epithelial cells
+C-B	SMLINT	cibersortx	Transit-amplifying cells	0.0413258	0.0098090	0.0869140	0.1382668	0.1789225	inflated	13	3	2	13	Epithelial cells
+C-B	SMLINT	dwls	Erythroid cells	0.0674788	0.0224895	0.0740442	0.0716053	0.0094403	deflated	13	13	9	13	Epithelial cells
+C-B	SMLINT	music	Stem cells	0.0720328	0.0206213	0.0819378	0.1727680	0.2446307	inflated	13	2	3	13	Epithelial cells
+C-B	SMLINT	scdc	Stem cells	0.0623093	0.0097830	0.0819378	0.1947501	0.2544674	inflated	13	2	3	13	Epithelial cells
+C-B	SMLINT	bisque	B cells	0.0063332	0.0016556	0.0745400	0.0627123	0.0627640	inflated	13	9	11	13	Epithelial cells
+C-B	SPLEEN	bp_rna	Erythroid progenitors	0.0960113	0.0200374	0.0660779	0.1296592	0.2116704	inflated	14	1	1	14	Erythroid progenitors
+C-B	SPLEEN	cibersortx	Erythroid progenitors	0.0680257	0.0168517	0.0660779	0.1149408	0.1750877	inflated	14	1	1	14	Erythroid progenitors
+C-B	SPLEEN	dwls	Erythroid progenitors	0.0760875	0.0253737	0.0660779	0.0656591	0.1356482	inflated	14	1	1	14	Erythroid progenitors
+C-B	SPLEEN	scdc	Erythroid progenitors	0.0962460	0.0223101	0.0660779	0.0638888	0.1533830	inflated	14	1	1	14	Erythroid progenitors
+C-B	TESTES	bp_rna	Condensed spermatids	0.0477449	0.0123219	0.1793043	0.1329676	0.0879391	deflated	6	6	4	6	Spermatocytes
+C-B	TESTES	cibersortx	Spermatocytes	0.0464205	0.0115154	0.1559511	0.2823772	0.3258336	inflated	6	1	1	6	Spermatocytes
+C-B	TESTES	dwls	Condensed spermatids	0.0503468	0.0072729	0.1793043	0.1778202	0.1263883	deflated	6	6	4	6	Spermatocytes
+C-B	TESTES	music	Condensed spermatids	0.0557900	0.0056183	0.1793043	0.1712367	0.1179085	deflated	6	6	4	6	Spermatocytes
+C-B	TESTES	scdc	Spermatocytes	0.0469610	0.0071558	0.1559511	0.2309647	0.2756621	inflated	6	1	1	6	Spermatocytes
+C-B	TESTES	bisque	Condensed spermatids	0.0041787	0.0000682	0.1793043	0.2168268	0.2166604	deflated	6	6	4	6	Spermatocytes
+C-B	WATSC	bp_rna	Cycling cells	0.0362689	0.0164605	0.0802646	0.1301858	0.1606627	inflated	13	1	2	13	Cycling cells
+C-B	WATSC	cibersortx	Mammary luminal epithelial cells	0.0272793	0.0132374	0.0823359	0.1420843	0.1654895	inflated	13	2	1	13	Cycling cells
+C-B	WATSC	dwls	Cycling cells	0.0363176	0.0194987	0.0802646	0.0819478	0.1148684	inflated	13	1	2	13	Cycling cells
+C-B	WATSC	music	B cells	0.0320102	0.0133058	0.0793177	0.0735753	0.0394672	deflated	13	13	12	13	Cycling cells
+C-B	WATSC	scdc	Cycling cells	0.0346723	0.0124961	0.0802646	0.0817794	0.1137472	inflated	13	1	2	13	Cycling cells
+C-B	WATSC	bisque	NK and cytotoxic T cells	0.0049215	0.0004379	0.0751654	0.0602397	0.0599289	deflated	13	11	13	13	Cycling cells
