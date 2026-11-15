@@ -1,0 +1,7 @@
+check	rows	not_as_expected	old_commit	new_commit	seconds	job	what_differs
+refs	22	0	44332e6	82f94a6	64	12378421	
+stage3	13	0	44332e6	82f94a6	2	12378421	
+rin	5	0	44332e6	82f94a6	86	12378421	
+pheno	2	0	44332e6	82f94a6	149	12378421	
+augur	3	0	44332e6	82f94a6	64	12378421	
+atlas	9	0	44332e6	82f94a6	83	12378421	

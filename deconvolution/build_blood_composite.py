@@ -161,6 +161,15 @@ def build(out):
     br.export_reference(a, out)
     a.obs[["barcode", "sample", "source", "cell_type", "cell_state"]].to_csv(Path(out) / "cells_source.tsv",
                                                                            sep="\t", index=False)
+    # Provenance, written after the reference files and never read by them (audit, cross-stage "provenance":
+    # this builder wrote none).
+    labels = [LABELS / r / "cells_final.tsv.gz" for r in ("BLOOD_PBMC", "BLOOD_WB")]
+    br.write_provenance(out, inputs=labels + jr.raw_input_files("BLOOD_PBMC") + jr.raw_input_files("BLOOD_WB"),
+                        params={"command": "build", "out": str(out), "sources": ["BLOOD_PBMC", "BLOOD_WB"],
+                                "from_whole_blood_only": FROM_WB, "min_state_cells": 20,
+                                "n_cells": int(a.n_obs), "n_genes": int(a.n_vars),
+                                "samples": sorted(a.obs["sample"].astype(str).unique()),
+                                "cell_types": sorted(a.obs["cell_type"].astype(str).unique())})
 
 
 def half_split(a, seed=SEED):

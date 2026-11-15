@@ -1,3 +1,9 @@
+# SUPERSEDED (note added 2026-11-14; audit finding 4.10). This is the manifest of the 10-tissue reference
+# panel of June 2026 (last changed 2026-06-22, commit 86f9d5d). It is kept as the record of that panel and is
+# read by no code. It does NOT describe the references in use: 5 of its 10 rows name a study that is no longer
+# the tissue's source (BLOOD, HIPPOC, LUNG, SKMGN, SKMVL), every reference_tag is a folder of the June layout,
+# and 6 tissues deconvolved today are missing. The registry of the references in use is
+# deconvolution/tissue_references.yaml (reference_dir, study and build command of each tissue).
 tissue	bulk_code	study	reference_tag	scheme	gene_join	merged	built_by	note
 pbmc	BLOOD	GSE285476	peripheral blood mononuclear cells_GSE285476	none	inner	N	make_pseudobulk(holdout)	14 immune labels; immune subtypes intentionally kept fine (omnideconv)
 cortex	CORTEX	GSE303115	cortex_GSE303115_union_merged	brain	outer	Y	build_references_v2.sh	gene-rich union + Excitatory-neuron merge; quiet exercise tissue (0 signal)

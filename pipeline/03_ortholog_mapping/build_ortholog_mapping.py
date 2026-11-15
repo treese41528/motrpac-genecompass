@@ -14,9 +14,11 @@ Pipeline position:
 
 Purpose:
     Map each rat gene in the pruned gene universe to a GeneCompass token ID
-    via tiered ortholog resolution. Genes with cross-species orthologs inherit
-    pre-trained token embeddings; genes without orthologs receive new token IDs
-    that will be learned during fine-tuning.
+    via tiered ortholog resolution. Genes with a one-to-one human or mouse ortholog
+    in the GeneCompass vocabulary (T1, T2a, T2b) reuse that gene's pre-trained token.
+    Every other gene (T3a, T3b, T4) receives a new token ID; for T3 the best-identity
+    ortholog is recorded, and Stage 7 starts the new token from that ortholog's
+    embedding row.
 
 Tier architecture (each rat gene assigned to first matching tier):
     T1   — Tri-species one2one: rat→human + rat→mouse, human↔mouse linked in GC
@@ -25,6 +27,8 @@ Tier architecture (each rat gene assigned to first matching tier):
     T3a  — Human-rat beyond one2one: one2many / many2many to human in GC vocab
     T3b  — Mouse-rat beyond one2one: one2many / many2many to mouse in GC vocab
     T4   — New rat token: no qualifying ortholog, biotype ∈ {protein_coding, lncRNA, miRNA}
+           ("no qualifying ortholog" is not "no ortholog": 237 of the 2,474 T4 genes have an
+           ortholog row whose gene is not in the GeneCompass vocabulary; audit Part 1, Stage 3)
 
 Key design decisions:
     - NO identity threshold — GeneCompass used none (empirically verified: min 1.2%).
@@ -33,7 +37,27 @@ Key design decisions:
     - One2one preferred over one2many/many2many (unambiguous functional equivalence).
     - For one2many/many2many: disambiguate by highest % identity.
     - Token collisions tracked with expansion direction (rat-expanded vs human-expanded).
-    - Confidence scoring (high/medium/low) as interpretive guardrail for Aims 2-3.
+    - Confidence scoring (high/medium/low) is written to rat_token_mapping.tsv. No
+      downstream code gates on it (see "Known limits").
+
+Known limits (audit of 2026-11-11, finding 1.10; docs/audit/remediation/STEP6_HYGIENE.md):
+    - Orthology calls are taken from Ensembl Compara as exported, unfiltered: the
+      orthology-confidence attribute is not fetched and there is no identity floor.
+      One-to-one calls with identity as low as 3.3% (T2a human) and 3.4% (T1 mouse)
+      are accepted (tier_diagnostics.json). The "min 1.2%" figure quoted for
+      GeneCompass's own map has no derivation in this repository.
+    - The `confidence` and `expansion_direction` columns flag nothing downstream: the
+      only reader is finetune/genecompass/build_rat_tf_list.py, which copies the column.
+    - The canonical outputs (2026-04-01) record git_hash b9e1d76, a commit that predates
+      the change giving T3 genes new tokens (10bac05, 2026-04-09): they were written from
+      an uncommitted working tree. A rerun at a later commit reproduced them byte for byte
+      (docs/repro_stages1_7/REPRODUCTION.md). The manifest now also lists modified tracked
+      files, so a build from an uncommitted tree is visible.
+    - Until 2026-11-14 the "flagged non-coding" list in tier_diagnostics.json was always
+      empty: the test compared the biotype with 'lncRNA' / 'miRNA' while the gene universe
+      stores 'lncrna' / 'mirna'. The comparison is now case-insensitive. The list is
+      report-only: no script reads it. A rerun therefore gives a tier_diagnostics.json
+      that differs from the canonical one in that key only (120 genes, the first 50 listed).
 
 Inputs:
     pruned_gene_universe.tsv   — 22,213 rat genes from Stage 2
@@ -49,11 +73,11 @@ Outputs:
     rat_tokens.pickle          — {rat_ensrnog: token_id}
     rat_to_human_mapping.pickle — {rat_ensrnog: human_ensg}
     rat_to_mouse_mapping.pickle — {rat_ensrnog: mouse_ensmusg}
-    new_rat_tokens.txt         — Rat genes assigned new token IDs (Tier 4)
+    new_rat_tokens.txt         — Rat genes assigned new token IDs (T3a, T3b and T4)
     tier_diagnostics.json      — Per-tier stats, identity distributions, biotype crosstabs
     collision_report.tsv       — Tokens shared by >1 rat gene
     mapping_statistics.json    — Full statistics
-    stage3_manifest.json       — Config snapshot + input checksums
+    stage3_manifest.json       — Config snapshot + input checksums + git commit and modified files
 
 Usage:
     python pipeline/03_ortholog_mapping/build_ortholog_mapping.py
@@ -674,10 +698,12 @@ def _build_diagnostics_summary(
         if len(genes) > 2
     }
 
-    # Non-coding genes in Tiers 1-3 (flagged for review)
+    # Non-coding genes in Tiers 1-3 (flagged for review). Report-only: written to tier_diagnostics.json and
+    # the log, read by no script. The universe stores biotypes in lower case ('lncrna', 'mirna'); until
+    # 2026-11-14 this compared with 'lncRNA' / 'miRNA', so the list was always empty (audit finding 1.10).
     flagged_noncoding = []
     for a in assignments:
-        if a['biotype'] in ('lncRNA', 'miRNA') and a['tier'] in (
+        if str(a['biotype']).lower() in ('lncrna', 'mirna') and a['tier'] in (
             'T1_tri_species', 'T2a_human_one2one', 'T2b_mouse_one2one',
             'T3a_human_multi', 'T3b_mouse_multi'
         ):
@@ -888,6 +914,9 @@ def write_outputs(
         'script': 'build_ortholog_mapping.py',
         'timestamp': datetime.now().isoformat(),
         'git_hash': _git_hash(),
+        # Tracked files that differ from that commit. The 2026-04-01 outputs came from an uncommitted tree
+        # and the manifest could not show it (audit finding 1.10).
+        'git_modified_tracked_files': _git_modified(),
         'config_snapshot': {
             'orthologs': config.get('orthologs', {}),
             'note': 'No identity threshold — Ensembl tree-based inference is the quality gate',
@@ -904,8 +933,8 @@ def write_outputs(
         'downstream': {
             'stage4': 'Gene Medians — rat_to_human_mapping.pickle determines human vs rat medians',
             'stage5': 'Tokenization — rat_tokens.pickle is the tokenizer for rat cells',
-            'aim2_grn': 'confidence column → GRN edges with low-confidence genes flagged',
-            'aim3_translation': 'confidence restricts cross-species translation claims',
+            'aim2_grn': 'confidence column: intended to flag GRN edges; read by no downstream code',
+            'aim3_translation': 'confidence column: intended to restrict translation claims; read by no downstream code',
         },
     }
     with open(output_dir / 'stage3_manifest.json', 'w') as f:
@@ -935,6 +964,19 @@ def _git_hash() -> str:
         return r.stdout.strip() if r.returncode == 0 else 'unknown'
     except Exception:
         return 'unknown'
+
+
+def _git_modified() -> list:
+    """Tracked files modified relative to HEAD ([] for a clean tree, None when git cannot be asked)."""
+    try:
+        import subprocess
+        r = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'],
+                           capture_output=True, text=True, timeout=30)
+        if r.returncode != 0:
+            return None
+        return [line[3:] for line in r.stdout.splitlines() if line.strip()]
+    except Exception:
+        return None
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1066,8 +1108,7 @@ def build_ortholog_mapping(config: dict, dry_run: bool = False):
     logger.info("  Downstream handoff:")
     logger.info("    Stage 4 → rat_to_human_mapping.pickle (human vs rat medians)")
     logger.info("    Stage 5 → rat_tokens.pickle (tokenizer for rat cells)")
-    logger.info("    Aim 2  → confidence column (GRN edge quality flags)")
-    logger.info("    Aim 3  → confidence column (cross-species translation guardrails)")
+    logger.info("    confidence column → written for Aims 2-3; no downstream code reads it")
 
 
 # ═════════════════════════════════════════════════════════════════════════════

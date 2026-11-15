@@ -6,6 +6,11 @@ advance, so a passing result is a genuine test and a failure is diagnosed in a f
 explained away. Gene set is frozen in `reference/perturb_prereg_genes.tsv` (all rel-113 ENSRNOG,
 verified in-vocab). Engine: `finetune/genecompass/perturb_cells.py`.
 
+> **Correction note (2026-11-14; audit, cross-stage "stale release labels").** The registration is left as
+> frozen. "rel-113" above is a wrong label: the gene IDs are those of the project's BioMart files, which are
+> Ensembl release 115 / GRCr8 (`config/pipeline_config.yaml`, `biomart` block). The frozen gene set is
+> unchanged.
+
 ## What the engine outputs (definitions)
 - **cell shift** = `1 - cos(CLS_original, CLS_perturbed)`, mean over the cells of a (tissue × cell type)
   that express the gene. Larger = the deletion moves the cell's representation more = bigger effect.

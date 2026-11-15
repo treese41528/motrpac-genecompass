@@ -1,0 +1,8 @@
+tier	genes_in_universe	human_median	rat_median_div_F	no_median
+T1_tri_species	13178	13116	21	41
+T2a_human_one2one	705	560	100	45
+T2b_mouse_one2one	3613	0	3321	292
+T3a_human_multi	1351	1090	40	221
+T3b_mouse_multi	892	0	681	211
+T4_new_token	2474	0	2293	181
+all	22213	14766	6456	991

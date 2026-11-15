@@ -1,0 +1,5 @@
+chromosome	genes_in_list	protein_coding	in_genecompass_vocabulary	protein_coding_and_in_vocabulary
+X	1574	907	891	833
+Y	160	66	28	22
+X + Y	1734	973	919	855
+all chromosomes (the two lists)		22016	22213	20727

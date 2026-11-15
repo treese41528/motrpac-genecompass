@@ -72,11 +72,12 @@ Outputs (all to paths.prior_knowledge_dir):
     grn_transfer_coverage.tsv       <- per-gene coverage report
     stage6_grn_manifest.json
 
-Config required in pipeline_config.yaml:
+Config in pipeline_config.yaml (read by run_stage6.py, which skips this step when it is false):
     prior_knowledge:
       grn:
         enabled: true
-        method: "transfer"
+    (An earlier version of this header also asked for `method: "transfer"`. No code reads such a key and
+    the config has none; the manifest writes method = "transfer" as a constant.)
 
 Usage:
     python pipeline/06_prior_knowledge/build_grn_transfer.py
@@ -107,7 +108,7 @@ import numpy as np
 # -----------------------------------------------------------------------------
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, refuse_overwrite, resolve_path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -440,6 +441,8 @@ Usage:
     parser.add_argument('--dry-run', action='store_true',
                         help='Validate all inputs without running transfer')
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='Replace an existing grn_embeddings.pkl (default: refuse; audit finding 2.7)')
     args = parser.parse_args()
 
     if args.verbose:
@@ -508,6 +511,7 @@ Usage:
         sys.exit(1)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    refuse_overwrite(output_dir / 'grn_embeddings.pkl', args.overwrite, dry_run=args.dry_run)
 
     if args.dry_run:
         # No manifest: a dry run must not overwrite the manifest of the real outputs

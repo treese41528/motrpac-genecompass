@@ -2,9 +2,17 @@
 """
 run_stage6.py — Stage 6 Orchestrator: Prior Knowledge Embeddings
 
-Runs two steps in sequence:
-  Step 1: build_coexp_embedding.py   (slow — scans 9.5M cells, ~2–6 hours)
-  Step 2: build_family_embedding.py  (fast — HGNC + gene2vec, ~10 minutes)
+Runs four steps in sequence (the diagram below shows the first two):
+  Step 1: build_coexp_embedding.py     (slow — the March run read 864 QC files; about 49 h in the rerun)
+  Step 2: build_family_embedding.py    (fast — HGNC + gene2vec, ~10 minutes)
+  Step 3: build_promoter_embedding.py  (DNABERT on promoter windows; prior_knowledge.promoter.enabled)
+  Step 4: build_grn_transfer.py        (PECA2vec transfer; prior_knowledge.grn.enabled)
+
+Overwrite guard (2026-11-14, audit finding 2.7). Every step writes its <name>_embeddings.pkl straight into
+paths.prior_knowledge_dir, which Stage 7 reads. The on-disk family_embeddings.pkl cannot be regenerated
+(it was trained with workers: 8) and a rerun of the promoter step would mix the cached March TSS table with
+a newer genome. So a step whose output already exists now stops, here and in each builder, unless
+--overwrite is given. v2's initialisation reads 36 GRN rows from this folder and nothing else.
 
 Architecture:
     ┌─────────────────────────────────────────────────┐
@@ -59,7 +67,7 @@ Architecture:
     └─────────────────────────────────────────────────┘
 
 Timing guidance:
-    Step 1 (co-expression) scans 88 studies × ~3,000 sampled cells each.
+    Step 1 (co-expression) scans every QC file (864 in the March run) × ~3,000 sampled cells each.
     PCC computation on ~5,000–10,000 expressed genes per matrix typically
     takes 2–6 hours on a single node. Use --from 2 to re-run Step 2 alone
     after Step 1 completes, without re-running the expensive PCC scan.
@@ -110,7 +118,7 @@ STEPS = [
             'pairs > 0.8 → gene2vec 768-dim → coexp_embeddings.pkl'
         ),
         'key_output':  'coexp_embeddings.pkl',
-        'timing_note': 'Expected: 2–6 hours (PCC computation over 88 studies)',
+        'timing_note': 'Expected: hours to days (PCC over every QC file; the 2026-10-31 estimate is about 49 h)',
     },
     {
         'num':         2,
@@ -338,12 +346,20 @@ def is_step_enabled(step: dict, config: dict) -> bool:
 # STEP RUNNER
 # ─────────────────────────────────────────────────────────────────────────────
 
+def existing_outputs(config: dict, from_step: int) -> list:
+    """Key outputs already on disk for the enabled steps a run from `from_step` would execute."""
+    pk_dir = resolve_path(config, config['paths']['prior_knowledge_dir'])
+    return [pk_dir / s['key_output'] for s in STEPS
+            if s['num'] >= from_step and is_step_enabled(s, config) and (pk_dir / s['key_output']).exists()]
+
+
 def run_step(
     step:      dict,
     config:    dict,
     dry_run:   bool = False,
     verbose:   bool = False,
     test_mode: bool = False,
+    overwrite: bool = False,
 ) -> bool:
     """Run one Stage 6 step as a subprocess, mirroring the run_stage4/5 pattern.
 
@@ -351,7 +367,7 @@ def run_step(
     config. If disabled, the step is logged as skipped and True is returned
     so the orchestrator continues normally.
 
-    --test is passed through to Steps 3 and 4 only (coexp and family have no
+    --test is passed through to Step 3 only (coexp, family and GRN have no
     test mode — they always run fully).
     """
     # ── Enabled check ─────────────────────────────────────────────────────────
@@ -379,8 +395,11 @@ def run_step(
         cmd.append('--dry-run')
     if verbose:
         cmd.append('-v')
-    # --test only applies to steps 3 and 4 (promoter + GRN have test modes)
-    if test_mode and step['num'] in (3, 4):
+    if overwrite:
+        cmd.append('--overwrite')
+    # --test applies to step 3 only: build_grn_transfer.py has no --test option (passing it, as this
+    # orchestrator did until 2026-11-14, made step 4 exit on an unrecognised argument)
+    if test_mode and step['num'] == 3:
         cmd.append('--test')
 
     logger.info("=" * 70)
@@ -388,7 +407,7 @@ def run_step(
     logger.info(f"  Script:  {script_path.name}")
     logger.info(f"  Action:  {step['description']}")
     logger.info(f"  Timing:  {step['timing_note']}")
-    if test_mode and step['num'] in (3, 4):
+    if test_mode and step['num'] == 3:
         logger.info("  Mode:    TEST (limited gene set)")
     logger.info("=" * 70)
 
@@ -439,7 +458,8 @@ Enable Steps 3 and 4 in pipeline_config.yaml:
     promoter: {enabled: true}
     grn:      {enabled: true}
 
-Use --test to validate Steps 3/4 on a small gene set before full genome-wide runs.
+Use --test to validate Step 3 on a small gene set before a full genome-wide run (it writes the same
+promoter_embeddings.pkl as a full run, so it needs --overwrite when that file exists).
 Step 1 is slow (2–6 hours). Use --from 2 to skip it once complete.
 
 On Gilbreth (recommended for Step 1):
@@ -456,7 +476,7 @@ Examples:
   python run_stage6.py              # Run all enabled steps
   python run_stage6.py --from 2     # Skip Step 1 (already done)
   python run_stage6.py --from 3     # Run Steps 3+4 only (test Steps 3/4)
-  python run_stage6.py --from 3 --test  # Test mode for Steps 3 and 4
+  python run_stage6.py --from 3 --test  # Test mode for Step 3 (Step 4 runs in full)
   python run_stage6.py --dry-run    # Validate all inputs without running
   python run_stage6.py -v           # Verbose (DEBUG) logging
         """,
@@ -473,7 +493,7 @@ Examples:
     parser.add_argument(
         '--test', action='store_true',
         help=(
-            'Pass --test to Steps 3 and 4 (promoter and GRN). '
+            'Pass --test to Step 3 (promoter). '
             'Runs on a small subset to validate the pipeline end-to-end '
             'before committing to a full genome-wide run.'
         ),
@@ -481,6 +501,13 @@ Examples:
     parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='Enable DEBUG-level logging',
+    )
+    parser.add_argument(
+        '--overwrite', action='store_true',
+        help=(
+            'Replace <name>_embeddings.pkl files that already exist in paths.prior_knowledge_dir. '
+            'Without it a step whose output exists stops (audit finding 2.7).'
+        ),
     )
     args = parser.parse_args()
 
@@ -505,6 +532,21 @@ Examples:
         logger.error("Input validation failed")
         sys.exit(1)
 
+    # ── Overwrite guard (before any step runs) ────────────────────────────────
+    present = existing_outputs(config, args.from_step)
+    if present and not args.overwrite:
+        listing = "\n".join(f"    {p}" for p in present)
+        if args.dry_run:
+            logger.warning(f"Outputs already on disk; a real run would stop without --overwrite:\n{listing}")
+        else:
+            logger.error(
+                f"Refusing to overwrite existing Stage 6 outputs:\n{listing}\n"
+                f"  Stage 7 reads these files and a rerun does not always reproduce them "
+                f"(family: non-deterministic March build; promoter: cached TSS table).\n"
+                f"  Start later with --from N, point paths.prior_knowledge_dir elsewhere, or pass --overwrite."
+            )
+            sys.exit(3)
+
     # ── Print step plan ───────────────────────────────────────────────────────
     pk = config.get('prior_knowledge', {})
 
@@ -515,7 +557,7 @@ Examples:
     for step in STEPS:
         enabled = is_step_enabled(step, config)
         status = "ENABLED" if enabled else "disabled in config"
-        test_flag = "  [--test will run in limited mode]" if (args.test and step['num'] in (3, 4) and enabled) else ""
+        test_flag = "  [--test will run in limited mode]" if (args.test and step['num'] == 3 and enabled) else ""
         logger.info(f"  Step {step['num']}: {step['name']:<35s} [{status}]{test_flag}")
     logger.info("")
 
@@ -546,7 +588,7 @@ Examples:
             f"(skipping Step(s) 1–{args.from_step - 1})"
         )
     if args.test:
-        logger.info("\n  TEST MODE active — Steps 3 and 4 will run on limited gene sets")
+        logger.info("\n  TEST MODE active — Step 3 will run on a limited gene set (Step 4 has no test mode)")
     logger.info("")
 
     # ── Run steps ─────────────────────────────────────────────────────────────
@@ -560,6 +602,7 @@ Examples:
             dry_run=args.dry_run,
             verbose=args.verbose,
             test_mode=args.test,
+            overwrite=args.overwrite,
         )
         if not ok:
             logger.error(f"Stage 6 aborted at Step {step['num']}")

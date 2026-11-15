@@ -361,10 +361,14 @@ prior_knowledge:
     # Stage 6 read (md5 5e1e18fea6f3b34dca80758c5322a9e6, fetched 2026-03-17) is not in the archive
     # (between the 03-06 and 04-01 snapshots); it is deposited.
     hgnc_url: "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2026-03-06.txt"
-    rat_only_tokens: true       # Only embed rat-specific tokens (T4); 
-                                # ortholog-mapped tokens inherit from GC
+    # rat_only_tokens is read by no code (audit Part 2, Stage 6 deviation 2). The family builder trains on
+    # human, mouse and rat families together and cannot give a rat-specific (T4) token a vector: 0 of 2,474
+    # T4 rows are non-zero in v2's initialisation. The key is left in place; removing it would change nothing.
+    rat_only_tokens: true
 
-  # Steps 3 & 4: Promoter and GRN — stubs, not yet implemented
+  # Steps 3 & 4: promoter (build_promoter_embedding.py) and GRN transfer (build_grn_transfer.py). Both are
+  # implemented and ran in March 2026; this comment called them "stubs, not yet implemented" until 2026-11-14.
+  # Stage 6 refuses to overwrite an existing <name>_embeddings.pkl without --overwrite (audit finding 2.7).
   promoter:
     enabled: true             # Requires DNABert + Ensembl genome sequences
     dnabert_model: "zhihan1996/DNA_bert_6"
@@ -406,7 +410,7 @@ deconvolution:
   # Committed reference artifacts (small, tracked; live with the code under deconvolution/reference/)
   rat_genecompass_genes: deconvolution/reference/rat_genecompass_genes.tsv  # GeneCompass token-gene keep-list
   sample_pheno: deconvolution/reference/motrpac_sample_pheno.tsv            # PHENO viallabel -> sex/group/weeks
-  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, rel-113
+  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, Ensembl 115 IDs
   reference_dir: deconvolution/reference   # root for the committed reference TSVs above
   # Outputs -- regenerable + gitignored, under data/deconvolution/ (NOT in the code tree)
   output_root: data/deconvolution
@@ -449,10 +453,11 @@ deconvolution:
   n_cores: 4
   r_module: r/4.4.1
   # Real MoTrPAC bulk gene-ID liftover (Fix 1): lift consortium TRNSCRPT_<TISSUE>_RAW_COUNTS
-  # (older Ensembl rat build) -> current mRatBN7.2 ENSRNOG via three bridges: direct match,
+  # (older Ensembl rat build) -> current ENSRNOG (the BioMart files above: Ensembl 115 / GRCr8; this
+  # comment said mRatBN7.2 until 2026-11-14) via three bridges: direct match,
   # a FEATURE_TO_GENE symbol bridge, and an Entrez/RGD ID-history bridge (rgd.genes_file
-  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed across
-  # the Rnor_6.0->mRatBN7.2 rebuild). Then write deconv-ready samples x genes bulk per
+  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed since
+  # the Rnor_6.0 annotation). Then write deconv-ready samples x genes bulk per
   # tissue. Built by deconvolution/R/prepare_motrpac_bulk.{R,sh}; biomart rat_gene_info
   # (above) supplies the current-ID universe.
   motrpac_bulk_dir: data/motrpac/rat_training_6mo/data        # source TRNSCRPT_*_RAW_COUNTS.rda

@@ -11,9 +11,15 @@ is a paired, within-block comparison.
 
 THREE questions, in order:
   (1) POSITIVE CONTROL -- does a STRONG, transfer-agnostic biological axis survive? Sex is the
-      pre-registered control (dominant, not exercise). If sup_sex_auc collapses in human space,
-      the transfer corrupted the embedding and nothing downstream is trustworthy. This is checked
-      and reported FIRST, before any exercise claim.
+      control this script was written with (dominant, not exercise). If sup_sex_auc collapses in
+      human space, the transfer corrupted the embedding and nothing downstream is trustworthy. This
+      is checked and reported FIRST, before any exercise claim.
+      The control and its floor (human-space median sup_sex_auc >= 0.70) were fixed in this script
+      when it was first committed (fc4a497, 2026-06-25), together with the transfer itself. No
+      pre-registration document states either: this header called the control "pre-registered"
+      until 2026-11-14 (audit finding 8.6). docs/RETRAIN_V2_PREREGISTRATION.md lists the sex
+      control's human-space median as a quantity to report, without a pass rule. Read the PASS /
+      FAIL line as a sanity check with a floor chosen by the authors, not as a registered test.
   (2) GLOBAL FIDELITY -- across all blocks, how well does the human-space trained AUC track the
       rat-space trained AUC (Spearman)? And the ordinal-dose rho?
   (3) HOTSPOT SURVIVAL -- among the rat exercise hotspots (q_sup_trained < --hotspot-q), classify
@@ -302,7 +308,7 @@ def main():
               f"(Spearman rat~human across {n_sx} blocks: r={sx_r:.3f})\n")
     md.append(f"- **transfer-validity: {'PASS' if sex_ok else 'FAIL'}** -- a strong, transfer-agnostic "
               f"biological axis {'remains' if sex_ok else 'does NOT remain'} detectable in human space "
-              f"(floor 0.70). {'Embedding biology preserved; exercise claims below are interpretable.' if sex_ok else 'Transfer suspect -- do NOT trust the exercise comparison until resolved.'}\n")
+              f"(floor 0.70; the floor is set in compare_transfer.py, not in a pre-registration). {'Embedding biology preserved; exercise claims below are interpretable.' if sex_ok else 'Transfer suspect -- do NOT trust the exercise comparison until resolved.'}\n")
 
     md.append("\n## (2) Global fidelity -- does human-space tracking follow rat-space?\n")
     md.append(f"- trained AUC  Spearman(rat, human) = {auc_r:.3f}  (n={n_auc})\n")

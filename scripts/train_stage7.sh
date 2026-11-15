@@ -5,7 +5,8 @@
 # Reproduces the torchrun launch in the local SLURM wrapper used for v2 (slurm/finetune/stage7.slurm,
 # gitignored): 1 node, torchrun with one process per GPU, fp16, gradient checkpointing, and automatic
 # resume from the newest checkpoint-* of the phase. Wrap it in your scheduler's batch script (v2: one
-# node, 4 x A100-40GB, 32 CPUs, 256 GB RAM, 6-day jobs; phase 1 = 517,793 steps, ~10 days over 2 jobs).
+# node, 4 x A100-40GB, 32 CPUs, 256 GB RAM, 6-day jobs; phase 1 = 517,793 steps in one job of 4 days 23.6 h,
+# job 11917121, docs/RETRAIN_V2_RESULTS.md; this line said "~10 days over 2 jobs" until 2026-11-14).
 #
 # Usage (from anywhere; paths are resolved from the repository root):
 #   PHASE=1 bash scripts/train_stage7.sh      # phase 1 (frozen encoder); rerun the same command to resume
@@ -23,7 +24,8 @@
 #
 # Seeds are rat_pretrain.py's defaults (seed_num 0, seed_val 42; Trainer seed 42), as for v2. GPU kernels
 # are not deterministic: a restart tracks v2's loss within fp16 nondeterminism (docs/repro_stages1_7/
-# REPRODUCTION.md) but is not bit-identical. The v2 checkpoints are deposited.
+# REPRODUCTION.md) but is not bit-identical. Deposited (config/deposit_md5.tsv): v2's initial checkpoint and
+# its phase-2 final model. No phase-1 checkpoint is in the deposit.
 # ============================================================================
 set -uo pipefail
 

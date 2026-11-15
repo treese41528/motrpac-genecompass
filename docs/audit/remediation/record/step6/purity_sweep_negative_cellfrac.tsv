@@ -1,0 +1,26 @@
+config_key	folder	sweep	mixtures	cell_types	mixtures_with_a_negative_cell_fraction	negative_entries	most_negative	cell_fractions_sum_min	cell_fractions_sum_max	which
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_bat_holdout	60	6	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_cortex_holdout	60	8	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_heart_holdout	60	16	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_hippoc_holdout	60	10	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_hypoth_holdout	60	10	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_kidney_holdout	60	15	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_lung_at2_holdout	60	21	3	3	-0.0033333333333333335	1.0	1.0	mix7 Plasmacytoid dendritic cells; mix26 Basal cells; mix32 Vascular smooth muscle cells
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_lung_club_holdout	60	21	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_skmgn_holdout	60	8	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_smlint_holdout	60	13	0	0		1.0	1.0	
+deconvolution.validation_dir	validation_refs4all_rebuild	SWEEP_testes_holdout	60	5	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_bat_holdout	60	6	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_cortex_holdout	60	25	2	2	-0.002	1.0	1.0	mix32 Meningeal fibroblasts; mix59 Neuroepithelial cells
+deconvolution.pilot_validation_dir	validation	SWEEP_heart_holdout	60	16	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_hepato_cross	60	4	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_hepato_holdout	60	5	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_hippoc_holdout	60	15	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_hypoth_holdout	60	10	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_kidney_holdout	60	14	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_lung_at2_holdout	60	31	3	3	-0.006666666666666667	1.0	1.0	mix23 Neutrophils; mix28 Ciliated cells; mix45 Naive B cells
+deconvolution.pilot_validation_dir	validation	SWEEP_lung_club_holdout	60	31	2	2	-0.001	1.0	1.0	mix35 CD4+ T cells; mix52 Naive CD4+ T cells
+deconvolution.pilot_validation_dir	validation	SWEEP_skmgn_holdout	60	16	4	4	-0.002	1.0	1.0	mix11 NK cells; mix51 Myeloid dendritic cells; mix53 Myeloid dendritic cells; mix60 CD8+ T cells
+deconvolution.pilot_validation_dir	validation	SWEEP_skmvl_holdout	60	12	1	1	-0.00125	1.0	1.0	mix49 Myofibroblasts
+deconvolution.pilot_validation_dir	validation	SWEEP_smlint_holdout	60	13	0	0		1.0	1.0	
+deconvolution.pilot_validation_dir	validation	SWEEP_testes_holdout	60	5	0	0		1.0	1.0	

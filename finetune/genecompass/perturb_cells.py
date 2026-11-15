@@ -96,7 +96,14 @@ def embed(model, input_ids, values, device, species=2):
 # ── perturbations (per-cell, on the padded 2048-length profile) ─────────────────────────────────────
 def delete_token(ids_row, vals_row, token):
     """Remove every position == token, left-shift the survivors, pad with 0 to keep length L.
-    Returns (new_ids, new_vals, removed_positions)."""
+    Returns (new_ids, new_vals, removed_positions).
+
+    Known confound, not quantified anywhere (audit finding 9.6): the left shift moves every gene ranked
+    below the deleted one up by one position, and the model adds a position embedding to each token. So a
+    deletion changes two things at once for those genes: the deleted gene is gone, and their absolute
+    position is one lower. The shifts reported downstream contain both. A control that would separate them
+    (delete a gene and leave a pad in its place, or delete a matched non-TF at the same rank) has not been
+    run; the expression-matched decoy null (deconvolution/grn_decoy_fdr.py) controls for it only in aggregate."""
     keep = ids_row != token
     L = ids_row.shape[0]
     new_ids = torch.zeros(L, dtype=ids_row.dtype)
@@ -248,6 +255,19 @@ def main():
             f.write(f"{r['gene']}\t{r['cell_type']}\t{r['n_cells']}\t{r.get('mean_cell_shift','')}\t"
                     f"{r.get('median_cell_shift','')}\t{tgt}\n")
     log.info(f"wrote {len(rows)} rows -> {args.out}")
+
+    # Provenance beside the table (audit finding 9.6: the engine's own output had none), with the md5 of the
+    # weights file, as build_grn.py and build_grn_pooled.py record it. Written after the table.
+    sys.path.insert(0, str(_ROOT / "lib"))
+    from provenance import write_provenance
+    weights = Path(args.model_dir) / "pytorch_model.bin"
+    params = dict(vars(args))
+    params.update({"genes_requested": genes, "n_genes_scored": len(rows), "n_cells": int(n),
+                   "weights_file": str(weights)})
+    write_provenance(Path(args.out).parent, name=f"provenance_{Path(args.out).stem}.json",
+                     inputs=[args.dataset, args.token_dict, Path(args.model_dir) / "config.json"]
+                            + ([args.gene_file] if args.gene_file else []),
+                     md5_inputs=[weights] + ([args.gene_file] if args.gene_file else []), params=params)
 
 
 if __name__ == "__main__":

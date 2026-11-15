@@ -41,8 +41,7 @@ Architecture:
     │ Downstream consumers                            │
     │ Stage 4 → rat_to_human_mapping (median source)  │
     │ Stage 5 → rat_tokens (tokenizer)                │
-    │ Aim 2  → confidence column (GRN edge flags)     │
-    │ Aim 3  → confidence column (translation guard)  │
+    │ confidence column: written, read by no stage    │
     └─────────────────────────────────────────────────┘
 
 Usage:
@@ -279,10 +278,11 @@ Tier Architecture:
   T2b  Mouse-rat one2one   — rat→mouse in GC vocab
   T3a  Human-rat multi     — one2many/many2many to human in GC vocab
   T3b  Mouse-rat multi     — one2many/many2many to mouse in GC vocab
-  T4   New rat token       — no ortholog, biotype = protein_coding/lncRNA/miRNA
+  T4   New rat token       — no qualifying ortholog (none, or one outside the GC vocab),
+                             biotype = protein_coding/lncRNA/miRNA
 
-Key: NO identity threshold. GeneCompass used none (min observed: 1.2%).
-     Ensembl tree-based orthology inference IS the quality gate.
+Key: NO identity threshold and no orthology-confidence filter: Ensembl Compara calls are
+     taken as exported (one-to-one calls down to 3.3% identity are accepted; audit finding 1.10).
 
 Examples:
   python run_stage3.py              # Run ortholog mapping

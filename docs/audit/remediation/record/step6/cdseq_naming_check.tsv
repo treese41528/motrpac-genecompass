@@ -1,0 +1,6 @@
+check	value	source
+estProp shape (cell types x samples)	14 x 50	data/deconvolution/results/_deployed_backup_20260715/BLOOD/cdseq_rr/cdseq_result.rds
+estProp columns equal bulk_samples.tsv, in order	TRUE	data/deconvolution/results/_deployed_backup_20260715/BLOOD/cdseq_rr/cdseq_result.rds
+new naming identical to positional naming (values and names)	TRUE	data/deconvolution/results/_deployed_backup_20260715/BLOOD/cdseq_rr/cdseq_result.rds
+new naming equals the saved cdseq_proportions.csv (names; values to 1e-12)	TRUE	data/deconvolution/results/_deployed_backup_20260715/BLOOD/cdseq_rr/cdseq_proportions.csv
+max abs difference, new naming against the saved table	5e-16	data/deconvolution/results/_deployed_backup_20260715/BLOOD/cdseq_rr/cdseq_proportions.csv

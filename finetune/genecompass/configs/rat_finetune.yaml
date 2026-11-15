@@ -1,3 +1,17 @@
+# The April model's paths and training hyperparameters. NOT a complete record of how April was built
+# (note added 2026-11-14; audit finding 2.7 and Part 3, 7c deviation 11):
+#   - Priors. initialization.t3_prior_source and t4_zero_priors below were added to this file on 2026-10-05/06
+#     (commit 916680e), for the retrain. April's initial checkpoint (data/models/rat_genecompass_init/, files
+#     dated 2026-04-02, no provenance record) was built before those options existed, by looking T3 prior rows
+#     up under the rat gene ID. That is what `t3_prior_source: stage6` with `t4_zero_priors: []` does today,
+#     and it left every T3a row zero in all four priors. The only table of April's prior rows is an
+#     uncommitted local file (tmp/data_audit/prior_zero_rows_by_tier.tsv); it was not recomputed for this note.
+#     The values below are left as they are: changing them would not rebuild April's checkpoint, and
+#     rat_model_init.py now refuses `stage6` unless allow_legacy_t3_priors is set.
+#   - Save interval. logging.save_steps is 10000. April's phase 2 was saved every 10,000 steps, but its phase 1
+#     every 125,000 (save_steps in rat_phase1_freeze_mixed/checkpoint-129449/trainer_state.json and
+#     rat_phase2_mixed_species/checkpoint-147941/trainer_state.json).
+#   - April's weights are read-only on disk; nothing should be trained from this file into the same folders.
 model:
   base_checkpoint: vendor/GeneCompass/pretrained_models/GeneCompass_Base
   init_checkpoint: data/models/rat_genecompass_init
@@ -64,9 +78,12 @@ training:
 initialization:
   t4_word_emb_init: random
   t4_word_emb_std: 0.02
-  t3_warm_start: true          # NEW: clone from ortholog
-  t3_noise_std: 0.001          # NEW: symmetry-breaking noise
-  species_init: mouse_plus_noise
+  # The next three keys are read by no code (audit finding 3.7). What they describe is fixed in
+  # rat_model_init.py: T3 word rows are always cloned from the ortholog with noise 0.001, and the rat species
+  # row is always the mouse row plus noise of species_noise_std. Changing them here changes nothing.
+  t3_warm_start: true          # not read
+  t3_noise_std: 0.001          # not read
+  species_init: mouse_plus_noise   # not read
   species_noise_std: 0.02
   coexp_rescale_factor: 3.9    # applied only to prior rows filled from Stage 6
   t3_prior_source: ortholog    # T3 prior rows = ortholog's pre-trained rows (T3a human, T3b mouse); 2026-10-05

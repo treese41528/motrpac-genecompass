@@ -113,6 +113,14 @@ def build(ref, out):
     import build_reference as br
     a = br.clean_cells(reference_cells(labelled(ref)), 20)
     br.export_reference(a, out)
+    # Provenance, written after the reference files and never read by them (audit, cross-stage "provenance":
+    # this builder wrote none).
+    br.write_provenance(out, inputs=[LABELS / ref / "cells_final.tsv.gz"] + jr.raw_input_files(ref),
+                        params={"command": "build", "ref": ref, "out": str(out), "min_state_cells": 20,
+                                "left_out_classes": sorted(GUARD | {"DROP"}),
+                                "n_cells": int(a.n_obs), "n_genes": int(a.n_vars),
+                                "samples": sorted(a.obs["sample"].astype(str).unique()),
+                                "cell_types": sorted(a.obs["cell_type"].astype(str).unique())})
 
 
 def half_split(types, seed=SEED):

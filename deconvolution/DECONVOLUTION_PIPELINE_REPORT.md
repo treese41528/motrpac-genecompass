@@ -137,6 +137,32 @@ cells and vascular smooth muscle cells; HYPOTH oligodendrocyte precursor cells.
       hepatocytes.
     - The driver table and the cross-check advice in `OMNIDECONV_RESULTS.md` are updated.
 
+---
+
+> **Everything below this line is the report as assembled on 2026-06-25 and refreshed for the July references
+> (banner added 2026-11-14, audit "stale documents").** It describes the pipeline of that time and is kept as
+> a record. It has not been brought up to date, and it was not re-checked line by line when this banner was
+> written. Known to be out of date:
+> - **Annotation label.** The body says "rel-113" and "mRatBN7.2" throughout, and quotes the config as
+>   `ensembl_release: "113"`, `assembly: "mRatBN7.2"`. The BioMart files every stage reads are Ensembl
+>   release 115 / GRCr8, and the config has said so since 2026-10-05. The IDs were always release 115's; only
+>   the label was wrong. Where the body explains the liftover by saying RGD "tracks the newer GRCr8", that
+>   cannot be the reason, because the project's own files are GRCr8. What was measured is only that 60.6% of
+>   RGD's Ensembl IDs are in the project's BioMart file; which annotation RGD's ID column follows has not
+>   been determined (see the note at the top of `MOTRPAC_BULK_LIFTOVER.md`).
+> - **Stages.** The body has no Stage 11. The gate it describes inside Stages 9 and 10 is
+>   `pipeline/run_stage11.py`, and it runs before Stage 10.
+> - **Differential expression.** The body's account of the DE model predates the corrections of the audit
+>   (finding 7.7). The test behind "dose-significant" is the per-sex omnibus F over `factor(week)`, the two
+>   sexes combined by Fisher's method, corrected by one IHW fit over all blocks; see the header of
+>   `deconvolution/R/run_pseudobulk_de.R` and `AIM2_DE_MOTRPAC_COMPARISON.md`.
+> - **Folders, references and figures.** Paths, reference names, cell-type counts, hotspot and transfer
+>   figures in the body are those of the April model on the June and July references.
+>
+> **Where the current description lives:** the stage list and the config keys that hold each stage's outputs
+> in `pipeline/README.md`; the per-tissue references in `tissue_references.yaml`; the commands in
+> `DECONV_REBUILD_RUNBOOK.md`; what the audit found, stage by stage, in `docs/audit/`.
+
 ## Executive summary
 
 The pipeline turns **MoTrPAC rat bulk exercise RNA-seq** into **cell-type-resolved biology** and a

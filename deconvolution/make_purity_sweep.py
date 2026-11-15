@@ -80,6 +80,7 @@ def generate_purity_sweep(pool, types, focal, rng, purity_grid, reps,
     rows, recs, design = [], [], []
     z_true = {t: [] for t in types}
     mix_i = 0
+    negative = []          # mixtures in which the drift repair below left a background type with < 0 cells
     for p in purity_grid:
         for r in range(reps):
             mix_i += 1
@@ -91,9 +92,18 @@ def generate_purity_sweep(pool, types, focal, rng, purity_grid, reps,
                 bg_frac = rng.dirichlet(np.full(len(background), bg_alpha))
                 bg_counts = (bg_frac * n_bg_total).round().astype(int)
                 # fix rounding drift so the total is exact
+                # KNOWN DEFECT (found 2026-11-14, docs/audit/remediation/STEP6_HYGIENE.md): the drift goes
+                # to one background type picked at random. A negative drift on a type with too few cells
+                # leaves a negative count; the type is then skipped below, the mixture holds one or two
+                # cells more than cells_per_mix, and its cellfrac__ columns are wrong by that much (one is
+                # negative). The mixture counts, the true Z and the rnafrac__ columns come from the cells
+                # actually drawn and stay exact. Left as it is: repairing it changes the random stream and
+                # with it every sweep. The run now reports how many mixtures are affected.
                 drift = n_bg_total - int(bg_counts.sum())
                 if drift != 0:
                     bg_counts[rng.integers(len(background))] += drift
+                if (bg_counts < 0).any():
+                    negative.append(f"mix{mix_i}")
                 for t, n in zip(background, bg_counts):
                     n_per[t] = int(n)
             else:
@@ -128,6 +138,10 @@ def generate_purity_sweep(pool, types, focal, rng, purity_grid, reps,
                            "focal_cellfrac": n_per[focal] / n_total,
                            "focal_rnafrac": rec[f"rnafrac__{focal}"]})
 
+    if negative:
+        print(f"NOTE: {len(negative)} of {mix_i} mixtures have a background type with a negative cell count "
+              f"after the rounding-drift repair ({', '.join(negative[:10])}{' ...' if len(negative) > 10 else ''}): "
+              f"their cellfrac__ columns are off by one or two cells; counts, true Z and rnafrac__ are exact.")
     counts = sp.csr_matrix(np.vstack(rows).astype(np.int64))
     z_true = {t: np.vstack(v) for t, v in z_true.items()}
     return counts, pd.DataFrame(recs), pd.DataFrame(design), z_true

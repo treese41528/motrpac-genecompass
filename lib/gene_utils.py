@@ -126,6 +126,25 @@ def resolve_path(config: dict, relative_path: str) -> Path:
     return config["_project_root"] / relative_path
 
 
+def refuse_overwrite(path, overwrite: bool = False, dry_run: bool = False, flag: str = "--overwrite") -> None:
+    """Stop a builder whose primary output is already on disk, unless it was asked to replace it.
+
+    Written for Stage 6 (audit finding 2.7): each builder wrote straight into paths.prior_knowledge_dir, so a
+    routine rerun replaced files that later stages read and that cannot all be regenerated (the on-disk
+    family_embeddings.pkl was trained non-deterministically). Nothing happens when the file is absent or
+    `overwrite` is true. A dry run only says what a real run would do. Otherwise SystemExit(3).
+    """
+    path = Path(path)
+    if overwrite or not path.exists():
+        return
+    msg = (f"{path} exists. Refusing to overwrite it: later stages read this file, and a rerun does not "
+           f"always reproduce it. Move it aside, point the output folder elsewhere, or pass {flag}.")
+    if dry_run:
+        print(f"NOTE (dry run, nothing written): a real run would stop here. {msg}")
+        return
+    raise SystemExit(f"ERROR: {msg}")
+
+
 def qc_corpus_files(config: dict) -> list:
     """The QC h5ad files a corpus stage should read.
 

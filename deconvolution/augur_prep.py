@@ -45,6 +45,7 @@ from sample_join import load_viallabels, mix_index                        # chec
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
+from provenance import write_provenance                                   # noqa: E402
 
 WEEK = {"control": 0, "1w": 1, "2w": 2, "4w": 4, "8w": 8}
 SPACE_SEED = {"embed": 7, "pca": 11, "genes": 13}
@@ -86,6 +87,7 @@ def main():
     phm = ph.drop_duplicates("viallabel").set_index("viallabel")
 
     items = []
+    read = []                                    # per-tissue input files, for the provenance record
     for d in sorted(glob.glob(f"{args.gc_root}/*/")):
         tis = os.path.basename(d.rstrip("/"))
         emb_p, ds_p = os.path.join(d, "embeddings", "cell_embeddings.npy"), os.path.join(d, "dataset")
@@ -102,6 +104,7 @@ def main():
         ridx = np.array([pos[o] for o in order])                          # align h5ad -> embedding order
         Xraw = A.X[ridx]; genes = list(map(str, A.var_names))
         vls = load_viallabels(bulk, tis, Path(args.results_root) / "motrpac")
+        read += [emb_p, h5_p, bs_p, str(Path(args.results_root) / "motrpac" / tis.upper() / "mixture_samples.tsv")]
         vl = np.array(vls)[mix_index(samp, len(vls), context=tis)]
         grp = np.array([phm.loc[v, gcol] if v in phm.index else None for v in vl], dtype=object)
         sex = np.array([phm.loc[v, "sex"] if v in phm.index else None for v in vl], dtype=object)
@@ -161,6 +164,13 @@ def main():
 
     rows = Parallel(n_jobs=args.jobs, verbose=5)(delayed(run)(it) for it in items)
     res = pd.DataFrame(rows); res.to_csv(args.ctl_out, sep="\t", index=False)
+    # Provenance (audit, cross-stage "provenance": this script wrote none): one record beside pca_control.tsv
+    # and one in the Augur input folder. Written after every output; they read nothing the outputs depend on.
+    prov = dict(vars(args), pheno=pheno, bulk_root=bulk, space_seed=SPACE_SEED, pca_random_state=0,
+                n_blocks=int(len(res)), blas_threads=1)
+    write_provenance(Path(args.ctl_out).parent, name=f"provenance_{Path(args.ctl_out).stem}.json",
+                     inputs=[pheno] + read, params=prov)
+    write_provenance(args.out, inputs=[pheno] + read, params=prov)
 
     pd.set_option("display.width", 200, "display.max_rows", 300)
     print(f"\nwrote {args.ctl_out} ({len(res)} blocks); Augur inputs under {args.out}\n")

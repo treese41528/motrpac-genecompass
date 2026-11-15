@@ -54,7 +54,8 @@ def map_target(tissue, ct):
                 out.append(n)
     return "|".join(out), ("cell type renamed: " + "; ".join(moved)) if moved else ""
 
-# symbol -> rel-113 ENSRNOG (case-insensitive), from the gene universe (same ID space as DE rownames)
+# symbol -> ENSRNOG (case-insensitive), from the gene universe (same ID space as DE rownames: the project's
+# BioMart files, Ensembl 115 / GRCr8; this comment said "rel-113" until 2026-11-14)
 sym2ens = {}
 with open(GU) as fh:
     r = csv.reader(fh, delimiter="\t"); next(r)

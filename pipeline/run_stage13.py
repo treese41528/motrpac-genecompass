@@ -121,6 +121,16 @@ def resolve_model_dir(base: Path) -> Path:
 
 
 def _safe(tissue: str, ct: str) -> str:
+    """Network file stem '<tissue>_<cell type>' (lower case, '+' spelled 'pos').
+
+    Kept on purpose, although the project rule is to import safe() from deconvolution/celltype_names.py:
+    the two give different names for every cell type (case), and for 9 of the 191 reference x cell-type
+    names of the refs5 references they differ beyond case ('CD4+ T cells' -> cd4pos_t_cells here,
+    cd4_t_cells there; 'SMCs & Pericytes' keeps its '&' here). Switching would rename the network files of
+    every arm on disk (docs/audit/remediation/record/step6/stage13_network_names.tsv, made by
+    analysis/audit_remediation/step6_stage13_names_check.py). This function is not injective either;
+    abundant_hotspots() below stops on a collision.
+    """
     s = ct.lower().replace('+', 'pos').replace(' ', '_').replace('-', '_').replace('/', '_')
     while '__' in s:
         s = s.replace('__', '_')

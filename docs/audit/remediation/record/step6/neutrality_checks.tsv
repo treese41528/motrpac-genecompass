@@ -1,0 +1,55 @@
+check	item	compared_with	reference_md5	new_md5	result	detail
+refs	LUNG_native_pooled/cells_meta.tsv	references_v5/LUNG_native_pooled	65289de56cbffe86a6c3849c12983c4b	65289de56cbffe86a6c3849c12983c4b	IDENTICAL	
+refs	LUNG_native_pooled/genes.tsv	references_v5/LUNG_native_pooled	47234208664664386d387541a48c731a	47234208664664386d387541a48c731a	IDENTICAL	
+refs	LUNG_native_pooled/reference_counts.mtx	references_v5/LUNG_native_pooled	18f3ef9e0de42b2b03e846d08bfc094d	18f3ef9e0de42b2b03e846d08bfc094d	IDENTICAL	
+refs	LUNG_native_pooled/summary.txt	references_v5/LUNG_native_pooled	7f629b9fe55d0636deaa6524a8278e22	7f629b9fe55d0636deaa6524a8278e22	IDENTICAL	
+refs	LUNG_native_pooled/provenance record	-			WRITTEN	provenance_build_lung_pooled.json
+refs	BLOOD_composite/cells_meta.tsv	references_v5/BLOOD_composite	4072d9afa28026bd562e8fc983e3b5db	4072d9afa28026bd562e8fc983e3b5db	IDENTICAL	
+refs	BLOOD_composite/cells_source.tsv	references_v5/BLOOD_composite	0fb7fd8521dfe107d5fced2b195b9c50	0fb7fd8521dfe107d5fced2b195b9c50	IDENTICAL	
+refs	BLOOD_composite/genes.tsv	references_v5/BLOOD_composite	3bd701c69b1780a443bc353774eb5483	3bd701c69b1780a443bc353774eb5483	IDENTICAL	
+refs	BLOOD_composite/reference_counts.mtx	references_v5/BLOOD_composite	c97446e35480949846f2359d9748400f	c97446e35480949846f2359d9748400f	IDENTICAL	
+refs	BLOOD_composite/summary.txt	references_v5/BLOOD_composite	cd6e25473c8555d114c6b6fdf9d90fbc	cd6e25473c8555d114c6b6fdf9d90fbc	IDENTICAL	
+refs	BLOOD_composite/provenance record	-			WRITTEN	provenance_build_blood_composite.json
+refs	SPLEEN_GSE306764/cells_meta.tsv	references_v5/SPLEEN_GSE306764	51284178ad3e632f96b3b3f0bbf079d7	51284178ad3e632f96b3b3f0bbf079d7	IDENTICAL	
+refs	SPLEEN_GSE306764/genes.tsv	references_v5/SPLEEN_GSE306764	76f400d420fc8f24a304198c3cfacc8c	76f400d420fc8f24a304198c3cfacc8c	IDENTICAL	
+refs	SPLEEN_GSE306764/reference_counts.mtx	references_v5/SPLEEN_GSE306764	4b84bf8e36a568841565e1396317cc7c	4b84bf8e36a568841565e1396317cc7c	IDENTICAL	
+refs	SPLEEN_GSE306764/summary.txt	references_v5/SPLEEN_GSE306764	b0b0e5c276a8b319938209efdd5d5153	ba72b1034c3fcac173f238a289902975	PATH ONLY	
+refs	SPLEEN_GSE306764/summary.txt with the repository root masked	references_v5/SPLEEN_GSE306764			IDENTICAL	the file quotes the liftover map's absolute path; only that path differs
+refs	SPLEEN_GSE306764/provenance record	-			WRITTEN	provenance_build_external_reference.json
+refs	OVARY_GSE343214/cells_meta.tsv	references_v5/OVARY_GSE343214	0ce49febd5c584bae6759ac8eebf29eb	0ce49febd5c584bae6759ac8eebf29eb	IDENTICAL	
+refs	OVARY_GSE343214/genes.tsv	references_v5/OVARY_GSE343214	993752d2f8b03fbd2436d2b9aeab1abf	993752d2f8b03fbd2436d2b9aeab1abf	IDENTICAL	
+refs	OVARY_GSE343214/reference_counts.mtx	references_v5/OVARY_GSE343214	c561c878379c9b413580c94a984c46a3	c561c878379c9b413580c94a984c46a3	IDENTICAL	
+refs	OVARY_GSE343214/summary.txt	references_v5/OVARY_GSE343214	a227d0a44aa1f37521aee589e6e1ffeb	a227d0a44aa1f37521aee589e6e1ffeb	IDENTICAL	
+refs	OVARY_GSE343214/provenance record	-			WRITTEN	provenance_build_external_reference.json
+stage3	collision_report.tsv	training/ortholog_mappings	d95bb29922741c6bdf92cbe3a5eed833	d95bb29922741c6bdf92cbe3a5eed833	IDENTICAL	
+stage3	mapping_statistics.json	training/ortholog_mappings	fc77cb55c8bddc90fc016517ce1f0bba	368aceca16bd566b50abb2ce4fc327e2	EXPECTED DIFFERENCE	
+stage3	mapping_statistics.json: keys that differ	training/ortholog_mappings			KEYS	/timestamp
+stage3	new_rat_tokens.txt	training/ortholog_mappings	202f623951299a43e5ce4eb455b75468	202f623951299a43e5ce4eb455b75468	IDENTICAL	
+stage3	rat_to_human_mapping.pickle	training/ortholog_mappings	317902827ed0012ad7c7622e1958fecc	317902827ed0012ad7c7622e1958fecc	IDENTICAL	
+stage3	rat_to_mouse_mapping.pickle	training/ortholog_mappings	09dce8709fbca5b2f9ef90b995ceddca	09dce8709fbca5b2f9ef90b995ceddca	IDENTICAL	
+stage3	rat_token_mapping.tsv	training/ortholog_mappings	258ffccb436c9464fa9c93844e299b06	258ffccb436c9464fa9c93844e299b06	IDENTICAL	
+stage3	rat_tokens.pickle	training/ortholog_mappings	915e6fc854ce68f9d1c405f7e3752b92	915e6fc854ce68f9d1c405f7e3752b92	IDENTICAL	
+stage3	stage3_manifest.json	training/ortholog_mappings	45b9b8d19c723b5f2cae410f0d3292a6	a5dd3a98e57fd89f7817f7869a37fcdd	EXPECTED DIFFERENCE	
+stage3	stage3_manifest.json: keys that differ	training/ortholog_mappings			KEYS	/downstream/aim2_grn; /downstream/aim3_translation; /git_hash; /git_modified_tracked_files (only new); /timestamp
+stage3	tier_diagnostics.json	training/ortholog_mappings	666ddd4188322f319f2399fdfb106dce	e9775ab202689fe678291a8bdc2dd181	EXPECTED DIFFERENCE	
+stage3	tier_diagnostics.json: keys that differ	training/ortholog_mappings			KEYS	/flagged_noncoding_in_tiers_1_3/count; /flagged_noncoding_in_tiers_1_3/genes
+stage3	flagged_noncoding_in_tiers_1_3	canonical count 0			COUNT	count 120; 50 listed; tiers ['T2a_human_one2one', 'T3a_human_multi']; biotypes ['mirna']
+rin	default tree	/depot/reese18/apps/motrpac-genecompass/tmp/wt_step6/tmp/step6/neutrality_12378421/new_tree/data/deconvolution/results_refs4all_rebuild/motrpac			INFO	hotspot tissues ['BLOOD', 'HYPOTH', 'LUNG', 'SKMGN', 'SKMVL']; with a sample key on disk: none
+rin	new script, no key on disk, ALLOW_POSITIONAL_SAMPLE_JOIN=1	old script (44332e6), same tree	9031c935d689f85c4be23d0f5f36541e	9031c935d689f85c4be23d0f5f36541e	IDENTICAL	
+rin	new script, no key on disk, no ALLOW flag	must stop			STOPPED	exit 1
+rin	new script, sample key present and in order	old script (44332e6), default tree	9031c935d689f85c4be23d0f5f36541e	9031c935d689f85c4be23d0f5f36541e	IDENTICAL	
+rin	new script, key of BLOOD with two vial labels exchanged	must stop			STOPPED	exit 1
+pheno	pheno_merge_test.tsv	old script (44332e6)	a96af33ff4242649155f915dff8e6daf	a96af33ff4242649155f915dff8e6daf	IDENTICAL	
+pheno	provenance record	-			WRITTEN	provenance_pheno_merge_test.json
+augur	pca_control.tsv	old script (44332e6)	09d4846f4edc2f03de3b33ef9667cd55	09d4846f4edc2f03de3b33ef9667cd55	IDENTICAL	
+augur	49 files (pca_control.tsv + embed/pca/meta of every tissue)	old script (44332e6)			IDENTICAL	49 of 49 identical (20 perms)
+augur	provenance records	-			WRITTEN	inputs/provenance_augur_prep.json, provenance_pca_control.json
+atlas	files on disk against translation/tabula_sapiens_md5.tsv	/depot/reese18/apps/motrpac-genecompass/data/external/tabula_sapiens			IDENTICAL	11 of 11 files verify (size and md5); exit 0
+atlas	score/atlas_projection_per_type.tsv	old script (44332e6)	b2212aaacbcb327aa232aaf5e06336a8	b2212aaacbcb327aa232aaf5e06336a8	IDENTICAL	
+atlas	score/atlas_projection_per_type.tsv against the committed record	translation/atlas_record_16	b2212aaacbcb327aa232aaf5e06336a8	b2212aaacbcb327aa232aaf5e06336a8	IDENTICAL	
+atlas	score/summary.txt	old script (44332e6)	b234cd8e7e98feef0192d4ac4a71e83e	b234cd8e7e98feef0192d4ac4a71e83e	IDENTICAL	
+atlas	score/summary.txt against the committed record	translation/atlas_record_16	b234cd8e7e98feef0192d4ac4a71e83e	b234cd8e7e98feef0192d4ac4a71e83e	IDENTICAL	
+atlas	score provenance record	-			WRITTEN	provenance_project_to_atlas_score.json
+atlas	prep Kidney/prep_summary.json	old script (44332e6)	3cfb27ed7c8720615b14db66a566b3ad	3cfb27ed7c8720615b14db66a566b3ad	IDENTICAL	
+atlas	prep Kidney/dataset/data-00000-of-00001.arrow	old script (44332e6)	649428446903fb88a5f102cd1bb275f9	649428446903fb88a5f102cd1bb275f9	IDENTICAL	
+atlas	prep provenance record	-			WRITTEN	provenance_project_to_atlas_prep.json

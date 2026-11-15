@@ -10,7 +10,12 @@ Writes data/deconvolution/idspace_audit/:
   lifted_membership.tsv  -- per bulk gene: old_id, lifted_id, method, cur_symbol,
                             in_biomart113, in_corpus_byID, in_corpus_bySymbol, in_builtref
   summary.txt            -- the release checks + per-method tallies
-Reuses tmp/corpus_genes.txt if present (the slow 864-h5ad union)."""
+Reuses tmp/corpus_genes.txt if present (the slow 864-h5ad union).
+
+Label note (2026-11-14; audit, "stale release labels"): "biomart rel-113", the column in_biomart113 and the
+"biomart113" lines of summary.txt mean the project's BioMart gene file (biomart.rat_gene_info), which is
+Ensembl release 115 / GRCr8. The names are kept so that the tables already written, and the documents that
+quote them, still match what this script writes; read them as "in the project's BioMart file"."""
 import anndata as ad, glob, pandas as pd, re, os, sys, warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")

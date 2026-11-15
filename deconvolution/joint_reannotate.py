@@ -202,6 +202,38 @@ def load_blood(ref):
     return adata
 
 
+def raw_input_files(ref):
+    """The files load_blood / load_external read for one BLOOD_SETS or EXTERNAL_SETS reference, for the
+    provenance record of a build: each library's matrix, feature and barcode files (or its .h5), the
+    liftover map when a library goes through it, and the bulk gene list when symbols are mapped to it.
+    Listing only: nothing is opened."""
+    files = []
+    names = ("features.tsv", "genes.tsv", "barcodes.tsv", "matrix.mtx")
+    if ref in BLOOD_SETS:
+        libs = [(d, prefix, "mtx_dir", lift) for _, d, prefix, lift in BLOOD_SETS[ref]]
+    else:
+        libs = []
+        for _, path, fmt, lift in EXTERNAL_SETS[ref]:
+            if fmt == "h5":
+                libs.append((Path(path), None, fmt, lift))
+            else:
+                d, prefix = (Path(path), "") if Path(path).is_dir() else (Path(path).parent, Path(path).name)
+                libs.append((d, prefix, fmt, lift))
+    lifted = symbols = False
+    for d, prefix, fmt, lift in libs:
+        if fmt == "h5":
+            files.append(d)
+        else:
+            files += [c for n in names for c in (d / f"{prefix}{n}.gz", d / f"{prefix}{n}") if c.exists()]
+        symbols |= lift == "symbol"
+        lifted |= bool(lift) and lift != "symbol"
+    if lifted:
+        files.append(ROOT / "deconvolution/reference/motrpac_bulk_liftover.tsv")
+    if symbols:
+        files.append(ROOT / f"data/deconvolution/motrpac_bulk/{BULK_TISSUE[ref]}/bulk_genes.tsv")
+    return files
+
+
 def _read_external(path, fmt):
     """Raw counts (cells x genes, csr), gene IDs, gene symbols, barcodes of one external library."""
     import scipy.io as sio

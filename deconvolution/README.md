@@ -29,8 +29,10 @@ the July references (172 blocks, 13 hotspots) are `config/profiles/july_refs.yam
 two reference bugs it now prevents: the **liver** Visium-spatial contamination (removed) and the
 **engineered lung** reference (GSE178405 → native pooled `lung_native_pooled`, which gave lung a real
 exercise-hotspot signal; 1 LUNG hotspot on the 16-tissue default, 3 on refs4's 14 tissues). Cross-method validation, the full **mRNA-bias analysis**, and **which
-downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. Analysis notebooks
-(`../notebooks/pipeline8–12`) still need re-executing per `../notebooks/RERUN_EDITS.md`.
+downstream claims to trust vs treat cautiously** are in `OMNIDECONV_RESULTS.md`. The analysis notebooks
+(`../notebooks/pipeline8–12`) read the active config and compute every number they show: after a rerun they
+are re-executed (`python notebooks/run_notebooks.py 8 9 10 11 12`), not edited; see the banner of
+`../notebooks/RERUN_EDITS.md`.
 
 ## Pipeline (production path)
 
