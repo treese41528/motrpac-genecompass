@@ -3,8 +3,15 @@
 # _refs4all_rebuild folders, built tissue by tissue by pipeline/run_deconv_all.py with no links. Compare the
 # result against the assembled default tree (results_refs4all, built by deconvolution/assemble_arm.py).
 #   export PIPELINE_PROFILE=config/profiles/refs4all_rebuild.yaml
-# Since 2026-11-03 these are the default config values (this profile is a no-op kept for scripts).
+# From 2026-11-03 to 2026-11-15 these were the default config values. Since refs5 became the default this
+# profile selects that earlier tree, with the settings it was built with: the earlier exclusion list and the
+# 6,400 target sum.
+# Not selected by a profile: the references. tissue_references.yaml now points every tissue at references_v5/
+# (13 of 15 are byte-identical to references_v4/; HEART and HYPOTH differ) and keeps the earlier folder of each
+# under refs4_reference_dir. To rebuild this tree's HEART or HYPOTH, pass that folder to run_stage8.py --ref-dir.
 deconvolution:
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes.tsv
+  pseudocell_target_sum: 6400
   results_dir: data/deconvolution/results_refs4all_rebuild
   genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild
   hotspots_table: data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv

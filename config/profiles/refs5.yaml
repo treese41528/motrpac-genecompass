@@ -4,6 +4,7 @@
 # single-sex DE repair, and the network difference on shared genes. Every output goes to fresh _refs5 folders;
 # the current default (_refs4all_rebuild) is untouched.
 #   export PIPELINE_PROFILE=config/profiles/refs5.yaml
+# Since 2026-11-15 these are the default config values (this profile is a no-op kept for scripts and records).
 deconvolution:
   rat_exclude_genes: deconvolution/reference/rat_exclude_genes_v2.tsv     # Amendment 1
   results_dir: data/deconvolution/results_refs5

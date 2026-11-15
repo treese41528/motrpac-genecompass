@@ -63,10 +63,25 @@ def committed():
 
 def test_v2_is_the_default_and_april_is_the_profile(committed):
     v2, april = committed
-    assert v2["deconvolution"]["pseudocell_target_sum"] == 6400
+    assert v2["deconvolution"]["pseudocell_target_sum"] == 6700      # refs5, by the registered formula (2026-11-15)
     assert april["deconvolution"]["pseudocell_target_sum"] == 6500
     assert "/genecompass_input_v2" in v2["deconvolution"]["hotspots_table"]   # v2 model, any reference arm
     assert "genecompass_input/" in april["deconvolution"]["hotspots_table"]
+
+
+def test_the_earlier_default_is_a_complete_profile():
+    """refs5 became the default on 2026-11-15. The profile of the tree it replaced must restore what that tree was
+    built with (its exclusion list and target sum), not only its folders."""
+    import yaml
+    root = Path(__file__).resolve().parents[1]
+    base = yaml.safe_load(open(root / "config" / "pipeline_config.yaml"))["deconvolution"]
+    old = yaml.safe_load(open(root / "config" / "profiles" / "refs4all_rebuild.yaml"))["deconvolution"]
+    new = yaml.safe_load(open(root / "config" / "profiles" / "refs5.yaml"))["deconvolution"]
+    assert old["rat_exclude_genes"].endswith("rat_exclude_genes.tsv") and old["pseudocell_target_sum"] == 6400
+    assert all("refs4all_rebuild" in old[k] for k in ("results_dir", "genecompass_input_dir", "hotspots_table", "grn_dir"))
+    # the refs5 profile and the default agree on every key the profile sets
+    assert {k: base[k] for k in new} == new
+    assert base["rat_exclude_genes"].endswith("rat_exclude_genes_v2.tsv")
 
 
 def test_hotspot_table_sits_inside_its_input_root(committed):

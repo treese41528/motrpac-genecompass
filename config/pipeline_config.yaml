@@ -393,8 +393,11 @@ deconvolution:
   cell_annotations_dir: data/training/cell_annotations
   consensus_annotations_dir: data/training/cell_annotations_consensus
   annotation_inventory: reports/annotations/annotation_inventory.tsv
-  # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup)
-  rat_exclude_genes: deconvolution/reference/rat_exclude_genes.tsv
+  # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup). Since refs5 (2026-11-15) the
+  # list built by rule in Ensembl 115 (deconvolution/build_exclude_genes.py; 464 genes; STEP3_PREREG.md
+  # Amendment 1). The earlier list, rat_exclude_genes.tsv (247 IDs of an older annotation, 57 absent from
+  # release 115, ten S6 kinases filed as ribosomal), is what config/profiles/refs4all_rebuild.yaml uses.
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes_v2.tsv
   # Rat protein-coding gene list (Gene type == protein_coding from biomart
   # rat_gene_info.tsv -- the same biotype source GeneCompass Stage 2 uses).
   # Replaces BayesPrism's hs/mm-only select.gene.type="protein_coding". Derived
@@ -417,33 +420,38 @@ deconvolution:
   built_reference_dir: data/deconvolution/references     # build_reference.py per-tissue SC references
   idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
   # Stage 14 purity sweeps on the production references (pipeline/run_stage14.py).
-  validation_dir: data/deconvolution/validation_refs4all_rebuild
+  validation_dir: data/deconvolution/validation_refs5
   # The research-phase method validation (build_all_datasets.sh: V0/V1/V2 and cross sets; run_purity_sweep.sh:
   # the paper-faithful liver sweep on the pilot reference). Not part of the numbered stages.
   pilot_validation_dir: data/deconvolution/validation
-  # Default = all 16 tissues with a reference (since 2026-11-01, REFERENCE_RELABEL_PREREG.md §14/§16,
-  # ALL_TISSUE_RERUN_RESULTS.md): the jointly re-annotated references (references_v4/, tissue_references.yaml;
-  # REFS4_RERUN_RESULTS.md) plus SPLEEN and OVARY, with the v2 model. Since 2026-11-03 the default folders are
-  # the clean rebuild (_refs4all_rebuild: every tissue built in place by the runbook commands, no links), which
-  # reproduces the earlier assembled tree byte for byte through Stage 13 (REFS4ALL_REBUILD_RESULTS.md); the
-  # assembled tree is config/profiles/refs_v4all.yaml. The 14-tissue result is config/profiles/refs4_14.yaml; the
-  # July-reference v2 outputs are config/profiles/july_refs.yaml; April's model is config/profiles/april.yaml.
-  results_dir: data/deconvolution/results_refs4all_rebuild
-  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild  # pseudo-cells/tokenized/embeddings/umap
+  # Default = refs5 (since 2026-11-15): the audit-remediation rerun of Stages 8-14 on all 16 tissues
+  # (docs/audit/remediation/STEP3_PREREG.md and STEP3_RESULTS.md). References rebuilt into references_v5/
+  # (HYPOTH re-annotated, the HEART merge applied; tissue_references.yaml), the exclusion list rebuilt in
+  # Ensembl 115, the gate's Monte Carlo classes, the DE repairs and the network difference on shared genes,
+  # with the v2 model. Every stage ran from one clean commit (44332e6).
+  # Earlier defaults stay on disk and are selected with PIPELINE_PROFILE: the 2026-11-03 clean rebuild on
+  # references_v4 is config/profiles/refs4all_rebuild.yaml (its assembled twin refs_v4all.yaml); the 14-tissue
+  # result refs4_14.yaml; the July-reference v2 outputs july_refs.yaml; April's model april.yaml.
+  results_dir: data/deconvolution/results_refs5
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs5  # pseudo-cells/tokenized/embeddings/umap
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
-  # Stage 9/12 tokenizer normalize_total target, calibrated so the pseudo-cells' token-value median matches
-  # the model's corpus (v2 6,400; April 6,500). Stage 12 must use the rat run's value.
-  pseudocell_target_sum: 6400
-  # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
-  # DE wrapper): the 10 splits x 10,000 permutations gate (pre-registration §6), scored under the §6
-  # analysable-block rule (median library >= 1,000; REFERENCE_RELABEL_PREREG.md §6).
-  hotspots_table: data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv
+  # Stage 9/12 tokenizer normalize_total target, set by the registered formula so that the LIVER pseudo-cells'
+  # median token value matches the model's corpus (RETRAIN_V2_PREREGISTRATION.md:155-164). refs5: 6,700
+  # (docs/audit/remediation/record/step3/stage8/target_sum.json); the 2026-11-03 rebuild used 6,400; April 6,500.
+  # Stage 12 must use the rat run's value.
+  pseudocell_target_sum: 6700
+  # The Aim-2 gate table. A hotspot is a block whose class is "hotspot" in its gate_class column (is_hotspot):
+  # a Benjamini-Hochberg call over the analysable blocks (median library >= 1,000) that more permutations
+  # could not reverse (10 splits; 10,000 permutations, then batches up to 1,000,000; deconvolution/mc_gate.py;
+  # STEP3_PREREG.md 5.2). "borderline" blocks are listed beside it and are not hotspots. Tables from before
+  # refs5 have no class column; for them a hotspot is q_sup_trained < 0.05.
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs5/gate_rcv10/corroboration_merged.tsv
   # Canonical-Augur exports (augur_prep.py) and the Stage 13 differential GRNs in rat and human space.
-  augur_input_dir: data/deconvolution/augur_input_v2_refs4all_rebuild
-  grn_dir: data/deconvolution/grn_v2_refs4all_rebuild
-  grn_human_dir: data/deconvolution/grn_v2_refs4all_rebuild_human
+  augur_input_dir: data/deconvolution/augur_input_v2_refs5
+  grn_dir: data/deconvolution/grn_v2_refs5
+  grn_human_dir: data/deconvolution/grn_v2_refs5_human
   # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
   # posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11). July's: reference/posctrl_prereg.tsv.
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
