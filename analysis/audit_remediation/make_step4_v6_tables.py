@@ -159,6 +159,8 @@ def floor_table(panel, sets):
                        n_types_scored=len(t), n_types_in_median=int(t["pearson_r"].notna().sum()),
                        min_type_r=t["pearson_r"].min(),
                        n_types_below_floor=int((t["pearson_r"] < FLOOR).sum()),
+                       n_types_r_ge_095=int((t["pearson_r"] >= 0.95).sum()),
+                       n_types_r_ge_090=int((t["pearson_r"] >= 0.90).sum()),
                        worst_types="; ".join(f"{x.cell_type} {x.pearson_r:.3f}" for x in
                                              t.nsmallest(3, "pearson_r").itertuples()))
         rows.append(row)
@@ -349,6 +351,10 @@ def main():
         x = sc[sc["design"] == kind]["bayesprism_median_r"]
         if len(x):
             L.append(f"  {kind}: {x.min():.3f} to {x.max():.3f} over {len(x)} sets")
+    if len(sc):
+        L.append(f"  per-type r of BayesPrism over all sets: {int(sc['n_types_scored'].sum())} type tests; "
+                 f"{int(sc['n_types_r_ge_095'].sum())} at 0.95 or above, {int(sc['n_types_r_ge_090'].sum())} at 0.90 or above, "
+                 f"{int(sc['n_types_below_floor'].sum())} below {FLOOR}")
 
     bpv = prev[prev["method"] == "bp_rna"].dropna(subset=["median_change"]) if len(prev) else prev
     L += ["", "== Against the panel of 2026-11-08 (BayesPrism median per-type r; descriptive, as registered) =="]
