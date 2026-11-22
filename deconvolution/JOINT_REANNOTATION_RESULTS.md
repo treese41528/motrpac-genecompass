@@ -1,5 +1,11 @@
 # Joint re-annotation of the deconvolution references: results
 
+> **2026-11-15: a dated record.** This is the run of 2026-10-27. Where it says HYPOTH is not re-annotated,
+> that was true then: HYPOTH was re-annotated by the same joint procedure for refs5
+> (`docs/audit/remediation/STEP3_RESULTS.md`, A2; decisions in `joint_reannotation_review.tsv`). The label
+> decisions here and there were made by an AI assistant; what a specialist should read is listed in
+> `docs/audit/remediation/LABEL_REVIEW_PLAN.md`.
+
 Run 2026-10-27 under `REFERENCE_RELABEL_PREREG.md` §10 (registered in 4e0a40f before any joint clustering)
 and the §9 entries of the same day. Code: `deconvolution/joint_reannotate.py`; panels
 `reference_marker_panels.yaml`; decisions `joint_reannotation_review.tsv` and `joint_reannotation_splits.tsv`;

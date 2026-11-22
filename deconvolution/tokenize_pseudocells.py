@@ -92,7 +92,7 @@ def main():
     ap.add_argument("--out", required=True, help="output dir (writes dataset/ + tokenize_summary.json)")
     ap.add_argument("--target-sum", type=float, default=None,
                     help="per-pseudo-cell library normalization target (default: "
-                    "deconvolution.pseudocell_target_sum -- v2 6,400, April 6,500 -- which calibrates the "
+                    "deconvolution.pseudocell_target_sum -- 6,700 by default, April 6,500 -- which calibrates the "
                     "value distribution to the model's corpus; 6500 if unset). The script prints the achieved "
                     "median -- re-check/adjust per tissue if it drifts from the corpus reference.")
     ap.add_argument("--top-n", type=int, default=TOP_N_DEFAULT)
@@ -100,7 +100,7 @@ def main():
     ap.add_argument("--min-genes", type=int, default=200,
                     help="drop pseudo-cells expressing < this many eligible genes (GeneCompass QC parity)")
     ap.add_argument("--pa-genes", help="optional TSV with a 'feature_ID' column of PA/training-regulated "
-                    "rel-113 ENSRNOG; these are PREFERRED into the top-N when sufficiently expressed")
+                    "ENSRNOG (Ensembl 115 IDs); these are PREFERRED into the top-N when sufficiently expressed")
     ap.add_argument("--pa-max-rank", type=int, default=4096,
                     help="'sufficiently expressed' bar for PA-preference: a PA gene is promoted only if "
                     "its expression ranks within the top this-many in the pseudo-cell (default 4096 = 2x top-N). "

@@ -1,0 +1,34 @@
+stage	file	key	value_on_disk	stale	correct_value
+Stage 2 gene universe	data/training/gene_universe/manifest_step1.json	/config/biomart_release	113	True	115 / GRCr8
+Stage 2 gene universe	data/training/gene_universe/manifest_step1.json	/config/biomart_assembly	mRatBN7.2	True	115 / GRCr8
+Stage 2 gene universe	data/training/gene_universe/manifest_step1.json	/pipeline/resolution_methods/not_in_biomart	50781448	False	115 / GRCr8
+Stage 2 gene universe	data/training/gene_universe/manifest_step1.json	/pipeline/resolution_methods/biomart_symbol	22992680	False	115 / GRCr8
+Stage 2 gene universe	data/training/gene_universe/stage2_manifest.json	/steps/step1_gene_universe/details/resolution_methods/not_in_biomart	50781448	False	115 / GRCr8
+Stage 2 gene universe	data/training/gene_universe/stage2_manifest.json	/steps/step1_gene_universe/details/resolution_methods/biomart_symbol	22992680	False	115 / GRCr8
+Stage 4 medians	data/training/gene_medians_v2/stage4_manifest.json	/config_snapshot/ensembl_release	113	True	115 / GRCr8
+Stage 5 tokenized corpus	data/training/tokenized_corpus_v2/stage5_manifest.json	/config_snapshot/ensembl_release	113	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_coexp_manifest.json	/config_snapshot/biomart/ensembl_release	113	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_coexp_manifest.json	/config_snapshot/biomart/assembly	mRatBN7.2	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_coexp_manifest.json	/config_snapshot/biomart/rat_genes_biomart	data/references/biomart/rat_all_genes.tsv	False	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_family_manifest.json	/config_snapshot/biomart/ensembl_release	113	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_family_manifest.json	/config_snapshot/biomart/assembly	mRatBN7.2	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_family_manifest.json	/config_snapshot/biomart/rat_genes_biomart	data/references/biomart/rat_all_genes.tsv	False	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_promoter_manifest.json	/config_snapshot/biomart/ensembl_release	113	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_promoter_manifest.json	/config_snapshot/biomart/assembly	mRatBN7.2	True	115 / GRCr8
+Stage 6 prior knowledge	data/training/prior_knowledge/stage6_promoter_manifest.json	/config_snapshot/biomart/rat_genes_biomart	data/references/biomart/rat_all_genes.tsv	False	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/bat/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/blood/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/cortex/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/heart/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/hippoc/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/hypoth/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/kidney/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/liver/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/lung/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/ovary/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/skmgn/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/skmvl/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/smlint/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/spleen/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/testes/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8
+Stage 8-9 pseudo-cells (default arm)	data/deconvolution/genecompass_input_v2_refs4all_rebuild/watsc/summary.txt	gene_space	rel-113_ENSRNOG	True	115 / GRCr8

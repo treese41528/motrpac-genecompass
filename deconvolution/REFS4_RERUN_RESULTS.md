@@ -1,5 +1,9 @@
 # Rerun on the jointly re-annotated references (refs4): results (2026-10-29)
 
+> **2026-11-15: a dated record.** This is the 14-tissue refs4 run (`config/profiles/refs4_14.yaml`). The
+> notes below that speak of "the default" mean the defaults of 2026-10-31 and 2026-11-01. The default is now
+> **refs5**; current results: `docs/audit/remediation/STEP3_RESULTS.md`.
+
 > **2026-11-01: superseded as the default by the all-tissue (16) result** (`ALL_TISSUE_RERUN_RESULTS.md`,
 > c3b27c7). SPLEEN and OVARY joined; the default config is now all 16 tissues and this 14-tissue arm is
 > `config/profiles/refs4_14.yaml`. The figures below stay as the 14-tissue (refs4) record. Headline changes:

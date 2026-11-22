@@ -4,7 +4,8 @@
 embed_cells.py — Extract cell embeddings from fine-tuned rat GeneCompass.
 
 Used for Stage 7 validation (before proceeding to Aim 2):
-  1. Cell type clustering — held-out rat cells cluster by biology, not batch
+  1. Cell type clustering — rat cells sampled from the training corpus (no cell is held out) cluster by
+     biology, not batch
   2. Homolog similarity — rat T1-T3 embeddings closer to orthologs than random
   3. T4 token quality — rat Cyp450s cluster near human CYP genes
 
@@ -45,6 +46,8 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
 )
 logger = logging.getLogger(__name__)
+
+LAST_LOAD_REPORT = {}     # filled by extract_embeddings(): what load_state_checked() found
 
 
 def extract_embeddings(
@@ -125,8 +128,12 @@ def extract_embeddings(
     num_species = 3
     model.bert.cls_embedding = nn.Embedding(num_species, config_dict['hidden_size'])
 
-    # Load weights
-    model.load_state_dict(state, strict=False)
+    # Load weights. strict=False is kept, but an incomplete load now stops the run (checked_load.py; audit
+    # finding 6.7: the missing/unexpected lists used to be discarded).
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from checked_load import load_state_checked
+    load_report = load_state_checked(model, state, log=logger)
+    LAST_LOAD_REPORT.clear(); LAST_LOAD_REPORT.update(load_report)   # main() writes it to provenance
     model = model.eval().to(device)
 
     # ── Load dataset ─────────────────────────────────────────────────────
@@ -209,9 +216,17 @@ def main():
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'lib'))
     from provenance import write_provenance
     md = Path(args.model_dir).resolve()
+    # md5 of the weights (not only size and mtime) and what the checked load found, so the record shows which
+    # weights produced these embeddings and that every tensor was loaded (audit findings 3.1, 6.7).
+    lr = LAST_LOAD_REPORT
     write_provenance(args.output, inputs=[md / 'config.json', md / 'pytorch_model.bin',
                                           Path(args.dataset) / 'dataset_info.json'],
-                     params={**vars(args), 'model_dir_resolved': str(md)})
+                     md5_inputs=[md / 'pytorch_model.bin'],
+                     params={**vars(args), 'model_dir_resolved': str(md),
+                             'weights_loaded_tensors': lr.get('n_loaded'),
+                             'weights_model_tensors': lr.get('n_model_tensors'),
+                             'weights_missing': lr.get('missing'), 'weights_unexpected': lr.get('unexpected'),
+                             'weights_loaded_but_different': lr.get('n_loaded_but_different')})
 
 
 if __name__ == '__main__':

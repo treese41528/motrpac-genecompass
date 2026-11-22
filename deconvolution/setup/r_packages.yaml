@@ -35,6 +35,9 @@ packages:
   - {name: edgeR,      version: "4.4.2",  source: bioc}    # Stage 10/14 log2-CPM (cpm/calcNormFactors)
   - {name: IHW,        version: "1.34.0", source: bioc}    # Stage 10 global IHW~tissue (seeded: deconvolution.de_seed)
   - {name: fgsea,      version: "1.32.4", source: bioc}    # Stage 13 enrichment (GSEA_SEED)
+  # Added 2026-11-14 (audit finding 5.8): the mRNA-content-bias battery needs it and it was installed outside
+  # the manifest. Version read from R_libs/SimBu/DESCRIPTION (Bioconductor 3.20), as in r_packages.lock.tsv.
+  - {name: SimBu,      version: "1.8.0",  source: bioc}    # simulated mixtures with an mRNA bias (omnideconv_bench/simulate_simbu.R)
 
   # ---- GitHub: reference-based method packages (omnideconv forks + Bisque) ----
   # These forks are patched to omnideconv::deconvolute()'s calling convention; use

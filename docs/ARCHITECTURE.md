@@ -1,5 +1,20 @@
 # GeneCompass Rat Fine-Tuning Pipeline — Refactoring Plan
 
+> **Historical document (banner added 2026-11-14, audit "stale documents").** This is the refactoring plan
+> written in February 2026, before the present pipeline existed. It is kept as the record of why BioMart
+> became the gene universe. It does **not** describe the pipeline as built:
+> - its stage numbers are an earlier scheme ("Stage 5: Gene Medians", "Stage 6: Reference Files"); today
+>   medians are Stage 4, tokenization Stage 5, prior knowledge Stage 6, fine-tuning Stage 7, and Stages 8-14
+>   (deconvolution to hardening) are not in it at all;
+> - the scripts it names (`02_gene_inventory.py`, `03_vocabulary_pruning.py`, `04_ortholog_mapping.py`,
+>   `05_compute_gene_medians.py`, `06_create_reference_files.py`) do not exist in the repository;
+> - its counts (895 QC files, 27,677 genes, a 61.5K vocabulary) are those of the pre-refactoring corpus.
+>
+> **Where the current description lives:** the research question and the stage-by-stage account in
+> `README.md`; the stage list and the config keys that hold each stage's outputs in `pipeline/README.md`;
+> what was checked and what was found wrong in `docs/audit/` (nine parts and `FINDINGS.md`).
+> (`docs/PROJECT_STRUCTURE.md` is also a planning document and carries its own banner.)
+
 ## Motivation
 
 The current pipeline accumulated RGD-annotated gene IDs from older Ensembl

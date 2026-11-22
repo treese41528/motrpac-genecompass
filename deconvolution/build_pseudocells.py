@@ -12,7 +12,7 @@ the portion of that sample's bulk counts BayesPrism attributes to that cell type
 (get.exp, sample x gene). This preserves per-sample variation needed for the Aim 2
 tissue x sex x timepoint contrasts (aggregating per group would discard it).
 
-Genes are rel-113 ENSRNOG -- the liftover (prepare_motrpac_bulk.R) guarantees the bulk,
+Genes are Ensembl 115 ENSRNOG (the label read rel-113 until 2026-11-14; the IDs were always 115's) -- the liftover (prepare_motrpac_bulk.R) guarantees the bulk,
 and therefore Z, lives in the same vocab the tokenizer keys on. RAW Z (count-scaled) is
 stored in .X and layers['z_raw']; per-pseudo-cell library normalization is a tokenization
 concern applied downstream (tokenize_pseudocells.py), so this stays a faithful record of
@@ -48,6 +48,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 from celltype_names import safe as _safe  # noqa: E402
 from provenance import write_provenance  # noqa: E402
+
+
+GENE_SPACE = "ensembl-115 ENSRNOG"      # the release the bulk liftover and the references use
 
 
 def load_pred_z(pred_z_dir):
@@ -89,6 +92,18 @@ def build_pseudocells(pred_z_dir, tissue, meta=None, meta_key="sample"):
     X = np.vstack(blocks)
     obs = pd.DataFrame(obs_rows)
 
+    # Each pseudo-cell carries its own diagnostics (audit finding 5.7; STEP3_PREREG.md 2.6): its library (the
+    # sum of Z over genes) and the cell type's estimated fraction in that sample. Nothing is removed on them
+    # here; the analysable-block rule (median library) is applied in Stages 10 and 11, where it always was.
+    obs["library"] = np.asarray(X.sum(axis=1)).ravel().astype(float)
+    obs["fraction"] = np.nan
+    frac_file = Path(pred_z_dir).parent / "estimated_fractions.csv"
+    if frac_file.exists():
+        theta = pd.read_csv(frac_file, index_col=0)
+        theta.index = theta.index.astype(str)
+        obs["fraction"] = [float(theta.at[s, t]) if (s in theta.index and t in theta.columns) else np.nan
+                           for s, t in zip(obs["sample"], obs["cell_type"])]
+
     nz = np.asarray(X.sum(axis=1)).ravel() > 0      # drop pseudo-cells with no signal
     n_drop = int((~nz).sum())
     X, obs = X[nz], obs.loc[nz].reset_index(drop=True)
@@ -111,7 +126,7 @@ def build_pseudocells(pred_z_dir, tissue, meta=None, meta_key="sample"):
     adata.uns["pseudocell_build"] = {
         "tissue": tissue, "n_samples": len(samples), "n_cell_types": len(types),
         "granularity": "sample_x_celltype", "values": "raw BayesPrism get.exp (count-scaled)",
-        "gene_space": "rel-113 ENSRNOG",
+        "gene_space": GENE_SPACE,
     }
     return adata, n_drop, len(samples), len(types)
 
@@ -136,9 +151,16 @@ def main():
     with open(out / "summary.txt", "w") as fh:
         fh.write(f"pseudocells={adata.n_obs} genes={adata.n_vars} "
                  f"(from {n_s} samples x {n_t} cell types; {n_drop} all-zero dropped)\n")
-        fh.write(f"tissue={args.tissue} gene_space=rel-113_ENSRNOG values=raw_get.exp\n\n")
+        fh.write(f"tissue={args.tissue} gene_space={GENE_SPACE.replace(' ', '_')} values=raw_get.exp\n\n")
         fh.write("pseudo-cells per cell type:\n")
         fh.write(ct.to_string())
+        # per-block diagnostics; a block whose median library is small holds almost no reads (it is skipped by
+        # the analysable-block rule of Stages 10 and 11, median library >= 1,000 by default)
+        diag = adata.obs.groupby("cell_type", observed=True).agg(
+            n=("library", "size"), median_library=("library", "median"), mean_fraction=("fraction", "mean"))
+        fh.write("\n\nper cell type: pseudo-cells, median library (sum of Z), mean estimated fraction:\n")
+        fh.write(diag.sort_values("median_library", ascending=False).round(6).to_string())
+        fh.write("\n")
     print(f"pseudocells: {adata.n_obs} cells x {adata.n_vars} genes "
           f"({n_s} samples x {n_t} types, {n_drop} all-zero dropped)")
     print(ct.to_string())

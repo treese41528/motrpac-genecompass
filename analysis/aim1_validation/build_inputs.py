@@ -4,7 +4,7 @@ build_inputs.py -- Aim-1 validation, input builder (CPU).
 
 Produces everything the GPU extractor + analysis need:
 
-V1 (held-out clustering):
+V1 (clustering of cells sampled from the training corpus; nothing is held out):
   - A STRATIFIED, LABELLED rat cell subset: pick a diverse set of studies, cap cells/study
     (so no single study dominates the batch-mixing test), join consensus cell-type labels by
     (study_id, barcode). Multi-sample studies reuse barcodes, so (study,barcode)->cell_type is

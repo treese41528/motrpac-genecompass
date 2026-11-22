@@ -1,0 +1,16 @@
+	value
+files	584.0
+cells	6803206.0
+files_whose_stored_mito_pct_is_all_zero	395.0
+cells_in_those_files	4889822.0
+files_with_no_mt_counts	12.0
+cells_above_5	2842801.0
+share_above_5	0.4178619609636986
+cells_above_10	1365203.0
+share_above_10	0.20067053680279562
+cells_above_15	708763.0
+share_above_15	0.10418073478886278
+cells_above_20	378918.0
+share_above_20	0.05569697580817044
+cells_above_50	42201.0
+share_above_50	0.006203104830281488

@@ -1,0 +1,18 @@
+# Tabula Sapiens files used by the atlas anchoring (E.3; translation/ATLAS_PROJECTION_PREREG.md and
+# ATLAS_PROJECTION_16_PREREG.md). One CELLxGENE dataset per tissue, from collection
+# e5f58829-1a66-40b5-a624-9046778e74f5 (the scripts that fetched them name its revision of 2026-06-11).
+# bytes and md5 are those recorded when each file was downloaded (data/external/tabula_sapiens/MANIFEST.txt,
+# written by the download jobs; the first nine tissues for the first registration, Spleen and Ovary for the
+# second). Fetch and verify:  bash translation/fetch_tabula_sapiens.sh [--verify]
+tissue	dataset_id	bytes	md5	registration
+Blood	1bf55482-ad49-446a-87c6-f3442bebcef1	2568875081	295fb6d10cb42c114fd35a3f0bbec690	ATLAS_PROJECTION_PREREG.md
+Lung	fddf43a3-b7c8-49e9-ac0a-5e24b390849f	3196847981	2efb556c5950390d8d42ca7828c3f3f3	ATLAS_PROJECTION_PREREG.md
+Muscle	4919a450-62fb-4741-b750-5591443edee8	2050367134	b15541924e2b28eb52b8ab1bb4fa37bd	ATLAS_PROJECTION_PREREG.md
+Heart	82197577-7914-45c0-9fde-6597a1da920f	1164824995	baa3d33bd03132732987dbf31047c62a	ATLAS_PROJECTION_PREREG.md
+Liver	a4b3a49e-062b-4e3f-8915-02f40607651f	834485899	ccb220e15f2070c3c22c226fe89d5878	ATLAS_PROJECTION_PREREG.md
+Kidney	76b6cf23-56db-4eac-8ee8-d84ce64c0395	449979909	aad26efe8b6bcdc01fad0d00bec7c11c	ATLAS_PROJECTION_PREREG.md
+Fat	8115812f-9acf-4f62-b15f-bde18086a1c8	3689061644	6f1fac07d668e8b6a4f877670b09c684	ATLAS_PROJECTION_PREREG.md
+Small_Intestine	6db4dfe6-d421-4287-a9dc-22eaa59be966	1807784328	25db4f8e1b1a4a2d2c911c89cc4a34a5	ATLAS_PROJECTION_PREREG.md
+Testis	09e3ae14-f355-4ed7-ad81-787b587c8a16	385384218	47bb455c337a8489b43ba1fbcb4b7979	ATLAS_PROJECTION_PREREG.md
+Spleen	5498457f-6a18-4766-b9a3-a2c8c4662703	2654711797	d27ccca98862b25431d589f6c9abc9ba	ATLAS_PROJECTION_16_PREREG.md
+Ovary	6ad78e84-6715-458d-95b4-69e8509cd785	1815903205	58a4e7adc1b8632db095408bd34daf91	ATLAS_PROJECTION_16_PREREG.md

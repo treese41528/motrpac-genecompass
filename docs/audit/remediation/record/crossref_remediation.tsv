@@ -1,0 +1,23 @@
+key	doi	first_authors	n_authors	title	journal	year_issued	volume	issue	pages	type
+gandy2014	10.1111/sjos.12085	Gandy A, Hahn G	2	MMCTest—A Safe Algorithm for Implementing Multiple Monte Carlo Tests	Scandinavian Journal of Statistics	2014	41	4	1083-1101	journal-article
+clopper1934	10.1093/biomet/26.4.404	CLOPPER CJ, PEARSON ES	2	THE USE OF CONFIDENCE OR FIDUCIAL LIMITS ILLUSTRATED IN THE CASE OF THE BINOMIAL	Biometrika	1934	26	4	404-413	journal-article
+winkler2014	10.1016/j.neuroimage.2014.01.060	Winkler AM, Ridgway GR, Webster MA, Smith SM, et al.	5	Permutation inference for the general linear model	NeuroImage	2014	92		381-397	journal-article
+andersonterbraak2003	10.1080/00949650215733	Anderson M, Braak CT	2	Permutation tests for multi-factorial analysis of variance	Journal of Statistical Computation and Simulation	2003	73	2	85-113	journal-article
+north2002	10.1086/341527	North B, Curtis D, Sham P	3	A Note on the Calculation of Empirical P Values from Monte Carlo Procedures	The American Journal of Human Genetics	2002	71	2	439-441	journal-article
+ban2014	10.1016/j.sbi.2014.01.002	Ban N, Beckmann R, Cate JH, Dinman JD, et al.	25	A new system for naming ribosomal proteins	Current Opinion in Structural Biology	2014	24		165-169	journal-article
+chen2017	10.1016/j.celrep.2017.03.004	Chen R, Wu X, Jiang L, Zhang Y	4	Single-Cell RNA-Seq Reveals Hypothalamic Cell Diversity	Cell Reports	2017	18	13	3227-3241	journal-article
+campbell2017	10.1038/nn.4495	Campbell JN, Macosko EZ, Fenselau H, Pers TH, et al.	13	A molecular census of arcuate hypothalamus and median eminence cell types	Nature Neuroscience	2017	20	3	484-496	journal-article
+steuernagel2022	10.1038/s42255-022-00657-y	Steuernagel L, Lam BYH, Klemm P, Dowsett GKC, et al.	19	HypoMap—a unified single-cell gene expression atlas of the murine hypothalamus	Nature Metabolism	2022	4	10	1402-1419	journal-article
+reimand2019	10.1038/s41596-018-0103-9	Reimand J, Isserlin R, Voisin V, Kucera M, et al.	12	Pathway enrichment analysis and visualization of omics data using g:Profiler, GSEA, Cytoscape and EnrichmentMap	Nature Protocols	2019	14	2	482-517	journal-article
+toker2016	10.12688/f1000research.9471.2	Toker L, Feng M, Pavlidis P	3	Whose sample is it anyway? Widespread misannotation of samples in transcriptomics studies	F1000Research	2016	5		2103	journal-article
+sturm2019	10.1093/bioinformatics/btz363	Sturm G, Finotello F, Petitprez F, Zhang JD, et al.	8	Comprehensive evaluation of transcriptome-based cell-type quantification methods for immuno-oncology	Bioinformatics	2019	35	14	i436-i445	journal-article
+avilacobos2020	10.1038/s41467-020-19015-1	Avila Cobos F, Alquicira-Hernandez J, Powell JE, Mestdagh P, et al.	5	Benchmarking of cell type deconvolution pipelines for transcriptomics data	Nature Communications	2020	11	1		journal-article
+simmons2011	10.1177/0956797611417632	Simmons JP, Nelson LD, Simonsohn U	3	False-Positive Psychology	Psychological Science	2011	22	11	1359-1366	journal-article
+nosek2018	10.1073/pnas.1708274114	Nosek BA, Ebersole CR, DeHaven AC, Mellor DT	4	The preregistration revolution	Proceedings of the National Academy of Sciences	2018	115	11	2600-2606	journal-article
+leek2010	10.1038/nrg2825	Leek JT, Scharpf RB, Bravo HC, Simcha D, et al.	9	Tackling the widespread and critical impact of batch effects in high-throughput data	Nature Reviews Genetics	2010	11	10	733-739	journal-article
+gallegoromero2014	10.1186/1741-7007-12-42	Gallego Romero I, Pai AA, Tung J, Gilad Y	4	RNA-seq: impact of RNA degradation on transcript quantification	BMC Biology	2014	12	1		journal-article
+sandve2011	10.1093/bioinformatics/btr568	Sandve GK, Ferkingstad E, Nygård S	3	Sequential Monte Carlo multiple testing	Bioinformatics	2011	27	23	3235-3241	journal-article
+osorio2021	10.1093/bioinformatics/btaa751	Osorio D, Cai JJ	2	Systematic determination of the mitochondrial proportion in human and mice tissues for single-cell RNA-sequencing data quality control	Bioinformatics	2020	37	7	963-967	journal-article
+luecken2019	10.15252/msb.20188746	Luecken MD, Theis FJ	2	Current best practices in single‐cell RNA‐seq analysis: a tutorial	Molecular Systems Biology	2019	15	6		journal-article
+marques2016	10.1126/science.aaf6463	Marques S, Zeisel A, Codeluppi S, van Bruggen D, et al.	23	Oligodendrocyte heterogeneity in the mouse juvenile and adult central nervous system	Science	2016	352	6291	1326-1329	journal-article
+nakao2008	10.1038/nature06738	Nakao N, Ono H, Yamamura T, Anraku T, et al.	22	Thyrotrophin in the pars tuberalis triggers photoperiodic response	Nature	2008	452	7185	317-322	journal-article

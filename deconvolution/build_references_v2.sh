@@ -42,7 +42,9 @@ launch kidney_GSE240658        --study GSE240658 --tissue kidney --conditions "N
 # (reference_qc.py FAILs it; superseded 2026-07-01). Build the NATIVE POOLED reference instead, from the
 # healthy control arms of 3 adult rat lung scRNA studies (GSE273062 VeNx + GSE252844 C3 + GSE242310 NOX)
 # -> data/deconvolution/references/lung_native_pooled. (Multi-study pool, so not a single `launch`.)
-$PY deconvolution/build_lung_pooled.py > tmp/refbuild_v2/lung_native_pooled.log 2>&1 &
+# 2026-11-14: build_lung_pooled.py now requires --out (it had a default that pointed at a later production
+# folder, which a bare run of this June script would have overwritten). This script writes under $OUT.
+$PY deconvolution/build_lung_pooled.py --out "$OUT/lung_native_pooled" > tmp/refbuild_v2/lung_native_pooled.log 2>&1 &
 launch gastrocnemius_GSE184413 --study GSE184413 --tissue gastrocnemius --conditions "Normal ambulation"
 # Vastus lateralis (SKMVL): merge the two collinear muscle-parenchyma labels into 'Skeletal muscle'.
 launch skeletal_muscle_GSE254371_muscle_merged --study GSE254371 --tissue "skeletal muscle" --gene-join outer --min-gene-cells 10 --label-scheme muscle

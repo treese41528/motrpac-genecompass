@@ -1,0 +1,30 @@
+[default_16] data/deconvolution/genecompass_input_v2_refs4all_rebuild/pseudobulk_de
+  fit: repfdr(replication) OR concordance(per-sex BH 8w), x sign
+  warnings: In column 1 male ,f(z) misfit = 677.7 . Rerun with increased df | In column 2 female ,f(z) misfit = 614.1 . Rerun with increased df
+  blocks 151 (min median libsize 1000); gene-blocks 2,045,228; with both-sex 8w z 1,755,187; repfdr Fdr finite 1,755,187, = 1 for 0.0000, min 1.9e-05
+  significant at 0.05: repfdr 5,126; concordance 144; both 144; repfdr only 4,982; concordance only 0
+  calls: up_both 2,089, down_both 3,037, opposite 0; of the 5,126 directional calls, 4,982 rest on repfdr alone; recomputed states that differ from the table: 0
+[default_16_minlib100] data/deconvolution/genecompass_input_v2_refs4all_rebuild/pseudobulk_de_minlib100
+  fit: repfdr(replication) OR concordance(per-sex BH 8w), x sign
+  warnings: In column 1 male ,f(z) misfit = 809.5 . Rerun with increased df | In column 2 female ,f(z) misfit = 725.4 . Rerun with increased df
+  blocks 158 (min median libsize 100); gene-blocks 2,134,240; with both-sex 8w z 1,844,199; repfdr Fdr finite 1,844,199, = 1 for 0.0000, min 1.76e-05
+  significant at 0.05: repfdr 5,106; concordance 144; both 144; repfdr only 4,962; concordance only 0
+  calls: up_both 2,022, down_both 3,084, opposite 0; of the 5,106 directional calls, 4,962 rest on repfdr alone; recomputed states that differ from the table: 0
+[default_16_minlib0] data/deconvolution/genecompass_input_v2_refs4all_rebuild/pseudobulk_de_minlib0
+  fit: concordance(per-sex BH 8w + sign); repfdr degenerate (Fdr = 1 for all 2199357 finite of 2199357 gene-blocks)
+  warnings: In column 1 male ,f(z) misfit = 3728.3 . Rerun with increased df | In column 2 female ,f(z) misfit = 2831.3 . Rerun with increased df | In column 2 female the estimated fraction of nulls is 1.
+  blocks 197 (min median libsize 0); gene-blocks 2,510,014; with both-sex 8w z 2,199,357; repfdr Fdr finite 0, = 1 for nan, min nan
+  significant at 0.05: repfdr 0; concordance 144; both 0; repfdr only 0; concordance only 144
+  calls: up_both 97, down_both 47, opposite 0; of the 144 directional calls, 0 rest on repfdr alone; recomputed states that differ from the table: 0
+[refs4_14] data/deconvolution/genecompass_input_v2_refs4/pseudobulk_de
+  fit: repfdr(replication) OR concordance(per-sex BH 8w), x sign
+  warnings: In column 1 male ,f(z) misfit = 686.6 . Rerun with increased df | In column 2 female ,f(z) misfit = 636.5 . Rerun with increased df
+  blocks 124 (min median libsize 1000); gene-blocks 1,680,717; with both-sex 8w z 1,598,503; repfdr Fdr finite 1,598,503, = 1 for 0.0000, min 1.14e-05
+  significant at 0.05: repfdr 5,704; concordance 144; both 144; repfdr only 5,560; concordance only 0
+  calls: up_both 2,371, down_both 3,333, opposite 0; of the 5,704 directional calls, 5,560 rest on repfdr alone; recomputed states that differ from the table: 0
+[v2_july_refs] data/deconvolution/genecompass_input_v2/pseudobulk_de
+  fit: concordance(per-sex BH 8w + sign); repfdr degenerate (Fdr = 1 for all 2017173 finite of 2017173 gene-blocks)
+  warnings: In column 1 male ,f(z) misfit = 3775.4 . Rerun with increased df | In column 2 female ,f(z) misfit = 3398.5 . Rerun with increased df | In column 2 female the estimated fraction of nulls is 1.
+  blocks 172 (min median libsize none); gene-blocks 2,099,387; with both-sex 8w z 2,017,173; repfdr Fdr finite 0, = 1 for nan, min nan
+  significant at 0.05: repfdr 0; concordance 136; both 0; repfdr only 0; concordance only 136
+  calls: up_both 90, down_both 46, opposite 0; of the 136 directional calls, 0 rest on repfdr alone; recomputed states that differ from the table: 0

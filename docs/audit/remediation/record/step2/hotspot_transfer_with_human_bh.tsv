@@ -1,0 +1,10 @@
+tissue	cell_type	sup_trained_auc_rat	q_sup_trained	sup_trained_auc_human	p_sup_trained_human	q_human	sup_dose_rho_rat	sup_dose_rho_human	status
+skmgn	Tenocytes	0.825	0.0301999999999999	0.925	0.0001	0.011324999999999998	0.298	0.462	PRESERVED
+skmvl	Satellite cells	0.887	0.0151	0.863	0.0003	0.011324999999999998	0.519	0.38	PRESERVED
+blood	Megakaryocytes and platelets	0.837	0.0301999999999999	0.855	0.0003	0.011324999999999998	0.376	0.372	PRESERVED
+blood	Neutrophils	0.819	0.0302	0.83	0.0006	0.015099999999999999	0.383	0.268	PRESERVED
+skmvl	Vascular smooth muscle cells	0.874	0.0151	0.811	0.0014	0.02265	0.424	0.414	PRESERVED
+blood	Classical monocytes	0.821	0.0301999999999999	0.827	0.0015	0.02265	0.316	0.31	PRESERVED
+blood	Erythroid cells	0.828	0.0301999999999999	0.799	0.0024	0.030199999999999998	0.356	0.34	PRESERVED
+lung	Vascular smooth muscle cells	0.817	0.033975	0.774	0.0079	0.07017058823529412	0.284	-0.138	PRESERVED
+hypoth	Oligodendrocyte precursor cells	0.798	0.0369111111111111	0.692	0.0384	0.18206285714285717	0.112	-0.24	PRESERVED

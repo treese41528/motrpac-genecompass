@@ -1,0 +1,7 @@
+method	mean_d_rmse_common	n_common	mean_d_rmse_all	median_d_rmse_all	n_all	n_positive	sets_missing
+bp_rna	0.02511	12	0.02549	0.02543	15	15	
+cibersortx	0.02200	12	0.02242	0.02112	15	15	
+dwls	0.02831	12	0.02788	0.02398	15	15	
+music	0.02535	12	0.02535	0.01908	12	12	HYPOTH; OVARY; SPLEEN
+scdc	0.02151	12	0.02065	0.01494	15	14	
+bisque	0.00244	12	0.00244	0.00170	12	12	HYPOTH; OVARY; SPLEEN

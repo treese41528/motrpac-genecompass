@@ -97,7 +97,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, refuse_overwrite, resolve_path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -774,6 +774,10 @@ def main() -> None:
         '--skip-download', action='store_true',
         help='Do not auto-download HGNC data if the file is missing',
     )
+    parser.add_argument(
+        '--overwrite', action='store_true',
+        help='Replace an existing family_embeddings.pkl (default: refuse; audit finding 2.7)',
+    )
     args = parser.parse_args()
 
     if args.verbose:
@@ -853,6 +857,7 @@ def main() -> None:
         sys.exit(1)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    refuse_overwrite(output_dir / 'family_embeddings.pkl', args.overwrite, dry_run=args.dry_run)
 
     if args.dry_run:
         logger.info("Dry run complete — all inputs validated.")

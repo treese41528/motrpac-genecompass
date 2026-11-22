@@ -6,6 +6,32 @@ Cross-species transcriptomic analysis of exercise adaptations using the [GeneCom
 
 ---
 
+## The question, and where it stands
+
+**Question.** MoTrPAC profiled the endurance-trained rat by bulk RNA-seq, which blends every cell type of a
+tissue. Can a rat-adapted GeneCompass model, given per-cell-type expression deconvolved from that bulk, show
+(1) which cell types respond to training, (2) which genes respond in them, and (3) whether the response carries
+over to the model's human representation?
+
+**Results on the default configuration** (refs5: the registered rerun of Stages 8-14 after the 2026-11-11 audit;
+v2 model; 16 tissues, 749 samples, 9,060 pseudo-cells). Each number has a table on disk, named in
+`docs/audit/remediation/STEP3_RESULTS.md` (the rerun), `STEP4_RESULTS.md` (the validations) and
+`STEP5_RESULTS.md` (the corpus). `pipeline/README.md` has the same results stage by stage.
+
+| Question | Result | What qualifies it |
+|---|---|---|
+| Does the model learn rat, keep human and mouse, and generalise? | By the pre-registered in-sample check, rat is learned (gene-identity loss 7.13 to 3.06) and human and mouse are kept (+0.05% and +1.32% against the base model, limit +10%). On 66,000 cells of 33 rat studies the model never saw, its loss is 1.046 times the in-sample loss (registered bar 1.10) | The gap is largest for rat-only tokens (1.18). The training corpus departs from its description and was not repaired: 10.4% of its 6,803,206 cells are above 15% mitochondrial reads (no cut was applied), and 1.04% of counts in ID-keyed files sit under another gene's token |
+| Is the deconvolution accurate? | For how a cell type's fraction varies across samples, yes: BayesPrism meets the registered floor on 19 of 19 known-truth mixture sets | A fraction is a share of mRNA, not of cells: BayesPrism's error against cell fractions rises under the references' own mRNA differences on 13 of 15 references. Per-cell-type expression is recovered at the type's own abundance for 4 of the 12 called blocks and for none of the five muscle blocks |
+| (1) Which cell types respond? | 11 hotspots and 1 borderline block among 150 analysable tissue x cell-type blocks (194 in all): four BLOOD types, two LUNG, one HEART, three SKMVL, one SKMGN | The list is not stable to small changes of the inputs: 7 of the 9 hotspots of the earlier default remain. No called block passes all nine registered readings |
+| (2) Which genes respond? | 52,961 dose-significant gene x block pairs over 9,617 distinct genes; 41,401 outside low-fraction blocks | No block's calls are robust to technical covariates by the registered verdict (44% and 33% of the pairs survive the two reruns). The positive-control red flag stands: 5 of the 26 testable pipeline-sanity controls recover |
+| (3) Does it carry over to the human representation? | 10 of 11 hotspots by the registered rule, 9 of 11 by the corrected rule | The human test reuses the rat test's cells, labels, folds and seeds. It is not a replication, and no human measurement enters |
+| Do the model's in-silico deletions point to regulation? | No. The 7 networks (1,540,997 edges) carry no TF-specific signal: they cannot be told from deleting a random gene of the same expression | Hub tables are descriptive model readouts. The rat-human score of the networks is self-consistency of the model, not conservation. Module A's criteria 1, 3 and 4 pass; its registered myeloid replication fails |
+
+No domain expert has reviewed the cell-type labels of the references; `docs/audit/remediation/README.md` says who
+did what, and `docs/audit/FINDINGS.md` lists what the audit found.
+
+---
+
 ## Overview
 
 This project adapts GeneCompass — a foundation model pretrained on 120M+ human and mouse single-cell transcriptomes — to analyze rat bulk and single-cell RNA-seq data from the Molecular Transducers of Physical Activity Consortium (MoTrPAC). The goal is to uncover molecular mechanisms of exercise-induced adaptations and translate findings from rat models to human biology.
@@ -14,7 +40,7 @@ This project adapts GeneCompass — a foundation model pretrained on 120M+ human
 
 | Component | Location | Description |
 |-----------|----------|-------------|
-| **Data pipeline** | `pipeline/` | Staged orchestrators (`run_stageN.py`, see `pipeline/README.md`): corpus → tokens → fine-tuning (Stages 1–7), the deconvolution bridge (8–9), per-cell-type DE (10), rat→human transfer (12), GRN/mechanism (13) and hardening (14) |
+| **Data pipeline** | `pipeline/` | Staged orchestrators (`run_stageN.py`, see `pipeline/README.md`): corpus → tokens → fine-tuning (Stages 1–7), the deconvolution bridge (8–9), the exercise gate (11), per-cell-type DE (10), rat→human transfer (12), perturbation networks (13) and hardening (14) |
 | **GeneCompass** | `vendor/GeneCompass/` | Foundation model (upstream git submodule, used as a library; rat adaptations live in `finetune/` + `data/`) |
 | **Fine-tuning** | `finetune/` | Continued pretraining on rat corpus |
 | **Deconvolution** | `deconvolution/` | Bulk ↔ single-cell integration: **BayesPrism** (vendored) + the **omnideconv** panel are the implemented Stage 8–9 stack; UniCell/scDEAL/Scissor are secondary/planned methods |
@@ -99,7 +125,7 @@ ln -s ../geo_datasets data/raw/geo/bulk/geo_datasets
 #   https://ngdc.cncb.ac.cn/omix/release/OMIX767 (files under https://download.cncb.ac.cn/OMIX/OMIX767/)
 #   into data/raw/ngdc/datasets/OMIX767/Gene_bc_matrices/{C,E7W}_gene_bc_matrices/.
 python pipeline/run_stage1.py --from 4                  # metadata, matrix analysis, LLM study analysis, catalog
-#   -> data/catalog/unified_studies.json (the study list Stage 2 reads). The LLM step (Claude Haiku) is not
+#   -> data/catalog/unified_studies.json (the study list Stage 2 reads). The LLM step (Claude Sonnet 4.5 and Haiku 4.5 in the deposited run) is not
 #   deterministic: DEPOSITED: data/catalog/.
 
 # ── Stage 2. Gene universe + cell QC (data/training/gene_universe/, qc_h5ad/; ~23 h, 16 CPUs, 200 GB) ──
@@ -138,6 +164,8 @@ python pipeline/run_stage6.py --from 2                  # family (8 min; determi
                                                         #   needs `pip install pyfaidx`, not in the lock),
                                                         # GRN transfer (seconds)
 python pipeline/run_stage6.py --from 1                  # + co-expression (~49 h; refuses the default config)
+#   Since 2026-11-14 a step whose <name>_embeddings.pkl already exists stops unless --overwrite is given:
+#   rerun into a fresh paths.prior_knowledge_dir, not over the deposited folder.
 #   v2's init takes only 36 T4 GRN rows from Stage 6 (GRN reproduces byte for byte). DEPOSITED: the whole folder
 #   (the family vectors were built with 8 gensim threads and cannot be regenerated).
 
@@ -147,10 +175,11 @@ python pipeline/run_stage7.py --from 1 --to 1           # init (seconds): rat_mo
 python pipeline/run_stage7.py --from 2 --to 2           # training mix (4.7 h, 546 GB; seed 42; 40/45/15 rat/human/mouse)
 python pipeline/run_stage7.py --from 3 --to 3           # evaluation probe (1.6 h; seed 20261008; md5s: data/training/eval_probe_v2.md5)
 #   Both reproduce byte for byte (state.json differs only in the HF fingerprint).
-PHASE=1 bash scripts/train_stage7.sh                    # phase 1: 517,793 steps on 4 x A100-40GB (about a week); rerun to resume
+PHASE=1 bash scripts/train_stage7.sh                    # phase 1: 517,793 steps on 4 x A100-40GB (4 days 23.6 h for v2); rerun to resume
 PHASE=2 bash scripts/train_stage7.sh                    # phase 2: 591,763 steps
 #   (= python pipeline/run_stage7.py --from 4 --phase N). GPU kernels are nondeterministic: a restart tracks
-#   v2's loss to 4 decimals but is not bit-identical. DEPOSITED: the phase 1 and phase 2 checkpoints.
+#   v2's loss to 4 decimals but is not bit-identical. DEPOSITED: the phase-2 final model (and the initial
+#   checkpoint above). No phase-1 checkpoint is in the deposit (config/deposit_md5.tsv).
 ```
 
 `pipeline/README.md` describes each stage. SLURM wrappers for this cluster are kept locally (`slurm/`, not in
@@ -170,9 +199,13 @@ python pipeline/run_stage9.py --label skmgn --dry-run
 ```
 
 **Reference integrity:** references are chosen from `deconvolution/tissue_references.yaml` and gated by
-`deconvolution/reference_qc.py` (blocks spatial/engineered/developmental/mixed samples — the class of bug
-behind the liver-Visium / engineered-lung fixes). Cross-method validation + the mRNA-bias analysis +
-which downstream claims to trust are in `deconvolution/OMNIDECONV_RESULTS.md`.
+`deconvolution/reference_qc.py`. The gate blocks spatial, engineered or cultured, and bulk samples by their
+titles in the corpus inventory (the class of bug behind the liver-Visium / engineered-lung fixes); it only
+warns on developmental ages and mixed depth, and it cannot test samples outside the inventory (BLOOD, SPLEEN,
+OVARY). The validations on the current references are in `docs/audit/remediation/STEP4_RESULTS.md`: V1 (is a
+cell type's expression recovered at its abundance), V5 (mRNA-content bias) and V6 (the known-truth mixture
+panel). `deconvolution/OMNIDECONV_RESULTS.md` holds the earlier cross-method runs and the guidance on which
+downstream claims to trust.
 
 First-time deconvolution setup — the R/BayesPrism environment, the per-site profile, data
 staging, and config — is documented in **`deconvolution/setup/SETUP.md`**; see
@@ -189,7 +222,7 @@ Raw data is not committed to this repository. All datasets are publicly availabl
 | Rat scRNA-seq corpus | ~27 GB | GEO (+ OMIX767 from NGDC) | v2: 584 QC files from 81 studies, 6,803,206 cells (`config/corpus_v2_plan.tsv`, 868 files listed) |
 | Rat bulk RNA-seq (MoTrPAC) | ~26 GB | [MotrpacRatTraining6moData](https://github.com/MoTrPAC/MotrpacRatTraining6moData) | 18 tissues, 8 timepoints |
 | BioMart + RGD reference | ~170 MB | [Ensembl 115 archive](https://sep2025.archive.ensembl.org/biomart), [RGD](https://download.rgd.mcw.edu/data_release/) | Gene annotations, orthologs, symbols (md5s: `config/reference_md5sums.tsv`) |
-| GeneCompass base assets | ~2 GB + 0.5M-cell sets | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Weights, prior knowledge, human/mouse cells (`scripts/stage_genecompass_assets.sh`) |
+| GeneCompass base assets | ~2 GB + two 5M-cell sets | [xCompass-AI/GeneCompass](https://github.com/xCompass-AI/GeneCompass) | Weights, prior knowledge, human/mouse cells (`scripts/stage_genecompass_assets.sh`) |
 
 ### Obtaining data
 
@@ -226,13 +259,23 @@ See `config/pipeline_config.yaml` for full documentation of each parameter.
 export PIPELINE_PROFILE=config/profiles/april.yaml
 ```
 
-**Which references.** Since 2026-10-31 the default deconvolution references are the jointly re-annotated
-ones (`references_v4/`, listed per tissue in `deconvolution/tissue_references.yaml`; BLOOD is a whole-blood
-composite). Since 2026-11-01 the default covers all 16 deconvolved tissues (SPLEEN and OVARY added) and every
-Stage 8–14 output lives in a `_refs4all_rebuild` folder: the clean, link-free rebuild, identical to the earlier
-assembled `_refs4all` tree through Stage 13 (`deconvolution/REFS4ALL_REBUILD_RESULTS.md`;
-`deconvolution/ALL_TISSUE_RERUN_RESULTS.md`); the 14-tissue
-refs4 arm (`_refs4` folders, `deconvolution/REFS4_RERUN_RESULTS.md`) is `config/profiles/refs4_14.yaml`. The July consensus-label references and their v2 results are `config/profiles/july_refs.yaml`.
+**Which references and which run.** Since 2026-11-15 the default is **refs5**, the registered rerun of
+Stages 8–14 that followed the audit (`docs/audit/remediation/STEP3_PREREG.md`, `STEP3_RESULTS.md`). What the
+config keys point at:
+
+| Config key (`deconvolution.*`, or the file named) | refs5 value |
+|---|---|
+| `reference_dir` of each tissue in `deconvolution/tissue_references.yaml` | `references_v5/`: all 15 references rebuilt from committed code. 13 are byte-identical to the builds used before; HYPOTH is re-annotated and HEART has its registered label merge. BLOOD is a whole-blood composite |
+| `rat_exclude_genes` | `deconvolution/reference/rat_exclude_genes_v2.tsv`, built by rule in Ensembl 115 (464 genes) |
+| `pseudocell_target_sum` | 6,700, by the registered formula |
+| `results_dir`, `genecompass_input_dir`, `hotspots_table`, `augur_input_dir`, `grn_dir`, `grn_human_dir`, `validation_dir` | the `_refs5` folders |
+
+Earlier arms stay on disk and are selected with a profile: the default before refs5
+(`_refs4all_rebuild` folders on `references_v4/`, with its own exclusion list and its 6,400 target sum;
+`deconvolution/REFS4ALL_REBUILD_RESULTS.md`, `deconvolution/ALL_TISSUE_RERUN_RESULTS.md`) is
+`config/profiles/refs4all_rebuild.yaml`; the 14-tissue refs4 arm (`deconvolution/REFS4_RERUN_RESULTS.md`) is
+`config/profiles/refs4_14.yaml`; the July consensus-label references and their v2 results are
+`config/profiles/july_refs.yaml`.
 
 ---
 
@@ -251,7 +294,7 @@ motrpac-genecompass/
 │   └── provenance.py           #   provenance_<script>.json writer (git, config, input md5s)
 ├── vendor/
 │   └── GeneCompass/            # Git submodule (tracks upstream xCompass-AI/GeneCompass)
-├── pipeline/                   # Stage orchestrators run_stage1..14.py (no Stage 11) + run_deconv_all.py
+├── pipeline/                   # Stage orchestrators run_stage1..14.py (Stage 11 is the gate) + run_deconv_all.py
 │   ├── 01_data_harvesting/     #   Stage 1 workers (harvest + QC)
 │   ├── 02_gene_universe/       #   Stage 2
 │   ├── 03_ortholog_mapping/    #   Stage 3
@@ -275,7 +318,7 @@ motrpac-genecompass/
 ## Tests
 
 ```bash
-pytest                 # offline tests, about 10 s; no data or internet needed
+pytest                 # offline tests, a few minutes; no data or internet needed
 pytest -m data         # checks against this machine's pipeline outputs (corpus files, v2 results)
 pytest -m network      # live NCBI / EBI / ENA checks (set NCBI_EMAIL for the Entrez one)
 ```

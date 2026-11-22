@@ -1,0 +1,27 @@
+{
+ "series_entering_qc": 34,
+ "series_with_qc_cells": 34,
+ "series_kept": 33,
+ "files_discovered": 262,
+ "files_qc_success": 257,
+ "cells_passing_qc": 4303867,
+ "files_kept": 220,
+ "cells_kept": 3299571,
+ "actions": {
+  "keep": 220,
+  "no_cells": 5,
+  "drop_nonrat": 10,
+  "drop_not_raw_counts": 13,
+  "drop_duplicate": 14
+ },
+ "cells_by_action": {
+  "drop_duplicate": 786523,
+  "drop_nonrat": 53857,
+  "drop_not_raw_counts": 163916,
+  "keep": 3299571,
+  "no_cells": 0
+ },
+ "tissues_kept": 21,
+ "files_kept_spatial_assay": 12,
+ "cells_kept_spatial_assay": 45729
+}

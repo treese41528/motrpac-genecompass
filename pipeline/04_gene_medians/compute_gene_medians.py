@@ -208,7 +208,12 @@ def normalize_total_inplace_sparse(X_raw_csr, target_sum: float = 1e4) -> 'sp.cs
     This normalization is EPHEMERAL — the result is returned, never written
     back to disk. Raw counts in X_raw_csr are untouched.
 
-    Matches GeneCompass preprocessing: sc.pp.normalize_total(target_sum=1e4).
+    NOT what GeneCompass's released preprocessing does (corrected 2026-11-14, audit finding 2.2): in
+    vendor/GeneCompass/preprocess/preprocess.py the per-cell normalisation is commented out (line 157) and
+    raw counts are divided by the gene median directly (line 160). Rat medians computed on these CP10K
+    values enter the model only through the scheme-B hybrid (rat median rescaled onto the human-median
+    scale for genes with no human median); Stage 5 tokenizes raw counts / hybrid median, with no depth
+    normalisation (pipeline/05_tokenization/tokenize_corpus.py).
     """
     lib_sizes = np.asarray(X_raw_csr.sum(axis=1), dtype=np.float64).ravel()
     scale = np.where(lib_sizes > 0, target_sum / lib_sizes, 0.0).astype(np.float32)

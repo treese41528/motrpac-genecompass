@@ -1,0 +1,14 @@
+old_label	Astrocytes	DROP	Endothelial cells	Ependymal cells	Glutamatergic neurons	Microglia	Neurons	Oligodendrocyte precursor cells	Oligodendrocytes	Pars tuberalis cells	Tanycytes	Vascular leptomeningeal cells
+Astrocytes	772	215	0	2	5	0	9	0	1	0	0	3
+Dopaminergic neurons	0	0	0	0	0	0	42	0	0	0	0	0
+Endothelial cells	0	0	51	0	3	0	4	0	0	0	0	1
+Ependymal cells	0	0	0	60	0	0	0	0	0	0	0	0
+GABAergic neurons	0	0	0	0	95	0	1781	0	0	3	0	2
+Glutamatergic neurons	0	2	1	2	1248	1	693	0	0	1	0	5
+Microglia	0	0	0	0	2	211	1	0	0	0	0	2
+Neuroendocrine cells	0	0	0	0	0	0	4	0	0	63	0	14
+Neurons	0	1	0	0	1335	0	453	3	0	0	0	0
+Oligodendrocyte precursor cells	0	0	0	1	2	0	2	223	1	0	0	0
+Oligodendrocytes	0	260	0	0	4	0	7	1	375	0	0	1
+Radial glial cells	0	1	0	0	7	0	12	0	0	0	0	211
+Tanycytes	2	0	0	57	3	1	4	0	0	0	200	5

@@ -1,0 +1,31 @@
+multiple_testing	IHW~tissue (covariate_type = nominal)
+ihw_version	1.34.0
+ihw_arguments	pvalues = P_fisher of every analysed gene-block; covariates = factor(tissue), 16 levels; alpha = 0.05; covariate_type = nominal; seed = 1
+ihw_arguments_at_package_default	nbins = "auto"; m_groups = NULL; folds = NULL; quiet = TRUE; nfolds = 5L; nfolds_internal = 5L; nsplits_internal = 1L; lambdas = "auto"; distrib_estimator = "grenander"; lp_solver = "lpsymphony"; adjustment_type = "BH"; null_proportion = FALSE; null_proportion_level = 0.5; return_internal = FALSE
+ihw_fit	nbins = 16; nfolds = 5; penalty = uniform deviation; regularization_term per fold = Inf, Inf, Inf, Inf, Inf; rejections = 52961
+package_versions	limma 3.62.2; edgeR 4.4.2; IHW 1.34.0; repfdr 1.2.3; R 4.4.1
+sex_consistency	primary = concordance: both per-sex 8w BH FDR < 0.05 within the block and equal sign; secondary = repfdr, fitted on 52734 dose-significant gene-blocks (FDR_IHW < 0.05, both 8w z finite); ztobins defaults; non.null = replication; call = tail-area Fdr < 0.05 and equal sign
+sex_consistency_primary	concordance: both per-sex 8w BH FDR < 0.05 within the block and equal sign
+sex_consistency_repfdr	fitted on 52734 dose-significant gene-blocks (FDR_IHW < 0.05, both 8w z finite); ztobins defaults; non.null = replication; call = tail-area Fdr < 0.05 and equal sign
+sex_consistency_warnings	In column 1 male ,f(z) misfit = 8.6 . Rerun with increased df | In column 2 female ,f(z) misfit = 1.9 . Rerun with increased df
+alpha	0.05
+seed	1
+hotspot_rule	is_hotspot column of the gate table
+n_blocks_ok	150
+n_blocks_single_sex	20
+min_median_libsize	1000
+n_blocks_skipped_degenerate	44
+n_fisher_tests	2024970
+n_dose_tests_single_sex	276423
+low_fraction_threshold	0.01
+technical_covariates	none
+n_samples_dropped_missing_covariate	0
+sample_key	mixture_samples.tsv equal in order to bulk_samples.tsv in 16 of 16 tissues (the file is absent in the others); rows of the fraction table and of every Z matrix checked against the samples in every tissue
+model_combined	~ sex + factor(week) (~ factor(week) in a one-sex block): F_dose_comb, P_dose_comb, lfc_1w..lfc_8w, P_8w_comb, logFC_sex, P_sex
+model_ordinal	~ sex + week, week numeric 0,1,2,4,8 (~ week in a one-sex block): slope_week, P_week_lin
+model_interaction	~ sex * factor(week), two-sex blocks only: F_sexXweek, P_sexXweek
+model_per_sex	~ factor(week) within each sex present: P_train_M, P_train_F (omnibus F over the week coefficients); 8w contrast: lfc_8w_M/F, z_8w_M/F, fdr_8w_M/F (BH within the block)
+dose_p	P_fisher = Fisher's combination of the per-sex omnibus p over the sexes present: chi-square on 4 df with two sexes, the one sex's p with one sex
+model_fraction	lm(fraction ~ week + sex), week numeric (fraction ~ week in a one-sex block): frac_week_slope, frac_week_p
+design	limma-trend (eBayes trend = TRUE, robust = TRUE) on log2-CPM (prior count 1, no TMM) of continuous Z; combined ~ sex + factor(week); ordinal ~ sex + week; interaction ~ sex * factor(week); per sex ~ factor(week); dose p = Fisher over the sexes present; IHW ~ tissue (nominal); 8w sex-consistency as in sex_consistency
+deviations	continuous Z with limma-trend, not DESeq2 negative binomial; technical covariates: none in this run (see the _covA and _covB reruns); repfdr on two columns (8w male, 8w female) pooled over blocks

@@ -63,7 +63,8 @@ OUT = ROOT / "data/deconvolution/joint_labels"
 
 # reference key -> tissue_references.yaml key whose spec selects the samples
 REFS = {"KIDNEY": "KIDNEY", "LIVER": "LIVER", "CORTEX": "CORTEX", "WATSC": "WATSC", "MUSCLE": "SKMGN",
-        "SMLINT": "SMLINT", "LUNG": "LUNG", "HIPPOC": "HIPPOC"}
+        "SMLINT": "SMLINT", "LUNG": "LUNG", "HIPPOC": "HIPPOC",
+        "HYPOTH": "HYPOTH"}      # added 2026-11-14 (docs/audit/remediation/STEP3_PREREG.md 2.2-2.3; §10.2 deferred it)
 # BLOOD option B (REFERENCE_RELABEL_PREREG.md §12): external GEO libraries, not corpus samples; all three
 # are labelled with the BLOOD panel. Paths are under data/raw/geo/blood_option_b/.
 BLOOD_RAW = ROOT / "data/raw/geo/blood_option_b"
@@ -150,11 +151,14 @@ def resolve(spec, idx, parent=None, rows=None):
             g = sorted(idx.get(s.lower(), ()))
             (found if g else missing).append(s)
             ids += g
+        # min_genes: a panel may lower the number of genes it needs to be scored (default MIN_PANEL_GENES).
+        # Used once, for the HYPOTH glutamatergic sub-class, whose single class-wide marker is Slc17a6
+        # (docs/audit/remediation/STEP3_PREREG.md 2.3 states the departure from the 3-6 gene rule).
         node = {"compartment": d.get("compartment"), "genes": d["genes"], "ids": sorted(set(ids)),
-                "found": found, "missing": missing}
+                "found": found, "missing": missing, "min_genes": int(d.get("min_genes", MIN_PANEL_GENES))}
         rows.append({"panel": name, "parent": parent or "", "compartment": node["compartment"] or "",
                      "found": ",".join(found), "missing": ",".join(missing),
-                     "scorable": len(found) >= MIN_PANEL_GENES})
+                     "scorable": len(found) >= node["min_genes"]})
         if d.get("sub"):
             node["sub"] = resolve(d["sub"], idx, name, rows)[0]
         out[name] = node
@@ -196,6 +200,38 @@ def load_blood(ref):
         parts.append(a)
     adata = ad.concat(parts, join="inner", merge="same", fill_value=0) if len(parts) > 1 else parts[0]
     return adata
+
+
+def raw_input_files(ref):
+    """The files load_blood / load_external read for one BLOOD_SETS or EXTERNAL_SETS reference, for the
+    provenance record of a build: each library's matrix, feature and barcode files (or its .h5), the
+    liftover map when a library goes through it, and the bulk gene list when symbols are mapped to it.
+    Listing only: nothing is opened."""
+    files = []
+    names = ("features.tsv", "genes.tsv", "barcodes.tsv", "matrix.mtx")
+    if ref in BLOOD_SETS:
+        libs = [(d, prefix, "mtx_dir", lift) for _, d, prefix, lift in BLOOD_SETS[ref]]
+    else:
+        libs = []
+        for _, path, fmt, lift in EXTERNAL_SETS[ref]:
+            if fmt == "h5":
+                libs.append((Path(path), None, fmt, lift))
+            else:
+                d, prefix = (Path(path), "") if Path(path).is_dir() else (Path(path).parent, Path(path).name)
+                libs.append((d, prefix, fmt, lift))
+    lifted = symbols = False
+    for d, prefix, fmt, lift in libs:
+        if fmt == "h5":
+            files.append(d)
+        else:
+            files += [c for n in names for c in (d / f"{prefix}{n}.gz", d / f"{prefix}{n}") if c.exists()]
+        symbols |= lift == "symbol"
+        lifted |= bool(lift) and lift != "symbol"
+    if lifted:
+        files.append(ROOT / "deconvolution/reference/motrpac_bulk_liftover.tsv")
+    if symbols:
+        files.append(ROOT / f"data/deconvolution/motrpac_bulk/{BULK_TISSUE[ref]}/bulk_genes.tsv")
+    return files
 
 
 def _read_external(path, fmt):
@@ -365,7 +401,7 @@ def scaled_means(means):
 
 def panel_score(scaled, node):
     cols = [g for g in node["ids"] if g in scaled.columns]
-    if len(node["found"]) < MIN_PANEL_GENES or not cols:
+    if len(node["found"]) < node.get("min_genes", MIN_PANEL_GENES) or not cols:
         return pd.Series(np.nan, index=scaled.index)
     return scaled[cols].mean(1)
 

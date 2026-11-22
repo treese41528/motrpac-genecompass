@@ -1,0 +1,15 @@
+# refs5 sensitivity (docs/audit/remediation/STEP3_PREREG.md 2.2): TESTES deconvolved against the control-only
+# reference (OMIX767 sample C, without the EDS-recovery arm E7W that the primary reference pools). Stage 8 only;
+# its fractions are compared with the primary refs5 TESTES run. Everything else as config/profiles/refs5.yaml.
+#   export PIPELINE_PROFILE=config/profiles/refs5_testes_controlonly.yaml
+#   python pipeline/run_stage8.py --tissue TESTES --label testes --from 2 \
+#     --ref-dir data/deconvolution/references_v5/TESTES_OMIX767_lifted_controlonly
+deconvolution:
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes_v2.tsv
+  results_dir: data/deconvolution/results_refs5_testes_controlonly
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs5_testes_controlonly
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs5/gate_rcv10/corroboration_merged.tsv
+  augur_input_dir: data/deconvolution/augur_input_v2_refs5_testes_controlonly
+  grn_dir: data/deconvolution/grn_v2_refs5_testes_controlonly
+  grn_human_dir: data/deconvolution/grn_v2_refs5_testes_controlonly_human
+  validation_dir: data/deconvolution/validation_refs5_testes_controlonly

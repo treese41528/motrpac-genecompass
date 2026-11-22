@@ -52,12 +52,20 @@ stopifnot(identical(rownames(true), rownames(pred)))   # same mixtures, same ord
 cat(sprintf("focal=%s | %d samples x %d common genes\n",
             focal, nrow(true), length(common)))
 
-# round to integer counts for DESeq2; fit VST once on [true|pred] together
+# Integer counts for DESeq2; fit VST once on [true|pred] together.
+# The conversion below TRUNCATES toward zero (mode<- "integer"); it does not round, although this comment
+# said "round" until 2026-11-14 (audit finding 5.8). BayesPrism's predicted Z is not integer, so 0.9 becomes 0
+# on the predicted side while the true side is already integer. Every purity-sweep figure reported so far was
+# computed this way, so the default is left as it is. SCORE_Z_VST_ROUND=1 rounds to the nearest integer
+# instead; it is off by default, is written into the provenance record, and exists to measure the difference
+# (docs/audit/remediation/STEP6_HYGIENE.md).
+ROUND_COUNTS <- identical(Sys.getenv("SCORE_Z_VST_ROUND"), "1")
 mat <- t(rbind(true, pred))                  # genes x (2*samples)
 # Column names must be unique: DESeq2's local-fit VST rebuilds its output column by NAME, so
 # with each mixture name appearing twice the "pred" half came back as a copy of the "true"
 # half and every Pearson-VST was exactly 1 (HEART, HYPOTH). The parametric fit was unaffected.
 colnames(mat) <- c(paste0("true_", rownames(true)), paste0("pred_", rownames(pred)))
+if (ROUND_COUNTS) mat <- round(mat)          # off by default: see the note above
 mode(mat) <- "integer"; mat[is.na(mat)] <- 0L
 storage.mode(mat) <- "integer"
 mat[mat < 0L] <- 0L
@@ -90,7 +98,8 @@ write.table(res, file.path(out, "z_vst_focal.tsv"), sep = "\t",
             quote = FALSE, row.names = FALSE)
 write_provenance(out, inputs = c(file.path(sd, "mixtures", "true_z_focal.csv"), predf,
                                  file.path(sd, "mixtures", "sweep_design.tsv")),
-                 params = list(stage_dir = sd, focal = focal))
+                 params = list(stage_dir = sd, focal = focal,
+                               integer_conversion = if (ROUND_COUNTS) "round (SCORE_Z_VST_ROUND=1)" else "truncate (default)"))
 cat("\n=== per-sample focal-expression accuracy (head) ===\n")
 print(utils::head(res, 12))
 cat(sprintf("\nWrote %s/z_vst_focal.tsv\n", out))

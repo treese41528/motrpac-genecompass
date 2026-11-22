@@ -5,9 +5,30 @@
 Stage 7 adapts GeneCompass (12-layer BERT, GeneCompass_Base) to rat transcriptomics by continuing
 masked-language-model pre-training on a rat/human/mouse mix. The working model is **v2**
 (`docs/RETRAIN_V2_RESULTS.md`): 6,803,206 rat cells (584 QC files kept by `config/corpus_v2_plan.tsv`)
-interleaved 40/45/15 with GeneCompass's 0.5M human and mouse cells. The vocabulary grows from 50,558 to
-**55,275** tokens: 2,243 T3 rat tokens (warm-started from their human/mouse ortholog) and 2,474 T4
-rat-specific tokens (random rows). April's model (`configs/rat_finetune.yaml`) had 53,032.
+interleaved 40/45/15 with GeneCompass's human and mouse sets (5,000,000 and 4,969,697 cells; the folders
+are named `randsel_500w_*`, and upstream's table labels that download "0.5M"). The vocabulary grows from
+50,558 to **55,275** tokens: 2,243 T3 rat tokens (warm-started from their human/mouse ortholog) and 2,474
+T4 rat-specific tokens (random rows). April's model (`configs/rat_finetune.yaml`) has the same 55,275-token
+vocabulary (`vocab_size` in its checkpoints' `config.json`); this page said 53,032 until 2026-11-14, the
+size of an earlier design that no model was trained on.
+
+## What has been tested, and what is known about the corpus (2026-11-15)
+
+The question for this stage: does the model learn rat without losing human and mouse, and does what it learned
+hold on rat data it has not seen?
+
+| Check | Result | Source |
+|---|---|---|
+| Rat learned, human and mouse kept (pre-registered, in sample) | Rat gene-identity loss 7.13 to 3.06; human +0.05% and mouse +1.32% against the base model (limit +10%) | `docs/RETRAIN_V2_RESULTS.md`, C1–C2 |
+| Generalisation to rat studies outside the corpus (registered) | On 66,000 cells of 33 studies, loss 1.046 times the in-sample probe's (bar 1.10). Per study 0.93 to 1.20; rat-only tokens 1.18 | `docs/audit/remediation/STEP4_RESULTS.md`, V3 |
+| Mitochondrial fraction of the training cells | 10.4% of the 6,803,206 cells are above 15% (GeneCompass's cut, which was configured and never applied); the outlier rule was inert in 395 of 584 files | `docs/audit/remediation/STEP5_RESULTS.md`, M1 |
+| Gene IDs carried over from earlier annotations | 1.04% of counts in ID-keyed files sit under another gene's token; a few highly expressed genes (Tpt1, Rps3, Rps20, Rpl23a, Rpl9, Rps27a) were seen under rat-only tokens | `STEP5_RESULTS.md`, M3 |
+| Series that never entered the corpus | 79 confirmed rat single-cell series; 33 of them are the held-out set above | `STEP5_RESULTS.md`, M2 |
+
+None of the corpus findings was repaired: the decision was not to retrain. The repairs exist as switches in
+`config/pipeline_config.yaml` that are off, for a future corpus. The held-out test is on single cells of new
+studies and says nothing about the pseudo-cells of Stages 9 to 13. The v2 initial checkpoint was built without
+a seed and cannot be regenerated.
 
 ## Quick start (v2 config: `configs/rat_finetune_v2.yaml`)
 

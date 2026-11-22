@@ -1,5 +1,13 @@
 # MoTrPAC Deconvolution: Tissues, References, Proportions, and How Much to Trust Them
 
+> **2026-11-15: a dated record.** Compiled 2026-07-14; its "CURRENT REFERENCES" banner and per-tissue map
+> describe refs4 (2026-10-31). The default is now **refs5**: all 15 references rebuilt into `references_v5/`
+> (13 byte-identical to the refs4 builds; HYPOTH re-annotated, 11 types; HEART with "CD8+ T cells" merged into
+> "T cells", 15 types), and a rebuilt exclusion list that shifts estimated fractions by at most 2.8 points in
+> the 14 tissues whose reference did not change. The current map is `tissue_references.yaml`; current
+> fractions and what to trust: `docs/audit/remediation/STEP3_RESULTS.md` (A1, A2, B1, B2) and
+> `STEP4_RESULTS.md` (V1, V5, V6).
+
 **Status:** working reference document. Compiled 2026-07-14 from the files on disk (see §10 for the full
 provenance list). Supersedes the tissue/reference/proportion sections of
 `deconvolution/DECONVOLUTION_PIPELINE_REPORT.md` and `deconvolution/AIM2_DECONV_RESULTS.md`, both of which

@@ -1,0 +1,17 @@
+{
+  "stored_table": "/depot/reese18/apps/motrpac-genecompass/data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/subspace_probe.tsv",
+  "blocks_stored": 197,
+  "blocks_recomputed": 197,
+  "blocks_in_one_table_only": 0,
+  "blocks_with_a_test": 197,
+  "auc_differ": 0,
+  "p_differ": 0,
+  "max_abs_count_difference_vs_stored": 0.0,
+  "blocks_count_not_implied_by_stored_p": 0,
+  "permutations_scored_by_loop": 1459,
+  "perms": 10000,
+  "repeats": 10,
+  "count_differ_vs_loop": 0,
+  "max_abs_count_difference_vs_loop": 0.0,
+  "verdict": "identical"
+}

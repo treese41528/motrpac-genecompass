@@ -111,7 +111,9 @@ def test_every_reference_panel_file_entry_is_well_formed():
         spec = jr.load_panels(ref)
         def walk(d, top):
             for name, n in d.items():
-                assert len(n["genes"]) >= 3, (ref, name)
+                # 3 or more genes, unless the panel declares a smaller minimum (one case: the HYPOTH
+                # glutamatergic sub-class is scored on Slc17a6 alone; STEP3_PREREG.md 2.3)
+                assert len(n["genes"]) >= 3 or len(n["genes"]) >= n.get("min_genes", 3), (ref, name)
                 if top:
                     assert n.get("compartment"), (ref, name)
                 walk(n.get("sub", {}), False)
@@ -164,3 +166,23 @@ def test_build_reference_refuses_mismatched_joint_labels(tmp_path):
                   "cell_type": ["Hep"]}).to_csv(f, sep="\t", index=False)
     with pytest.raises(SystemExit, match="do not match"):
         br.apply_joint_labels(a, f)
+
+
+def test_only_the_hypoth_glutamatergic_panel_lowers_the_gene_minimum():
+    lowered = []
+    for ref in jr.REFS:
+        def walk(d, path):
+            for name, n in d.items():
+                if "min_genes" in n:
+                    lowered.append((ref, " > ".join(path + [name]), n["min_genes"], n["genes"]))
+                walk(n.get("sub", {}), path + [name])
+        walk(jr.load_panels(ref), [])
+    assert lowered == [("HYPOTH", "Neurons > Glutamatergic neurons", 1, ["Slc17a6"])]
+
+
+def test_a_one_gene_panel_is_scored_only_when_it_declares_min_genes():
+    scaled = pd.DataFrame({"g1": [0.0, 1.0], "g2": [1.0, 0.0]}, index=["c0", "c1"])
+    declared = {"ids": ["g1"], "found": ["A"], "min_genes": 1}
+    undeclared = {"ids": ["g1"], "found": ["A"]}
+    assert list(jr.panel_score(scaled, declared)) == [0.0, 1.0]
+    assert jr.panel_score(scaled, undeclared).isna().all()

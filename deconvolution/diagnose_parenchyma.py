@@ -38,6 +38,7 @@ PAR = {'SKMGN': ['Skeletal muscle cells', 'Skeletal myocytes'],
        'LIVER': ['Hepatocytes']}
 
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
+from sample_join import load_viallabels  # noqa: E402  (checked sample key, STEP3_PREREG section 2.5)
 
 ph = pd.read_csv(PHENO, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')
 
@@ -53,7 +54,7 @@ def log2cpm(counts):                            # counts: genes x samples
 
 for TIS in ['SKMGN', 'SKMVL', 'HEART', 'LIVER']:
     print('=' * 78); print(f'[{TIS}]')
-    via = [x.strip() for x in open(os.path.join(BULK, TIS, 'bulk_samples.tsv')) if x.strip()]
+    via = load_viallabels(BULK, TIS, RES)    # Z rows are mix1..mixN in this order; checked against Stage 8
     bgenes = [x.strip() for x in open(os.path.join(BULK, TIS, 'bulk_genes.tsv')) if x.strip()]
     M = np.asarray(mmread(os.path.join(BULK, TIS, 'bulk.mtx')).todense(), float)
     if M.shape[0] != len(bgenes):              # orient to genes x samples

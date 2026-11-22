@@ -1,0 +1,3 @@
+contrast	measures	common_set	n_common	bp_rna	cibersortx	dwls	music	scdc	bisque	music_and_scdc_below_bayesprism_and_cibersortx	verdict	leave_one_out_same_verdict	references
+C-A	added + native bias against no bias (registered corrector reading)	all three arms	12	0.0528099	0.0617938	-0.0125500	-0.0069536	0.0181228	0.0048658	True	reproduced	12 of 12	BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC
+C-B	added bias against native bias (the 2026-11-11 reading)	all three arms	12	0.0251957	0.0220510	0.0284421	0.0259579	0.0216214	0.0024321	False	not reproduced	12 of 12	BAT; BLOOD; CORTEX; HEART; HIPPOC; KIDNEY; LIVER; LUNG; MUSCLE; SMLINT; TESTES; WATSC

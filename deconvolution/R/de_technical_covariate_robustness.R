@@ -1,11 +1,29 @@
 #!/usr/bin/env Rscript
-# de_technical_covariate_robustness.R -- Aim 2 hardening: is the per-cell-type exercise (dose)
-# signal robust to RNA-quality technical covariates? The main DE (run_pseudobulk_de.R) omitted
-# RIN / % globin because motrpac_sample_pheno.tsv lacked them -- but they ARE in the local
-# MotrpacRatTraining6moData::TRNSCRPT_META (RIN, pct_globin, per viallabel). For every HOTSPOT
-# block we re-fit the ordinal dose slope on log2-CPM of the BayesPrism Z with and without
-# {RIN + pct_globin} as covariates and compare the per-gene dose statistic. High agreement =
-# the exercise signal is not a technical-quality artifact.
+# de_technical_covariate_robustness.R -- the earlier RIN / percent-globin check, on the ORDINAL SLOPE.
+#
+# What it tests. For every hotspot block it fits the ordinal dose model (~ sex + week, week numeric
+# 0, 1, 2, 4, 8) on log2-CPM of the BayesPrism Z twice, without and with RIN and pct_globin as covariates,
+# and compares the week coefficient: Spearman correlation of the moderated t over genes, Pearson correlation
+# of the slopes, and the share of genes with per-block BH < 0.05 that stay significant. The verdict is
+# ROBUST when the correlation is at least 0.9 and the retained share is at least 0.8 (or undefined because
+# the base model has no significant gene), otherwise CHECK.
+#
+# What it does not test. The headline of Stage 10 is not the ordinal slope: "dose-significant" is the Fisher
+# combination of the per-sex omnibus F over factor(week), adjusted by one IHW fit pooled over all blocks.
+# This script refits a different model with a different multiplicity rule, on hotspots only, passes a hotspot
+# that has no significant gene, and does not look at calls gained (audit finding 7.6). The check on the
+# headline statistic is deconvolution/compare_de_runs.py (STEP3_PREREG.md 6.4): the whole DE is rerun with
+# the covariates in every model (pipeline/run_stage10.py --covariate-variants A B) and compared with the
+# headline per block. This script is kept as the earlier ordinal-slope check; its models and rule are unchanged.
+#
+# Sample key. The animal behind each row of a Z matrix comes from the sample key Stage 8 wrote
+# (<results>/<TISSUE>/mixture_samples.tsv), checked against bulk_samples.tsv by deconvolution/R/sample_key.R;
+# until 2026-11-14 this script paired mix<i> with line i of bulk_samples.tsv with no check. A tree without the
+# key stops the script unless ALLOW_POSITIONAL_SAMPLE_JOIN=1. The numbers are unchanged when the order is
+# right (docs/audit/remediation/STEP6_HYGIENE.md).
+#
+# The covariates come from the vendored MotrpacRatTraining6moData submodule (TRNSCRPT_META.rda, columns RIN
+# and pct_globin, per viallabel), not from the installed package.
 #
 # Out: <DE folder>/rin_globin_robustness.tsv (DE folder: $DE_DIR, which pipeline/run_stage14.py sets, else
 # <genecompass_input_dir>/pseudobulk_de from the config, else the repo default)
@@ -19,6 +37,7 @@ ROOT     <- Sys.getenv("PIPELINE_ROOT", ".")
 })
 source(file.path(.script_dir, "config.R"))      # fatal on a config error; no hardcoded arm fallback
 source(file.path(.script_dir, "provenance.R"))
+source(file.path(.script_dir, "sample_key.R"))
 RESULTS  <- file.path(cfg_value("CFG_RESULTS_DIR"), "motrpac")
 BULK     <- cfg_value("CFG_MOTRPAC_BULK_OUT")
 PHENO    <- cfg_value("CFG_SAMPLE_PHENO", default = file.path(ROOT, "deconvolution/reference/motrpac_sample_pheno.tsv"))
@@ -56,14 +75,20 @@ cat(sprintf("TRNSCRPT_META: %d samples; RIN non-NA=%d, pct_globin non-NA=%d\n",
 
 hs <- read.delim(HOT, stringsAsFactors=FALSE); hs <- hs[toupper(hs$is_hotspot)=="TRUE", ]
 rows <- list()
+key_files <- character(0)                              # sample keys read, for the provenance record
 for (i in seq_len(nrow(hs))) {
   TIS <- hs$tissue[i]; ct <- hs$cell_type[i]
   bs <- file.path(BULK, TIS, "bulk_samples.tsv"); csv <- file.path(RESULTS, TIS, "pred_z", paste0("predz__", safe(ct), ".csv"))
   base_row <- data.table(tissue=TIS, cell_type=ct)
   if (!file.exists(bs) || !file.exists(csv)) { rows[[length(rows)+1]] <- cbind(base_row, status="no input"); next }
-  via <- trimws(readLines(bs)); via <- via[via != ""]
+  key <- read_sample_key(bs, file.path(RESULTS, TIS), TIS)                   # mix <-> viallabel, checked
+  via <- key$viallabel
+  key_files <- union(key_files, c(bs, file.path(RESULTS, TIS, "mixture_samples.tsv")))
   Z <- as.matrix(read.csv(csv, row.names=1, check.names=FALSE))              # samples(mix1..N) x genes
-  m <- data.table(mix=paste0("mix", seq_along(via)), via=via,
+  if (nrow(Z) != nrow(key) || !all(key$mix %in% rownames(Z)))
+    stop(sprintf("[%s] %s has %d rows for the %d samples of the sample key (rows must be mix1..mix%d)",
+                 TIS, csv, nrow(Z), nrow(key), nrow(key)))
+  m <- data.table(mix=key$mix, via=via,
                   sex=ph[via,"sex"], group=ph[via,"group"], rin=RIN[via], glo=GLO[via])
   m[, week := WEEK_NUM[group]]
   ok  <- !is.na(m$week) & !is.na(m$sex) & m$group %in% WEEK_LV
@@ -97,7 +122,9 @@ for (i in seq_len(nrow(hs))) {
 }
 res <- rbindlist(rows, fill=TRUE)
 fwrite(res, OUT, sep="\t")
-write_provenance(DE_DIR, inputs = c(HOT, PHENO, META_RDA), params = list(results = RESULTS, bulk = BULK, out = OUT))
+write_provenance(DE_DIR, inputs = c(HOT, PHENO, META_RDA, key_files),
+                 params = list(results = RESULTS, bulk = BULK, out = OUT,
+                               allow_positional_sample_join = identical(Sys.getenv("ALLOW_POSITIONAL_SAMPLE_JOIN"), "1")))
 ok <- res[status=="ok"]
 cat(sprintf("\nwrote %s\n%d hotspots scored: %d ROBUST, %d CHECK; median spearman(dose-t)=%.3f, median retain=%.2f\n",
             OUT, nrow(ok), sum(ok$verdict=="ROBUST"), sum(ok$verdict=="CHECK"),

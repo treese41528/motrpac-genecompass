@@ -1,0 +1,25 @@
+quantity	value	source
+builder	pipeline/05_tokenization/build_hybrid_medians.py --fallback-rescale auto (the default)	the script
+fallback mode recorded for this build	auto	data/training/gene_medians_v2/hybrid_median_provenance.json: fallback_rescale.mode
+scale F recorded (rounded to 6 decimals by the builder)	2.052656	data/training/gene_medians_v2/hybrid_median_provenance.json: fallback_rescale.scale
+scale F recomputed here from the three inputs	2.052656	measure_fallback_scale() on the inputs below
+genes with both a rat and a human median (F is their median ratio), recorded	14766	data/training/gene_medians_v2/hybrid_median_provenance.json: fallback_rescale.n_shared_genes
+the same, recomputed here	14766	measure_fallback_scale()
+genes in the hybrid dictionary	21222	data/training/gene_medians_v2/hybrid_gene_medians.pickle
+genes recorded with a human median	14766	data/training/gene_medians_v2/hybrid_median_provenance.json: coverage.human_median
+genes recorded with a rescaled rat median	6456	data/training/gene_medians_v2/hybrid_median_provenance.json: coverage.rat_median
+genes recorded with the constant fallback 1.0	0	data/training/gene_medians_v2/hybrid_median_provenance.json: coverage.fallback
+genes whose value equals the human median of their ortholog, exactly	14766 of 14766	data/training/gene_medians_v2/hybrid_gene_medians.pickle against vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle through rat_to_human_mapping.pickle
+genes whose value equals their rat median divided by the recomputed F, exactly	6456 of 6456	data/training/gene_medians_v2/hybrid_gene_medians.pickle against data/training/gene_medians_v2/rat_gene_medians.pickle
+rule rebuilt from the inputs: same genes as the dictionary on disk	True	build_hybrid_medians()
+rule rebuilt from the inputs: genes with an identical value	21222 of 21222	build_hybrid_medians()
+rule rebuilt from the inputs: genes with the recorded source	21222 of 21222	data/training/gene_medians_v2/hybrid_median_provenance.json: per_gene_source
+genes in the Stage 3 universe	22213	data/training/ortholog_mappings/rat_token_mapping.tsv
+universe genes with no median (never tokenized)	991	data/training/ortholog_mappings/rat_token_mapping.tsv against data/training/gene_medians_v2/hybrid_gene_medians.pickle
+of those, genes with a new token (T3a, T3b or T4)	613	data/training/ortholog_mappings/rat_token_mapping.tsv
+when the dictionary was written (UTC)	2026-10-09T02:41:45.308061Z	data/training/gene_medians_v2/hybrid_median_provenance.json: generated_at
+command line and git commit of this build	not recorded: the folder holds no provenance_build_hybrid_medians.json	data/training/gene_medians_v2
+md5 hybrid_gene_medians.pickle	3bcd501ef49209636d74da6b8360d4f9	data/training/gene_medians_v2/hybrid_gene_medians.pickle
+md5 rat_gene_medians.pickle	df45b472ae33ec47571fc7e1e0f74a37	data/training/gene_medians_v2/rat_gene_medians.pickle
+md5 rat_to_human_mapping.pickle	317902827ed0012ad7c7622e1958fecc	data/training/ortholog_mappings/rat_to_human_mapping.pickle
+md5 human_gene_median_after_filter.pickle	33a0303055bd0b1689db085b2c26e3c7	vendor/GeneCompass/scdata/dict/human_gene_median_after_filter.pickle

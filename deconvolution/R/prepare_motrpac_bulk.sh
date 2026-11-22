@@ -1,7 +1,8 @@
 #!/bin/bash
 # Wrapper for prepare_motrpac_bulk.R -- reproduces the Gilbreth R env (project-local
 # R_libs/, suppressed site Rprofile, TMPDIR=project tmp/, conda stripped) then lifts
-# the MoTrPAC bulk gene IDs to current mRatBN7.2 ENSRNOG and writes deconv-ready
+# the MoTrPAC bulk gene IDs to current ENSRNOG (the project's BioMart files: Ensembl 115 / GRCr8;
+# this comment said mRatBN7.2 until 2026-11-14) and writes deconv-ready
 # samples x genes matrices. Light enough for a login node (reads .rda, builds the
 # liftover map, writes mtx) -- no GPU/compute node needed.
 #

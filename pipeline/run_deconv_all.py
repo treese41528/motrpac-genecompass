@@ -12,7 +12,7 @@ cross-species cortex). Before each tissue it runs TWO gates:
 Tissues are skipped (not run) when blocked / needs-online-data / (proposed, unless --include-proposed).
 
 Outputs go STRAIGHT into the active config's folders -- deconvolution.results_dir/motrpac/<TISSUE> and
-deconvolution.genecompass_input_dir/<label> (default config: the 16-tissue _refs4all_rebuild folders) -- with no links.
+deconvolution.genecompass_input_dir/<label> (default config: the 16-tissue _refs5 folders) -- with no links.
 A tissue whose output folder is a symlink (an arm assembled by deconvolution/assemble_arm.py) is refused,
 because writing would go through the link into another arm; pass --allow-links to override.
 
@@ -53,6 +53,10 @@ def main():
     ap.add_argument("--include-proposed", action="store_true", help="also run 'proposed' tissues (e.g. HIPPOC, pending sign-off)")
     ap.add_argument("--tissue", nargs="*", help="subset of BULK codes (default: all runnable)")
     ap.add_argument("--from-step", type=int, default=1, choices=[1, 2])
+    ap.add_argument("--stages", default="89", choices=["89", "8", "9"],
+                    help="which stages each tissue job runs: 8 then 9 (default), Stage 8 only, or Stage 9 only. "
+                         "Stage 8 alone lets the Stage 9 target sum be fixed from the new LIVER pseudo-cells "
+                         "(deconvolution/calibrate_target_sum.py) before any tissue is tokenized.")
     ap.add_argument("--run-local", action="store_true",
                     help="run each tissue's Stage 8 + 9 serially in this process (use inside a GPU compute job)")
     ap.add_argument("--allow-links", action="store_true",
@@ -128,9 +132,10 @@ def main():
                                  "--ref-dir", ref, "--fail"], cwd=ROOT)
             if qc.returncode != 0:
                 problems.append(f"{t}: reference_qc FAILED (non-native): {ref}"); continue
-        inner = (f"{py} pipeline/run_stage8.py --tissue {t} --ref-dir {shlex.quote(ref)} "
-                 f"--label {label} --from {args.from_step} --n-cores {args.cores} && "
-                 f"{py} pipeline/run_stage9.py --label {label} --device cuda")
+        s8 = (f"{py} pipeline/run_stage8.py --tissue {t} --ref-dir {shlex.quote(ref)} "
+              f"--label {label} --from {args.from_step} --n-cores {args.cores}")
+        s9 = f"{py} pipeline/run_stage9.py --label {label} --device cuda"
+        inner = {"89": f"{s8} && {s9}", "8": s8, "9": s9}[args.stages]
         planned.append((t, ref, label, inner))
 
     if skipped:

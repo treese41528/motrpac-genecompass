@@ -1,0 +1,5 @@
+sample_id	cells_default	default_md5	cells_canonical	same_cells	same_genes	same_counts	same_md5	default_above_15	default_stored_mito_pct_max	produced_with_switches	cells_switches	switches_above_15	switches_max_mito	switches_stored_mito_pct_max	switches_cells_all_in_default
+GSE181979_sample0	4631	8c5413dc793ccebfe9f755fa8a068b37	4631	True	True	True	False	616	0.0	True	4015	0	0.14917787742899852	0.14917787909507751	True
+GSE260849_sample0	3174	ec5f8fae605ef499ee6ce348fc23240f	3174	True	True	True	False	0	0.10324142128229141	True	3174	0	0.10324142285834562	0.10324142128229141	True
+GSE260849_sample1	3174	f7ec1ce7ff9ae53d4529f02865509ecf	3174	True	True	True	False	0	0.10324142128229141	True	3174	0	0.10324142285834562	0.10324142128229141	True
+GSE272895_sample0	95948	cd9f8fbc40e821d403e14289c05bee84	95948	True	True	True	False	19140	0.0	True	76760	0	0.15	0.15000000596046448	True

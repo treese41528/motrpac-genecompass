@@ -1,0 +1,41 @@
+OLD: /depot/reese18/apps/motrpac-genecompass/data/deconvolution/genecompass_input_v2_refs4all_rebuild/pseudobulk_de
+NEW: /depot/reese18/apps/motrpac-genecompass/data/audit_remediation/step3/de_regression/pseudobulk_de
+blocks analysed: OLD 151, NEW 151; same set: True
+
+(a) two-sex blocks: 130 blocks, 1,755,187 gene rows; same gene set in all: True
+    P_train_M: text mismatches 0; max |difference| 0; finite OLD 1,755,187, NEW 1,755,187
+    P_train_F: text mismatches 0; max |difference| 0; finite OLD 1,755,187, NEW 1,755,187
+    P_fisher: text mismatches 0; max |difference| 0; finite OLD 1,755,187, NEW 1,755,187
+    the other 24 shared columns outside the registered changes (n_nonzero, AveExpr, mean_fraction, F_dose_comb, P_dose_comb, slope_week, P_week_lin, lfc_1w, lfc_2w, lfc_4w, lfc_8w, P_8w_comb, F_sexXweek, P_sexXweek, FDR_BH_block, lfc_8w_M, lfc_8w_F, z_8w_M, z_8w_F, fdr_8w_M, fdr_8w_F, logFC_sex, P_sex, FDR_sex): all identical
+
+(b) one-sex blocks: 21 blocks (OVARY 15, TESTES 6), 290,041 gene rows
+    P_fisher finite: OLD 0, NEW 290,041
+    OVARY: genes 207,827; finite dose p NEW 207,827 (OLD 0); dose-significant NEW 11 (OLD 0)
+    TESTES: genes 82,214; finite dose p NEW 82,214 (OLD 0); dose-significant NEW 202 (OLD 0)
+    dose p equal to the one sex's omnibus p in every gene: True; equal to P_dose_comb (the same model): True
+
+(c) dose-significant gene x block pairs (FDR_IHW < 0.05) per tissue, OLD against NEW
+         tissue  n_blocks  n_sig_old  n_sig_new  n_sig_both  n_sig_lost  n_sig_gained  change
+          BLOOD         8      19358      19347       19326          32            21     -11
+           LUNG         7       9583       9658        9578           5            80      75
+            BAT         6       7303       7257        7228          75            29     -46
+         SPLEEN        12       6439       6553        6345          94           208     114
+          HEART        12       3719       3722        3705          14            17       3
+          SKMVL         8       2086       2039        1970         116            69     -47
+          SKMGN         8       1729       1631        1583         146            48     -98
+          WATSC        12       1456       1431        1370          86            61     -25
+          LIVER         8        992       1016         949          43            67      24
+         SMLINT        13        305        304         303           2             1      -1
+         KIDNEY        11        104         98          96           8             2      -6
+         CORTEX        10          9         10           7           2             3       1
+         HYPOTH         8          1          1           1           0             0       0
+         HIPPOC         7          0          3           0           0             3       3
+          OVARY        15          0         11           0           0            11      11
+         TESTES         6          0        202           0           0           202     202
+    ALL two-sex       130      53084      53070       52461         623           609     -14
+            ALL       151      53084      53283       52461         623           822     199
+    summary tables agree with the per-gene tables: OLD True, NEW True
+
+sex-consistency at 8 weeks (two-sex blocks)
+    OLD up_both + down_both states (repfdr on every gene-block OR concordance): 5,126
+    NEW concordance (primary): 144; repfdr on dose-significant gene-blocks: 3,404; union: 3,415

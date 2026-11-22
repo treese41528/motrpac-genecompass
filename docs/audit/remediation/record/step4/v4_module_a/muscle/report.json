@@ -1,0 +1,42 @@
+{
+  "cell_type": "Skeletal muscle cells",
+  "n_cells": 50,
+  "panel": 77,
+  "c1": {
+    "mef2c_pctile": 100.0,
+    "n_matched": 26,
+    "mef2c_shift": 6.027221843396546e-06,
+    "pass": true
+  },
+  "c2": {
+    "hits": 0,
+    "n_top": 25,
+    "K": 48,
+    "N": 2604,
+    "p": 1.0,
+    "pass": null,
+    "withdrawn": true
+  },
+  "c3": {
+    "detail": {
+      "Alb": {
+        "n_cells": 0,
+        "shift": null,
+        "pass": true
+      },
+      "Snap25": {
+        "n_cells": 0,
+        "shift": null,
+        "pass": true
+      }
+    },
+    "null_median": 1.4668703443021514e-06,
+    "pass": true,
+    "run": true
+  },
+  "c4": {
+    "rho": 0.771780850728219,
+    "p": 2.1149292249914224e-16,
+    "pass": true
+  }
+}

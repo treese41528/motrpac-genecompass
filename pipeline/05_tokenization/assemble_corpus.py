@@ -469,12 +469,21 @@ def write_stage5_manifest(
     # Pull config snapshot from first manifest (all tasks share the same config)
     cfg_snap = manifests[0].get('config_snapshot', {}) if manifests else {}
 
+    # The commit that assembled the corpus, and any modified tracked file (audit finding 2.7: the manifest
+    # carried neither). config_snapshot.ensembl_release comes from the scatter tasks, which copy the config;
+    # the config said "113" until 2026-10-05 although the files were release 115.
+    try:
+        from provenance import git_state
+        git = git_state()
+    except Exception:                                   # a manifest must not fail the run
+        git = {'git_commit': '', 'git_modified_tracked_files': []}
     manifest = {
         'stage':        5,
         'phase':        'gather',
         'generated_at': datetime.utcnow().isoformat() + 'Z',
         'elapsed_s':    round(time.time() - t_start, 1),
         'dry_run':      dry_run,
+        **git,
         'config_snapshot': cfg_snap,
         'inputs': {
             'n_scatter_tasks':       len(manifests),

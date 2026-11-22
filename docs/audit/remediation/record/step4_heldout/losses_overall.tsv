@@ -1,0 +1,5 @@
+model	set	model_dir	eval_set	studies	cells	masked_tokens	id_loss	value_loss	top1_acc	mean_expressed_genes	seed	batch_size	device
+v2	probe	data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/models	data/training/eval_probe_v2	77	2000	317619	3.0589878566859188	0.00024770560525922184	0.2550949407938442	1058.7875	20261008	8	NVIDIA A100-SXM4-40GB
+v2	heldout	data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species/models	data/audit_remediation/heldout/tokenized/eval_set	33	66000	13805095	3.199135110808296	0.0003745559632739544	0.23531522238709693	1394.6623181818181	20261008	8	NVIDIA A100-SXM4-40GB
+april	probe	data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models	data/training/eval_probe_v2	77	2000	317619	5.3102290960526055	0.000391625427248737	0.1879893835066542	1058.7875	20261008	8	NVIDIA A100-SXM4-40GB
+april	heldout	data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models	data/audit_remediation/heldout/tokenized/eval_set	33	66000	13805095	5.3998890395379195	0.0005653653448662136	0.17716821217094122	1394.6623181818181	20261008	8	NVIDIA A100-SXM4-40GB

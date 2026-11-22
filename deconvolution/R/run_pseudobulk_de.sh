@@ -1,14 +1,21 @@
 #!/bin/bash
-# Wrapper for run_pseudobulk_de.R -- per-(tissue x cell-type) pseudobulk DE on BayesPrism Z
-# (expression ~ sex + week; limma-trend on log2-CPM). Same R env as the other R/*.sh
-# wrappers (project R_libs/, suppressed site Rprofile, site profile for modules/conda).
-# Light (CSV + limma), so a login node is fine. Reads pred_z already on disk for all
-# tissues -- no deconvolution rerun needed.
+# Wrapper for run_pseudobulk_de.R -- differential expression per (tissue x cell type) on BayesPrism Z
+# (limma-trend on log2-CPM; the models are listed in the R script's header and in de_methods.tsv).
+# Same R env as the other R/*.sh wrappers (project R_libs/, suppressed site Rprofile, site profile for
+# modules/conda). It reads pred_z already on disk for all tissues; no deconvolution is rerun.
+# A full run (16 tissues) takes about 15 minutes and needs a compute node on this cluster (run it inside an
+# sbatch job, or through pipeline/run_stage10.py inside one).
 #
 # Usage:  run_pseudobulk_de.sh [TISSUE ...]      (default: all tissues with pred_z; hotspots first)
-#   e.g.  run_pseudobulk_de.sh                   # full run, 10 tissues
-#         run_pseudobulk_de.sh BLOOD SKMVL       # just these tissues
-# Override outputs/inputs via env: RESULTS_ROOT, BULK_ROOT, PHENO, HOTSPOTS, OUT_DIR, DE_SEED.
+#   e.g.  run_pseudobulk_de.sh                   # full run, every tissue
+#         run_pseudobulk_de.sh BLOOD SKMVL       # just these tissues (debugging: IHW and repfdr are pooled)
+# Override inputs and outputs via env: RESULTS_ROOT, BULK_ROOT, PHENO, HOTSPOTS, OUT_DIR.
+# Settings via env (pipeline/run_stage10.py sets them from its options):
+#   DE_SEED             IHW fold seed                         (--seed; default deconvolution.de_seed, else 1)
+#   DE_ALPHA            significance level of the R step       (--alpha; default 0.05)
+#   DE_TECH_COVARIATES  comma-separated technical covariates added to every model, among
+#                       rin, pct_globin, pct_umi_dup, median_5_3_bias   (--tech-covariates; default none)
+#   DE_MIN_MEDIAN_LIBSIZE  analysable-block rule              (--sensitivities; default 1000)
 set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -34,11 +41,16 @@ HOTSPOTS="${HOTSPOTS:-${CFG_HOTSPOTS_TABLE:-${GC_DIR}/gate_rcv10/corroboration_m
 OUT_DIR="${OUT_DIR:-${GC_DIR}/pseudobulk_de}"
 # IHW fold seed (config deconvolution.de_seed, default 1; env DE_SEED or run_stage10.py --seed override)
 export DE_SEED="${DE_SEED:-${CFG_DE_SEED:-1}}"
+# Significance level and technical covariates of the R step (STEP3_PREREG.md 6.1 and 6.4)
+export DE_ALPHA="${DE_ALPHA:-0.05}"
+export DE_TECH_COVARIATES="${DE_TECH_COVARIATES:-}"
 
 echo "results : ${RESULTS_ROOT}"
 echo "bulk    : ${BULK_ROOT}"
 echo "out     : ${OUT_DIR}"
 echo "seed    : ${DE_SEED}"
+echo "alpha   : ${DE_ALPHA}"
+echo "covars  : ${DE_TECH_COVARIATES:-none}"
 Rscript --no-init-file --no-site-file \
   "${PROJECT_ROOT}/deconvolution/R/run_pseudobulk_de.R" \
   "${RESULTS_ROOT}" "${BULK_ROOT}" "${PHENO}" "${HOTSPOTS}" "${OUT_DIR}" "$@"

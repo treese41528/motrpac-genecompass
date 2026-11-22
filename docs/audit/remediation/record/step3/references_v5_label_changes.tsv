@@ -1,0 +1,18 @@
+tissue	cell_type	cells_old	cells_new
+HEART	CD8+ T cells	1624	0
+HEART	T cells	5721	7345
+HYPOTH	Astrocytes	1007	774
+HYPOTH	Dopaminergic neurons	42	0
+HYPOTH	Endothelial cells	59	52
+HYPOTH	Ependymal cells	60	122
+HYPOTH	GABAergic neurons	1881	0
+HYPOTH	Glutamatergic neurons	1953	2704
+HYPOTH	Microglia	216	213
+HYPOTH	Neuroendocrine cells	81	0
+HYPOTH	Neurons	1792	3012
+HYPOTH	Oligodendrocyte precursor cells	229	227
+HYPOTH	Oligodendrocytes	648	377
+HYPOTH	Pars tuberalis cells	0	67
+HYPOTH	Radial glial cells	231	0
+HYPOTH	Tanycytes	272	200
+HYPOTH	Vascular leptomeningeal cells	0	244

@@ -7,7 +7,9 @@ Adapted from vendor/GeneCompass/pretraining/pretrain_genecompass_w_human_mouse_b
 
 Key changes from the original:
   1. Imports rat_load_prior_embedding instead of load_prior_embedding
-  2. vocab_size = 53,032 (50,558 + 2,474 T4 rat tokens)
+  2. vocab_size = 55,275 (50,558 + 4,717 new rat tokens: T3a 1,351 + T3b 892 + T4 2,474), read from the
+     token dictionary. (This line said 53,032 = 50,558 + 2,474 T4 until 2026-11-14: an earlier design that
+     no model was trained on.)
   3. cls_embedding = nn.Embedding(3, 768) — monkey-patched after model creation
   4. Loads from extended checkpoint (rat_model_init.py output)
   5. Reads hyperparameters from config/pipeline_config.yaml finetuning: section

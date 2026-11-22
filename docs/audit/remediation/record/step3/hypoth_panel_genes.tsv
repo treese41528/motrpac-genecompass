@@ -1,0 +1,16 @@
+panel	parent	compartment	found	missing	scorable
+Neurons		neural	Snap25,Syt1,Rbfox3,Stmn2,Syn1		True
+GABAergic neurons	Neurons		Slc32a1,Gad1,Gad2		True
+Glutamatergic neurons	Neurons		Slc17a6		True
+Astrocytes		glial	Aqp4,Gja1,Slc1a2,Aldh1l1,Gfap		True
+Oligodendrocytes		glial	Mbp,Plp1,Mobp,St18	Mog	True
+Oligodendrocyte precursor cells		glial	Pdgfra,Cspg4,Vcan	Gpr17	True
+Tanycytes		glial	Rax,Col23a1,Crym	Dio2	True
+Ependymal cells		glial	Dynlrb2,Drc12,Rarres2	Foxj1	True
+Microglia		immune	Cx3cr1,P2ry12,Tmem119,Csf1r,Hexb		True
+Border-associated macrophages		immune	Mrc1,Cd163,F13a1	Lyve1	True
+Endothelial cells		vascular	Flt1,Slc2a1,Ly6c	Cldn5,Pecam1	True
+Mural cells		vascular	Pdgfrb,Kcnj8,Vtn,Myh11	Rgs5	True
+Vascular leptomeningeal cells		stromal	Dcn,Col1a2,Slc6a13,Ptgds,Lum		True
+Choroid plexus epithelial cells		epithelial	Ttr,Kl,Folr1,Clic6		True
+T cells		immune	Cd3e,Cd3g,Cd3d,Cd2,Lck		True

@@ -1,0 +1,101 @@
+V6: known-truth mixture panel on the refs5 references. 19 sets under data/deconvolution/mixture_panel_refs5
+
+== Pass rule (registered, unchanged): BayesPrism's median per-type r >= 0.85 ==
+scored 19 of 19 sets; at or above the floor: 19; weak: 0; not scored: 0
+  BAT_holdout      median 0.998  recovers pooled 0.958  types 6/6  below 0.85: 0
+  BLOOD_holdout    median 0.990  recovers pooled 0.980  types 13/13  below 0.85: 0
+  CORTEX_holdout   median 0.999  recovers pooled 0.999  types 8/8  below 0.85: 0
+  HEART_holdout    median 0.994  recovers pooled 0.974  types 15/15  below 0.85: 0
+  HIPPOC_holdout   median 0.998  recovers pooled 0.997  types 10/10  below 0.85: 0
+  HYPOTH_holdout   median 0.995  recovers pooled 0.926  types 10/10  below 0.85: 0
+  KIDNEY_holdout   median 0.995  recovers pooled 0.974  types 15/15  below 0.85: 0
+  LIVER_holdout    median 0.992  recovers pooled 0.844  types 7/7  below 0.85: 1  worst: Hepatocytes 0.789; NK cells 0.978; Liver sinusoidal endothelial cells 0.981
+  LUNG_holdout     median 0.991  recovers pooled 0.947  types 21/21  below 0.85: 0
+  MUSCLE_holdout   median 0.997  recovers pooled 0.958  types 8/8  below 0.85: 0
+  OVARY_holdout    median 0.996  recovers pooled 0.995  types 16/16  below 0.85: 1  worst: Erythroid cells 0.397; Stromal cells 0.976; B cells 0.985
+  SMLINT_holdout   median 0.992  recovers pooled 0.979  types 13/13  below 0.85: 0
+  SPLEEN_holdout   median 0.990  recovers pooled 0.987  types 13/13  below 0.85: 0
+  TESTES_holdout   median 0.999  recovers pooled 0.996  types 5/5  below 0.85: 0
+  WATSC_holdout    median 0.994  recovers pooled 0.950  types 9/9  below 0.85: 0
+  CORTEX_cross     median 0.983  recovers pooled 0.897  types 6/6  below 0.85: 0
+  HIPPOC_cross     median 0.996  recovers pooled 0.826  types 6/6  below 0.85: 1  worst: Excitatory neurons 0.722; Microglia 0.995; Oligodendrocytes 0.995
+  KIDNEY_cross     median 0.976  recovers pooled 0.174  types 7/7  below 0.85: 3  worst: Monocytes 0.587; Immune cells 0.698; Distal convoluted tubule cells 0.703
+  MUSCLE_cross     median 0.986  recovers pooled 0.832  types 4/4  below 0.85: 0
+  holdout: 0.990 to 0.999 over 15 sets
+  cross: 0.976 to 0.996 over 4 sets
+  per-type r of BayesPrism over all sets: 192 type tests; 181 at 0.95 or above, 185 at 0.90 or above, 6 below 0.85
+
+== Against the panel of 2026-11-08 (BayesPrism median per-type r; descriptive, as registered) ==
+compared 19 sets; dropped by more than 0.05: 0
+largest drop -0.0035 (HEART_holdout); largest rise +0.0022 (KIDNEY_cross)
+  BAT_holdout      0.998 -> 0.998 (-0.0000)
+  BLOOD_holdout    0.989 -> 0.990 (+0.0006)
+  CORTEX_holdout   0.999 -> 0.999 (+0.0000)
+  HEART_holdout    0.997 -> 0.994 (-0.0035)
+  HIPPOC_holdout   0.998 -> 0.998 (-0.0000)
+  HYPOTH_holdout   0.995 -> 0.995 (-0.0003)
+  KIDNEY_holdout   0.995 -> 0.995 (-0.0003)
+  LIVER_holdout    0.992 -> 0.992 (-0.0002)
+  LUNG_holdout     0.991 -> 0.991 (+0.0002)
+  MUSCLE_holdout   0.997 -> 0.997 (-0.0001)
+  OVARY_holdout    0.995 -> 0.996 (+0.0005)
+  SMLINT_holdout   0.992 -> 0.992 (+0.0001)
+  SPLEEN_holdout   0.990 -> 0.990 (-0.0002)
+  TESTES_holdout   0.999 -> 0.999 (-0.0000)
+  WATSC_holdout    0.994 -> 0.994 (-0.0002)
+  CORTEX_cross     0.983 -> 0.983 (+0.0000)
+  HIPPOC_cross     0.996 -> 0.996 (-0.0000)
+  KIDNEY_cross     0.973 -> 0.976 (+0.0022)
+  MUSCLE_cross     0.986 -> 0.986 (-0.0000)
+
+== HEART_holdout and HYPOTH_holdout, every type (labels changed) ==
+  HEART_holdout: 15 types scored; r 0.894 to 0.999; below 0.85: 0; new since 2026-11-08: none; benchmarked then, not now: CD8+ T cells
+    Dendritic cells                        r 0.894 (2026-11-08: 0.900)  true 0.056 est 0.062
+    Endothelial cells                      r 0.984 (2026-11-08: 0.982)  true 0.051 est 0.064
+    Cardiac fibroblasts                    r 0.984 (2026-11-08: 0.991)  true 0.063 est 0.068
+    T cells                                r 0.988 (2026-11-08: 0.971)  true 0.047 est 0.057
+    Pericytes                              r 0.993 (2026-11-08: 0.997)  true 0.051 est 0.057
+    Macrophages                            r 0.993 (2026-11-08: 0.986)  true 0.060 est 0.068
+    Mast cells                             r 0.994 (2026-11-08: 0.994)  true 0.081 est 0.049
+    Monocytes                              r 0.994 (2026-11-08: 0.988)  true 0.046 est 0.045
+    NK cells                               r 0.996 (2026-11-08: 0.999)  true 0.053 est 0.048
+    Cardiac neurons                        r 0.996 (2026-11-08: 0.999)  true 0.056 est 0.054
+    Vascular smooth muscle cells           r 0.997 (2026-11-08: 0.997)  true 0.062 est 0.065
+    Lymphatic endothelial cells            r 0.997 (2026-11-08: 0.998)  true 0.061 est 0.059
+    B cells                                r 0.998 (2026-11-08: 0.999)  true 0.043 est 0.043
+    Mesothelial cells                      r 0.998 (2026-11-08: 0.999)  true 0.080 est 0.065
+    Cardiomyocytes                         r 0.999 (2026-11-08: 0.999)  true 0.189 est 0.195
+  HYPOTH_holdout: 10 types scored; r 0.955 to 0.997; below 0.85: 0; new since 2026-11-08: Ependymal cells, Vascular leptomeningeal cells, Pars tuberalis cells; benchmarked then, not now: GABAergic neurons, Neuroendocrine cells, Radial glial cells
+    Ependymal cells                        r 0.955 (2026-11-08: n/a)  true 0.110 est 0.068
+    Neurons                                r 0.957 (2026-11-08: 0.978)  true 0.109 est 0.161
+    Tanycytes                              r 0.982 (2026-11-08: 0.997)  true 0.111 est 0.118
+    Glutamatergic neurons                  r 0.991 (2026-11-08: 0.850)  true 0.119 est 0.139
+    Oligodendrocyte precursor cells        r 0.995 (2026-11-08: 0.999)  true 0.110 est 0.084
+    Microglia                              r 0.995 (2026-11-08: 0.998)  true 0.108 est 0.088
+    Pars tuberalis cells                   r 0.996 (2026-11-08: n/a)  true 0.075 est 0.081
+    Vascular leptomeningeal cells          r 0.996 (2026-11-08: n/a)  true 0.089 est 0.081
+    Oligodendrocytes                       r 0.997 (2026-11-08: 0.996)  true 0.067 est 0.063
+    Astrocytes                             r 0.997 (2026-11-08: 0.995)  true 0.103 est 0.110
+
+== Status of every method run ==
+  not applicable: 6
+  scored: 108
+    HYPOTH_holdout   MuSiC      not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': 'x' must be an array of at 
+    HYPOTH_holdout   Bisque     not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': Only one individual detecte
+    OVARY_holdout    MuSiC      not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': 'x' must be an array of at 
+    OVARY_holdout    Bisque     not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': Only one individual detecte
+    SPLEEN_holdout   MuSiC      not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': 'x' must be an array of at 
+    SPLEEN_holdout   Bisque     not applicable: one-sample reference; runner message: error in evaluating the argument 'x' in selecting a method for function 'as.matrix': Only one individual detecte
+
+== DWLS as the benchmark plan specified (mast_optimized, p 0.05) beside the earlier run (mast, p 0.01) ==
+scored 19 of 19 sets; median per-type r 0.706 to 0.996; change against 2026-11-08 -0.006 to +0.009 over 19 sets
+signature build and deconvolution, minutes per set 3.9 to 57.9, total 319 over 19 sets
+settings recorded: mast_optimized, p 0.05, fold change 0.5 (19 sets)
+the in-memory guard fired on 2 sets: BAT_holdout (Brown adipocytes); OVARY_holdout (Erythroid cells)
+
+== Provenance records (finding 5.6) ==
+76 records; cross-check runner 57, Stage 8 runner 19; commits: 631fde0; records with modified tracked files: 0
+
+== Build check (before deconvolution) ==
+cross harmonization identical to the reviewed maps: 4 of 4
+mixtures byte-identical to the 2026-11-08 panel: 17 of 19 sets; different: HEART_holdout, HYPOTH_holdout

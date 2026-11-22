@@ -1,5 +1,11 @@
 # Clean rebuild of the 16-tissue default: results (2026-11-02)
 
+> **2026-11-15: a dated record.** "The default" below is the 16-tissue run on the refs4 references
+> (`_refs4all_rebuild` folders), the default until 2026-11-15 and now `config/profiles/refs4all_rebuild.yaml`.
+> The default is now **refs5**; current results: `docs/audit/remediation/STEP3_RESULTS.md`. refs5's own
+> reproduction record is its sections A1 (all 15 references rebuilt, 13 byte-identical) and B1 (Stage 8 run
+> twice, byte-identical).
+
 Pre-registration: `REFS4ALL_REBUILD_PREREG.md` (bf0f417, written before any job ran). Commands: `DECONV_REBUILD_RUNBOOK.md`
 §0.6–0.7 exactly as written, under `PIPELINE_PROFILE=config/profiles/refs4all_rebuild.yaml`, at commit aee68a3.
 

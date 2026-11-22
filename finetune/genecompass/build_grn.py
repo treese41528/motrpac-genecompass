@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 r"""
-build_grn.py -- Module B (Aim 2b): differential trained-vs-control model-driven gene regulatory network.
+build_grn.py -- Module B (Aim 2b) PILOT: per-cell differential trained-vs-control network (a model read-out).
+
+Superseded by build_grn_pooled.py, which pseudobulks each arm and bootstraps; this file is kept because the
+pooled and human builders import load_arms() from it. No production table comes from this script.
 
 For one tissue x cell type, split the pseudo-cells into a CONTROL arm (training week 0) and a TRAINED arm
 (weeks 1-8), then for each transcription factor (TF) run the in-silico deletion (perturb_cells.perturb_gene)
-SEPARATELY in each arm. The per-gene contextual-embedding shift a TF deletion induces = that TF's candidate
-regulatory targets in that arm. The DIFFERENTIAL edge (trained - control) is the exercise-remodeled
-regulation: which TF->target relationships strengthen or weaken with training. Output is a ranked edge list.
+SEPARATELY in each arm. The per-gene contextual-embedding shift a TF deletion induces is the model's read-out
+for that TF and gene in that arm. The DIFFERENTIAL edge is trained - control, taken only on the targets that
+both arms report (docs/audit/remediation/STEP3_PREREG.md 8.1; the difference is build_grn_pooled.diff). A
+target reported by one arm only gets no edge; the summary table counts them per TF. Output is a ranked edge list.
 
 Arm labels come from augur_input/<tissue>/meta.tsv (columns sample, cell_type, label{control,trained},
 week, sex), joined to the tokenized dataset by (sample, cell_type). Use the per-gene TARGET shift as the
@@ -93,6 +97,8 @@ def main():
     if nC < args.min_cells or nT < args.min_cells:
         sys.exit(f"too few cells per arm (control={nC}, trained={nT}); need >= {args.min_cells}")
     model = pc.load_model(args.model_dir, args.device)
+    # Imported here, not at the top: build_grn_pooled imports load_arms from this module.
+    from build_grn_pooled import EDGE_RULE, arm_counts, diff
 
     edges, summ = [], []
     for gi, g in enumerate(tfs):
@@ -102,27 +108,47 @@ def main():
         if rc.get("n_cells", 0) < args.min_cells or rt.get("n_cells", 0) < args.min_cells:
             continue
         ac, at = rc.get("all_targets", {}), rt.get("all_targets", {})
-        deltas = [(tg, at.get(tg, 0.0) - ac.get(tg, 0.0), ac.get(tg, 0.0), at.get(tg, 0.0))
-                  for tg in set(ac) | set(at)]
-        deltas.sort(key=lambda x: -abs(x[1]))
+        # Registration 8.1: the difference exists only for targets both arms report. The earlier line filled
+        # a target missing from one arm with 0, which made the "difference" that arm's raw shift.
+        dd = diff(ac, at)
+        n = arm_counts(ac, at)
+        deltas = sorted(((tg, d, ac[tg], at[tg]) for tg, d in dd.items()), key=lambda x: (-abs(x[1]), x[0]))
         for tg, d, c, tr in deltas[:args.top_edges]:
             edges.append((g, sym.get(g, ""), tg, sym.get(tg, ""), round(d, 6),
                           round(c, 6), round(tr, 6), rc["n_cells"], rt["n_cells"]))
         summ.append((g, sym.get(g, ""), rc["n_cells"], rt["n_cells"],
-                     round(rc.get("mean_cell_shift", 0), 7), round(rt.get("mean_cell_shift", 0), 7), len(deltas)))
+                     round(rc.get("mean_cell_shift", 0), 7), round(rt.get("mean_cell_shift", 0), 7), len(deltas),
+                     n["n_targets_control_only"], n["n_targets_trained_only"]))
         if (gi + 1) % 25 == 0:
             print(f"  {gi + 1}/{len(tfs)} TFs processed", flush=True)
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w") as f:
         f.write("tf\ttf_symbol\ttarget\ttarget_symbol\tdelta\tctrl_shift\ttrained_shift\tn_ctrl\tn_trained\n")
-        for e in sorted(edges, key=lambda x: -abs(x[4])):
+        for e in sorted(edges, key=lambda x: (-abs(x[4]), x[0], x[2])):
             f.write("\t".join(str(x) for x in e) + "\n")
     with open(args.out.replace(".tsv", "_tfsummary.tsv"), "w") as f:
-        f.write("tf\tsymbol\tn_ctrl\tn_trained\tctrl_cell_shift\ttrained_cell_shift\tn_targets\n")
-        for s in sorted(summ, key=lambda x: -x[5]):
+        f.write("tf\tsymbol\tn_ctrl\tn_trained\tctrl_cell_shift\ttrained_cell_shift\tn_targets\t"
+                "n_targets_control_only\tn_targets_trained_only\n")
+        for s in sorted(summ, key=lambda x: (-x[5], x[0])):
             f.write("\t".join(str(x) for x in s) + "\n")
-    print(f"wrote {len(edges)} differential edges from {len(summ)} expressed TFs -> {args.out}")
+    one_arm = sum(s[7] + s[8] for s in summ)
+    print(f"wrote {len(edges)} differential edges from {len(summ)} expressed TFs -> {args.out} "
+          f"(edge rule {EDGE_RULE}: {one_arm:,} TF x target pairs reported by one arm only got no edge)")
+
+    # Provenance (audit finding 9.6), with the md5 of the weights file.
+    sys.path.insert(0, str(_ROOT / "lib"))
+    from provenance import write_provenance
+    weights = Path(args.model_dir) / "pytorch_model.bin"
+    params = dict(vars(args))
+    params.update({"space": "rat", "builder": "per-cell pilot", "edge_rule": EDGE_RULE,
+                   "registration": "docs/audit/remediation/STEP3_PREREG.md section 8.1",
+                   "weights_file": str(weights), "n_edges": len(edges), "n_tfs": len(summ),
+                   "n_pairs_one_arm_only": one_arm})
+    write_provenance(Path(args.out).parent, name=f"provenance_{Path(args.out).stem}.json",
+                     inputs=[args.dataset, args.meta, args.tf_file, pc.DEFAULT_TOKEN_DICT,
+                             Path(args.model_dir) / "config.json"],
+                     md5_inputs=[weights, args.tf_file, args.meta], params=params)
 
 
 if __name__ == "__main__":

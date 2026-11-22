@@ -1,0 +1,10 @@
+{
+ "tokenize_summary": "data/audit_remediation/step3/calibration/liver_T6400/tokenize_summary.json",
+ "T0": 6400.0,
+ "liver_median_at_T0": 0.8794445991516113,
+ "corpus_median": 0.9145306348800659,
+ "T_star": 6745.1942582057245,
+ "T": 6700.0,
+ "liver_median_at_T_predicted": 0.9099852810852709,
+ "n_pseudocells": 400
+}

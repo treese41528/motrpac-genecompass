@@ -3,6 +3,15 @@
 # mRatBN7.2 (Ensembl rel-113) ENSRNOG, then emit deconv-ready samples x genes
 # matrices for BayesPrism (run_deconvolution.R).
 #
+# LABEL CORRECTION (2026-11-14; audit findings 1.9 and 4.5). Wherever the comments below say "rel-113" or
+# "mRatBN7.2" they mean the project's BioMart files (biomart.rat_gene_info in the config), and those files are
+# Ensembl release 115 / GRCr8. The label was wrong in the config until 2026-10-05 and was copied here. The
+# lift reads the files, not the label, so no output depends on it. The comments also say RGD's ENSEMBL_ID
+# "tracks the newer GRCr8 assembly": that cannot be the reason, since the project's files are GRCr8; what was
+# measured is that about 60% of RGD's Ensembl IDs are in the project's BioMart file. Not using RGD's Ensembl
+# IDs is right either way. The two label strings written to motrpac_missed_genes_summary.txt now say
+# "release 115"; nothing else in the outputs changes.
+#
 # WHY: the consortium's TRNSCRPT_<TISSUE>_RAW_COUNTS are annotated on an OLDER
 # Ensembl rat build (~Rnor_6.0). Only ~61% of the 32,883 bulk ENSRNOG IDs are
 # current; the rest are ID orphans that (a) silently drop out of bulk∩reference
@@ -317,7 +326,7 @@ if (file.exists(trf)) {
   n_corp <- if (all(is.na(md$in_sc_corpus))) "NA (audit sets absent)" else as.character(sum(md$in_sc_corpus, na.rm = TRUE))
   writeLines(c(
     "MoTrPAC training-regulated ('primary') genes still NOT tokenizable after the",
-    "3-bridge gene-ID liftover  (direct + symbol + Entrez/RGD ID-history -> rel-113)",
+    "3-bridge gene-ID liftover  (direct + symbol + Entrez/RGD ID-history -> release 115)",
     "=============================================================================", "",
     sprintf("%d of the %d training-regulated transcriptome genes remain without a", nrow(md), length(union_tr)),
     sprintf("GeneCompass token: %d already in vocab + %d symbol-recovered + %d id_history-recovered",
@@ -331,7 +340,7 @@ if (file.exists(trf)) {
     "growth. Notable members: the RT1-* rat-MHC immune cluster (training-regulated in up to",
     "8 tissues; hyper-polymorphic, excluded from ortholog vocabularies) and a few real",
     "metabolic/immune genes (e.g. CD36, NDUFA13, TPI1, GPT, LYVE1, C4A, CFB).", "",
-    "Columns: symbol, old_ensrnog, current_ensrnog (rel-113: own id if current, else symbol-",
+    "Columns: symbol, old_ensrnog, current_ensrnog (release 115: own id if current, else symbol-",
     "resolved), n_tissues_trainreg, tissues, in_current_annot, in_sc_corpus, category, importance."),
     MISSED_SUM)
   cat(sprintf("\n-- still-missed primary genes: %d (record: %s; high %d/med %d/low %d) --\n",

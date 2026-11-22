@@ -3,7 +3,8 @@
 """
 build_rat_tf_list.py -- Module A.5: the rat transcription-factor list to perturb (Aim 2b/3b).
 
-Produces deconvolution/reference/rat_tf_ensrnog.tsv: rel-113 ENSRNOG rat TFs (in the GeneCompass vocab),
+Produces deconvolution/reference/rat_tf_ensrnog.tsv: rat TFs by ENSRNOG (in the GeneCompass vocab; the IDs are
+those of the project's BioMart files, Ensembl 115 / GRCr8 -- this line said "rel-113" until 2026-11-14),
 optionally restricted to per-tissue expressed genes. This is the "which genes to delete" list for the
 GRN (Module B): perturb each TF -> targets -> differential trained-vs-control network.
 

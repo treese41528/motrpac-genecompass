@@ -171,7 +171,9 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
     # Check if already done
     if (output_dir / 'pytorch_model.bin').exists():
         logger.info(f"Extended checkpoint already exists: {output_dir}")
-        logger.info("Skipping Step 1 (use --force to regenerate)")
+        logger.info("Skipping Step 1. This orchestrator never regenerates an existing initial checkpoint: "
+                    "to build another, set model.init_checkpoint to a new folder (rat_model_init.py itself "
+                    "refuses to replace one without --overwrite).")
         return True
 
     if dry_run:
@@ -197,6 +199,10 @@ def run_model_init(config: dict, dry_run: bool = False) -> bool:
     # deposited); null in the YAML reproduces that unseeded behaviour.
     if ft.get('init_seed') is not None:
         cmd += ['--seed', str(int(ft['init_seed']))]
+    # t3_prior_source: stage6 is the pre-October lookup that leaves every T3a prior row zero. The worker
+    # refuses it unless the YAML also says initialization.allow_legacy_t3_priors: true (audit finding 2.7).
+    if ft.get('allow_legacy_t3_priors'):
+        cmd += ['--allow-legacy-t3-priors']
 
     logger.info("Step 1: Extending checkpoint for rat vocabulary...")
     result = subprocess.run(cmd, capture_output=False)
@@ -283,7 +289,9 @@ def _run(label: str, cmd: list, dry_run: bool, env: dict = None) -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Stage 7 orchestrator")
     parser.add_argument('--config', default=None, type=str,
-                        help='Path to config YAML (default: finetune/genecompass/configs/rat_finetune_v2.yaml; April: rat_finetune.yaml)')
+                        help='Path to config YAML (default: finetune/genecompass/configs/rat_finetune_v2.yaml). '
+                             "rat_finetune.yaml carries April's paths and hyperparameters but not April's "
+                             'prior policy or save interval; see the note at the top of that file')
     parser.add_argument('--from', dest='start_step', type=int, default=1, choices=[1, 2, 3, 4],
                         help='Start from step N (1=init, 2=mix, 3=probe, 4=train)')
     parser.add_argument('--to', dest='end_step', type=int, default=4, choices=[1, 2, 3, 4],
@@ -296,13 +304,23 @@ def main():
     parser.add_argument('--dry-run', action='store_true',
                         help='Validate only, do not execute')
     parser.add_argument('--force', action='store_true',
-                        help='Force re-execution of completed steps')
+                        help='Not implemented: stops with instructions. Until 2026-11-14 the flag was accepted '
+                             'and ignored (audit finding 3.7)')
     parser.add_argument('-v', '--verbose', action='store_true')
 
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    if args.force:
+        # The flag was parsed and never used, while the skip message recommended it. Regenerating an initial
+        # checkpoint, a training mix or a probe in place would destroy the inputs of a trained model, so the
+        # flag is not wired up: it stops the run and says what to do instead.
+        logger.error("--force is not implemented. Stage 7 never regenerates an existing initial checkpoint, "
+                     "training mix or evaluation probe. To build new ones, point the YAML at new folders "
+                     "(model.init_checkpoint, data.mixed_dataset, probe.output) and rerun without --force.")
+        sys.exit(2)
 
     config = load_config(args.config)
 

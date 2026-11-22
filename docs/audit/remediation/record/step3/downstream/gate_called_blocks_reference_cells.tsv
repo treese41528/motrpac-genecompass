@@ -1,0 +1,13 @@
+tissue	cell_type	gate_class	reference	reference_cells_of_type	libraries_with_the_type	reference_libraries	mean_fraction	median_libsize
+BLOOD	Classical monocytes	hotspot	BLOOD_composite	3050	5	6	0.034940380371097	308413.96199999994
+BLOOD	Erythroid cells	hotspot	BLOOD_composite	90	1	6	0.7083906014191019	6037809.365999989
+BLOOD	Megakaryocytes and platelets	hotspot	BLOOD_composite	533	5	6	0.1454259064774922	1263074.1539999966
+BLOOD	Neutrophils	hotspot	BLOOD_composite	2168	1	6	0.0696522055495882	556768.5939999983
+HEART	Vascular smooth muscle cells	hotspot	HEART_GSE280111_LV	810	17	19	0.0129072975328553	176184.9919999958
+LUNG	Endothelial cells	hotspot	LUNG_native_pooled	783	3	3	0.5314578967982295	10522530.478000008
+LUNG	Vascular smooth muscle cells	hotspot	LUNG_native_pooled	327	3	3	0.0724280685079396	1450314.8339999977
+SKMGN	Schwann cells	hotspot	MUSCLE_GSE137869_Y	30	2	2	0.0007919733577017	7372.829999999949
+SKMGN	Vascular smooth muscle cells	borderline	MUSCLE_GSE137869_Y	167	2	2	0.0012306815601753	14043.918000000082
+SKMVL	Satellite cells	hotspot	MUSCLE_GSE137869_Y	261	2	2	0.0021376964009687	18677.10400000009
+SKMVL	Tenocytes	hotspot	MUSCLE_GSE137869_Y	212	2	2	0.0071412800243067	48838.31000000065
+SKMVL	Vascular smooth muscle cells	hotspot	MUSCLE_GSE137869_Y	167	2	2	0.0022030437891886	19376.31800000027

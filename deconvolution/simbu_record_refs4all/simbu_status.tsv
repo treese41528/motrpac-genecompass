@@ -1,0 +1,16 @@
+set	paired_reference	same_truth	n_ref_cells	n_types	n_genes_bulk	bias_bp_rna	bias_cibersortx	bias_dwls	bias_music	bias_scdc	bias_bisque	nobias_bp_rna	nobias_cibersortx	nobias_dwls	nobias_music	nobias_scdc	nobias_bisque
+BAT	True	True	2595	6	17895	True	True	True	True	True	True	True	True	True	True	True	True
+BLOOD	True	True	5680	13	18260	True	True	True	True	True	True	True	True	True	True	True	True
+CORTEX	True	True	3892	12	21003	True	True	True	True	True	True	True	True	True	True	True	True
+HEART	True	True	7360	16	19256	True	True	True	True	True	True	True	True	True	True	True	True
+HIPPOC	True	True	4566	11	17895	True	True	True	True	True	True	True	True	True	True	True	True
+HYPOTH	True	True	3690	13	17351	True	True	True	False	True	False	True	True	True	False	True	False
+KIDNEY	True	True	5977	15	17867	True	True	True	True	True	True	True	True	True	True	True	True
+LIVER	True	True	2421	8	17895	True	True	True	True	True	True	True	True	True	True	True	True
+LUNG	True	True	9354	21	16956	True	True	True	True	True	True	True	True	True	True	True	True
+MUSCLE	True	True	2927	9	17895	True	True	True	True	True	True	True	True	True	True	True	True
+OVARY	True	True	5236	18	30562	True	True	True	False	True	False	True	True	True	False	True	False
+SMLINT	True	True	4944	13	17895	True	True	True	True	True	True	True	True	True	True	True	True
+SPLEEN	True	True	4449	14	22050	True	True	True	False	True	False	True	True	True	False	True	False
+TESTES	True	True	2206	6	14482	True	True	True	True	True	True	True	True	True	True	True	True
+WATSC	True	True	3556	13	17895	True	True	True	True	True	True	True	True	True	True	True	True

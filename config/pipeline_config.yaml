@@ -155,6 +155,9 @@ harvesting:
   min_genes_per_cell: 200
   max_mito_fraction: 0.15
 
+  # The deposited data/catalog/llm_study_analysis.json was NOT made with this one model: it holds 1,336 records
+  # from claude-sonnet-4-5-20250929, 1,216 from claude-haiku-4-5 and 10 from claude-3-5-haiku-20241022 (audit
+  # finding 1.4). The key is what a new run would use.
   llm_model: "claude-haiku-4-5"
   llm_cost_limit_usd: 5.0
   llm_output_file: data/catalog/llm_study_analysis.json
@@ -167,6 +170,11 @@ harvesting:
   data_root: data/raw
   catalog_file: data/gene_inventory/study_catalog.tsv
   catalog_dir: data/catalog
+  # A series returned by both the single-cell and the bulk GEO query is listed twice in master_catalog.json.
+  # false (as v2 was built): the later, bulk row wins and Stage 2 skips the series; 79 confirmed rat
+  # single-cell series never reached cell QC (audit finding 1.1). true keeps the single-cell row. Recommended
+  # true for any new corpus; it changes which series enter Stage 2.
+  prefer_single_cell_on_conflict: false
 
   sources:
     geo:
@@ -207,14 +215,27 @@ gene_universe:
     - "^E-[A-Z]+-[A-Z]+-\\d+$"
   fail_on_unrecognized_accession: true
 
-  # ── Step 2 cell QC thresholds (GeneCompass-exact) ──
+  # ── Step 2 cell QC thresholds (modelled on GeneCompass; departures, audit findings 1.2, 1.3, 1.8) ──
+  # As the v2 corpus was built: no fixed 15% mitochondrial cut (max_mito_fraction is read only under its
+  # switch below); the only mitochondrial rule is the within-file 3 SD outlier rule, applied to total counts
+  # and mitochondrial fraction (GeneCompass applies 3 SD to the number of expressed genes); and that rule has
+  # no effect in files keyed by Ensembl ID, because mitochondrial genes are recognised by symbol. Measured:
+  # 10.4% of the 6.8 million training cells are above 15% (docs/audit/remediation/STEP5_RESULTS.md, M1).
   preprocessing:
     min_genes_per_cell: 200
     min_cells_per_sample: 4
-    max_mito_fraction: 0.15
+    max_mito_fraction: 0.15        # applied only when apply_max_mito_fraction is true
     outlier_sd_threshold: 3.0
     min_core_genes_per_cell: 7
     save_qc_matrices: true
+    # Repairs for a FUTURE corpus (docs/audit/remediation/STEP5_PREREG.md). All false: the v2 corpus is
+    # defined by its file list and checksums (config/corpus_v2_plan.tsv), and turning any of these on makes
+    # Stage 2 produce a different corpus. Recommended true for any new corpus.
+    mito_by_id: false               # 1.3: also recognise mitochondrial genes by Ensembl ID (chromosome MT)
+    apply_max_mito_fraction: false  # 1.2: drop cells above max_mito_fraction
+    outlier_on_n_genes: false       # 1.8: 3 SD rule on the number of expressed genes as well
+    walk_each_file_once: false      # 1.6: do not read a matrix under <GSE>_RAW twice (the second read made
+                                    #      the md5 copies that corpus_v2_plan.tsv lists as drop_duplicate)
 
   # ── Step 3 expression-based pruning ──
   # GeneCompass architecture: biotype filtering (Step 1) + top-2048
@@ -340,10 +361,14 @@ prior_knowledge:
     # Stage 6 read (md5 5e1e18fea6f3b34dca80758c5322a9e6, fetched 2026-03-17) is not in the archive
     # (between the 03-06 and 04-01 snapshots); it is deposited.
     hgnc_url: "https://storage.googleapis.com/public-download-files/hgnc/archive/archive/monthly/tsv/hgnc_complete_set_2026-03-06.txt"
-    rat_only_tokens: true       # Only embed rat-specific tokens (T4); 
-                                # ortholog-mapped tokens inherit from GC
+    # rat_only_tokens is read by no code (audit Part 2, Stage 6 deviation 2). The family builder trains on
+    # human, mouse and rat families together and cannot give a rat-specific (T4) token a vector: 0 of 2,474
+    # T4 rows are non-zero in v2's initialisation. The key is left in place; removing it would change nothing.
+    rat_only_tokens: true
 
-  # Steps 3 & 4: Promoter and GRN — stubs, not yet implemented
+  # Steps 3 & 4: promoter (build_promoter_embedding.py) and GRN transfer (build_grn_transfer.py). Both are
+  # implemented and ran in March 2026; this comment called them "stubs, not yet implemented" until 2026-11-14.
+  # Stage 6 refuses to overwrite an existing <name>_embeddings.pkl without --overwrite (audit finding 2.7).
   promoter:
     enabled: true             # Requires DNABert + Ensembl genome sequences
     dnabert_model: "zhihan1996/DNA_bert_6"
@@ -368,8 +393,11 @@ deconvolution:
   cell_annotations_dir: data/training/cell_annotations
   consensus_annotations_dir: data/training/cell_annotations_consensus
   annotation_inventory: reports/annotations/annotation_inventory.tsv
-  # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup)
-  rat_exclude_genes: deconvolution/reference/rat_exclude_genes.tsv
+  # Rat gene-cleanup list (ribo/mito/hb; replaces BayesPrism's hs/mm-only cleanup). Since refs5 (2026-11-15) the
+  # list built by rule in Ensembl 115 (deconvolution/build_exclude_genes.py; 464 genes; STEP3_PREREG.md
+  # Amendment 1). The earlier list, rat_exclude_genes.tsv (247 IDs of an older annotation, 57 absent from
+  # release 115, ten S6 kinases filed as ribosomal), is what config/profiles/refs4all_rebuild.yaml uses.
+  rat_exclude_genes: deconvolution/reference/rat_exclude_genes_v2.tsv
   # Rat protein-coding gene list (Gene type == protein_coding from biomart
   # rat_gene_info.tsv -- the same biotype source GeneCompass Stage 2 uses).
   # Replaces BayesPrism's hs/mm-only select.gene.type="protein_coding". Derived
@@ -385,40 +413,45 @@ deconvolution:
   # Committed reference artifacts (small, tracked; live with the code under deconvolution/reference/)
   rat_genecompass_genes: deconvolution/reference/rat_genecompass_genes.tsv  # GeneCompass token-gene keep-list
   sample_pheno: deconvolution/reference/motrpac_sample_pheno.tsv            # PHENO viallabel -> sex/group/weeks
-  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, rel-113
+  pa_genes: deconvolution/reference/motrpac_pa_genes.tsv                    # training-regulated (PA) genes, Ensembl 115 IDs
   reference_dir: deconvolution/reference   # root for the committed reference TSVs above
   # Outputs -- regenerable + gitignored, under data/deconvolution/ (NOT in the code tree)
   output_root: data/deconvolution
   built_reference_dir: data/deconvolution/references     # build_reference.py per-tissue SC references
   idspace_audit_dir: data/deconvolution/idspace_audit    # audit_idspace.py output
   # Stage 14 purity sweeps on the production references (pipeline/run_stage14.py).
-  validation_dir: data/deconvolution/validation_refs4all_rebuild
+  validation_dir: data/deconvolution/validation_refs5
   # The research-phase method validation (build_all_datasets.sh: V0/V1/V2 and cross sets; run_purity_sweep.sh:
   # the paper-faithful liver sweep on the pilot reference). Not part of the numbered stages.
   pilot_validation_dir: data/deconvolution/validation
-  # Default = all 16 tissues with a reference (since 2026-11-01, REFERENCE_RELABEL_PREREG.md §14/§16,
-  # ALL_TISSUE_RERUN_RESULTS.md): the jointly re-annotated references (references_v4/, tissue_references.yaml;
-  # REFS4_RERUN_RESULTS.md) plus SPLEEN and OVARY, with the v2 model. Since 2026-11-03 the default folders are
-  # the clean rebuild (_refs4all_rebuild: every tissue built in place by the runbook commands, no links), which
-  # reproduces the earlier assembled tree byte for byte through Stage 13 (REFS4ALL_REBUILD_RESULTS.md); the
-  # assembled tree is config/profiles/refs_v4all.yaml. The 14-tissue result is config/profiles/refs4_14.yaml; the
-  # July-reference v2 outputs are config/profiles/july_refs.yaml; April's model is config/profiles/april.yaml.
-  results_dir: data/deconvolution/results_refs4all_rebuild
-  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs4all_rebuild  # pseudo-cells/tokenized/embeddings/umap
+  # Default = refs5 (since 2026-11-15): the audit-remediation rerun of Stages 8-14 on all 16 tissues
+  # (docs/audit/remediation/STEP3_PREREG.md and STEP3_RESULTS.md). References rebuilt into references_v5/
+  # (HYPOTH re-annotated, the HEART merge applied; tissue_references.yaml), the exclusion list rebuilt in
+  # Ensembl 115, the gate's Monte Carlo classes, the DE repairs and the network difference on shared genes,
+  # with the v2 model. Every stage ran from one clean commit (44332e6).
+  # Earlier defaults stay on disk and are selected with PIPELINE_PROFILE: the 2026-11-03 clean rebuild on
+  # references_v4 is config/profiles/refs4all_rebuild.yaml (its assembled twin refs_v4all.yaml); the 14-tissue
+  # result refs4_14.yaml; the July-reference v2 outputs july_refs.yaml; April's model april.yaml.
+  results_dir: data/deconvolution/results_refs5
+  genecompass_input_dir: data/deconvolution/genecompass_input_v2_refs5  # pseudo-cells/tokenized/embeddings/umap
   # Fine-tuned rat GeneCompass for Stage 9 embedding (pipeline/run_stage9.py picks the
   # latest checkpoint-* beneath this dir). Under data/models/ (gitignored data tree).
   genecompass_model_dir: data/models/rat_genecompass_finetuned_v2/models/rat_phase2_mixed_species
-  # Stage 9/12 tokenizer normalize_total target, calibrated so the pseudo-cells' token-value median matches
-  # the model's corpus (v2 6,400; April 6,500). Stage 12 must use the rat run's value.
-  pseudocell_target_sum: 6400
-  # The Aim-2 gate table whose q_sup_trained < 0.05 blocks are the exercise hotspots (Stage 10 and the
-  # DE wrapper): the 10 splits x 10,000 permutations gate (pre-registration §6), scored under the §6
-  # analysable-block rule (median library >= 1,000; REFERENCE_RELABEL_PREREG.md §6).
-  hotspots_table: data/deconvolution/genecompass_input_v2_refs4all_rebuild/gate_rcv10/corroboration_merged.tsv
+  # Stage 9/12 tokenizer normalize_total target, set by the registered formula so that the LIVER pseudo-cells'
+  # median token value matches the model's corpus (RETRAIN_V2_PREREGISTRATION.md:155-164). refs5: 6,700
+  # (docs/audit/remediation/record/step3/stage8/target_sum.json); the 2026-11-03 rebuild used 6,400; April 6,500.
+  # Stage 12 must use the rat run's value.
+  pseudocell_target_sum: 6700
+  # The Aim-2 gate table. A hotspot is a block whose class is "hotspot" in its gate_class column (is_hotspot):
+  # a Benjamini-Hochberg call over the analysable blocks (median library >= 1,000) that more permutations
+  # could not reverse (10 splits; 10,000 permutations, then batches up to 1,000,000; deconvolution/mc_gate.py;
+  # STEP3_PREREG.md 5.2). "borderline" blocks are listed beside it and are not hotspots. Tables from before
+  # refs5 have no class column; for them a hotspot is q_sup_trained < 0.05.
+  hotspots_table: data/deconvolution/genecompass_input_v2_refs5/gate_rcv10/corroboration_merged.tsv
   # Canonical-Augur exports (augur_prep.py) and the Stage 13 differential GRNs in rat and human space.
-  augur_input_dir: data/deconvolution/augur_input_v2_refs4all_rebuild
-  grn_dir: data/deconvolution/grn_v2_refs4all_rebuild
-  grn_human_dir: data/deconvolution/grn_v2_refs4all_rebuild_human
+  augur_input_dir: data/deconvolution/augur_input_v2_refs5
+  grn_dir: data/deconvolution/grn_v2_refs5
+  grn_human_dir: data/deconvolution/grn_v2_refs5_human
   # Positive-control spec with the targets renamed to the joint labels (genes/directions unchanged;
   # posctrl_celltype_map_refs4.tsv, REFERENCE_RELABEL_PREREG.md §11). July's: reference/posctrl_prereg.tsv.
   posctrl_prereg: deconvolution/reference/posctrl_prereg_refs4.tsv
@@ -428,10 +461,11 @@ deconvolution:
   n_cores: 4
   r_module: r/4.4.1
   # Real MoTrPAC bulk gene-ID liftover (Fix 1): lift consortium TRNSCRPT_<TISSUE>_RAW_COUNTS
-  # (older Ensembl rat build) -> current mRatBN7.2 ENSRNOG via three bridges: direct match,
+  # (older Ensembl rat build) -> current ENSRNOG (the BioMart files above: Ensembl 115 / GRCr8; this
+  # comment said mRatBN7.2 until 2026-11-14) via three bridges: direct match,
   # a FEATURE_TO_GENE symbol bridge, and an Entrez/RGD ID-history bridge (rgd.genes_file
-  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed across
-  # the Rnor_6.0->mRatBN7.2 rebuild). Then write deconv-ready samples x genes bulk per
+  # above + FEATURE_TO_GENE.entrez_gene; recovers genes whose ENSRNOG/symbol changed since
+  # the Rnor_6.0 annotation). Then write deconv-ready samples x genes bulk per
   # tissue. Built by deconvolution/R/prepare_motrpac_bulk.{R,sh}; biomart rat_gene_info
   # (above) supplies the current-ID universe.
   motrpac_bulk_dir: data/motrpac/rat_training_6mo/data        # source TRNSCRPT_*_RAW_COUNTS.rda

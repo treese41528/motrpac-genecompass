@@ -36,8 +36,24 @@ Usage:
   python forgetting_analysis.py [--n-cells 5000] [--mask-prob 0.15] [--seed 42]
                                 [--output-dir reports/forgetting] [--rat-init DIR] [--finetuned-root DIR]
 
-v2's pre-registered forgetting check is C1/C2 (analysis/aim1_validation/analyze.py,
-docs/RETRAIN_V2_RESULTS.md); this script is the per-checkpoint trajectory view.
+v2's pre-registered forgetting check is C1/C2, computed by finetune/genecompass/eval_mlm.py and scored by
+finetune/genecompass/score_prereg_c1c2.py (docs/RETRAIN_V2_RESULTS.md); this script is the per-checkpoint
+trajectory view. (This header pointed to analysis/aim1_validation/analyze.py until 2026-11-14.)
+
+READ BEFORE USING (added 2026-11-14; audit finding 3.7 and Part 3, 7e deviation 6). Nothing below was changed;
+these are properties of the script as it stands.
+  * It has been run for the April model only. The one result on disk (reports/forgetting/, 2026-04-12) lists
+    April's checkpoints (phase 1 to step 129,449, phase 2 to 147,941). There is no v2 trajectory.
+  * Its losses are not comparable with eval_mlm.py's or with the training loss. Every masked token becomes
+    <mask> and its value is set to 0.0 (eval_mlm.py and, by the audit's reading, the training collator use
+    80% mask / 10% random / 10% unchanged, with hidden values set to -1); it passes no attention mask; and the
+    audit reports that it averages over batches, not tokens. The audit quotes a base human gene-ID loss of
+    4.245 here against 3.444 under eval_mlm.py.
+  * The species-embedding drift is always missing: it is looked up as bert.embeddings.cls_embedding.weight,
+    and the tensor is bert.cls_embedding.weight.
+  * Paths: the rat corpus is April's (data/training/tokenized_corpus/dataset) although the default model
+    paths are v2's, and PROJECT_ROOT is an absolute path written into the script.
+A v2 trajectory comparable with C1/C2 would need eval_mlm.py run on v2's intermediate checkpoints.
 
 Cluster:  Gilbreth, 1x A100-40GB (eval only, no training)
 Account:  reese18
@@ -372,7 +388,11 @@ def load_model(ckpt_info, device):
     if num_species != 2:
         model.bert.cls_embedding = nn.Embedding(num_species, 768)
 
-    model.load_state_dict(state, strict=False)
+    # This script also loads the 2-species base model, whose key set differs from the rat model's, so the load
+    # is reported and not enforced here (checked_load.py; audit finding 6.7).
+    sys.path.insert(0, str(PROJECT_ROOT / "finetune" / "genecompass"))
+    from checked_load import load_state_checked
+    load_state_checked(model, state, raise_on_error=False)
     model = model.eval().to(device)
 
     return model

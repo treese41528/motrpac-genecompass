@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Recommendation A (data-anchored parenchyma positive control) + C (dominant-cell-type flags).
+A data-anchored check of the dominant cell type's DE (A) + dominant-cell-type flags (C).
 
-A: the pre-registered Tier-A controls were MIS-SPECIFIED (flat/down in rat bulk transcript).
-   The CORRECT parenchyma positive control is data-anchored: genes that GENUINELY move with
-   training dose IN THE MATCHED BULK (8wk-vs-control, BH<0.05 & |log2FC|>=THR) -- do they
-   recover (FDR_IHW<0.05 & sign-concordant) in the parenchyma cell type's DE? High recovery =
-   the deconvolution->DE faithfully propagates real bulk dose signal to the dominant cell type.
+A: of the genes that move with training dose in the matched bulk (8wk-vs-control, BH<0.05 &
+   |log2FC|>=THR), how many does the dominant (parenchyma) cell type's DE call in the same direction
+   (FDR_IHW<0.05 & sign-concordant)? This check was written after the registered positive controls
+   (POSCTRL_PREREG.md) missed in muscle and heart, and it is not registered. The dominant type is most of
+   its tissue, so agreement with the bulk is expected by construction; the table is a description, not a
+   verdict on the pipeline, and it does not replace the registered controls (audit finding 7.3).
 
 C: emit the dominant (most-abundant) cell type per tissue so the write-up can flag/down-weight
    absolute per-gene DE there (H3-robust reporting).
@@ -24,6 +25,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from gene_utils import load_config, resolve_path  # noqa: E402
 _cfg = load_config()
 BULK = str(resolve_path(_cfg, _cfg['deconvolution']['motrpac_bulk_out']))
+RES  = str(resolve_path(_cfg, _cfg['deconvolution']['results_dir']) / 'motrpac')   # Stage 8 output, for the sample-key check
 DE   = os.environ.get('DE_DIR') or str(resolve_path(_cfg, _cfg['deconvolution']['genecompass_input_dir']) / 'pseudobulk_de')
 print(f'DE folder: {DE}')
 PH   = str(resolve_path(_cfg, _cfg['deconvolution']['sample_pheno']))
@@ -34,6 +36,7 @@ PAR = {'SKMGN': ['Skeletal myocytes', 'Skeletal muscle cells'],
        'SKMVL': ['Skeletal myocytes', 'Skeletal muscle cells'],
        'HEART': ['Cardiomyocytes'], 'LIVER': ['Hepatocytes']}
 from celltype_names import safe  # noqa: E402  (shared writer/reader filename contract)
+from sample_join import load_viallabels  # noqa: E402  (checked sample key, STEP3_PREREG section 2.5)
 ph = pd.read_csv(PH, sep='\t', dtype=str).drop_duplicates('viallabel').set_index('viallabel')
 summ = pd.read_csv(os.path.join(DE, 'de_summary.tsv'), sep='\t')
 
@@ -50,7 +53,7 @@ print('\n=== A: do parenchyma DE blocks recover genes that GENUINELY move in the
 print('(bulk movers = 8wk-vs-control BH<0.05 & |log2FC|>=%.2f)' % THR_LFC)
 rows = []
 for TIS, cts in PAR.items():
-    via = [x.strip() for x in open(f'{BULK}/{TIS}/bulk_samples.tsv') if x.strip()]
+    via = load_viallabels(BULK, TIS, RES)
     g = [x.strip() for x in open(f'{BULK}/{TIS}/bulk_genes.tsv') if x.strip()]
     M = np.asarray(mmread(f'{BULK}/{TIS}/bulk.mtx').todense(), float)
     if M.shape[0] != len(g): M = M.T
@@ -81,6 +84,14 @@ if missing:
     sys.exit(f'ERROR: no parenchyma DE block found for {missing} (renamed cell type? update PAR)')
 res.to_csv(os.path.join(DE, 'parenchyma_dataanchored_validation.tsv'), sep='\t', index=False)
 print(res.to_string(index=False))
-print('\nREAD: high recovery_rate => the parenchyma DE faithfully recovers REAL bulk dose movers')
-print('(the proper positive control), confirming the pipeline is sound and the earlier Tier-A')
-print('non-recovery was control mis-specification, not a deconvolution failure.')
+# What the table is, and is not (audit finding 7.3). It is a later, unregistered check: of the genes that move
+# with training in the matched bulk, how many does the dominant cell type's DE call in the same direction. The
+# dominant type is most of its tissue, so its estimated expression is close to the bulk and a high rate is
+# expected by construction. It does not replace the registered positive controls (POSCTRL_PREREG.md), whose
+# pipeline-sanity subset is reported on its own terms. No verdict is printed: the numbers are.
+tested = res[res.n_testable > 0]
+print(f'\nrecovery of bulk dose movers by the dominant cell type: {int(tested.n_recovered.sum())} of '
+      f'{int(tested.n_testable.sum())} testable genes over {len(tested)} tissues; per-tissue rate '
+      f'{tested.recovery_rate.min():.3f} to {tested.recovery_rate.max():.3f} (median {tested.recovery_rate.median():.3f})'
+      if len(tested) else '\nno tissue had a testable bulk mover')
+print('This is an unregistered, later check on blocks that are most of their tissue; it carries no verdict.')

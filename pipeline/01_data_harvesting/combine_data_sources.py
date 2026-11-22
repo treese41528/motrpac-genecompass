@@ -245,16 +245,43 @@ def load_json(path: Path) -> Optional[dict]:
         return None
 
 
-def load_catalog(catalog_dir: Path, filename: str = 'master_catalog.json') -> Dict[str, dict]:
+def index_catalog(studies: List[dict], prefer_single_cell: bool = False) -> Dict[str, dict]:
+    """Index catalog rows by accession.
+
+    A series returned by both the single-cell and the bulk query is listed twice. By default the later row
+    wins, which is how the v2 corpus was built: the bulk row, so Stage 2 skipped the series (audit finding 1.1:
+    79 confirmed rat single-cell series never reached cell QC). With prefer_single_cell (switch
+    harvesting.prefer_single_cell_on_conflict, off for v2) a single-cell row is kept over any other row of the
+    same accession.
+    """
+    by_acc: Dict[str, dict] = {}
+    n_conflict = n_kept_sc = 0
+    for s in studies:
+        acc = s['accession']
+        if acc in by_acc:
+            n_conflict += 1
+            if prefer_single_cell and by_acc[acc].get('data_type') == 'single_cell' \
+                    and s.get('data_type') != 'single_cell':
+                n_kept_sc += 1
+                continue
+        by_acc[acc] = s
+    if n_conflict:
+        logger.info(f"{n_conflict} accessions are listed more than once; "
+                    + (f"single-cell row kept for {n_kept_sc}" if prefer_single_cell else "the later row is kept"))
+    return by_acc
+
+
+def load_catalog(catalog_dir: Path, filename: str = 'master_catalog.json',
+                 prefer_single_cell: bool = False) -> Dict[str, dict]:
     """Load catalog JSON and index by accession."""
     path = catalog_dir / filename
     data = load_json(path)
     if not data:
         return {}
-    
+
     studies = data.get('studies', [])
     logger.info(f"Loaded {len(studies)} studies from {filename}")
-    return {s['accession']: s for s in studies}
+    return index_catalog(studies, prefer_single_cell)
 
 
 def load_matrix_analysis(catalog_dir: Path, filename: str = 'matrix_analysis.json') -> Dict[str, dict]:
@@ -952,7 +979,8 @@ def main():
     logger.info(f"Catalog directory: {catalog_dir}")
     logger.info(f"Output: {output_path}")
     
-    catalog_by_acc = load_catalog(catalog_dir, args.catalog)
+    catalog_by_acc = load_catalog(catalog_dir, args.catalog,
+                                  prefer_single_cell=bool(h.get('prefer_single_cell_on_conflict', False)))
     matrix_by_acc = load_matrix_analysis(catalog_dir, args.matrix)
     llm_by_acc = load_llm_analysis(catalog_dir, args.llm)
     

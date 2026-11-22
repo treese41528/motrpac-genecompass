@@ -1,0 +1,19 @@
+reference	cell_type	n_ref_cells	ref_mean_library_size	ref_mean_expressed_genes	arm	scaling_factor	remove_bias_in_counts	remove_bias_in_counts_method	mean_library_size_as_summed	relative_to_type_mean
+TESTES	Condensed spermatids	500	30707.27800	2794.72200	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Condensed spermatids	500	30707.27800	2794.72200	B	NONE	False	read-number	31223.21900	0.69665
+TESTES	Condensed spermatids	500	30707.27800	2794.72200	C	expressed_genes	False	read-number	105714666.56000	0.47644
+TESTES	Elongating spermatids	500	57424.77200	4755.62200	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Elongating spermatids	500	57424.77200	4755.62200	B	NONE	False	read-number	57731.69000	1.28810
+TESTES	Elongating spermatids	500	57424.77200	4755.62200	C	expressed_genes	False	read-number	289923981.29700	1.30665
+TESTES	Round spermatids	500	44314.84800	4675.84400	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Round spermatids	500	44314.84800	4675.84400	B	NONE	False	read-number	43952.58300	0.98067
+TESTES	Round spermatids	500	44314.84800	4675.84400	C	expressed_genes	False	read-number	214372359.83200	0.96615
+TESTES	Sertoli cells	42	28657.16667	4650.90476	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Sertoli cells	42	28657.16667	4650.90476	B	NONE	False	read-number	28676.45400	0.63983
+TESTES	Sertoli cells	42	28657.16667	4650.90476	C	expressed_genes	False	read-number	137776962.41700	0.62095
+TESTES	Spermatocytes	500	80809.78000	5378.33400	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Spermatocytes	500	80809.78000	5378.33400	B	NONE	False	read-number	81336.44400	1.81477
+TESTES	Spermatocytes	500	80809.78000	5378.33400	C	expressed_genes	False	read-number	467457525.43500	2.10678
+TESTES	Spermatogonia	164	26427.46341	4277.80488	A	NONE	True	read-number	1.00000	1.00000
+TESTES	Spermatogonia	164	26427.46341	4277.80488	B	NONE	False	read-number	25994.33300	0.57998
+TESTES	Spermatogonia	164	26427.46341	4277.80488	C	expressed_genes	False	read-number	116050792.56300	0.52303

@@ -3,6 +3,13 @@
 **Repository:** `treese41528/motrpac-genecompass`
 **Description:** Cross-species transcriptomic analysis of exercise adaptations using foundation models — integrating MoTrPAC rat data with GeneCompass
 
+> **Planning document (banner added 2026-11-14, audit "stale documents").** This page was written as the
+> intended layout of the repository. Parts of it were never built or have since changed: for example it
+> lists `docs/REFACTORING.md`, `docs/DATA_DICTIONARY.md`, `notebooks/pipeline_validation.ipynb` and
+> `pipeline/01_data_harvesting/harvest_arrayexpress.py`, none of which exists. It was not checked line by
+> line when this banner was written, so do not rely on its file tree. For what is in the repository, list
+> it (`git ls-files`); for what each stage does and where its outputs are, read `pipeline/README.md`.
+
 ---
 
 ## Why this name

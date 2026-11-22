@@ -25,7 +25,7 @@ Purpose:
          orthologs) keep their ENSRNOG ID — they form embeddings adjacent to
          their correlated partners in 768-dim space, which is exactly what
          fine-tuning requires for new token initialization.
-      5. Deduplicate pairs across all 88 studies.
+      5. Deduplicate pairs across all studies (the March 2026 run read 864 QC files).
       6. Train gene2vec (Word2Vec Skip-Gram, 768 dimensions) on the pair list.
       7. Save embeddings keyed by the same unified ID used in the token lookup.
 
@@ -122,7 +122,7 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 _PROJECT_ROOT = Path(os.environ.get('PIPELINE_ROOT', '.')).resolve()
 sys.path.insert(0, str(_PROJECT_ROOT / 'lib'))
-from gene_utils import load_config, resolve_path
+from gene_utils import load_config, refuse_overwrite, resolve_path
 
 logging.basicConfig(
     level=logging.INFO,
@@ -642,6 +642,10 @@ def main() -> None:
             'output directory and skips already-processed files.'
         ),
     )
+    parser.add_argument(
+        '--overwrite', action='store_true',
+        help='Replace an existing coexp_embeddings.pkl (default: refuse; audit finding 2.7)',
+    )
     args = parser.parse_args()
 
     if args.verbose:
@@ -713,6 +717,7 @@ def main() -> None:
     logger.info(f"  QC'd h5ad files: {len(h5ad_files):,} [OK]")
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    refuse_overwrite(output_dir / 'coexp_embeddings.pkl', args.overwrite, dry_run=args.dry_run)
 
     if args.dry_run:
         logger.info("Dry run complete — all inputs validated.")

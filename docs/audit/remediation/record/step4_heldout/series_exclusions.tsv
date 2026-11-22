@@ -1,0 +1,4 @@
+level	accession	file	kind	rule	detail
+series	GSE304911		note	sibling_of_training_under_superseries	sub-series of GSE304998, which is also the super-series of training series GSE284698
+series	GSE304998		exclusion	shares_gsm_with_training	41 of 71 samples are samples of training series GSE284698 (e.g. GSM8690733,GSM8690734,GSM8690735)
+series	GSE304998		exclusion	superseries_of_training	SuperSeries of GSE284698

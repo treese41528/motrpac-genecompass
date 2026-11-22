@@ -1,5 +1,20 @@
 # MoTrPAC Bulk Gene-ID Liftover & Deconvolution Prep — Findings & Status
 
+> **Correction note (2026-11-14; audit findings 1.9, 4.5, cross-stage "stale release labels").** This is a
+> status document of 2026-06-09 and is left as written. Two things in it are wrong:
+> - **"rel-113" and "mRatBN7.2" mean the project's BioMart files, which are Ensembl release 115 / GRCr8**
+>   (`config/pipeline_config.yaml`, `biomart` block; byte-identical to the September 2025 Ensembl archive).
+>   The label was wrong in the config until 2026-10-05 and this document copied it. The lift depends only on
+>   the files, so every count and percentage below stands; read "rel-113" as "release 115" throughout.
+> - **The explanation that RGD's `ENSEMBL_ID` column "tracks the newer GRCr8 assembly" (TL;DR and §5) cannot
+>   be right**, because the project's own files are GRCr8. What was measured is only that 60.6% of RGD's
+>   Ensembl IDs are in the project's BioMart file. Which annotation RGD's column follows has not been
+>   determined. The fix described in §5 (resolve by current symbol, never by RGD's Ensembl ID) does not
+>   depend on the explanation.
+>
+> The script (`deconvolution/R/prepare_motrpac_bulk.R`) now names the release correctly in its comments and in
+> the summary it writes.
+
 _Status as of 2026-06-09. For collaborator review. Branch `stage8-omnideconv-setup`._
 _Commits: `3bd9fb8` (Fix 1 + DWLS), `1bdccd9` (missed-gene record), `fd530e5` (bridge-3),
 `05cb123` (Fix 2 cortex), `cde5e00` (ID-space audit); **id_history bridge re-targeted to rel-113 —

@@ -19,6 +19,9 @@ deconvolution:
   posctrl_prereg: deconvolution/reference/posctrl_prereg.tsv
   genecompass_input_dir: data/deconvolution/genecompass_input
   genecompass_model_dir: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species
+  # The weights April's runs loaded. models/pytorch_model.bin is byte-identical to checkpoint-147941 (cmp,
+  # 2026-11-14). Without this line the profile kept the default config's v2 checkpoint (audit finding 3.1).
+  model_checkpoint: data/models/rat_genecompass_finetuned/models/rat_phase2_mixed_species/models
   pseudocell_target_sum: 6500
   hotspots_table: data/deconvolution/genecompass_input/gate_rcv10/corroboration_merged.tsv
   augur_input_dir: data/deconvolution/augur_input

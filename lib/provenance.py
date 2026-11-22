@@ -1,12 +1,17 @@
 """provenance.py -- write a small JSON record of how an output was produced.
 
 One call next to an output directory records the git commit (plus any modified tracked
-files), the command line, the time, the host, the run parameters, and the size and mtime of
-each input file (optionally its md5, for files under 2 GB) and, if given, the loaded config, so a
+files), the command line, the time, the host, the run parameters, and the size, mtime and md5 of
+each input file (md5 for regular files under 2 GB) and, if given, the loaded config, so a
 result can always be traced to the code and inputs that made it.
 deconvolution/R/provenance.R is the R twin and writes the same fields.
 
-It never raises: a failure only prints a warning, because provenance must not fail a run.
+Since 2026-11-14 the md5 is recorded by default (audit, cross-stage "provenance": records held a file's
+size and time where a checksum was needed). Size and mtime are kept. Pass md5=False, or set the
+environment variable PROVENANCE_MD5=0, to skip the checksums of ``inputs`` (``md5_inputs`` are always hashed).
+
+It never raises: a failure only prints a warning, because provenance must not fail a run. It is called
+after the outputs it describes are written and never reads or changes them.
 
     from provenance import write_provenance
     write_provenance(out_dir, inputs=[pheno_tsv, bulk_dir], params=vars(args))
@@ -31,6 +36,15 @@ def _git(*args):
         return out.stdout if out.returncode == 0 else ""
     except Exception:
         return ""
+
+
+def git_state():
+    """The repository's commit and its modified tracked files, for a stage manifest:
+    {'git_commit': <HEAD, '' when git cannot be asked>, 'git_modified_tracked_files': [paths]}.
+    The same two fields write_provenance records. Never raises."""
+    modified = [line[3:] for line in
+                _git("status", "--porcelain", "--untracked-files=no").splitlines() if line.strip()]
+    return {"git_commit": _git("rev-parse", "HEAD").strip(), "git_modified_tracked_files": modified}
 
 
 MD5_MAX_BYTES = 2 * 1024 ** 3   # md5 only files below 2 GB; bigger ones get size + mtime only
@@ -75,16 +89,19 @@ def _config_snapshot(config):
         return str(config)
 
 
-def write_provenance(out_dir, inputs=(), params=None, name=None, md5=False, config=None,
+def write_provenance(out_dir, inputs=(), params=None, name=None, md5=None, config=None,
                      md5_inputs=None):
     """Write <out_dir>/provenance_<script>.json and return its path (None on failure).
 
-    md5=True adds the md5 of every regular input file under 2 GB (larger files and directories
-    keep size + mtime only). md5_inputs, if given, is an extra list of paths that are always
+    md5 adds the md5 of every regular input file under 2 GB (larger files and directories keep
+    size + mtime only). The default (None) is on unless the environment has PROVENANCE_MD5=0;
+    True and False force it. md5_inputs, if given, is an extra list of paths that are always
     md5'd (under the same 2 GB cap) whatever ``md5`` is, e.g. the small reference files next to
     a huge corpus input. config (a loaded pipeline or training config dict) is recorded as-is.
     """
     try:
+        if md5 is None:
+            md5 = os.environ.get("PROVENANCE_MD5", "1") != "0"
         out_dir = Path(out_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
         script = Path(sys.argv[0]).stem or "python"

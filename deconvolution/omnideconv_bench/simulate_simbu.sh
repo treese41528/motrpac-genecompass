@@ -17,5 +17,7 @@ mkdir -p "${TMPDIR}"
 # a laptop/container. See deconvolution/setup/site_env.sh.
 source "${PROJECT_ROOT}/deconvolution/setup/site_env.sh"
 echo "R : $(command -v R)"
+# SIMBU_SCRIPT picks which R script of this folder runs in that environment: the simulator (default) or
+# check_simbu_arms.R.
 Rscript --no-init-file --no-site-file \
-  "${PROJECT_ROOT}/deconvolution/omnideconv_bench/simulate_simbu.R" "$@"
+  "${PROJECT_ROOT}/deconvolution/omnideconv_bench/${SIMBU_SCRIPT:-simulate_simbu.R}" "$@"

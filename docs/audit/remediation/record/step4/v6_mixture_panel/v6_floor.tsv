@@ -1,0 +1,20 @@
+set	design	floor	bayesprism_median_r	bayesprism_pooled_r	verdict	n_types_scored	n_types_in_median	min_type_r	n_types_below_floor	n_types_r_ge_095	n_types_r_ge_090	worst_types
+BAT_holdout	holdout	0.8500000	0.9976065	0.9577389	recovers	6	6	0.9570404	0	6	6	Brown adipocytes 0.957; Endothelial cells 0.990; Neuronal-like cells 0.997
+BLOOD_holdout	holdout	0.8500000	0.9899235	0.9798215	recovers	13	13	0.9178200	0	12	13	CD4+ T cells 0.918; Regulatory T cells 0.976; CD8+ T cells 0.979
+CORTEX_holdout	holdout	0.8500000	0.9990611	0.9993719	recovers	8	8	0.9859501	0	8	8	Neuroblasts 0.986; Oligodendrocyte precursor cells 0.996; Oligodendrocytes 0.999
+HEART_holdout	holdout	0.8500000	0.9939076	0.9744658	recovers	15	15	0.8937759	0	14	14	Dendritic cells 0.894; Endothelial cells 0.984; Cardiac fibroblasts 0.984
+HIPPOC_holdout	holdout	0.8500000	0.9978841	0.9968564	recovers	10	10	0.9957905	0	10	10	Excitatory neurons 0.996; Dentate gyrus granule cells 0.996; Astrocytes 0.997
+HYPOTH_holdout	holdout	0.8500000	0.9948544	0.9258028	recovers	10	10	0.9553453	0	10	10	Ependymal cells 0.955; Neurons 0.957; Tanycytes 0.982
+KIDNEY_holdout	holdout	0.8500000	0.9950522	0.9736555	recovers	15	15	0.9419883	0	14	15	Injured proximal tubule cells 0.942; Thick ascending limb cells 0.957; Immune cells 0.967
+LIVER_holdout	holdout	0.8500000	0.9921796	0.8437164	recovers	7	7	0.7890997	1	6	6	Hepatocytes 0.789; NK cells 0.978; Liver sinusoidal endothelial cells 0.981
+LUNG_holdout	holdout	0.8500000	0.9910537	0.9467332	recovers	21	21	0.9197458	0	19	21	Club cells 0.920; Goblet cells 0.935; Non-classical monocytes 0.979
+MUSCLE_holdout	holdout	0.8500000	0.9966995	0.9581535	recovers	8	8	0.9779812	0	8	8	Fibro-adipogenic progenitors 0.978; Skeletal muscle cells 0.986; Pericytes 0.994
+OVARY_holdout	holdout	0.8500000	0.9957737	0.9950175	recovers	16	16	0.3967221	1	15	15	Erythroid cells 0.397; Stromal cells 0.976; B cells 0.985
+SMLINT_holdout	holdout	0.8500000	0.9916493	0.9785301	recovers	13	13	0.9820111	0	13	13	Epithelial cells 0.982; NK cells 0.986; Stem cells 0.987
+SPLEEN_holdout	holdout	0.8500000	0.9901465	0.9871708	recovers	13	13	0.9553453	0	13	13	CD4+ T cells 0.955; CD8+ T cells 0.974; B cells 0.983
+TESTES_holdout	holdout	0.8500000	0.9991067	0.9963944	recovers	5	5	0.9961798	0	5	5	Round spermatids 0.996; Spermatogonia 0.999; Elongating spermatids 0.999
+WATSC_holdout	holdout	0.8500000	0.9941426	0.9500601	recovers	9	9	0.9783510	0	9	9	Adipose stromal progenitor cells 0.978; T cells 0.980; Macrophages 0.988
+CORTEX_cross	cross	0.8500000	0.9827586	0.8967403	recovers	6	6	0.9607055	0	6	6	Microglia 0.961; T cells 0.971; Oligodendrocytes 0.979
+HIPPOC_cross	cross	0.8500000	0.9959725	0.8262142	recovers	6	6	0.7220980	1	5	5	Excitatory neurons 0.722; Microglia 0.995; Oligodendrocytes 0.995
+KIDNEY_cross	cross	0.8500000	0.9756027	0.1744538	recovers	7	7	0.5867436	3	4	4	Monocytes 0.587; Immune cells 0.698; Distal convoluted tubule cells 0.703
+MUSCLE_cross	cross	0.8500000	0.9859997	0.8320140	recovers	4	4	0.9746277	0	4	4	Skeletal muscle cells 0.975; Macrophages 0.983; Schwann cells 0.989

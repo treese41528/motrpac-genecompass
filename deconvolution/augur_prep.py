@@ -3,7 +3,7 @@
 
 Two outputs:
   (A) Per-tissue inputs for CANONICAL Augur (R / neurorestore) under
-      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2_refs4all_rebuild/ under the default config):
+      <deconvolution.augur_input_dir>/<tissue>/ (data/deconvolution/augur_input_v2_refs5/ under the default config):
         embed.tsv   768-d GeneCompass CLS embedding, cells x dims
         pca.tsv     PCA-50 of the log-normalized deconvolved Z, cells x PCs
         meta.tsv    cell_id, cell_type, sample, label(trained/control), sex, week
@@ -18,7 +18,8 @@ Two outputs:
       separate exercise better than a plain PCA baseline? (cf. "one PCA still rules them all",
       arXiv 2410.13956). Writes pca_control.tsv.
 
-Join + alignment identical to pheno_merge_test.py / subspace_probe.py (mix{i} -> viallabel -> pheno;
+Join + alignment identical to pheno_merge_test.py / subspace_probe.py (mix{i} -> viallabel -> pheno, through
+deconvolution/sample_join.py, which checks the sample key against the Stage 8 output under --results-root;
 h5ad reindexed to the embedding row order by pseudocell_id).
 """
 import os
@@ -27,7 +28,7 @@ import os
 # joblib processes (--jobs), so results no longer depend on the calling script's environment.
 for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ[_v] = "1"
-import argparse, glob, re, sys
+import argparse, glob, sys
 from pathlib import Path
 
 import numpy as np, pandas as pd
@@ -40,9 +41,11 @@ from sklearn.decomposition import PCA
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from subspace_probe import block_seed, make_fold_sets, supervised         # reuse the CV probe
+from sample_join import load_viallabels, mix_index                        # checked sample key (STEP3_PREREG 2.5)
 sys.path.insert(0, str(Path(os.environ.setdefault(
     "PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                          # noqa: E402
+from provenance import write_provenance                                   # noqa: E402
 
 WEEK = {"control": 0, "1w": 1, "2w": 2, "4w": 4, "8w": 8}
 SPACE_SEED = {"embed": 7, "pca": 11, "genes": 13}
@@ -74,6 +77,9 @@ def main():
                     help="fold splits per probe, as in subspace_probe.py (1 = a single split)")
     ap.add_argument("--jobs", type=int, default=16)
     ap.add_argument("--ctl-out", default=os.path.join(gc, "pca_control.tsv"))
+    ap.add_argument("--results-root", default=str(resolve_path(cfg, dc["results_dir"])),
+                    help="deconvolution results root (holds motrpac/<TISSUE>/); the sample key is checked "
+                         "against it where it is on disk (default: config results_dir)")
     args = ap.parse_args()
 
     ph = pd.read_csv(pheno, sep="\t", dtype=str); ph["viallabel"] = ph["viallabel"].astype(str)
@@ -81,6 +87,7 @@ def main():
     phm = ph.drop_duplicates("viallabel").set_index("viallabel")
 
     items = []
+    read = []                                    # per-tissue input files, for the provenance record
     for d in sorted(glob.glob(f"{args.gc_root}/*/")):
         tis = os.path.basename(d.rstrip("/"))
         emb_p, ds_p = os.path.join(d, "embeddings", "cell_embeddings.npy"), os.path.join(d, "dataset")
@@ -96,9 +103,9 @@ def main():
         pos = {str(n): i for i, n in enumerate(A.obs_names)}
         ridx = np.array([pos[o] for o in order])                          # align h5ad -> embedding order
         Xraw = A.X[ridx]; genes = list(map(str, A.var_names))
-        vls = [l.strip() for l in open(bs_p) if l.strip()]
-        idx = np.array([int(re.sub(r"\D", "", s)) - 1 for s in samp])
-        vl = np.array([vls[i] if 0 <= i < len(vls) else "" for i in idx])
+        vls = load_viallabels(bulk, tis, Path(args.results_root) / "motrpac")
+        read += [emb_p, h5_p, bs_p, str(Path(args.results_root) / "motrpac" / tis.upper() / "mixture_samples.tsv")]
+        vl = np.array(vls)[mix_index(samp, len(vls), context=tis)]
         grp = np.array([phm.loc[v, gcol] if v in phm.index else None for v in vl], dtype=object)
         sex = np.array([phm.loc[v, "sex"] if v in phm.index else None for v in vl], dtype=object)
         trained = np.array([None if g is None else
@@ -157,6 +164,13 @@ def main():
 
     rows = Parallel(n_jobs=args.jobs, verbose=5)(delayed(run)(it) for it in items)
     res = pd.DataFrame(rows); res.to_csv(args.ctl_out, sep="\t", index=False)
+    # Provenance (audit, cross-stage "provenance": this script wrote none): one record beside pca_control.tsv
+    # and one in the Augur input folder. Written after every output; they read nothing the outputs depend on.
+    prov = dict(vars(args), pheno=pheno, bulk_root=bulk, space_seed=SPACE_SEED, pca_random_state=0,
+                n_blocks=int(len(res)), blas_threads=1)
+    write_provenance(Path(args.ctl_out).parent, name=f"provenance_{Path(args.ctl_out).stem}.json",
+                     inputs=[pheno] + read, params=prov)
+    write_provenance(args.out, inputs=[pheno] + read, params=prov)
 
     pd.set_option("display.width", 200, "display.max_rows", 300)
     print(f"\nwrote {args.ctl_out} ({len(res)} blocks); Augur inputs under {args.out}\n")

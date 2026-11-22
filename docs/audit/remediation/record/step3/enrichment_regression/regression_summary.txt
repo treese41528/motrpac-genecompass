@@ -1,0 +1,68 @@
+Enrichment regression on /depot/reese18/apps/motrpac-genecompass/data/deconvolution/genecompass_input_v2_refs4all_rebuild/pseudobulk_de
+blocks (de_summary status ok): 151
+
+== gene sets ==
+file: /depot/reese18/apps/motrpac-genecompass/data/audit_remediation/step3/enrichment_regression/registered/gene_sets_used.tsv
+  file: gene_sets_used.tsv
+  md5: ac1c1238aeffe5330e1cc1861957b956
+  msigdbr_version: 26.1.0
+  msigdb_release: 2026.1.Hs
+  collections: H; C2 CP:REACTOME
+  species: Homo sapiens
+  n_sets: 1889
+  n_rows: 120984
+  n_ensembl_genes: 13728
+  created: 2026-11-14T10:45:42-0500
+
+== genes mapped, old rule (upper-cased rat symbol) against the one-to-one ortholog pairs; both on P_dose_comb ==
+tissue                    cell_type  n_genes_with_stat  old_n_ranked  new_n_ranked  new_n_no_pair  old_n_in_sets  new_n_in_sets  in_sets_old_only  in_sets_new_only
+ BLOOD Megakaryocytes and platelets              13942         13907         10950           2992           8444           7309              1310               175
+ SKMGN                    Tenocytes              12427         12409         10114           2313           7804           6801              1144               141
+  LUNG Vascular smooth muscle cells              15118         15112         12035           3083           9152           7915              1407               170
+ LIVER                  Hepatocytes              12728         12690         10151           2577           7971           6924              1204               157
+TESTES         Condensed spermatids              13702         13676         10806           2896           8182           7066              1271               155
+
+totals over the blocks (a gene counts once per block):
+  genes with a statistic               2,045,228
+  ranked, old rule                     2,041,272
+  ranked, one-to-one pairs             1,630,784
+  dropped, no one-to-one pair            414,444  (of which 65,273 have a human ortholog that is not one-to-one)
+  in at least one gene set, old rule   1,257,026
+  in at least one gene set, new rule   1,090,160
+    in both 1,066,371; old rule only 190,655; new rule only 23,789
+  check: the recomputed old ranks equal the count the old run logged in 151 of 151 blocks
+
+== significant gene sets (padj < 0.05 within block) ==
+                         hits   blocks with a hit   tests   tests without p
+  old                    7,502          132        200,588        139
+  mapping only           6,274          127        185,952        102
+  registered             4,761          101        159,961         67
+  hits shared: old and mapping only 5,230; old and registered 3,617
+  two-sex tissues only: old 7,360, mapping only 6,180, registered 4,761
+  single-sex tissues (TESTES, OVARY; 21 blocks): old 142, mapping only 94, registered 0
+  median over blocks of the Spearman correlation of NES: old vs mapping only 0.9193; old vs registered 0.8110
+
+== blocks the registered run did not test ==
+tissue                    cell_type  n_genes  n_missing_stat                         status
+ OVARY              Granulosa cells    14132           14132 fewer than 50 ranked genes (0)
+ OVARY                Stromal cells    14135           14135 fewer than 50 ranked genes (0)
+ OVARY                    Monocytes    13816           13816 fewer than 50 ranked genes (0)
+ OVARY                    Pericytes    14120           14120 fewer than 50 ranked genes (0)
+ OVARY            Endothelial cells    14131           14131 fewer than 50 ranked genes (0)
+ OVARY                  Theca cells    14126           14126 fewer than 50 ranked genes (0)
+ OVARY                  Macrophages    14105           14105 fewer than 50 ranked genes (0)
+ OVARY                 Luteal cells    14133           14133 fewer than 50 ranked genes (0)
+ OVARY      Non-classical monocytes    12527           12527 fewer than 50 ranked genes (0)
+ OVARY Plasmacytoid dendritic cells    14052           14052 fewer than 50 ranked genes (0)
+ OVARY                     NK cells    13359           13359 fewer than 50 ranked genes (0)
+ OVARY          Smooth muscle cells    14130           14130 fewer than 50 ranked genes (0)
+ OVARY              Dendritic cells    13836           13836 fewer than 50 ranked genes (0)
+ OVARY                      B cells    13293           13293 fewer than 50 ranked genes (0)
+ OVARY  Lymphatic endothelial cells    13932           13932 fewer than 50 ranked genes (0)
+TESTES         Condensed spermatids    13702           13702 fewer than 50 ranked genes (0)
+TESTES             Round spermatids    13703           13703 fewer than 50 ranked genes (0)
+TESTES        Elongating spermatids    13702           13702 fewer than 50 ranked genes (0)
+TESTES                Spermatocytes    13703           13703 fewer than 50 ranked genes (0)
+TESTES                Spermatogonia    13701           13701 fewer than 50 ranked genes (0)
+TESTES                Sertoli cells    13703           13703 fewer than 50 ranked genes (0)
+

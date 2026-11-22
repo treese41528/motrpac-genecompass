@@ -529,6 +529,12 @@ Seen before registration: the §13 result above.
     threshold and moved only through the pooled refit, so it is not a real gain.
   - Transfer 11/11 preserved; RIN/globin 11/11 ok. The GRNs were linked from refs4 (hotspot set unchanged),
     and conservation is identical (median 0.297).
+    > **Note added 2026-11-14 (audit finding 9.4); the entry above is left as written.** "Median 0.297" here
+    > is the median of the eight per-network medians. The figure quoted for the same eight networks
+    > everywhere else, 0.310, is the median over all 859 TF x network scores. Both were re-derived from
+    > `grn_v2_refs4_human/conservation/` on 2026-11-14 (0.2974 and 0.3096;
+    > `docs/audit/remediation/record/step6/self_consistency_two_medians.tsv`). They are two summaries of one
+    > table, not two results.
   - Link check: none of the 1,840 refs4/v2 files changed in size or mtime. The follow-up job reported a
     change only because the before-listing used absolute paths and the after-listing relative ones.
 - 2026-10-31 — Cleanup (user). The refs4h and refs4h2 output folders and both corrected HIPPOC references

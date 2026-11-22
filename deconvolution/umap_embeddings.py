@@ -3,13 +3,15 @@
 tissues, color-coded by cell type / tissue / sex / PA level (exercise group) / time (weeks).
 
 Joins each pseudo-cell to PHENO via: sample 'mix{i}' -> i-th viallabel in <TISSUE>/bulk_samples.tsv
--> PHENO[viallabel] (sex, group). PA level = exercise group (control/1w/2w/4w/8w); time = weeks
+-> PHENO[viallabel] (sex, group), through deconvolution/sample_join.py (the list is checked against the
+Stage 8 output under --results-root). PA level = exercise group (control/1w/2w/4w/8w); time = weeks
 (control=0). Outputs (under <out>):
   umap_coords.tsv        x,y + metadata per pseudo-cell (reusable)
   umap_panels.png        static faceted UMAP (cell_type/tissue/sex/PA/time)
   umap_interactive.html  plotly: legend toggles CELL TYPES on/off; buttons recolor by facet
 
-Usage: python deconvolution/umap_embeddings.py [--gc-root ...] [--pheno ...] [--bulk-root ...] [--out ...]
+Usage: python deconvolution/umap_embeddings.py [--gc-root ...] [--pheno ...] [--bulk-root ...]
+       [--results-root ...] [--out ...]
 """
 import argparse
 import glob
@@ -24,6 +26,8 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(os.environ.setdefault("PIPELINE_ROOT", str(Path(__file__).resolve().parents[1]))) / "lib"))
 from gene_utils import load_config, resolve_path                       # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sample_join import load_viallabels, mix_index                     # noqa: E402
 
 
 def weeks_of(group):
@@ -34,7 +38,9 @@ def weeks_of(group):
     return int(m.group(1)) if m else -1
 
 
-def load_all(gc_root, bulk_root, pheno):
+def load_all(gc_root, bulk_root, pheno, results_motrpac=None):
+    """Embeddings and metadata of every tissue. results_motrpac (<results_dir>/motrpac, optional) is the
+    Stage 8 output the sample key is checked against."""
     ph = pd.read_csv(pheno, sep="\t", dtype=str).drop_duplicates("viallabel").set_index("viallabel")
     from datasets import load_from_disk
     embs, meta = [], []
@@ -48,10 +54,10 @@ def load_all(gc_root, bulk_root, pheno):
         ct = np.array(ds["cell_type"]); samp = np.array(ds["sample"])
         if e.shape[0] != len(ct):
             print(f"[{tis}] misaligned, skip"); continue
-        vls = [l.strip() for l in open(bs) if l.strip()]
+        vls = load_viallabels(bulk_root, tis, results_motrpac)        # checked sample key (STEP3_PREREG 2.5)
+        idx = mix_index(samp, len(vls), context=tis)                  # raises on a name outside the list
         for k in range(len(ct)):
-            i = int("".join(filter(str.isdigit, str(samp[k])))) - 1
-            v = vls[i] if 0 <= i < len(vls) else ""
+            v = vls[idx[k]]
             grp = ph.loc[v, "group"] if v in ph.index else "NA"
             sex = ph.loc[v, "sex"] if v in ph.index else "NA"
             meta.append({"tissue": tis, "cell_type": str(ct[k]), "sex": str(sex),
@@ -148,12 +154,15 @@ def main():
     ap.add_argument("--gc-root", default=gc)
     ap.add_argument("--pheno", default=resolve_path(cfg, dc["sample_pheno"]))
     ap.add_argument("--bulk-root", default=resolve_path(cfg, dc["motrpac_bulk_out"]))
+    ap.add_argument("--results-root", default=resolve_path(cfg, dc["results_dir"]),
+                    help="deconvolution results root (holds motrpac/<TISSUE>/); the sample key is checked "
+                         "against it where it is on disk (default: config results_dir)")
     ap.add_argument("--out", default=os.path.join(gc, "umap"))
     ap.add_argument("--n-neighbors", type=int, default=30)
     ap.add_argument("--min-dist", type=float, default=0.3)
     args = ap.parse_args()
 
-    E, M = load_all(args.gc_root, args.bulk_root, args.pheno)
+    E, M = load_all(args.gc_root, args.bulk_root, args.pheno, Path(args.results_root) / "motrpac")
     print(f"combined: {E.shape[0]} pseudo-cells x {E.shape[1]} dims, {M.tissue.nunique()} tissues, "
           f"{M.cell_type.nunique()} cell types")
     import umap

@@ -578,15 +578,25 @@ def write_outputs(
     total_cells = sum(t['n_cells'] for t in tasks)
     total_files = sum(t['n_files'] for t in tasks)
 
+    # The commit that ran the gather, and any modified tracked file (audit finding 2.7: the manifest carried
+    # neither). ensembl_release is copied from the config; the config said "113" until 2026-10-05 although
+    # the files were release 115, so manifests written before that date carry the wrong label.
+    try:
+        from provenance import git_state
+        git = git_state()
+    except Exception:                                   # a manifest must not fail the run
+        git = {'git_commit': '', 'git_modified_tracked_files': []}
     manifest = {
         'stage': 4,
         'phase': 'gather',
         'generated_at': datetime.utcnow().isoformat() + 'Z',
         'elapsed_s': round(time.time() - t_start, 1),
+        **git,
         'config_snapshot': {
             'target_sum': med_cfg.get('target_sum', 10000),
             'min_nonzero_cells': min_nonzero_cells,
             'ensembl_release': config.get('biomart', {}).get('ensembl_release', '?'),
+            'assembly': config.get('biomart', {}).get('assembly', '?'),
         },
         'inputs': {
             'n_scatter_tasks': len(tasks),
@@ -612,8 +622,10 @@ def write_outputs(
         'note': (
             "rat_gene_medians.pickle format: {ensembl_id: float32_median_normalized_expr}. "
             "Medians are computed on normalize_total(target_sum=10000) values (non-zero cells only). "
-            "Matches GeneCompass human_gene_median_after_filter.pickle format. "
-            "Stage 5 uses this to convert raw counts → median-normalized → ranked tokens."
+            "Same format as GeneCompass's human_gene_median_after_filter.pickle. "
+            "Stage 5 does not divide by this file directly: build_hybrid_medians.py combines it with "
+            "GeneCompass's human medians into hybrid_gene_medians.pickle (docs/SCHEME_B_MEDIANS.md), and "
+            "raw counts are divided by that."
         ),
     }
     mfst_path = output_dir / 'stage4_manifest.json'
